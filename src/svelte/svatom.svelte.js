@@ -14,7 +14,11 @@ export function view(opticLense, s) {
 			return get(opticLense, s.value)
 		},
 		set value(newVal) {
-			s.value = set(opticLense, newVal, s.value)
+			const transformed = set(opticLense, newVal, s.value)
+			
+			if (!(transformed instanceof Error)) {
+				s.value = transformed
+			}
 		}
 	}
 }

@@ -1,5 +1,18 @@
 <script>
-	let {greeting} = $props()
+	let { greeting, onkeydown } = $props();
+
+	let field = $state();
+
+	export function focus() {
+		field.focus();
+	}
 </script>
 
-<label>Greeting: <input type="text" bind:value={greeting.value} /></label>
+<label
+	>Greeting: <input
+		{onkeydown}
+		bind:this={field}
+		type="text"
+		bind:value={greeting.value}
+	/></label
+>
