@@ -31,7 +31,7 @@
 	);
 
 	// Views into the Atom
-	const clampedSize = read(L.normalize(clamp(10, 30)), size);
+	const clampedSize = view(L.normalize(clamp(10, 30)), size);
 	const fontSize = read(
 		L.lens(
 			(s) => `font-size: ${s}px`,
@@ -60,7 +60,25 @@
 	<p>
 		Size: {clampedSize.value} (clamped to 10&lt;v&lt;30)<br />
 		CSS: {fontSize.value}<br />
-		<input type="range" bind:value={size.value} min="5" max="50" />
+		<label class="number-picker"
+			>Slider A: <input
+				type="range"
+				bind:value={size.value}
+				min="5"
+				max="50"
+			/>
+			<span>This slider can move outside the range</span>
+		</label>
+		<label class="number-picker"
+			>Slider B: <input
+				type="range"
+				bind:value={clampedSize.value}
+				min="5"
+				max="50"
+			/>
+
+			<span>This slider is forced into the range</span>
+		</label>
 	</p>
 
 	<h3>People ({count.value})</h3>
@@ -116,6 +134,8 @@
 							}
 						}}
 					/>
+				{:else}
+					<span>Press enter to jump to the next field.</span>
 				{/if}
 			</li>
 		{/each}
