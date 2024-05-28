@@ -1,8 +1,9 @@
 <script>
 	import * as L from "partial.lenses";
-	import { atom, view, read } from "./svatom.svelte.js";
+	import { atom, view, read, combine } from "./svatom.svelte.js";
 	import Nested from "./Nested.svelte";
 	import { clamp } from "./utils.js";
+	import favicon from "../../favicon.svg";
 
 	// Atoms
 	const inputFields = atom([]);
@@ -10,6 +11,45 @@
 	const allNames = atom([{ name: "Laszlo" }]);
 	const wins = atom({ x: 100, y: 100 });
 	const theNumber = atom(2);
+
+	const settings = atom({ local: "de" });
+	const translation = atom({
+		de: {
+			greeting: "Hallo",
+		},
+		en: {
+			greeting: "hello",
+		},
+		es: {
+			greeting: "Hola",
+		},
+	});
+	const allLangs = read([L.keys, L.defaults([])], translation);
+	const lang = view("local", settings);
+	const langAndTranslation = combine({
+		lang: view("local", settings),
+		translation,
+	});
+
+	const currentTranslation = view(
+		[
+			L.choose((x) => {
+				return ["translation", L.prop(x.lang || "de")];
+			}),
+		],
+		langAndTranslation,
+	);
+
+	const langAndTransJson = view(
+		L.inverse(L.json({ space: "  " })),
+		langAndTranslation,
+	);
+
+	const currentGreeting = view(
+		["greeting", L.defaults("")],
+		currentTranslation,
+	);
+	const yourName = view(["name", L.removable(), L.defaults("")], settings);
 
 	// Predefined Lenses
 	const numeric = L.lens(
@@ -24,6 +64,47 @@
 					.map((_, i) => i),
 			(c, a) => c.length - xtra,
 		);
+
+	const prefix = (pre) =>
+		L.lens(
+			(x) => {
+				if (x === undefined) {
+					return x;
+				} else {
+					return pre + x;
+				}
+			},
+			(n, o) => {
+				if (n === undefined) {
+					return undefined;
+				} else if (n.indexOf(pre) === 0) {
+					return n.slice(pre.length);
+				} else {
+					return o;
+				}
+			},
+		);
+
+	const postfix = (post) =>
+		L.lens(
+			(x) => {
+				if (x === undefined) {
+					return x;
+				} else {
+					return x + post;
+				}
+			},
+			(n, o) => {
+				if (n === undefined) {
+					return undefined;
+				} else if (n.slice(-post.length) === post) {
+					return n.slice(0, -post.length);
+				} else {
+					return o;
+				}
+			},
+		);
+
 	const indexedName = (i) => [i, L.removable("name"), "name", L.defaults("")];
 	const doubleNumber = L.lens(
 		(x) => x * 2,
@@ -55,7 +136,13 @@
 </script>
 
 <section>
-	<h1>Optix Booooom</h1>
+	<h1>
+		<img
+			src={favicon}
+			style="width: 1.2em; vertical-align: text-top; margin: 0 0.3em 0 0; display: inline-block;"
+			alt=""
+		/>Svatom
+	</h1>
 
 	<p>
 		Size: {clampedSize.value} (clamped to 10&lt;v&lt;30)<br />
@@ -80,6 +167,42 @@
 			<span>This slider is forced into the range</span>
 		</label>
 	</p>
+
+	<h3>Language</h3>
+
+	<textarea bind:value={langAndTransJson.value}></textarea>
+
+	<h4>
+		{read(["greeting", L.valueOr("Hi")], currentTranslation).value}{read(
+			[
+				"name",
+				prefix(" "),
+				postfix("!"),
+				L.valueOr(", whats your name?"),
+			],
+			settings,
+		).value}
+	</h4>
+
+	<div class="simple-form">
+		<label
+			><span>Your Name:</span>
+			<input type="text" bind:value={yourName.value} /></label
+		>
+		<label
+			><span>Your language:</span>
+			<select bind:value={lang.value}>
+				{#each allLangs.all as l}
+					<option value={l}>{l}</option>
+				{/each}
+			</select></label
+		>
+
+		<label
+			><span>Preferred Greeting:</span>
+			<input type="text" bind:value={currentGreeting.value} /></label
+		>
+	</div>
 
 	<h3>People ({count.value})</h3>
 
@@ -248,5 +371,18 @@
 		display: inline-block;
 		font: inherit;
 		cursor: pointer;
+	}
+
+	.simple-form {
+		display: grid;
+		grid-template-columns: auto auto;
+		gap: 0.5em;
+		justify-content: start;
+	}
+
+	.simple-form > label {
+		display: grid;
+		grid-template-columns: subgrid;
+		grid-column: 1 / span 2;
 	}
 </style>
