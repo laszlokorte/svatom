@@ -6,4 +6,4 @@ The core idea is to compose [lenses](https://github.com/calmm-js/partial.lenses)
 
 ![Screenshot](./preview.png)
 
-[Live Demo](https://static.laszlkorte.de/svatom)
+[Live Demo](https://static.laszlokorte.de/svatom)
