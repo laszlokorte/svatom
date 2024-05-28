@@ -133,6 +133,21 @@
 		theNumber,
 	);
 	const theNumberDoubled = view(doubleNumber, theNumberClamped);
+
+	function bindAtomInput(node, atom) {
+		function oninput(e) {
+			atom.value = node.value;
+			node.value = atom.value;
+		}
+		node.value = atom.value;
+		$effect(() => {
+			node.value = atom.value;
+		});
+		node.addEventListener("input", oninput);
+		return () => {
+			node.removeEventListener("input", oninput);
+		};
+	}
 </script>
 
 <section>
@@ -159,10 +174,12 @@
 		<label class="number-picker"
 			>Slider B: <input
 				type="range"
-				bind:value={clampedSize.value}
+				use:bindAtomInput={clampedSize}
 				min="5"
 				max="50"
 			/>
+
+			({clampedSize.value})
 
 			<span>This slider is forced into the range</span>
 		</label>

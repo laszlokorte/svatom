@@ -450,7 +450,7 @@ svelte-hmr@^0.16.0:
   resolved "https://registry.yarnpkg.com/svelte-hmr/-/svelte-hmr-0.16.0.tgz#9f345b7d1c1662f1613747ed7e82507e376c1716"
   integrity sha512-Gyc7cOS3VJzLlfj7wKS0ZnzDVdv3Pn2IuVeJPk9m2skfhcu5bq3wtIZyQGggr7/Iim5rH5cncyQft/kRLupcnA==
 
-svelte@^5.0.0-next:
+svelte@^5.0.0-next.140:
   version "5.0.0-next.143"
   resolved "https://registry.yarnpkg.com/svelte/-/svelte-5.0.0-next.143.tgz#2b00893c86a37be4e7ca8d304b2ad37b8c66bf6a"
   integrity sha512-hRm52FjYUfd24eUlkBS41JSmqHOx6wt0cV+wMzgwqhhxIpJoz96eiMcnvcLqXx+gTxM1m0Pt/+7xP3vlm2QvPg==
