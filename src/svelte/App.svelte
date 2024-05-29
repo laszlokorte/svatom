@@ -67,7 +67,11 @@
 		[L.appendTo, L.removable("name"), "name", L.defaults("")],
 		allNames,
 	);
-	const json = failableView(L.inverse(L.json({ space: "  " })), allNames);
+	const peopleJson = failableView(
+		L.inverse(L.json({ space: "  " })),
+		allNames,
+		false,
+	);
 
 	const theNumberClamped = view(
 		[L.normalize(clamp(0, 200)), numeric],
@@ -171,12 +175,25 @@
 			<input type="text" bind:value={currentGreeting.value} /></label
 		>
 	</div>
+	<p>
+		The left field is editable and permits invalid JSON (but reports an
+		error). The center field is read-only, the right field is editable but
+		only permits valid JSON.
+	</p>
 
-	<p>Left side is editable, right side read only:</p>
+	<p>
+		If the left field has encountered an parse error, it resets
+		automatically as soon as the backing data changes. Try to introduce an
+		error and then edit the form above or the JSON in the right-most field.
+	</p>
 
 	<div class="beside">
-		<textarea bind:value={langAndTransJson.value}></textarea>
-		<pre>{langAndTransJson.stable}</pre>
+		<textarea
+			class:has-error={langAndTransJson.hasError}
+			bind:value={langAndTransJson.value}
+		></textarea>
+		<pre>{langAndTransJson.stableValue}</pre>
+		<textarea use:bindValue={langAndTransJson.stableAtom}></textarea>
 	</div>
 	<div class="error-message" hidden={!langAndTransJson.hasError}>
 		<button type="button" onclick={langAndTransJson.reset}>Reset</button>
@@ -245,16 +262,32 @@
 
 	<h3>JSON</h3>
 
-	<p>Person list is formatted as json</p>
+	<p>Person list formatted as json:</p>
+	<p>
+		The left field is editable and permits invalid JSON (but reports an
+		error). The center field is read-only, the right field is editable but
+		only permits valid JSON.
+	</p>
+
+	<p>
+		Once the left field is in an error state it has to be reset explicitly
+		to get rid of the error. Try to introduce an error and then edit the
+		peole in the form above or in the right-most field.
+	</p>
 
 	<div class="beside">
-		<textarea bind:value={json.value}></textarea>
-		<pre style={fontSize.value}>{json.stable}</pre>
+		<textarea
+			class:has-error={peopleJson.hasError}
+			bind:value={peopleJson.value}
+		></textarea>
+		<pre style={fontSize.value}>{peopleJson.stableValue}</pre>
+
+		<textarea use:bindValue={peopleJson.stableAtom}></textarea>
 	</div>
 
-	<div class="error-message" hidden={!json.hasError}>
-		<button type="button" onclick={json.reset}>Reset</button>
-		{json.error}
+	<div class="error-message" hidden={!peopleJson.hasError}>
+		<button type="button" onclick={peopleJson.reset}>Reset</button>
+		{peopleJson.error}
 	</div>
 
 	<div>

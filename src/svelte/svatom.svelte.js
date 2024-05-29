@@ -54,7 +54,7 @@ export function view(opticLense, someAtom) {
 	}
 }
 
-export function failableView(opticLense, someAtom, errorAtom = atom(null), transientAtom = atom(null)) {
+export function failableView(opticLense, someAtom, autoReset = true, errorAtom = atom(null), transientAtom = atom(null)) {
 	return {
 		get value() {
 			return !$state.is(errorAtom.value, null) ? transientAtom.value : get(opticLense, someAtom.value)
@@ -72,9 +72,41 @@ export function failableView(opticLense, someAtom, errorAtom = atom(null), trans
 				errorAtom.value = transformed
 			}
 		},
-		get stable() {
+		get stableValue() {
 			return get(opticLense, someAtom.value)
 		},
+		set stableValue(newVal) {
+			const transformed = set(opticLense, newVal, someAtom.value)
+			
+			if (!(transformed instanceof Error)) {
+				someAtom.value = transformed
+
+				if(autoReset) {
+					transientAtom.value = null
+					errorAtom.value = null
+				}
+			}
+		},
+
+		get stableAtom() {
+			return {
+				get value() {
+					return get(opticLense, someAtom.value)
+				},
+				set value(newVal) {
+					const transformed = set(opticLense, newVal, someAtom.value)
+					
+					if (!(transformed instanceof Error)) {
+						someAtom.value = transformed
+						if(autoReset) {
+							transientAtom.value = null
+							errorAtom.value = null
+						}
+					}
+				}
+			}
+		},
+
 		get error() {
 			return errorAtom.value
 		},
@@ -122,9 +154,21 @@ export function read(opticLense, someAtom) {
 
 
 export function bindValue(node, someAtom) {
+	let c0 = null;
+	let c1 = null
 	function oninput(e) {
+		const before = someAtom.value;
 		someAtom.value = node.value;
 		node.value = someAtom.value;
+		if(someAtom.value == before) {
+			node.selectionStart = c0
+			node.selectionEnd = c1
+		}
+	}
+
+	function onbeforeinput(e) {
+		c0 = node.selectionStart
+		c1 = node.selectionEnd
 	}
 
 	node.value = someAtom.value;
@@ -134,8 +178,10 @@ export function bindValue(node, someAtom) {
 	});
 
 	node.addEventListener("input", oninput);
+	node.addEventListener("beforeinput", onbeforeinput);
 
 	return () => {
+		node.removeEventListener("beforeinput", onbeforeinput);
 		node.removeEventListener("input", oninput);
 	};
 }

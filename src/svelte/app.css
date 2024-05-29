@@ -87,13 +87,20 @@ button {
 	color: #aa0000;
 }
 
+.has-error {
+	background: #ffeeee;
+	outline: 3px solid #aa0000;
+	color: #330000;
+}
+
 .beside {
 	display: grid;
-	grid-template-columns: 1fr 1fr;
+	grid-template-columns: repeat(auto-fit, minmax(10em, 1fr));
 	justify-items: stretch;
 	align-items: stretch;
 	gap: 0.5em;
 	resize: vertical;
+	min-height: 10em;
 	overflow: hidden;
 	padding: 0.3em;
 }
