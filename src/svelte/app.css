@@ -102,7 +102,7 @@ button {
 	resize: vertical;
 	min-height: 10em;
 	overflow: hidden;
-	padding: 0.3em;
+	padding: 0 0.5em 0.5em 0;
 }
 
 .beside > * {

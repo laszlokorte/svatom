@@ -126,6 +126,9 @@
 				min="5"
 				max="50"
 			/>
+
+			<output>({size.value})</output>
+
 			<span>This slider can move outside the range</span>
 		</label>
 		<label class="number-picker"
@@ -136,7 +139,7 @@
 				max="50"
 			/>
 
-			({clampedSize.value})
+			<output>({clampedSize.value})</output>
 
 			<span>This slider is forced into the range</span>
 		</label>
@@ -300,15 +303,17 @@
 		</p>
 
 		<div class="number-picker">
-			<input type="range" bind:value={theNumberClamped.value} max="100" />
-			<input type="text" bind:value={theNumberClamped.value} max="100" />
+			<input type="range" use:bindValue={theNumberClamped} max="100" />
+			<input type="text" use:bindValue={theNumberClamped} max="100" />
 			<output>({theNumberClamped.value})</output>
+			The input is bound synchronously
 		</div>
 
 		<div class="number-picker">
 			<input type="range" bind:value={theNumberDoubled.value} max="200" />
 			<input type="text" bind:value={theNumberDoubled.value} max="200" />
 			<output>({theNumberDoubled.value})</output>
+			The input is bound deferred
 		</div>
 	</div>
 </section>
