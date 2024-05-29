@@ -1,6 +1,14 @@
 <script>
 	import * as L from "partial.lenses";
-	import { atom, view, read, combine } from "./svatom.svelte.js";
+	import {
+		atom,
+		view,
+		read,
+		combine,
+		combineWithRest,
+		failableView,
+		bindValue,
+	} from "./svatom.svelte.js";
 	import Nested from "./Nested.svelte";
 	import { clamp } from "./utils.js";
 	import favicon from "../../favicon.svg";
@@ -11,7 +19,6 @@
 	const allNames = atom([{ name: "Laszlo" }]);
 	const wins = atom({ x: 100, y: 100 });
 	const theNumber = atom(2);
-
 	const settings = atom({ local: "de" });
 	const translation = atom({
 		de: {
@@ -24,32 +31,6 @@
 			greeting: "Hola",
 		},
 	});
-	const allLangs = read([L.keys, L.defaults([])], translation);
-	const lang = view("local", settings);
-	const langAndTranslation = combine({
-		lang: view("local", settings),
-		translation,
-	});
-
-	const currentTranslation = view(
-		[
-			L.choose((x) => {
-				return ["translation", L.prop(x.lang || "de")];
-			}),
-		],
-		langAndTranslation,
-	);
-
-	const langAndTransJson = view(
-		L.inverse(L.json({ space: "  " })),
-		langAndTranslation,
-	);
-
-	const currentGreeting = view(
-		["greeting", L.defaults("")],
-		currentTranslation,
-	);
-	const yourName = view(["name", L.removable(), L.defaults("")], settings);
 
 	// Predefined Lenses
 	const numeric = L.lens(
@@ -63,46 +44,6 @@
 					.fill(0)
 					.map((_, i) => i),
 			(c, a) => c.length - xtra,
-		);
-
-	const prefix = (pre) =>
-		L.lens(
-			(x) => {
-				if (x === undefined) {
-					return x;
-				} else {
-					return pre + x;
-				}
-			},
-			(n, o) => {
-				if (n === undefined) {
-					return undefined;
-				} else if (n.indexOf(pre) === 0) {
-					return n.slice(pre.length);
-				} else {
-					return o;
-				}
-			},
-		);
-
-	const postfix = (post) =>
-		L.lens(
-			(x) => {
-				if (x === undefined) {
-					return x;
-				} else {
-					return x + post;
-				}
-			},
-			(n, o) => {
-				if (n === undefined) {
-					return undefined;
-				} else if (n.slice(-post.length) === post) {
-					return n.slice(0, -post.length);
-				} else {
-					return o;
-				}
-			},
 		);
 
 	const indexedName = (i) => [i, L.removable("name"), "name", L.defaults("")];
@@ -126,7 +67,7 @@
 		[L.appendTo, L.removable("name"), "name", L.defaults("")],
 		allNames,
 	);
-	const json = view(L.inverse(L.json({ space: "  " })), allNames);
+	const json = failableView(L.inverse(L.json({ space: "  " })), allNames);
 
 	const theNumberClamped = view(
 		[L.normalize(clamp(0, 200)), numeric],
@@ -134,20 +75,32 @@
 	);
 	const theNumberDoubled = view(doubleNumber, theNumberClamped);
 
-	function bindAtomInput(node, atom) {
-		function oninput(e) {
-			atom.value = node.value;
-			node.value = atom.value;
-		}
-		node.value = atom.value;
-		$effect(() => {
-			node.value = atom.value;
-		});
-		node.addEventListener("input", oninput);
-		return () => {
-			node.removeEventListener("input", oninput);
-		};
-	}
+	const allLangs = read([L.keys, L.defaults([])], translation);
+	const lang = view("local", settings);
+	const langAndTranslation = combineWithRest({
+		lang: view("local", settings),
+		translation,
+	});
+
+	const currentTranslation = view(
+		[
+			L.choose((x) => {
+				return ["translation", L.prop(x.lang || "de")];
+			}),
+		],
+		langAndTranslation,
+	);
+
+	const langAndTransJson = failableView(
+		L.inverse(L.json({ space: "  " })),
+		langAndTranslation,
+	);
+
+	const currentGreeting = view(
+		["greeting", L.defaults("")],
+		currentTranslation,
+	);
+	const yourName = view(["name", L.removable(), L.defaults("")], settings);
 </script>
 
 <section>
@@ -174,7 +127,7 @@
 		<label class="number-picker"
 			>Slider B: <input
 				type="range"
-				use:bindAtomInput={clampedSize}
+				use:bindValue={clampedSize}
 				min="5"
 				max="50"
 			/>
@@ -187,14 +140,12 @@
 
 	<h3>Language</h3>
 
-	<textarea bind:value={langAndTransJson.value}></textarea>
-
 	<h4>
 		{read(["greeting", L.valueOr("Hi")], currentTranslation).value}{read(
 			[
 				"name",
-				prefix(" "),
-				postfix("!"),
+				L.inverse(L.dropPrefix(" ")),
+				L.inverse(L.dropSuffix("!")),
 				L.valueOr(", whats your name?"),
 			],
 			settings,
@@ -219,6 +170,17 @@
 			><span>Preferred Greeting:</span>
 			<input type="text" bind:value={currentGreeting.value} /></label
 		>
+	</div>
+
+	<p>Left side is editable, right side read only:</p>
+
+	<div class="beside">
+		<textarea bind:value={langAndTransJson.value}></textarea>
+		<pre>{langAndTransJson.stable}</pre>
+	</div>
+	<div class="error-message" hidden={!langAndTransJson.hasError}>
+		<button type="button" onclick={langAndTransJson.reset}>Reset</button>
+		{langAndTransJson.error}
 	</div>
 
 	<h3>People ({count.value})</h3>
@@ -285,15 +247,15 @@
 
 	<p>Person list is formatted as json</p>
 
-	<pre style={fontSize.value}>{json.value}</pre>
+	<div class="beside">
+		<textarea bind:value={json.value}></textarea>
+		<pre style={fontSize.value}>{json.stable}</pre>
+	</div>
 
-	<h3>Also Editable</h3>
-
-	<p>
-		Edit the JSON below and see how it is kept in sync with the list above.
-	</p>
-
-	<textarea bind:value={json.value}></textarea>
+	<div class="error-message" hidden={!json.hasError}>
+		<button type="button" onclick={json.reset}>Reset</button>
+		{json.error}
+	</div>
 
 	<div>
 		<h3>Numbers</h3>
@@ -319,87 +281,5 @@
 </section>
 
 <style>
-	section {
-		margin: 3em auto;
-		max-width: 60em;
-	}
-
-	ul {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-		display: flex;
-		gap: 0.5em;
-		flex-direction: column;
-	}
-
-	pre {
-		white-space: pre-wrap;
-		background: #333;
-		color: #fff;
-		height: 10em;
-		overflow: auto;
-		resize: vertical;
-		padding: 1em;
-		box-sizing: border-box;
-	}
-
-	textarea {
-		white-space: pre-wrap;
-		background: #ffffee;
-		color: #000;
-		width: 100%;
-		min-height: 10em;
-		border: 0;
-		resize: vertical;
-		padding: 1em;
-		box-sizing: border-box;
-	}
-
-	.number-picker {
-		display: flex;
-		align-items: center;
-		gap: 1em;
-	}
-
-	input[type="range"] {
-		padding: 1em;
-		margin: 0;
-	}
-
-	input[type="text"] {
-		margin: 0;
-	}
-
-	.phantom {
-		visibility: hidden;
-	}
-
-	.controls {
-		display: flex;
-		margin: 1em 0;
-	}
-
-	button {
-		border: none;
-		background: #111;
-		color: #fff;
-		padding: 0.3em 0.5em;
-		display: inline-block;
-		font: inherit;
-		cursor: pointer;
-	}
-
-	.simple-form {
-		display: grid;
-		grid-template-columns: auto auto;
-		gap: 0.5em;
-		justify-content: start;
-	}
-
-	.simple-form > label {
-		display: grid;
-		grid-template-columns: subgrid;
-		grid-column: 1 / span 2;
-	}
+	@import url("app.css");
 </style>

@@ -1,0 +1,108 @@
+section {
+	margin: 3em auto;
+	max-width: 60em;
+}
+
+ul {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: flex;
+	gap: 0.5em;
+	flex-direction: column;
+}
+
+pre {
+	white-space: pre-wrap;
+	background: #333;
+	color: #aaa;
+	height: 10em;
+	overflow: auto;
+	resize: vertical;
+	padding: 1em;
+	box-sizing: border-box;
+	margin: 0;
+}
+
+textarea {
+	white-space: pre-wrap;
+	background: #ffffee;
+	color: #000;
+	width: 100%;
+	min-height: 10em;
+	border: 0;
+	resize: vertical;
+	padding: 1em;
+	box-sizing: border-box;
+}
+
+.number-picker {
+	display: flex;
+	align-items: center;
+	gap: 1em;
+}
+
+input[type="range"] {
+	padding: 1em;
+	margin: 0;
+}
+
+input[type="text"] {
+	margin: 0;
+}
+
+.phantom {
+	visibility: hidden;
+}
+
+.controls {
+	display: flex;
+	margin: 1em 0;
+}
+
+button {
+	border: none;
+	background: #111;
+	color: #fff;
+	padding: 0.3em 0.5em;
+	display: inline-block;
+	font: inherit;
+	cursor: pointer;
+}
+
+.simple-form {
+	display: grid;
+	grid-template-columns: auto auto;
+	gap: 0.5em;
+	justify-content: start;
+}
+
+.simple-form > label {
+	display: grid;
+	grid-template-columns: subgrid;
+	grid-column: 1 / span 2;
+}
+
+.error-message {
+	color: #aa0000;
+}
+
+.beside {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	justify-items: stretch;
+	align-items: stretch;
+	gap: 0.5em;
+	resize: vertical;
+	overflow: hidden;
+	padding: 0.3em;
+}
+
+.beside > * {
+	flex-grow: 1;
+	height: 100%;
+}
+
+.beside * {
+	resize: none;
+}
