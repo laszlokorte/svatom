@@ -102,7 +102,7 @@ button {
 	resize: vertical;
 	min-height: 10em;
 	overflow: hidden;
-	padding: 0 0.5em 0.5em 0;
+	padding: 2px 0.5em 0.5em 2px;
 }
 
 .beside > * {
@@ -112,4 +112,61 @@ button {
 
 .beside * {
 	resize: none;
+}
+
+.asciiart {
+	white-space: pre;
+	font-family: monospace;
+	line-height: 1;
+	line-break: none;
+}
+
+.scroller {
+	min-height: 10em;
+	resize: both;
+	overflow: scroll;
+	height: 30em;
+	position: relative;
+}
+
+.scroller-space {
+	height: calc(var(--scroll-y, 1) * 1px  + 10000px);
+	width: calc(var(--scroll-x, 1) * 1px  + 2000px);
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+
+.scroller-body {
+	position: absolute;
+	left: calc(var(--scroll-x, 0) * 1px);
+	top: calc(var(--scroll-y, 0) * 1px);
+	width: calc(var(--scroll-w, 0) * 1px);
+	height: calc(var(--scroll-h, 0) * 1px);
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	overflow: hidden;
+}
+
+.scroller-row {
+	display: flex;
+	gap: 2px;
+	flex-grow: 1;
+	position: relative;
+	left: calc(var(--scroll-ox, 0) * -1px);
+	top: calc(var(--scroll-oy, 0) * -1px);
+	width: calc(var(--scroll-w, 0) * 1px + (2*var(--scroll-rw)) * 1px);
+	height: calc(var(--scroll-h, 0) * 1px + (2*var(--scroll-rh)) * 1px);
+}
+
+.scroller-cell {
+	flex-grow: 1;
+	text-align: center;
+	background: #fafafa;
+	box-sizing: border-box;
+	text-align: center;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }

@@ -185,3 +185,47 @@ export function bindValue(node, someAtom) {
 		node.removeEventListener("input", oninput);
 	};
 }
+
+export function bindScroll(node, someAtom) {
+	 function onscroll(e) {
+		someAtom.value = {
+			x: node.scrollLeft,
+			y: node.scrollTop,
+		}
+	}
+
+	$effect.pre(() => {
+		node.scrollLeft = someAtom.value.x;
+		node.scrollTop = someAtom.value.y;
+	});
+
+	node.addEventListener("scroll", onscroll, { passive: false });
+
+	return () => {
+		node.removeEventListener("scroll", onscroll, { passive: false });
+	};
+}
+
+export function bindSize(node, someAtom) {
+	const resizeObserver = new ResizeObserver((entries) => {
+	  for (const entry of entries) {
+	    if (entry.borderBoxSize) {
+	    	someAtom.value = {
+	    		x: entry.borderBoxSize[0].inlineSize,
+	    		y: entry.borderBoxSize[0].blockSize,
+	    	}
+	    } else {
+			someAtom.value = {
+				x: entry.contentRect.width,
+				y: entry.contentRect.height,
+			}
+	    }
+	  }
+	});
+
+	resizeObserver.observe(node)
+
+	return () => {
+		resizeObserver.disconnect()
+	};
+}

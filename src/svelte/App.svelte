@@ -8,12 +8,17 @@
 		combineWithRest,
 		failableView,
 		bindValue,
+		bindScroll,
+		bindSize,
 	} from "./svatom.svelte.js";
 	import Nested from "./Nested.svelte";
 	import { clamp } from "./utils.js";
 	import favicon from "../../favicon.svg";
 
 	// Atoms
+	const textScroller = atom({ x: 0, y: 0 });
+	const tableScroller = atom({ x: 0, y: 0 });
+	const tableScrollerSize = atom({ x: 0, y: 0 });
 	const inputFields = atom([]);
 	const size = atom(15);
 	const allNames = atom([{ name: "Laszlo" }]);
@@ -105,6 +110,45 @@
 		currentTranslation,
 	);
 	const yourName = view(["name", L.removable(), L.defaults("")], settings);
+
+	const ascii = atom(`
+     *   .                  .              .        .   *          .
+  .         .                     .       .           .      .        .
+        o                             .                   .
+         .              .                  .           .
+          0     .
+                 .          .                 ,                ,    ,
+ .          \\          .                         .
+      .      \\   ,
+   .          o     .                 .                   .            .
+     .         \\                 ,             .                .
+               #\\##\\#      .                              .        .
+             #  #O##\\###                .                        .
+   .        #*#  #\\##\\###                       .                     ,
+        .   ##*#  #\\##\\##               .                     .
+      .      ##*#  #o##\\#         .                             ,       .
+          .     *#  #\\#     .                    .             .          ,
+                      \\          .                         .
+____^/\\___^--____/\\____O______________/\\/\\---/\\___________---______________
+   /\\^   ^  ^    ^                  ^^ ^  '\\ ^          ^       ---
+         --           -            --  -      -         ---  __       ^
+   --  __                      ___--  ^  ^                         --  __
+`);
+
+	const scrollerContent = $derived(
+		Array(Math.ceil(tableScrollerSize.value.y / 50) + 2)
+			.fill(tableScroller.value.y)
+			.map((y, i) => {
+				return Array(Math.ceil(tableScrollerSize.value.x / 100) + 2)
+					.fill(tableScroller.value.x)
+					.map(
+						(x, j) =>
+							`${Math.floor(x / 100) + j}/${Math.floor(y / 50) + i}`,
+					);
+			}),
+	);
+
+	$inspect(scrollerContent);
 </script>
 
 <section>
@@ -314,6 +358,63 @@
 			<input type="text" bind:value={theNumberDoubled.value} max="200" />
 			<output>({theNumberDoubled.value})</output>
 			The input is bound deferred
+		</div>
+	</div>
+
+	<h2>More Stuff</h2>
+	<div class="beside">
+		<textarea
+			use:bindScroll={textScroller}
+			use:bindValue={ascii}
+			class="asciiart"
+		></textarea>
+		<textarea
+			use:bindScroll={textScroller}
+			use:bindValue={ascii}
+			class="asciiart"
+		></textarea>
+		<textarea
+			use:bindScroll={textScroller}
+			use:bindValue={ascii}
+			class="asciiart"
+		></textarea>
+	</div>
+
+	<h3>Infinite Table</h3>
+
+	<dl>
+		<dt>Scroll Position</dt>
+		<dd>{tableScroller.value.x} / {tableScroller.value.y}</dd>
+		<dt>Frame Size</dt>
+		<dd>{tableScrollerSize.value.x} / {tableScrollerSize.value.y}</dd>
+	</dl>
+
+	<div
+		class="scroller"
+		use:bindScroll={tableScroller}
+		use:bindSize={tableScrollerSize}
+		style:--scroll-x={tableScroller.value.x}
+		style:--scroll-y={tableScroller.value.y}
+		style:--scroll-ox={tableScroller.value.x % 100}
+		style:--scroll-oy={tableScroller.value.y % 50}
+		style:--scroll-cx={Math.floor(tableScrollerSize.value.x / 100)}
+		style:--scroll-cy={Math.floor(tableScrollerSize.value.y / 50)}
+		style:--scroll-rw={100}
+		style:--scroll-rh={50}
+		style:--scroll-w={tableScrollerSize.value.x}
+		style:--scroll-h={tableScrollerSize.value.y}
+	>
+		<div class="scroller-space"></div>
+		<div class="scroller-body">
+			{#each scrollerContent as row, i (i)}
+				<div class="scroller-row">
+					{#each row as cell, j (j)}
+						<div class="scroller-cell">
+							{cell}
+						</div>
+					{/each}
+				</div>
+			{/each}
 		</div>
 	</div>
 </section>
