@@ -1,5 +1,6 @@
 import { get, set, collect, foldl, propsExcept } from 'partial.lenses'
 import * as R from "ramda";
+import {tick} from "svelte";
 
 export function atom(init) {
 	let root = $state({
@@ -155,12 +156,16 @@ export function read(opticLense, someAtom) {
 
 export function bindValue(node, someAtom) {
 	let c0 = null;
-	let c1 = null
+	let c1 = null;
 	function oninput(e) {
 		const before = someAtom.value;
 		someAtom.value = node.value;
 		node.value = someAtom.value;
-		if(someAtom.value == before) {
+		const newVal = someAtom.value;
+		if(node.value != newVal) {	
+			node.value = newVal;
+		}
+		if(c0 !== null && someAtom.value == before) {
 			node.selectionStart = c0
 			node.selectionEnd = c1
 		}
@@ -171,38 +176,59 @@ export function bindValue(node, someAtom) {
 		c1 = node.selectionEnd
 	}
 
-	node.value = someAtom.value;
-
-	$effect(() => {
-		node.value = someAtom.value;
+	$effect.pre(() => {
+		const newVal = someAtom.value;
+		if(node.value != newVal) {	
+			node.value = newVal;
+		}
 	});
 
+	// $effect(() => {
+	// 	node.value = someAtom.value;
+	// });
+
 	node.addEventListener("input", oninput);
-	node.addEventListener("beforeinput", onbeforeinput);
+	node.addEventListener("change", oninput);
+	try {
+		let x = node.selectionStart;
+		node.addEventListener("beforeinput", onbeforeinput);
+	} catch(e) {
+
+	}
 
 	return () => {
 		node.removeEventListener("beforeinput", onbeforeinput);
 		node.removeEventListener("input", oninput);
+		node.removeEventListener("change", oninput);
 	};
 }
 
 export function bindScroll(node, someAtom) {
+	 let scrolling = false
 	 function onscroll(e) {
-		someAtom.value = {
-			x: node.scrollLeft,
-			y: node.scrollTop,
-		}
+	 	if(!scrolling && (!$state.is(someAtom.value.x, node.scrollLeft) || !$state.is(someAtom.value.y, node.scrollTop))) {
+			someAtom.value = {
+				x: node.scrollLeft,
+				y: node.scrollTop,
+			}
+	 	}
 	}
 
 	$effect.pre(() => {
-		node.scrollLeft = someAtom.value.x;
-		node.scrollTop = someAtom.value.y;
+		const newY =  someAtom.value.y
+		const newX =  someAtom.value.x
+		scrolling = true
+		tick().then(() => {
+			node.scrollLeft = newX;
+			node.scrollTop = newY
+			scrolling = false
+		});
 	});
 
-	node.addEventListener("scroll", onscroll, { passive: false });
+	node.addEventListener("scroll", onscroll, { passive: true });
 
 	return () => {
-		node.removeEventListener("scroll", onscroll, { passive: false });
+		node.removeEventListener("scroll", onscroll, { passive: true });
 	};
 }
 

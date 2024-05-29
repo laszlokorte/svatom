@@ -17,6 +17,14 @@
 
 	// Atoms
 	const textScroller = atom({ x: 0, y: 0 });
+	const textScrollerY = view(
+		["y", L.normalize((x) => parseInt(x, 10)), L.normalize(Math.round)],
+		textScroller,
+	);
+	const textScrollerX = view(
+		["x", L.normalize((x) => parseInt(x, 10)), L.normalize(Math.round)],
+		textScroller,
+	);
 	const tableScroller = atom({ x: 0, y: 0 });
 	const tableScrollerSize = atom({ x: 0, y: 0 });
 	const inputFields = atom([]);
@@ -111,29 +119,29 @@
 	);
 	const yourName = view(["name", L.removable(), L.defaults("")], settings);
 
-	const ascii = atom(`
-     *   .                  .              .        .   *          .
-  .         .                     .       .           .      .        .
-        o                             .                   .
-         .              .                  .           .
-          0     .
-                 .          .                 ,                ,    ,
- .          \\          .                         .
-      .      \\   ,
-   .          o     .                 .                   .            .
-     .         \\                 ,             .                .
-               #\\##\\#      .                              .        .
-             #  #O##\\###                .                        .
-   .        #*#  #\\##\\###                       .                     ,
-        .   ##*#  #\\##\\##               .                     .
-      .      ##*#  #o##\\#         .                             ,       .
-          .     *#  #\\#     .                    .             .          ,
-                      \\          .                         .
-____^/\\___^--____/\\____O______________/\\/\\---/\\___________---______________
-   /\\^   ^  ^    ^                  ^^ ^  '\\ ^          ^       ---
-         --           -            --  -      -         ---  __       ^
-   --  __                      ___--  ^  ^                         --  __
-`);
+	const ascii =
+		atom(`                                                                                 
+     *   .                  .              .        .   *          .             
+  .         .                     .       .           .      .        .          
+        o                             .                   .                      
+         .              .                  .           .                         
+          0     .                                                                
+                 .          .                 ,                ,    ,            
+ .          \\          .                         .                               
+      .      \\   ,                                                               
+   .          o     .                 .                   .            .         
+     .         \\                 ,             .                .                
+               #\\##\\#      .                              .        .             
+             #  #O##\\###                .                        .               
+   .        #*#  #\\##\\###                       .                     ,          
+        .   ##*#  #\\##\\##               .                     .                  
+      .      ##*#  #o##\\#         .                             ,       .        
+          .     *#  #\\#     .                    .             .          ,      
+                      \\          .                         .                     
+____^/\\___^--____/\\____O______________/\\/\\---/\\___________---______________      
+   /\\^   ^  ^    ^                  ^^ ^  '\\ ^          ^       ---              
+         --           -            --  -      -         ---  __       ^          
+   --  __                      ___--  ^  ^                         --  __        `);
 
 	const scrollerContent = $derived(
 		Array(Math.ceil(tableScrollerSize.value.y / 50) + 2)
@@ -147,8 +155,6 @@ ____^/\\___^--____/\\____O______________/\\/\\---/\\___________---______________
 					);
 			}),
 	);
-
-	$inspect(scrollerContent);
 </script>
 
 <section>
@@ -362,22 +368,62 @@ ____^/\\___^--____/\\____O______________/\\/\\---/\\___________---______________
 	</div>
 
 	<h2>More Stuff</h2>
+	<label class="number-picker"
+		>Horizontal: <input
+			type="range"
+			use:bindValue={textScrollerX}
+			min="0"
+			max="200"
+			step="1"
+		/><input
+			type="number"
+			use:bindValue={textScrollerX}
+			min="0"
+			max="200"
+			step="1"
+		/></label
+	>
+	<label class="number-picker">
+		Vertical: <input
+			type="range"
+			use:bindValue={textScrollerY}
+			min="0"
+			max="200"
+			step="1"
+		/><input
+			type="number"
+			use:bindValue={textScrollerY}
+			min="0"
+			max="200"
+			step="1"
+		/>
+	</label>
 	<div class="beside">
 		<textarea
 			use:bindScroll={textScroller}
 			use:bindValue={ascii}
-			class="asciiart"
+			class="asciiart scrollable"
 		></textarea>
 		<textarea
 			use:bindScroll={textScroller}
 			use:bindValue={ascii}
-			class="asciiart"
+			class="asciiart scrollable"
 		></textarea>
 		<textarea
 			use:bindScroll={textScroller}
 			use:bindValue={ascii}
-			class="asciiart"
+			class="asciiart scrollable"
 		></textarea>
+
+		<pre
+			class="scrollable asciiart"
+			use:bindScroll={textScroller}>{ascii.value}</pre>
+		<pre
+			class="scrollable asciiart"
+			use:bindScroll={textScroller}>{ascii.value}</pre>
+		<pre
+			class="scrollable asciiart"
+			use:bindScroll={textScroller}>{ascii.value}</pre>
 	</div>
 
 	<h3>Infinite Table</h3>

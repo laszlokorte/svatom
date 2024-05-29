@@ -42,9 +42,75 @@ textarea {
 	gap: 1em;
 }
 
-input[type="range"] {
-	padding: 1em;
-	margin: 0;
+input[type=range]{
+    /* fix for FF unable to apply focus style bug  */
+    border: 1px solid white; 
+
+    /*required for proper track sizing in FF*/
+    width: 300px;
+}
+
+input[type=range]::-moz-range-track {
+    width: 15em;
+    height: 0.4em;
+    background: #ddd;
+    border: none;
+    border-radius: 3px;
+    margin: 1.2em 0;
+}
+
+input[type=range]::-moz-range-thumb {
+    border: none;
+    border: none;
+    height: 1.5em;
+    width: 1.5em;
+    border-radius: 50%;
+    background: #dd4e40;
+    margin-top: -0.5em;
+    border: 2px solid #ffe0ee;
+}
+
+/*hide the outline behind the border*/
+input[type=range]:-moz-focusring{
+    outline: 1px solid white;
+    outline-offset: -1px;
+}
+
+input[type=range]:focus::-moz-range-track {
+    background: #aaa;
+}
+
+input[type=range]{
+    -webkit-appearance: none;
+    width: 15em;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    width: 15em;
+    height: 0.4em;
+    background: #ddd;
+    border: none;
+    border-radius: 0.25em;
+    margin: 1.2em 0;
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    border: none;
+    height: 1.5em;
+    width: 1.5em;
+    border-radius: 50%;
+    background: #dd4e40;
+    margin-top: -0.5em;
+    border: 2px solid #ffe0ee;
+}
+
+input[type=range]:focus {
+    outline: none;
+}
+
+input[type=range]:focus::-webkit-slider-runnable-track {
+    background: #aaa;
 }
 
 input[type="text"] {
@@ -95,12 +161,15 @@ button {
 
 .beside {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(10em, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(15em, 1fr));
+	grid-template-rows: 1fr;
+	grid-auto-rows: 1fr;
 	justify-items: stretch;
 	align-items: stretch;
 	gap: 0.5em;
 	resize: vertical;
 	min-height: 10em;
+	height: 20em;
 	overflow: hidden;
 	padding: 2px 0.5em 0.5em 2px;
 }
@@ -118,7 +187,20 @@ button {
 	white-space: pre;
 	font-family: monospace;
 	line-height: 1;
-	line-break: none;
+	font-size: 1em;
+	padding: 0;
+	line-break: strict;
+	border: none;
+	margin: 0;
+	min-height: 130px;
+	width: 100%;
+	vertical-align: baseline;
+	appearance: revert;
+	padding: 2px;
+}
+
+.asciiart::after {
+	content: '\a';
 }
 
 .scroller {
@@ -169,4 +251,8 @@ button {
 	display: flex;
 	align-items: center;
 	justify-content: center;
+}
+
+.scrollable {
+	overflow: scroll;
 }
