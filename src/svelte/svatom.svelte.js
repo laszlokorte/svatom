@@ -153,6 +153,14 @@ export function read(opticLense, someAtom) {
 	}
 }
 
+export function string(parts, ...args) {
+	return {
+		get value() {
+			return R.join('', R.zipWith(R.concat, parts, R.map(R.compose(R.toString, R.prop('value')), args))) + R.last(parts)
+		},
+	}
+}
+
 
 export function bindValue(node, someAtom) {
 	let c0 = null;

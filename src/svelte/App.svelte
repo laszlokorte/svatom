@@ -10,6 +10,7 @@
 		bindValue,
 		bindScroll,
 		bindSize,
+		string,
 	} from "./svatom.svelte.js";
 	import Nested from "./Nested.svelte";
 	import { clamp } from "./utils.js";
@@ -67,13 +68,7 @@
 
 	// Views into the Atom
 	const clampedSize = view(L.normalize(clamp(10, 30)), size);
-	const fontSize = read(
-		L.lens(
-			(s) => `font-size: ${s}px`,
-			(n, o) => o,
-		),
-		clampedSize,
-	);
+	const fontSize = string`font-size: ${clampedSize}px`;
 	const count = view("length", allNames);
 	const indices = view(lindex(1), count);
 	const newName = view(
