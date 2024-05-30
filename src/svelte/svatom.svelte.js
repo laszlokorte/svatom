@@ -184,6 +184,8 @@ export function bindValue(node, someAtom) {
 		c1 = node.selectionEnd
 	}
 
+	node.value = someAtom.value;
+
 	$effect.pre(() => {
 		const newVal = someAtom.value;
 		if(node.value != newVal) {	
