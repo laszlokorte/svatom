@@ -1,5 +1,6 @@
 <script>
 	import * as L from "partial.lenses";
+	import * as G from "./generators";
 	import * as R from "ramda";
 	import {
 		atom,
@@ -50,8 +51,18 @@
 			rowStarts,
 		),
 	);
-	const visibleColumns = $derived(R.range(firstColumn, R.inc(lastColumn)));
-	const visibleRows = $derived(R.range(firstRow, R.inc(lastRow)));
+
+	const visibleColumns = $derived(() =>
+		G.range(firstColumn, R.inc(lastColumn)),
+	);
+	const visibleRows = $derived(G.range(firstRow, R.inc(lastRow)));
+
+	const cellValues = atom({});
+
+	const cellValuesJson = failableView(
+		L.inverse(L.json({ space: "  " })),
+		cellValues,
+	);
 </script>
 
 <div
@@ -71,12 +82,21 @@
 	<div class="scroller-body">
 		{#each visibleRows as y, i (y)}
 			<div class="scroller-row" style:--row-height={rowHeights.value[y]}>
-				{#each visibleColumns as x, j (x)}
+				{#each visibleColumns() as x, j (x)}
+					{@const val = view(
+						[`val-${y}-${x}`, L.defaults("")],
+						cellValues,
+					)}
 					<div
 						class="scroller-cell"
 						style:--column-width={columnWidths.value[x]}
 					>
-						{x + 1}/{y + 1}
+						<input
+							class="cell-input"
+							type="text"
+							placeholder="-"
+							bind:value={val.value}
+						/>
 					</div>
 				{/each}
 			</div>
@@ -84,8 +104,11 @@
 	</div>
 </div>
 
+<textarea use:bindValue={cellValuesJson.stableAtom}></textarea>
+
 <style>
 	.scroller {
+		border: 2px solid #aaa;
 		min-height: 10em;
 		resize: both;
 		overflow: scroll;
@@ -145,5 +168,18 @@
 		flex-grow: 0;
 		font-family: monospace;
 		font-size: 0.9em;
+		display: flex;
+		padding: 2px;
+	}
+
+	.cell-input {
+		flex-grow: 1;
+		flex-shrink: 1;
+		width: 100%;
+		height: 100%;
+		border: none;
+		font: inherit;
+		padding: 0.5em;
+		box-sizing: border-box;
 	}
 </style>
