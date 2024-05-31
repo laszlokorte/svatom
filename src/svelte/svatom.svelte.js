@@ -1,6 +1,5 @@
 import { get, set, collect, foldl, propsExcept } from 'partial.lenses'
 import * as R from "ramda";
-import {tick} from "svelte";
 
 export function atom(init) {
 	let root = $state({
@@ -214,9 +213,8 @@ export function bindValue(node, someAtom) {
 }
 
 export function bindScroll(node, someAtom) {
-	 let scrolling = false
 	 function onscroll(e) {
-	 	if(!scrolling && (!$state.is(someAtom.value.x, node.scrollLeft) || !$state.is(someAtom.value.y, node.scrollTop))) {
+	 	if((!$state.is(someAtom.value.x, node.scrollLeft) || !$state.is(someAtom.value.y, node.scrollTop))) {
 			someAtom.value = {
 				x: node.scrollLeft,
 				y: node.scrollTop,
@@ -227,12 +225,8 @@ export function bindScroll(node, someAtom) {
 	$effect.pre(() => {
 		const newY =  someAtom.value.y
 		const newX =  someAtom.value.x
-		scrolling = true
-		tick().then(() => {
-			node.scrollLeft = newX;
-			node.scrollTop = newY
-			scrolling = false
-		});
+		node.scrollLeft = newX;
+		node.scrollTop = newY
 	});
 
 	node.addEventListener("scroll", onscroll, { passive: true });

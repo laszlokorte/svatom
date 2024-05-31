@@ -20,19 +20,44 @@
 
 	const blueNoiseSequence = (w, i) =>
 		Math.round((((i * 1.61803) % 1) + 1) * w);
+	const startAccum = R.mapAccum((acc, size) => [acc + size, acc]);
+	const endAccum = R.mapAccum((acc, size) => [acc + size, acc + size]);
+
+	const columnHeadWidths = atom(
+		R.addIndex(R.map)(blueNoiseSequence)(R.repeat(30, 2)),
+	);
+	const rowHeadHeights = atom(
+		R.addIndex(R.map)(blueNoiseSequence)(R.repeat(20, 2)),
+	);
+	const columnHeadStarts = $derived(
+		R.last(startAccum(0, columnHeadWidths.value)),
+	);
+	const [columnHeadWidthSum, columnHeadEnds] = $derived(
+		endAccum(0, columnHeadWidths.value),
+	);
+	const rowHeadStarts = $derived(R.last(startAccum(0, rowHeadHeights.value)));
+	const [rowHeadHeightSum, rowHeadEnds] = $derived(
+		endAccum(0, rowHeadHeights.value),
+	);
 
 	const columnWidths = atom(
-		R.addIndex(R.map)(blueNoiseSequence)(R.repeat(100, 120)),
+		R.addIndex(R.map)(blueNoiseSequence)(R.repeat(100, 1120)),
 	);
 	const rowHeights = atom(
-		R.addIndex(R.map)(blueNoiseSequence)(R.repeat(30, 5000)),
+		R.addIndex(R.map)(blueNoiseSequence)(R.repeat(30, 15000)),
 	);
-	const startAccum = R.mapAccum((acc, size) => [acc + size, acc], 0);
-	const endAccum = R.mapAccum((acc, size) => [acc + size, acc + size], 0);
-	const columnStarts = $derived(R.last(startAccum(columnWidths.value)));
-	const [columnWidthSum, columnEnds] = $derived(endAccum(columnWidths.value));
-	const rowStarts = $derived(R.last(startAccum(rowHeights.value)));
-	const [rowHeightSum, rowEnds] = $derived(endAccum(rowHeights.value));
+	const columnStarts = $derived(
+		R.last(startAccum(columnHeadWidthSum, columnWidths.value)),
+	);
+	const [columnWidthSum, columnEnds] = $derived(
+		endAccum(columnHeadWidthSum, columnWidths.value),
+	);
+	const rowStarts = $derived(
+		R.last(startAccum(rowHeadHeightSum, rowHeights.value)),
+	);
+	const [rowHeightSum, rowEnds] = $derived(
+		endAccum(rowHeadHeightSum, rowHeights.value),
+	);
 	const firstColumn = $derived(
 		R.findIndex(R.lte(tableScroller.value.x), columnEnds),
 	);
@@ -55,7 +80,14 @@
 	const visibleColumns = $derived(() =>
 		G.range(firstColumn, R.inc(lastColumn)),
 	);
-	const visibleRows = $derived(G.range(firstRow, R.inc(lastRow)));
+	const visibleRows = $derived(() => G.range(firstRow, R.inc(lastRow)));
+
+	const visibleHeadColumns = $derived(() =>
+		G.range(0, R.length(columnHeadWidths.value)),
+	);
+	const visibleHeadRows = $derived(() =>
+		G.range(0, R.length(rowHeadHeights.value)),
+	);
 
 	const cellValues = atom({});
 
@@ -70,19 +102,17 @@
 	use:bindScroll={tableScroller}
 	style:--scroll-total-x={columnWidthSum}
 	style:--scroll-total-y={rowHeightSum}
-	style:--scroll-ox={tableScroller.value.x - columnStarts[firstColumn]}
-	style:--scroll-oy={tableScroller.value.y - rowStarts[firstRow]}
 	style:--scroll-x={tableScroller.value.x}
 	style:--scroll-y={tableScroller.value.y}
-	style:--scroll-w={tableScrollerSize.value.x}
-	style:--scroll-h={tableScrollerSize.value.y}
 >
-	<div class="scroller-measure" use:bindSize={tableScrollerSize}></div>
-	<div class="scroller-space"></div>
 	<div class="scroller-body">
-		{#each visibleRows as y, i (y)}
-			<div class="scroller-row" style:--row-height={rowHeights.value[y]}>
-				{#each visibleColumns() as x, j (x)}
+		{#each visibleRows() as y, i (i)}
+			<div
+				class="scroller-row"
+				style:--row-height={rowHeights.value[y]}
+				style:--row-start={rowStarts[y]}
+			>
+				{#each visibleColumns() as x, j (j)}
 					{@const val = view(
 						[`val-${y}-${x}`, L.defaults("")],
 						cellValues,
@@ -90,18 +120,51 @@
 					<div
 						class="scroller-cell"
 						style:--column-width={columnWidths.value[x]}
+						style:--column-start={columnStarts[x]}
 					>
 						<input
 							class="cell-input"
 							type="text"
-							placeholder="-"
+							placeholder={"-"}
 							bind:value={val.value}
 						/>
+					</div>
+				{/each}
+
+				<div key="heads">
+					{#each visibleHeadColumns() as x, j (j)}
+						<div
+							class="scroller-head-column"
+							style:--column-width={columnHeadWidths.value[x]}
+							style:--column-start={columnHeadStarts[x]}
+						>
+							{y}
+						</div>
+					{/each}
+				</div>
+			</div>
+		{/each}
+
+		{#each visibleHeadRows() as y, i (i)}
+			<div
+				class="scroller-head-row"
+				style:--row-height={rowHeadHeights.value[y]}
+				style:--row-start={rowHeadStarts[y]}
+			>
+				{#each visibleColumns() as x, j (j)}
+					<div
+						class="scroller-head-cell"
+						style:--column-width={columnWidths.value[x]}
+						style:--column-start={columnStarts[x] -
+							tableScroller.value.x}
+					>
+						{x}
 					</div>
 				{/each}
 			</div>
 		{/each}
 	</div>
+	<div class="scroller-measure" use:bindSize={tableScrollerSize}></div>
 </div>
 
 <textarea use:bindValue={cellValuesJson.stableAtom}></textarea>
@@ -117,36 +180,36 @@
 	}
 
 	.scroller-measure {
+		position: absolute;
+		top: 0;
+		left: 0;
 		width: 100%;
 		height: 100%;
+		pointer-events: none;
 	}
 
-	.scroller-space {
+	.scroller::after {
+		display: "block";
+		content: " ";
 		height: calc(var(--scroll-total-y, 1) * 1px);
 		width: calc(var(--scroll-total-x, 1) * 1px);
 		position: absolute;
 		top: 0;
 		left: 0;
+		pointer-events: none;
 	}
 
 	.scroller-body {
-		position: absolute;
-		left: calc(var(--scroll-x, 0) * 1px);
-		top: calc(var(--scroll-y, 0) * 1px);
-		width: calc(var(--scroll-w, 0) * 1px);
-		height: calc(var(--scroll-h, 0) * 1px);
-		display: flex;
-		flex-direction: column;
-		overflow: hidden;
-		justify-items: start;
-		justify-content: start;
+		position: sticky;
+		top: 0;
+		left: 0;
 	}
 
 	.scroller-row {
-		display: flex;
-		flex-shrink: 0;
-		flex-grow: 0;
-		position: relative;
+		position: absolute;
+		top: calc(var(--row-start, 0) * 1px - var(--scroll-y, 0) * 1px);
+		height: calc(var(--row-height, 128) * 1px);
+		left: 0;
 	}
 
 	.scroller-cell {
@@ -159,17 +222,67 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		position: relative;
+		position: absolute;
 		width: calc(var(--column-width, 128) * 1px);
 		height: calc(var(--row-height, 128) * 1px);
-		left: calc(var(--scroll-ox, 0) * -1px);
-		top: calc(var(--scroll-oy, 0) * -1px);
-		flex-shrink: 0;
-		flex-grow: 0;
+		left: calc(var(--column-start, 0) * 1px - var(--scroll-x, 0) * 1px);
+		top: 0;
 		font-family: monospace;
 		font-size: 0.9em;
 		display: flex;
 		padding: 2px;
+	}
+
+	.scroller-head-column {
+		position: absolute;
+		text-align: center;
+		border-right: 1px solid #eee;
+		border-bottom: 1px solid #eee;
+		box-sizing: border-box;
+		text-align: center;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: calc(var(--column-width, 128) * 1px);
+		height: calc(var(--row-height, 128) * 1px);
+		left: calc(var(--column-start, 0) * 1px);
+		top: 0;
+		font-family: monospace;
+		font-size: 0.9em;
+		display: flex;
+		padding: 2px;
+		background: #aa0b10;
+		color: #fff;
+		z-index: 10;
+	}
+
+	.scroller-head-row {
+		position: absolute;
+		top: calc(var(--row-start, 0) * 1px);
+		z-index: 20;
+	}
+
+	.scroller-head-cell {
+		position: absolute;
+		left: calc(var(--column-start, 0) * 1px);
+
+		text-align: center;
+		border-right: 1px solid #eee;
+		border-bottom: 1px solid #eee;
+		box-sizing: border-box;
+		text-align: center;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: calc(var(--column-width, 128) * 1px);
+		height: calc(var(--row-height, 128) * 1px);
+		font-family: monospace;
+		font-size: 0.9em;
+		display: flex;
+		padding: 2px;
+		background: #dd4e40;
+		color: #fff;
+		z-index: 10;
 	}
 
 	.cell-input {
