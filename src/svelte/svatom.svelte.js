@@ -259,3 +259,32 @@ export function bindSize(node, someAtom) {
 		resizeObserver.disconnect()
 	};
 }
+
+export function autofocusIf(node, yes) {
+	if(yes) {
+		if(yes && document.activeElement !== node) {
+			node.focus({
+			  preventScroll: true
+			})
+		} else if(!yes && document.activeElement === node) {
+			node.blur()
+		}
+	}
+
+
+	return {
+		update(yes) {
+			if(yes && document.activeElement !== node) {
+				node.focus({
+				  preventScroll: true
+				})
+			} else if(!yes && document.activeElement === node) {
+				node.blur()
+			}
+		},
+
+		destroy() {
+			// the node has been removed from the DOM
+		},
+	};
+}

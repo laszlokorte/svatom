@@ -12,11 +12,14 @@
 		bindValue,
 		bindScroll,
 		bindSize,
+		autofocusIf,
 		string,
 	} from "./svatom.svelte.js";
 
 	const tableScroller = atom({ x: 0, y: 0 });
 	const tableScrollerSize = atom({ x: 0, y: 0 });
+
+	const focus = atom(null);
 
 	const blueNoiseSequence = (w, i) =>
 		Math.round((((i * 1.61803) % 1) + 1) * w);
@@ -95,7 +98,29 @@
 		L.inverse(L.json({ space: "  " })),
 		cellValues,
 	);
+
+	function isFocused(f, x, y) {
+		return f.value && f.value.x == x && f.value.y == y;
+	}
+
+	function onFocus(evt) {
+		const x = parseInt(evt.currentTarget.getAttribute("data-cell-x"), 10);
+		const y = parseInt(evt.currentTarget.getAttribute("data-cell-y"), 10);
+
+		focus.value = { x, y };
+	}
+
+	function onBlur(evt) {
+		const x = parseInt(evt.currentTarget.getAttribute("data-cell-x"), 10);
+		const y = parseInt(evt.currentTarget.getAttribute("data-cell-y"), 10);
+		if (isFocused(focus, x, y)) {
+			focus.value = null;
+		}
+	}
 </script>
+
+<code>Focus: {!focus.value ? "none" : `${focus.value.x}/${focus.value.y}`}</code
+>
 
 <div
 	class="scroller"
@@ -136,6 +161,11 @@
 							type="text"
 							placeholder={"-"}
 							bind:value={val.value}
+							use:autofocusIf={isFocused(focus, x, y)}
+							data-cell-x={x}
+							data-cell-y={y}
+							onfocus={onFocus}
+							onblur={onBlur}
 						/>
 					</div>
 				{/each}
@@ -180,7 +210,7 @@
 
 <style>
 	.scroller {
-		border: 2px solid #aaa;
+		border: 3px solid #333;
 		min-height: 10em;
 		resize: both;
 		overflow: scroll;
@@ -241,8 +271,6 @@
 
 	.scroller-cell {
 		text-align: center;
-		border-right: 1px solid #eee;
-		border-bottom: 1px solid #eee;
 		color: #000;
 		box-sizing: border-box;
 		text-align: center;
@@ -257,7 +285,6 @@
 		font-family: monospace;
 		font-size: 0.9em;
 		display: flex;
-		padding: 2px;
 	}
 
 	.scroller-head-column {
@@ -321,5 +348,11 @@
 		font: inherit;
 		padding: 0.5em;
 		box-sizing: border-box;
+		outline: 1px solid #eee;
+	}
+
+	.cell-input:focus-visible {
+		outline: 3px solid #00ccdd;
+		z-index: 1;
 	}
 </style>
