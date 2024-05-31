@@ -95,7 +95,15 @@
 	const cellValues = atom({});
 
 	const cellValuesJson = failableView(
-		L.inverse(L.json({ space: "  " })),
+		L.inverse([
+			L.alternatives(
+				L.dropPrefix(
+					"// Or try to edit this Json (only edits that keep the structure valid are possible)\n",
+				),
+				L.identity,
+			),
+			L.json({ space: "  " }),
+		]),
 		cellValues,
 	);
 
@@ -177,7 +185,13 @@
 							style:--column-width={columnHeadWidths.value[x]}
 							style:--column-start={columnHeadStarts[x]}
 						>
-							{y}
+							{#if j == 0}
+								{String.fromCharCode(65 + (y % 26))}{Math.floor(
+									y / 26,
+								)}
+							{:else}
+								{y}
+							{/if}
 						</div>
 					{/each}
 				</div>
@@ -197,7 +211,13 @@
 						style:--column-start={columnStarts[x] -
 							tableScroller.value.x}
 					>
-						{x}
+						{#if i == 0}
+							{String.fromCharCode(65 + (x % 26))}{Math.floor(
+								x / 26,
+							)}
+						{:else}
+							{x}
+						{/if}
 					</div>
 				{/each}
 			</div>
@@ -206,6 +226,11 @@
 	<div class="scroller-measure" use:bindSize={tableScrollerSize}></div>
 </div>
 
+<h4>Sparse Cell Values</h4>
+<p>
+	Edit some cells in the table above and see how they appear in the json
+	object below:
+</p>
 <textarea use:bindValue={cellValuesJson.stableAtom}></textarea>
 
 <style>
