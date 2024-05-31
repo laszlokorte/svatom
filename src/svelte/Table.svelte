@@ -106,6 +106,15 @@
 	style:--scroll-y={tableScroller.value.y}
 >
 	<div class="scroller-body">
+		<div
+			class="scroller-corner"
+			style:--row-height={rowHeadHeightSum}
+			style:--column-width={columnHeadWidthSum}
+		>
+			<span>x: {tableScroller.value.x}</span>
+			<br />
+			<span>y: {tableScroller.value.y}</span>
+		</div>
 		{#each visibleRows() as y, i (i)}
 			<div
 				class="scroller-row"
@@ -203,6 +212,24 @@
 		position: sticky;
 		top: 0;
 		left: 0;
+	}
+
+	.scroller-corner {
+		height: calc(var(--row-height, 0) * 1px - 1px);
+		width: calc(var(--column-width, 0) * 1px - 1px);
+		background: #222;
+		color: #fff;
+		top: 0;
+		left: 0;
+		position: absolute;
+		z-index: 1000;
+		display: flex;
+		flex-direction: column;
+		place-items: center;
+		place-content: center;
+		outline: 1px solid #444;
+		box-shadow: 0px 0px 15px 1px #000a;
+		font-family: monospace;
 	}
 
 	.scroller-row {
