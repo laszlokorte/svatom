@@ -260,6 +260,43 @@ export function bindSize(node, someAtom) {
 	};
 }
 
+export function bindScrollMax(node, someAtom) {
+	// TODO specialize code for different kind of elements
+	const resizeObserver = new ResizeObserver(() => {
+		someAtom.value = {
+			x: node.scrollWidth - node.clientWidth,
+			y: node.scrollHeight - node.clientHeight,
+		}
+	});
+
+	const mutObserver = new MutationObserver(() => {
+		someAtom.value = {
+			x: node.scrollWidth - node.clientWidth,
+			y: node.scrollHeight - node.clientHeight,
+		}
+	});
+
+	const onInput = (evt) => {
+		if(evt.currentTarget !== node) {
+			return
+		}
+		someAtom.value = {
+			x: node.scrollWidth - node.clientWidth,
+			y: node.scrollHeight - node.clientHeight,
+		}
+	}
+
+	resizeObserver.observe(node)
+	mutObserver.observe(node, { attributes: true, childList: false, subtree: true, characterData: true, })
+	node.addEventListener('input', onInput)
+
+	return () => {
+		node.removeEventListener('input', onInput)
+		mutObserver.unobserve(node)
+		resizeObserver.unobserve(node)
+	};
+}
+
 export function autofocusIf(node, yes) {
 	if(yes) {
 		if(yes && document.activeElement !== node) {

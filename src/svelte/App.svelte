@@ -10,6 +10,7 @@
 		failableView,
 		bindValue,
 		bindScroll,
+		bindScrollMax,
 		bindSize,
 		string,
 	} from "./svatom.svelte.js";
@@ -21,6 +22,7 @@
 
 	// Atoms
 	const textScroller = atom({ x: 0, y: 0 });
+	const textScrollerMax = atom({ x: 0, y: 0 });
 	const textScrollerY = view(
 		["y", L.normalize((x) => parseInt(x, 10)), L.normalize(Math.round)],
 		textScroller,
@@ -334,13 +336,13 @@
 			type="range"
 			use:bindValue={textScrollerX}
 			min="0"
-			max="200"
+			max={textScrollerMax.value.x}
 			step="1"
 		/><input
 			type="number"
 			use:bindValue={textScrollerX}
 			min="0"
-			max="200"
+			max={textScrollerMax.value.x}
 			step="1"
 		/></label
 	>
@@ -349,42 +351,48 @@
 			type="range"
 			use:bindValue={textScrollerY}
 			min="0"
-			max="200"
+			max={textScrollerMax.value.y}
 			step="1"
 		/><input
 			type="number"
 			use:bindValue={textScrollerY}
 			min="0"
-			max="200"
+			max={textScrollerMax.value.y}
 			step="1"
 		/>
 	</label>
 	<div class="beside">
 		<textarea
 			use:bindScroll={textScroller}
+			use:bindScrollMax={textScrollerMax}
 			use:bindValue={ascii}
 			class="asciiart scrollable"
 		></textarea>
 		<textarea
 			use:bindScroll={textScroller}
+			use:bindScrollMax={textScrollerMax}
 			use:bindValue={ascii}
 			class="asciiart scrollable"
 		></textarea>
 		<textarea
 			use:bindScroll={textScroller}
+			use:bindScrollMax={textScrollerMax}
 			use:bindValue={ascii}
 			class="asciiart scrollable"
 		></textarea>
 
 		<pre
 			class="scrollable asciiart"
-			use:bindScroll={textScroller}>{ascii.value}</pre>
+			use:bindScroll={textScroller}
+			use:bindScrollMax={textScrollerMax}>{ascii.value}</pre>
 		<pre
 			class="scrollable asciiart"
-			use:bindScroll={textScroller}>{ascii.value}</pre>
+			use:bindScroll={textScroller}
+			use:bindScrollMax={textScrollerMax}>{ascii.value}</pre>
 		<pre
 			class="scrollable asciiart"
-			use:bindScroll={textScroller}>{ascii.value}</pre>
+			use:bindScroll={textScroller}
+			use:bindScrollMax={textScrollerMax}>{ascii.value}</pre>
 	</div>
 
 	<h3>Huge Table</h3>
