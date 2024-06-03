@@ -16,6 +16,7 @@
 	} from "./svatom.svelte.js";
 	import Nested from "./Nested.svelte";
 	import Table from "./Table.svelte";
+	import Canvas from "./Canvas.svelte";
 	import asciiLogo from "./asciiLogo.txt?raw";
 	import { clamp } from "./utils.js";
 	import favicon from "../../favicon.svg";
@@ -398,6 +399,10 @@
 	<h3>Huge Table</h3>
 
 	<Table />
+
+	<h3>How about Canvas</h3>
+
+	<Canvas />
 </section>
 
 <style>
