@@ -12,11 +12,17 @@ export function atom(init) {
 export function combine(mapOfAtoms) {
 	return {
 		get value() {
-			return R.map((v) => v.value, mapOfAtoms)
+			return R.map((v) => {
+				const s = $state.snapshot(v.value);
+
+				return s
+			}, mapOfAtoms)
 		},
 		set value(newVal) {
 			R.forEachObjIndexed((v, k) => {
-				v.value = newVal[k]
+				if(!$state.is(v.value, newVal[k])) {
+					v.value = newVal[k]
+				}
 			}, mapOfAtoms)
 		}
 	}
