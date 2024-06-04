@@ -15,11 +15,60 @@
 		autofocusIf,
 		string,
 	} from "./svatom.svelte.js";
+	import { derived } from "svelte/store";
 
 	const el = atom(null);
+	const rotEl = atom(null);
 	const svgPoint = $derived(el.value ? el.value.createSVGPoint() : null);
 
 	const lastOrNew = L.ifElse(R.length, [L.index(0)], [L.appendTo]);
+
+	const camera = atom({
+		focus: {
+			x: 0,
+			y: 0,
+			z: 0,
+			w: 0,
+		},
+		plane: {
+			x: 100,
+			y: 100,
+		},
+		frame: {
+			aspect: "meet",
+			alignX: "Mid",
+			alignY: "Mid",
+			padding: 10,
+		},
+	});
+
+	const preserveAspectRatio = $derived(
+		`X${camera.value.frame.alignX} Y${camera.value.frame.alignY} X${camera.value.frame.aspect}`,
+	);
+
+	const viewBox = $derived(
+		`${camera.value.focus.x - (camera.value.plane.x / 2) * Math.exp(-camera.value.focus.z)} 
+		${camera.value.focus.y - (camera.value.plane.y / 2) * Math.exp(-camera.value.focus.z)} 
+		${camera.value.plane.x * Math.exp(-camera.value.focus.z)} 
+		${camera.value.plane.y * Math.exp(-camera.value.focus.z)}`,
+	);
+
+	const viewBoxPath = $derived(
+		`M${camera.value.focus.x - (camera.value.plane.x / 2 - camera.value.frame.padding) * Math.exp(-camera.value.focus.z)},
+		${camera.value.focus.y - (camera.value.plane.y / 2 - camera.value.frame.padding) * Math.exp(-camera.value.focus.z)}
+		H${camera.value.focus.x + (camera.value.plane.x / 2 - camera.value.frame.padding) * Math.exp(-camera.value.focus.z)}
+		V${camera.value.focus.y + (camera.value.plane.y / 2 - camera.value.frame.padding) * Math.exp(-camera.value.focus.z)}
+		H${camera.value.focus.x - (camera.value.plane.x / 2 - camera.value.frame.padding) * Math.exp(-camera.value.focus.z)}z`,
+	);
+
+	const rotationTransform = $derived(
+		`translate(${camera.value.focus.x}, ${camera.value.focus.y}) rotate(${camera.value.focus.w}) translate(${-camera.value.focus.x}, ${-camera.value.focus.y}) `,
+	);
+
+	const cameraZoom = view(["focus", "z"], camera);
+	const cameraX = view(["focus", "x"], camera);
+	const cameraY = view(["focus", "y"], camera);
+	const cameraAngle = view(["focus", "w"], camera);
 
 	const tool = atom("select");
 	const nodes = atom([{ x: 200, y: 100 }]);
@@ -57,10 +106,12 @@
 				final: newNode,
 				start: isDrafting,
 				current: lastDraft,
+				root: rotEl,
 			}),
 			select: combine({
 				start: rubberBandStart,
 				current: rubberBandEnd,
+				root: el,
 			}),
 		}[tool.value],
 	);
@@ -74,7 +125,44 @@
 	const dragToolStart = $derived(view("start", dragTool));
 	const dragToolCurrent = $derived(view("current", dragTool));
 	const dragToolFinal = $derived(view("final", dragTool));
+	const dragRoot = $derived(view("root", dragTool));
 </script>
+
+<div>
+	X:
+	<input
+		type="range"
+		bind:value={cameraX.value}
+		min="-400"
+		max="400"
+		step="0.1"
+	/>
+	Y:
+	<input
+		type="range"
+		bind:value={cameraY.value}
+		min="-400"
+		max="400"
+		step="0.1"
+	/>
+	<br />
+	Zoom:
+	<input
+		type="range"
+		bind:value={cameraZoom.value}
+		min="-2"
+		max="5"
+		step="0.1"
+	/>
+	Rotation:
+	<input
+		type="range"
+		bind:value={cameraAngle.value}
+		min="-90"
+		max="90"
+		step="0.1"
+	/>
+</div>
 
 <button
 	type="button"
@@ -93,9 +181,10 @@
 <div class="resizer">
 	<svg
 		bind:this={el.value}
+		use:bindSize={view("plane", camera)}
 		tabindex="-1"
-		viewBox="-500 -500 1000 1000"
-		preserveAspectRatio="XMidYMid meet"
+		{viewBox}
+		{preserveAspectRatio}
 		role="button"
 		onkeydown={(evt) => {
 			dragToolCurrent.value = undefined;
@@ -106,7 +195,7 @@
 			pt.x = evt.clientX;
 			pt.y = evt.clientY;
 			const svgP = pt.matrixTransform(
-				$state.snapshot(el.value).getScreenCTM().inverse(),
+				dragRoot.value.getScreenCTM().inverse(),
 			);
 
 			///newDraft.value = { x: svgP.x, y: svgP.y };
@@ -119,7 +208,7 @@
 				pt.x = evt.clientX;
 				pt.y = evt.clientY;
 				const svgP = pt.matrixTransform(
-					$state.snapshot(el.value).getScreenCTM().inverse(),
+					dragRoot.value.getScreenCTM().inverse(),
 				);
 
 				//lastDraft.value = { x: svgP.x, y: svgP.y };
@@ -132,7 +221,7 @@
 				pt.x = evt.clientX;
 				pt.y = evt.clientY;
 				const svgP = pt.matrixTransform(
-					$state.snapshot(el.value).getScreenCTM().inverse(),
+					dragRoot.value.getScreenCTM().inverse(),
 				);
 
 				//newNode.value = lastDraft.value;
@@ -143,12 +232,20 @@
 			}
 		}}
 	>
-		{#each nodes.value as v}
-			<circle cx={v.x} cy={v.y} r="20"></circle>
-		{/each}
-		{#each drafts.value as v}
-			<circle opacity="0.2" cx={v.x} cy={v.y} r="20"></circle>
-		{/each}
+		<path d={viewBoxPath} fill="#ddffee" />
+
+		<g transform={rotationTransform} bind:this={rotEl.value}>
+			<g>
+				{#each nodes.value as v, i (i)}
+					<circle cx={v.x} cy={v.y} r="20"></circle>
+				{/each}
+			</g>
+			<g>
+				{#each drafts.value as v, i (i)}
+					<circle opacity="0.2" cx={v.x} cy={v.y} r="20"></circle>
+				{/each}
+			</g>
+		</g>
 
 		<path
 			d={rubberBandPath.value}
@@ -185,5 +282,6 @@
 		fill: #dd4e40;
 		stroke: #aa0b10;
 		stroke-width: 2px;
+		vector-effect: non-scaling-stroke;
 	}
 </style>

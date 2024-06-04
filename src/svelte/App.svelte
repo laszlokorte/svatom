@@ -246,7 +246,7 @@
 				<button
 					class:phantom={!thisEntry.value}
 					type="button"
-					onclick={() => (thisName.value = "")}>x</button
+					onclick={() => (thisName.value = "")}>✖</button
 				>
 				<label
 					>Name: <input
@@ -338,12 +338,14 @@
 			use:bindValue={textScrollerX}
 			min="0"
 			max={textScrollerMax.value.x}
+			disabled={textScrollerMax.value.x < 1}
 			step="1"
 		/><input
 			type="number"
 			use:bindValue={textScrollerX}
 			min="0"
 			max={textScrollerMax.value.x}
+			disabled={textScrollerMax.value.x < 1}
 			step="1"
 		/></label
 	>
@@ -353,12 +355,14 @@
 			use:bindValue={textScrollerY}
 			min="0"
 			max={textScrollerMax.value.y}
+			disabled={textScrollerMax.value.y < 1}
 			step="1"
 		/><input
 			type="number"
 			use:bindValue={textScrollerY}
 			min="0"
 			max={textScrollerMax.value.y}
+			disabled={textScrollerMax.value.y < 1}
 			step="1"
 		/>
 	</label>

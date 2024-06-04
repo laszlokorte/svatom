@@ -113,6 +113,13 @@ input[type=range]:focus::-webkit-slider-runnable-track {
     background: #aaa;
 }
 
+input[type=range]:disabled::-moz-range-thumb, 
+input[type=range]:disabled::-webkit-slider-thumb {
+	background: #fff;
+	border-color: #ccc;
+}
+
+
 input[type="text"] {
 	margin: 0;
 }
@@ -128,12 +135,24 @@ input[type="text"] {
 
 button {
 	border: none;
-	background: #111;
+	background: #222;
 	color: #fff;
 	padding: 0.3em 0.5em;
 	display: inline-block;
 	font: inherit;
 	cursor: pointer;
+}
+
+button:hover {
+	background: #333;
+}
+
+button:active {
+	background: #000;
+}
+
+button:focus-visible {
+	outline: 3px solid #00ccdd;
 }
 
 .simple-form {
