@@ -2,11 +2,20 @@ import { get, set, collect, foldl, propsExcept } from 'partial.lenses'
 import * as R from "ramda";
 
 export function atom(init) {
-	let root = $state({
+	let root = $state.frozen({
 		value: init
 	})
 
-	return root
+	return {
+		get value() {
+			return root.value
+		},
+		set value(newVal) {
+			root = {
+				value: newVal
+			}
+		}
+	}
 }
 
 export function combine(mapOfAtoms) {

@@ -191,7 +191,7 @@
 		}}
 		onpointerdown={(evt) => {
 			evt.currentTarget.setPointerCapture(evt.pointerId);
-			const pt = $state.snapshot(svgPoint);
+			const pt = svgPoint;
 			pt.x = evt.clientX;
 			pt.y = evt.clientY;
 			const svgP = pt.matrixTransform(
@@ -204,7 +204,7 @@
 		}}
 		onpointermove={(evt) => {
 			if (dragToolStart.value) {
-				const pt = $state.snapshot(svgPoint);
+				const pt = svgPoint;
 				pt.x = evt.clientX;
 				pt.y = evt.clientY;
 				const svgP = pt.matrixTransform(
@@ -217,7 +217,7 @@
 		}}
 		onpointerup={(evt) => {
 			if (dragToolStart.value) {
-				const pt = $state.snapshot(svgPoint);
+				const pt = svgPoint;
 				pt.x = evt.clientX;
 				pt.y = evt.clientY;
 				const svgP = pt.matrixTransform(
