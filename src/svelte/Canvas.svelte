@@ -39,6 +39,10 @@
 			alignX: "Mid",
 			alignY: "Mid",
 			padding: 10,
+			size: {
+				x: 100,
+				y: 100,
+			},
 		},
 	});
 
@@ -59,6 +63,14 @@
 		H${camera.value.focus.x + (camera.value.plane.x / 2 - camera.value.frame.padding) * Math.exp(-camera.value.focus.z)}
 		V${camera.value.focus.y + (camera.value.plane.y / 2 - camera.value.frame.padding) * Math.exp(-camera.value.focus.z)}
 		H${camera.value.focus.x - (camera.value.plane.x / 2 - camera.value.frame.padding) * Math.exp(-camera.value.focus.z)}z`,
+	);
+
+	const frameBoxPath = $derived(
+		`M${camera.value.focus.x - (camera.value.frame.size.x / 2 - camera.value.frame.padding) * Math.exp(-camera.value.focus.z)},
+		${camera.value.focus.y - (camera.value.frame.size.y / 2 - camera.value.frame.padding) * Math.exp(-camera.value.focus.z)}
+		H${camera.value.focus.x + (camera.value.frame.size.x / 2 - camera.value.frame.padding) * Math.exp(-camera.value.focus.z)}
+		V${camera.value.focus.y + (camera.value.frame.size.y / 2 - camera.value.frame.padding) * Math.exp(-camera.value.focus.z)}
+		H${camera.value.focus.x - (camera.value.frame.size.x / 2 - camera.value.frame.padding) * Math.exp(-camera.value.focus.z)}z`,
 	);
 
 	const rotationTransform = $derived(
@@ -194,6 +206,7 @@
 	<svg
 		bind:this={el.value}
 		use:bindSize={view(["plane", makeSquare], camera)}
+		use:bindSize={view(["frame", "size"], camera)}
 		tabindex="-1"
 		{viewBox}
 		{preserveAspectRatio}
@@ -245,6 +258,14 @@
 		}}
 	>
 		<path d={viewBoxPath} fill="#ddffee" />
+		<path
+			d={frameBoxPath}
+			stroke="#ffaaaa"
+			fill="none"
+			vector-effect="non-scaling-stroke"
+			stroke-width="1px"
+			shape-rendering="crispEdges"
+		/>
 
 		<g transform={rotationTransform} bind:this={rotEl.value}>
 			<g>

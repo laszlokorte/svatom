@@ -2,6 +2,7 @@
 	import * as L from "partial.lenses";
 	import * as G from "./generators";
 	import * as R from "ramda";
+	import * as U from "./utils";
 	import {
 		atom,
 		view,
@@ -103,6 +104,11 @@
 				L.identity,
 			),
 			L.json({ space: "  " }),
+			L.ifElse(
+				U.isPlainObject,
+				L.identity,
+				L.getter(R.always(new Error("fooo"))),
+			),
 		]),
 		cellValues,
 	);
