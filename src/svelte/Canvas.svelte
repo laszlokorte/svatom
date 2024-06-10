@@ -43,7 +43,7 @@
 	});
 
 	const preserveAspectRatio = $derived(
-		`X${camera.value.frame.alignX} Y${camera.value.frame.alignY} X${camera.value.frame.aspect}`,
+		`x${camera.value.frame.alignX}Y${camera.value.frame.alignY} ${camera.value.frame.aspect}`,
 	);
 
 	const viewBox = $derived(
@@ -126,6 +126,18 @@
 	const dragToolCurrent = $derived(view("current", dragTool));
 	const dragToolFinal = $derived(view("final", dragTool));
 	const dragRoot = $derived(view("root", dragTool));
+
+	const makeSquare = L.lens(R.identity, (n, o) => ({
+		...n,
+		x: Math.min(n.x, n.y),
+		y: Math.min(n.x, n.y),
+	}));
+
+	const makeXSquare = L.lens(R.identity, (n, o) => ({
+		...n,
+		x: n.y,
+		y: n.y,
+	}));
 </script>
 
 <div>
@@ -181,7 +193,7 @@
 <div class="resizer">
 	<svg
 		bind:this={el.value}
-		use:bindSize={view("plane", camera)}
+		use:bindSize={view(["plane", makeSquare], camera)}
 		tabindex="-1"
 		{viewBox}
 		{preserveAspectRatio}

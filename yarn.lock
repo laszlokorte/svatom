@@ -450,10 +450,10 @@ svelte-hmr@^0.16.0:
   resolved "https://registry.yarnpkg.com/svelte-hmr/-/svelte-hmr-0.16.0.tgz#9f345b7d1c1662f1613747ed7e82507e376c1716"
   integrity sha512-Gyc7cOS3VJzLlfj7wKS0ZnzDVdv3Pn2IuVeJPk9m2skfhcu5bq3wtIZyQGggr7/Iim5rH5cncyQft/kRLupcnA==
 
-svelte@^5.0.0-next.149:
-  version "5.0.0-next.151"
-  resolved "https://registry.yarnpkg.com/svelte/-/svelte-5.0.0-next.151.tgz#5b21097d036522b136a916cc398f4c723ebc0545"
-  integrity sha512-1XmoL74CYNpWQZI8o6IqXJQbIL+eVA+MIyfis0ErlEmO7p8+DxdsGREIyg2Qpr1CgT+Eva9R1zfMA9KG/Nd8wg==
+svelte@^5.0.0-next.151:
+  version "5.0.0-next.153"
+  resolved "https://registry.yarnpkg.com/svelte/-/svelte-5.0.0-next.153.tgz#8c007b7621558fb9c6abc9063d894bc3e0474a11"
+  integrity sha512-ZbRnvO0UWXhE71Va5Rjg+nY4tbCUnqJFQC0VXHdqkHT/i5nqW8DPtw0rBlsFg4mq2uDQ8iOO/P7tR3OVXaSI7g==
   dependencies:
     "@ampproject/remapping" "^2.2.1"
     "@jridgewell/sourcemap-codec" "^1.4.15"
@@ -470,9 +470,9 @@ svelte@^5.0.0-next.149:
     zimmerframe "^1.1.2"
 
 vite@^5.2.11:
-  version "5.2.12"
-  resolved "https://registry.yarnpkg.com/vite/-/vite-5.2.12.tgz#3536c93c58ba18edea4915a2ac573e6537409d97"
-  integrity sha512-/gC8GxzxMK5ntBwb48pR32GGhENnjtY30G4A0jemunsBkiEZFw60s8InGpN8gkhHEkjnRK1aSAxeQgwvFhUHAA==
+  version "5.2.13"
+  resolved "https://registry.yarnpkg.com/vite/-/vite-5.2.13.tgz#945ababcbe3d837ae2479c29f661cd20bc5e1a80"
+  integrity sha512-SSq1noJfY9pR3I1TUENL3rQYDQCFqgD+lM6fTRAM8Nv6Lsg5hDLaXkjETVeBt+7vZBCMoibD+6IWnT2mJ+Zb/A==
   dependencies:
     esbuild "^0.20.1"
     postcss "^8.4.38"
