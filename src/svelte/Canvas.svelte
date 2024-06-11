@@ -2,6 +2,7 @@
 	import * as L from "partial.lenses";
 	import * as G from "./generators";
 	import * as R from "ramda";
+	import * as U from "./utils";
 	import {
 		atom,
 		view,
@@ -47,7 +48,9 @@
 	});
 
 	const preserveAspectRatio = $derived(
-		`x${camera.value.frame.alignX}Y${camera.value.frame.alignY} ${camera.value.frame.aspect}`,
+		camera.value.frame.aspect
+			? `x${camera.value.frame.alignX}Y${camera.value.frame.alignY} ${camera.value.frame.aspect}`
+			: "none",
 	);
 
 	const viewBox = $derived(
@@ -85,6 +88,7 @@
 	const tool = atom("select");
 	const nodes = atom([{ x: 200, y: 100 }]);
 	const drafts = atom([]);
+	const lasso = atom([]);
 	const rubberBand = atom(undefined);
 	const newNode = view([L.appendTo, L.required("x", "y")], nodes);
 	const isDrafting = view([L.index(0), L.defaults(false)], drafts);
@@ -112,21 +116,52 @@
 		rubberBand,
 	);
 
-	const dragTool = $derived(
-		{
-			create: combine({
-				final: newNode,
-				start: isDrafting,
-				current: lastDraft,
-				root: rotEl,
-			}),
-			select: combine({
-				start: rubberBandStart,
-				current: rubberBandEnd,
-				root: el,
-			}),
-		}[tool.value],
+	const startLasso = view([L.index(0), L.defaults(false)], lasso);
+	const currentLasso = view(
+		[
+			L.setter((n, o) => (n ? [...o, n] : [])),
+			L.removable("x", "y"),
+			L.defaults(false),
+		],
+		lasso,
 	);
+
+	const lassoPath = view(
+		L.iso(
+			(l) =>
+				R.join(
+					",",
+					R.map(R.compose(R.join(" "), R.props(["x", "y"])), l),
+				),
+			(p) =>
+				R.map(
+					R.compose(R.zipWith(R.assoc, ["x", "y"]), R.split(" ")),
+					p,
+				),
+		),
+		lasso,
+	);
+
+	const tools = {
+		create: combine({
+			final: newNode,
+			start: isDrafting,
+			current: lastDraft,
+			root: rotEl,
+		}),
+		select: combine({
+			start: rubberBandStart,
+			current: rubberBandEnd,
+			root: el,
+		}),
+		lasso: combine({
+			start: startLasso,
+			current: currentLasso,
+			root: rotEl,
+		}),
+	};
+
+	const dragTool = $derived(tools[tool.value]);
 
 	// const dragTool = combine({
 	// 	start: rubberBandStart,
@@ -150,57 +185,131 @@
 		x: n.y,
 		y: n.y,
 	}));
+
+	const aspect = view(
+		[
+			"frame",
+			L.props("alignX", "alignY", "aspect"),
+			"aspect",
+			L.defaults("none"),
+		],
+		camera,
+	);
+	const alignX = view(["frame", "alignX", L.normalize(U.capitalize)], camera);
+	const alignY = view(["frame", "alignY", L.normalize(U.capitalize)], camera);
+	const alignments = ["Min", "Mid", "Max"];
+
+	const cameraJson = failableView(
+		L.inverse([
+			L.alternatives(
+				L.dropPrefix(
+					"// Or try to edit this Json (only edits that keep the structure valid are possible)\n",
+				),
+				L.identity,
+			),
+			L.json({ space: "  " }),
+			L.ifElse(
+				U.isPlainObject,
+				L.identity,
+				L.getter(R.always(new Error("fooo"))),
+			),
+		]),
+		camera,
+	);
 </script>
 
-<div>
-	X:
-	<input
-		type="range"
-		bind:value={cameraX.value}
-		min="-400"
-		max="400"
-		step="0.1"
-	/>
-	Y:
-	<input
-		type="range"
-		bind:value={cameraY.value}
-		min="-400"
-		max="400"
-		step="0.1"
-	/>
-	<br />
-	Zoom:
-	<input
-		type="range"
-		bind:value={cameraZoom.value}
-		min="-2"
-		max="5"
-		step="0.1"
-	/>
-	Rotation:
-	<input
-		type="range"
-		bind:value={cameraAngle.value}
-		min="-90"
-		max="90"
-		step="0.1"
-	/>
-</div>
+<fieldset>
+	<legend>Focus</legend>
 
-<button
-	type="button"
-	onclick={() => {
-		nodes.value = [];
-	}}>Clear</button
->
+	<div>
+		X:
+		<input
+			type="range"
+			bind:value={cameraX.value}
+			min="-400"
+			max="400"
+			step="0.1"
+		/>
+		Y:
+		<input
+			type="range"
+			bind:value={cameraY.value}
+			min="-400"
+			max="400"
+			step="0.1"
+		/>
+		<br />
+		Zoom:
+		<input
+			type="range"
+			bind:value={cameraZoom.value}
+			min="-2"
+			max="5"
+			step="0.1"
+		/>
+		Rotation:
+		<input
+			type="range"
+			bind:value={cameraAngle.value}
+			min="-90"
+			max="90"
+			step="0.1"
+		/>
+	</div>
+</fieldset>
 
-<label
-	><input type="radio" bind:group={tool.value} value="select" /> Select</label
->
-<label
-	><input type="radio" bind:group={tool.value} value="create" /> Create</label
->
+<fieldset>
+	<legend>Frame</legend>
+
+	<div>
+		Aspect:
+		<label
+			><input type="radio" value="meet" bind:group={aspect.value} /> meet</label
+		>
+		<label
+			><input type="radio" value="slice" bind:group={aspect.value} /> slice</label
+		>
+		<label
+			><input type="radio" value="none" bind:group={aspect.value} /> none</label
+		>
+	</div>
+	<div>
+		Align-X:
+		{#each alignments as a (a)}
+			<label
+				><input type="radio" value={a} bind:group={alignX.value} />
+				{a}</label
+			>
+		{/each}
+	</div>
+	<div>
+		Align-Y:
+		{#each alignments as a (a)}
+			<label
+				><input type="radio" value={a} bind:group={alignY.value} />
+				{a}</label
+			>
+		{/each}
+	</div>
+</fieldset>
+
+<fieldset>
+	<legend>Tools</legend>
+
+	<button
+		type="button"
+		onclick={() => {
+			nodes.value = [];
+		}}>Clear</button
+	>
+
+	{#each Object.keys(tools) as t (t)}
+		<label
+			><input type="radio" bind:group={tool.value} value={t} />
+			{U.capitalize(t)}</label
+		>
+	{/each}
+</fieldset>
 
 <div class="resizer">
 	<svg
@@ -270,12 +379,19 @@
 		<g transform={rotationTransform} bind:this={rotEl.value}>
 			<g>
 				{#each nodes.value as v, i (i)}
-					<circle cx={v.x} cy={v.y} r="20"></circle>
+					<circle class="node" cx={v.x} cy={v.y} r="20"></circle>
 				{/each}
 			</g>
 			<g>
 				{#each drafts.value as v, i (i)}
-					<circle opacity="0.2" cx={v.x} cy={v.y} r="20"></circle>
+					<circle class="node" opacity="0.2" cx={v.x} cy={v.y} r="20"
+					></circle>
+				{/each}
+			</g>
+			<g>
+				<polygon points={lassoPath.value} class="lasso-area" />
+				{#each lasso.value as v, i (i)}
+					<circle class="lasso" cx={v.x} cy={v.y} r="4"></circle>
 				{/each}
 			</g>
 		</g>
@@ -291,6 +407,9 @@
 		/>
 	</svg>
 </div>
+
+<h3>Camera Parameter</h3>
+<textarea use:bindValue={cameraJson.stableAtom}></textarea>
 
 <style>
 	.resizer {
@@ -311,10 +430,26 @@
 		grid-area: 1/1/1/1;
 	}
 
-	circle {
+	.node {
 		fill: #dd4e40;
 		stroke: #aa0b10;
 		stroke-width: 2px;
 		vector-effect: non-scaling-stroke;
+	}
+
+	.lasso {
+		fill: #100baa;
+		stroke-width: 2px;
+		vector-effect: non-scaling-stroke;
+	}
+
+	.lasso-area {
+		fill: #100baa;
+		opacity: 0.2;
+		fill-rule: evenodd;
+	}
+
+	textarea {
+		min-height: 30em;
 	}
 </style>
