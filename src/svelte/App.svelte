@@ -21,7 +21,13 @@
 	import { clamp } from "./utils.js";
 	import favicon from "../../favicon.svg";
 
+	const numberFormat = new Intl.NumberFormat("en-US", {
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2,
+	});
+
 	// Atoms
+	const summingValues = atom([10, 10, 10]);
 	const textScroller = atom({ x: 0, y: 0 });
 	const textScrollerMax = atom({ x: 0, y: 0 });
 	const textScrollerY = view(
@@ -62,6 +68,25 @@
 					.fill(0)
 					.map((_, i) => i),
 			(c, a) => c.length - xtra,
+		);
+
+	const summingLens = (i, forceSum = null) =>
+		L.lens(
+			(a) => a[i],
+			(n, o) => {
+				const sum = R.isNil(forceSum) ? R.sum(o) : forceSum;
+				const remaining = sum - n;
+				const denom = sum - (o[i] || 0);
+				const shrink = denom
+					? R.multiply(remaining / denom)
+					: R.always(remaining / (o.length - 1));
+
+				return [
+					...o.slice(0, i).map(shrink),
+					n,
+					...o.slice(i + 1).map(shrink),
+				];
+			},
 		);
 
 	const indexedName = (i) => [i, L.removable("name"), "name", L.defaults("")];
@@ -398,6 +423,31 @@
 			class="scrollable asciiart"
 			use:bindScroll={textScroller}
 			use:bindScrollMax={textScrollerMax}>{ascii.value}</pre>
+	</div>
+
+	<h3>Summed Slider</h3>
+
+	{#each [0, 1, 2, 3, 4, 5] as i}
+		{@const entry = view(
+			[summingLens(i, 30), L.valueOr(0), L.getter(numberFormat.format)],
+			summingValues,
+		)}
+
+		<label class="number-picker"
+			>Value {String.fromCharCode(65 + i)}:
+			<input
+				type="range"
+				bind:value={entry.value}
+				max={R.sum(summingValues.value)}
+				step="0.01"
+			/>
+
+			<output>({numberFormat.format(entry.value)})</output>
+		</label>
+	{/each}
+
+	<div>
+		Sum: {numberFormat.format(R.sum(summingValues.value))}
 	</div>
 
 	<h3>Huge Table</h3>
