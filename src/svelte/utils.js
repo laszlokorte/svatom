@@ -34,8 +34,8 @@ export function scaleViewBox({
         return {
             minX: minX + hPad,
             minY: minY + vPad,
-            width: width - 2 * hPad,
-            height: height - 2 * vPad,
+            width: Math.max(width - 2 * hPad, 0),
+            height: Math.max(height - 2 * vPad, 0),
         }
     } else {
         const factor = {
@@ -65,8 +65,8 @@ export function scaleViewBox({
         return {
             minX:  minX - extraWeightingX * extraWidth + actualPadding,
             minY: minY - extraWeightingY * extraHeight + actualPadding,
-            width: actualWidth - 2*actualPadding,
-            height: actualHeight - 2*actualPadding,
+            width: Math.max(actualWidth - 2*actualPadding, 0),
+            height: Math.max(actualHeight - 2*actualPadding, 0),
         }
     }
 }

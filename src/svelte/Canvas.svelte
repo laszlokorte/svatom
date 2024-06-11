@@ -3,6 +3,7 @@
 	import * as G from "./generators";
 	import * as R from "ramda";
 	import * as U from "./utils";
+	import * as C from "./combinators";
 	import {
 		atom,
 		view,
@@ -136,6 +137,28 @@
 	const startLasso = view([L.index(0), L.defaults(false)], lasso);
 	const currentLasso = view(
 		[
+			L.setter(R.takeLast(100)), // limit the lasso length just for fun
+			L.setter(
+				// discard very close samples
+				R.dropRepeatsWith(
+					R.compose(
+						R.gt(10),
+						Math.sqrt,
+						R.uncurryN(
+							2,
+							C.Phi1(R.add)(
+								C.Psi(R.compose((x) => x * x, R.subtract))(
+									R.prop("x"),
+								),
+							)(
+								C.Psi(R.compose((x) => x * x, R.subtract))(
+									R.prop("y"),
+								),
+							),
+						),
+					),
+				),
+			),
 			L.setter((n, o) => (n ? [...o, n] : [])),
 			L.removable("x", "y"),
 			L.defaults(false),
@@ -439,9 +462,9 @@
 			</g>
 			<g>
 				<polygon points={lassoPath.value} class="lasso-area" />
-				{#each lasso.value as v, i (i)}
+				<!-- {#each lasso.value as v, i (i)}
 					<circle class="lasso" cx={v.x} cy={v.y} r="4"></circle>
-				{/each}
+				{/each} -->
 			</g>
 		</g>
 
@@ -494,8 +517,11 @@
 
 	.lasso-area {
 		fill: #100baa;
-		opacity: 0.2;
+		fill-opacity: 0.2;
 		fill-rule: evenodd;
+		stroke-dasharray: 5 5;
+		stroke: #100baa;
+		stroke-width: 1px;
 	}
 
 	textarea {
