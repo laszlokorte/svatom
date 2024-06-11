@@ -32,6 +32,7 @@
 			w: 0,
 		},
 		plane: {
+			autosize: true,
 			x: 100,
 			y: 100,
 		},
@@ -68,13 +69,29 @@
 		H${camera.value.focus.x - (camera.value.plane.x / 2 - camera.value.frame.padding) * Math.exp(-camera.value.focus.z)}z`,
 	);
 
-	const frameBoxPath = $derived(
-		`M${camera.value.focus.x - (camera.value.frame.size.x / 2 - camera.value.frame.padding) * Math.exp(-camera.value.focus.z)},
-		${camera.value.focus.y - (camera.value.frame.size.y / 2 - camera.value.frame.padding) * Math.exp(-camera.value.focus.z)}
-		H${camera.value.focus.x + (camera.value.frame.size.x / 2 - camera.value.frame.padding) * Math.exp(-camera.value.focus.z)}
-		V${camera.value.focus.y + (camera.value.frame.size.y / 2 - camera.value.frame.padding) * Math.exp(-camera.value.focus.z)}
-		H${camera.value.focus.x - (camera.value.frame.size.x / 2 - camera.value.frame.padding) * Math.exp(-camera.value.focus.z)}z`,
-	);
+	const frameBoxPath = $derived.by(() => {
+		const { minX, minY, width, height } = U.scaleViewBox(
+			{
+				alignmentX: camera.value.frame.alignX,
+				alignmentY: camera.value.frame.alignY,
+				width: camera.value.plane.x * Math.exp(-camera.value.focus.z),
+				height: camera.value.plane.y * Math.exp(-camera.value.focus.z),
+				minX:
+					camera.value.focus.x -
+					(camera.value.plane.x / 2) *
+						Math.exp(-camera.value.focus.z),
+				minY:
+					camera.value.focus.y -
+					(camera.value.plane.y / 2) *
+						Math.exp(-camera.value.focus.z),
+				scaling: camera.value.frame.aspect,
+			},
+			camera.value.frame.size.x,
+			camera.value.frame.size.y,
+			camera.value.frame.padding,
+		);
+		return `M${minX},${minY}h${width}v${height}h${-width}z`;
+	});
 
 	const rotationTransform = $derived(
 		`translate(${camera.value.focus.x}, ${camera.value.focus.y}) rotate(${camera.value.focus.w}) translate(${-camera.value.focus.x}, ${-camera.value.focus.y}) `,
@@ -180,6 +197,17 @@
 		y: Math.min(n.x, n.y),
 	}));
 
+	const keepAspect = (xprop, yprop) =>
+		L.lens(R.identity, (n, o) => {
+			const oldAspect = yprop(o) / xprop(o);
+
+			return {
+				...n,
+				x: xprop(n),
+				y: xprop(n) * oldAspect,
+			};
+		});
+
 	const makeXSquare = L.lens(R.identity, (n, o) => ({
 		...n,
 		x: n.y,
@@ -197,6 +225,7 @@
 	);
 	const alignX = view(["frame", "alignX", L.normalize(U.capitalize)], camera);
 	const alignY = view(["frame", "alignY", L.normalize(U.capitalize)], camera);
+	const autosize = view(["plane", "autosize"], camera);
 	const alignments = ["Min", "Mid", "Max"];
 
 	const cameraJson = failableView(
@@ -262,6 +291,15 @@
 	<legend>Frame</legend>
 
 	<div>
+		<label
+			><input
+				type="checkbox"
+				bind:checked={autosize.value}
+			/>Autofit</label
+		>
+	</div>
+
+	<div>
 		Aspect:
 		<label
 			><input type="radio" value="meet" bind:group={aspect.value} /> meet</label
@@ -314,7 +352,18 @@
 <div class="resizer">
 	<svg
 		bind:this={el.value}
-		use:bindSize={view(["plane", makeSquare], camera)}
+		use:bindSize={view(
+			[
+				"plane",
+				L.ifElse(
+					R.prop("autosize"),
+					L.identity,
+					keepAspect(R.prop("x"), R.prop("y")),
+				),
+				L.props("x", "y"),
+			],
+			camera,
+		)}
 		use:bindSize={view(["frame", "size"], camera)}
 		tabindex="-1"
 		{viewBox}
@@ -372,7 +421,7 @@
 			stroke="#ffaaaa"
 			fill="none"
 			vector-effect="non-scaling-stroke"
-			stroke-width="1px"
+			stroke-width="5px"
 			shape-rendering="crispEdges"
 		/>
 
