@@ -450,10 +450,10 @@ svelte-hmr@^0.16.0:
   resolved "https://registry.yarnpkg.com/svelte-hmr/-/svelte-hmr-0.16.0.tgz#9f345b7d1c1662f1613747ed7e82507e376c1716"
   integrity sha512-Gyc7cOS3VJzLlfj7wKS0ZnzDVdv3Pn2IuVeJPk9m2skfhcu5bq3wtIZyQGggr7/Iim5rH5cncyQft/kRLupcnA==
 
-svelte@^5.0.0-next.151:
-  version "5.0.0-next.153"
-  resolved "https://registry.yarnpkg.com/svelte/-/svelte-5.0.0-next.153.tgz#8c007b7621558fb9c6abc9063d894bc3e0474a11"
-  integrity sha512-ZbRnvO0UWXhE71Va5Rjg+nY4tbCUnqJFQC0VXHdqkHT/i5nqW8DPtw0rBlsFg4mq2uDQ8iOO/P7tR3OVXaSI7g==
+svelte@^5.0.0-next.153:
+  version "5.0.0-next.154"
+  resolved "https://registry.yarnpkg.com/svelte/-/svelte-5.0.0-next.154.tgz#0e75cadf2058924eb7423dc90fa603abe7d4c1cc"
+  integrity sha512-fB7eVEqJ+79L/YBWm8CuKzoqc2+psgdRvlVeyi7y+18piElWLudOsfUNGStD06iFQ3SywyhWYf2HlzXxb4wXVg==
   dependencies:
     "@ampproject/remapping" "^2.2.1"
     "@jridgewell/sourcemap-codec" "^1.4.15"
