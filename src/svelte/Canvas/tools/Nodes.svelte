@@ -1,10 +1,15 @@
 <script>
-	const { nodes, rotationTransform } = $props();
+	const { nodes, rotationTransform, cameraScale } = $props();
 </script>
 
 <g transform={rotationTransform.value} pointer-events="none">
 	{#each nodes.value as v, i (i)}
-		<circle class="node" cx={v.x} cy={v.y} r="20"></circle>
+		<circle
+			class="node"
+			cx={v.x}
+			cy={v.y}
+			r={Math.min(cameraScale.value * 20, 20)}
+		></circle>
 	{/each}
 </g>
 

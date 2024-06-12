@@ -94,12 +94,6 @@
 
 <path
 	d={rubberBandPath.value}
-	fill-opacity="0.2"
-	fill="blue"
-	stroke="blue"
-	vector-effect="non-scaling-stroke"
-	stroke-width="1px"
-	shape-rendering="crispEdges"
 	class="rubber-band"
 	pointer-events="none"
 />
@@ -108,7 +102,23 @@
 
 	.rubber-band {
 		stroke-dasharray: 5 5;
-		stroke-dashoffset: 10%;
+		fill: #27b7db;
+		stroke: #2374ff;
+		fill-opacity: 0.2;
+		fill-rule: evenodd;
+		stroke-width: 1px;
+		shape-rendering: crispEdges;
+		vector-effect: non-scaling-stroke;
+		animation: 4s linear marquee infinite;
+	}
+
+	@keyframes marquee {
+		0% {
+			stroke-dashoffset: 0;
+		}
+		100% {
+			stroke-dashoffset: -100;
+		}
 	}
 
 	

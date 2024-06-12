@@ -93,15 +93,13 @@
 			},
 			camera.value.frame.size.x,
 			camera.value.frame.size.y,
-			camera.value.frame.padding *
-				(camera.value.frame.aspect == "meet"
-					? Math.exp(-camera.value.focus.z)
-					: 1),
+			camera.value.frame.padding,
 		);
 		return `M${minX},${minY}h${width}v${height}h${-width}z`;
 	});
 
 	const rotationTransform = read(L.getter((c) => `rotate(${c.focus.w}, ${c.focus.x}, ${c.focus.y})`), camera);
+	const cameraScale = read(L.getter(c => Math.exp(-c.focus.z)), camera)
 
 	const cameraZoom = view(["focus", "z"], camera);
 	const cameraX = view(["focus", "x"], camera);
@@ -152,8 +150,11 @@
 		],
 		camera,
 	);
+	const planeWidth = view(["plane", "x"], camera);
+	const planeHeight = view(["plane", "y"], camera);
 	const alignX = view(["frame", "alignX", L.normalize(U.capitalize)], camera);
 	const alignY = view(["frame", "alignY", L.normalize(U.capitalize)], camera);
+	const alignCombi = view(L.iso(({alignX, alignY}) => `x${alignX}Y${alignY}`, R.compose(R.prop('groups'), R.match(/x(?<alignX>Min|Mid|Max)Y(?<alignY>Min|Mid|Max)/))) , combine({alignX, alignY}))
 	const autosize = view(["plane", "autosize"], camera);
 	const alignments = ["Min", "Mid", "Max"];
 
@@ -229,18 +230,28 @@
 	</div>
 
 	<div>
-		Aspect:
+		
 		<label
-			><input type="radio" value="meet" bind:group={aspect.value} /> meet</label
-		>
+			>Camera Width:<input type="range" min="100" max="1500" bind:value={planeWidth.value}  disabled={autosize.value} /></label
+		><br>
 		<label
-			><input type="radio" value="slice" bind:group={aspect.value} /> slice</label
-		>
-		<label
-			><input type="radio" value="none" bind:group={aspect.value} /> none</label
+			>Camera Height:<input type="range" min="100" max="1500" bind:value={planeHeight.value}  disabled={autosize.value} /></label
 		>
 	</div>
+
 	<div>
+		Aspect:
+		<label
+			><input type="radio" value="meet" bind:group={aspect.value}  disabled={autosize.value} /> meet</label
+		>
+		<label
+			><input type="radio" value="slice" bind:group={aspect.value}  disabled={autosize.value} /> slice</label
+		>
+		<label
+			><input type="radio" value="none" bind:group={aspect.value}  disabled={autosize.value} /> none</label
+		>
+	</div>
+	<!-- <div>
 		Align-X:
 		{#each alignments as a (a)}
 			<label
@@ -256,6 +267,18 @@
 				><input type="radio" value={a} bind:group={alignY.value} />
 				{a}</label
 			>
+		{/each}
+	</div> -->
+
+	Alignment: 
+	<div class="alignment-grid">
+		{#each alignments as ay (ay)}
+			{#each alignments as ax (ax)}
+				<label class="alignment-grid-label"
+					><input  disabled={autosize.value} type="radio" value={`x${ax}Y${ay}`} bind:group={alignCombi.value} />
+					x{ax}Y{ay}</label
+				>
+			{/each}
 		{/each}
 	</div>
 </fieldset>
@@ -287,7 +310,7 @@
 				L.ifElse(
 					R.prop("autosize"),
 					L.identity,
-					keepAspect(R.prop("x"), R.prop("y")),
+					L.lens(R.identity, (_,o) => o),
 				),
 				L.props("x", "y"),
 			],
@@ -308,11 +331,11 @@
 				shape-rendering="crispEdges"
 			/>
 
-			<Bounds nodes={nodes} rotationTransform={rotationTransform} />
-			<Nodes nodes={nodes} rotationTransform={rotationTransform} />
+			<Bounds nodes={nodes} rotationTransform={rotationTransform} cameraScale={cameraScale} />
+			<Nodes nodes={nodes} rotationTransform={rotationTransform} cameraScale={cameraScale} />
 		</g>
 
-		<svelte:component this={tools[tool.value]} {newNode} rotationTransform={rotationTransform}>
+		<svelte:component this={tools[tool.value]} {newNode} rotationTransform={rotationTransform} cameraScale={cameraScale}>
 			{#snippet frame()}
 				<path
 					d={frameBoxPath}
@@ -349,5 +372,31 @@
 
 	textarea {
 		min-height: 30em;
+	}
+
+	.alignment-grid {
+		display: grid;
+		grid-template-rows: 1fr 1fr 1fr;
+		grid-template-columns: 1fr 1fr 1fr;
+		width: max-content;
+		gap: 2px;
+		font-family: monospace;
+	}
+
+	.alignment-grid-label:has(:checked) {
+		background: black;
+		color: #fff;
+	}
+
+	.alignment-grid-label {
+		color: #666;
+		background: #eee;
+		padding: 4px;
+		text-align: center;
+		cursor: pointer;
+	}
+
+	.alignment-grid-label > * {
+		display: none;
 	}
 </style>

@@ -57,10 +57,7 @@ export function scaleViewBox({
         const extraWeightingX = alignmentWeights[alignmentX];
         const extraWeightingY = alignmentWeights[alignmentY];
 
-        const actualPadding = {
-            'meet': 1,
-            'slice': factor,
-        }[scaling] * padding;
+        const actualPadding = factor * padding;
 
         return {
             minX:  minX - extraWeightingX * extraWidth + actualPadding,

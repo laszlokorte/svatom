@@ -18,15 +18,12 @@
 		string,
 	} from "../../svatom.svelte.js";
 
-	const { frame, newNode, rotationTransform } = $props();
+	const { frame, newNode, rotationTransform, cameraScale } = $props();
 
 	const rootEl = atom(null);
-	const gEl = view(
-		L.setter((g) => g.ownerSVGElement),
-		rootEl,
-	);
+	$inspect(rootEl.value)
 	const svgPoint = $derived(
-		rootEl.value ? rootEl.value.createSVGPoint() : null,
+		rootEl.value ? rootEl.value.ownerSVGElement.createSVGPoint() : null,
 	);
 
 	const drafts = atom([]);
@@ -36,8 +33,6 @@
 </script>
 
 <g
-	bind:this={gEl.value}
-    transform={rotationTransform.value}
 	role="button"
 	tabindex="-1"
 	onkeydown={(evt) => {
@@ -83,9 +78,9 @@
 	{@render frame()}
 </g>
 
-<g pointer-events="none">
+<g pointer-events="none" transform={rotationTransform.value} bind:this={rootEl.value}>
 	{#each drafts.value as v, i (i)}
-		<circle class="node" opacity="0.2" cx={v.x} cy={v.y} r="20"></circle>
+		<circle class="node" opacity="0.2" cx={v.x} cy={v.y} r={Math.min(20, cameraScale.value*20)}></circle>
 	{/each}
 </g>
 

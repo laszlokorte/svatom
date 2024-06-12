@@ -18,7 +18,7 @@
 		string,
 	} from "../../svatom.svelte.js";
 
-	const {frame} = $props();
+	const {frame, cameraScale} = $props();
 
 	const rootEl = atom(null);
 	const gEl = view(L.setter((g) => g.ownerSVGElement), rootEl);
@@ -29,12 +29,12 @@
 	const startLasso = view([L.index(0), L.defaults(false)], lasso);
 	const currentLasso = view(
 		[
-			L.setter(R.takeLast(100)), // limit the lasso length just for fun
+			L.setter(R.takeLast(200)), // limit the lasso length just for fun
 			L.setter(
 				// discard very close samples
 				R.dropRepeatsWith(
 					R.compose(
-						R.gt(10),
+						x => x < cameraScale.value * 10,
 						Math.sqrt,
 						R.uncurryN(
 							2,
@@ -68,7 +68,7 @@
 			(p) =>
 				R.map(
 					R.compose(R.zipWith(R.assoc, ["x", "y"]), R.split(" ")),
-					p,
+					R.split(',', p),
 				),
 		),
 		lasso,
@@ -119,28 +119,42 @@
 	}}>
 
 	{@render frame()}
+
+
+	{#each lasso.value as v, i (i)}
+		<circle class="lasso-anchor" cx={v.x} cy={v.y} r={3 * cameraScale.value}></circle>
+	{/each}
+	<polyline points={lassoPath.value} class="lasso-area" pointer-events="none" />
+
 </g>
 
 	
-<polygon points={lassoPath.value} class="lasso-area" pointer-events="none" />
-<!-- 	{#each lasso.value as v, i (i)}
-	<circle class="lasso" cx={v.x} cy={v.y} r="1px"></circle>
-{/each} -->
 
 <style>
-	.lasso {
-		fill: #100baa;
-		stroke-width: 2px;
+	.lasso-anchor {
+		fill: #2374ff;
 		vector-effect: non-scaling-stroke;
+		display: none;
 	}
 
 	.lasso-area {
-		fill: #100baa;
+		fill: #27b7db;
+		stroke: #2374ff;
 		fill-opacity: 0.2;
 		fill-rule: evenodd;
-		stroke-dasharray: 5 5;
-		stroke: #100baa;
 		stroke-width: 1px;
 		vector-effect: non-scaling-stroke;
+		stroke-dasharray: 5 5;
+		animation: 4s linear marquee infinite;
 	}
+
+	@keyframes marquee {
+		0% {
+			stroke-dashoffset: 0;
+		}
+		100% {
+			stroke-dashoffset: -100;
+		}
+	}
+
 </style>
