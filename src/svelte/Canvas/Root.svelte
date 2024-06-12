@@ -1,9 +1,9 @@
 <script>
 	import * as L from "partial.lenses";
-	import * as G from "./generators";
+	import * as G from "../generators";
 	import * as R from "ramda";
-	import * as U from "./utils";
-	import * as C from "./combinators";
+	import * as U from "../utils";
+	import * as C from "../combinators";
 	import {
 		atom,
 		view,
@@ -16,11 +16,15 @@
 		bindSize,
 		autofocusIf,
 		string,
-	} from "./svatom.svelte.js";
-	import { derived } from "svelte/store";
+	} from "../svatom.svelte.js";
+
+	import Creator from "./tools/Creator.svelte";
+	import Lasso from "./tools/Lasso.svelte";
+	import RubberBand from "./tools/RubberBand.svelte";
+	import Nodes from "./tools/Nodes.svelte";
+	import Bounds from "./tools/Bounds.svelte";
 
 	const el = atom(null);
-	const rotEl = atom(null);
 	const svgPoint = $derived(el.value ? el.value.createSVGPoint() : null);
 
 	const lastOrNew = L.ifElse(R.length, [L.index(0)], [L.appendTo]);
@@ -89,130 +93,32 @@
 			},
 			camera.value.frame.size.x,
 			camera.value.frame.size.y,
-			camera.value.frame.padding,
+			camera.value.frame.padding *
+				(camera.value.frame.aspect == "meet"
+					? Math.exp(-camera.value.focus.z)
+					: 1),
 		);
 		return `M${minX},${minY}h${width}v${height}h${-width}z`;
 	});
 
-	const rotationTransform = $derived(
-		`translate(${camera.value.focus.x}, ${camera.value.focus.y}) rotate(${camera.value.focus.w}) translate(${-camera.value.focus.x}, ${-camera.value.focus.y}) `,
-	);
+	const rotationTransform = read(L.getter((c) => `rotate(${c.focus.w}, ${c.focus.x}, ${c.focus.y})`), camera);
 
 	const cameraZoom = view(["focus", "z"], camera);
 	const cameraX = view(["focus", "x"], camera);
 	const cameraY = view(["focus", "y"], camera);
 	const cameraAngle = view(["focus", "w"], camera);
 
-	const tool = atom("select");
+	const tool = atom("lasso");
 	const nodes = atom([{ x: 200, y: 100 }]);
 	const drafts = atom([]);
-	const lasso = atom([]);
 	const rubberBand = atom(undefined);
 	const newNode = view([L.appendTo, L.required("x", "y")], nodes);
-	const isDrafting = view([L.index(0), L.defaults(false)], drafts);
-	const lastDraft = view([L.index(0), L.removable("x", "y")], drafts);
-
-	const rubberBandStart = view(
-		[L.removable("start"), "start", L.removable("x", "y")],
-		rubberBand,
-	);
-	const rubberBandEnd = view(
-		L.ifElse(
-			R.prop("start"),
-			[L.removable("end"), "end", L.removable("x", "y")],
-			L.zero,
-		),
-		rubberBand,
-	);
-
-	const rubberBandPath = read(
-		L.getter((b) =>
-			b && b.start && b.end
-				? `M${b.start.x},${b.start.y}H${b.end.x}V${b.end.y}H${b.start.x}z`
-				: "",
-		),
-		rubberBand,
-	);
-
-	const startLasso = view([L.index(0), L.defaults(false)], lasso);
-	const currentLasso = view(
-		[
-			L.setter(R.takeLast(100)), // limit the lasso length just for fun
-			L.setter(
-				// discard very close samples
-				R.dropRepeatsWith(
-					R.compose(
-						R.gt(10),
-						Math.sqrt,
-						R.uncurryN(
-							2,
-							C.Phi1(R.add)(
-								C.Psi(R.compose((x) => x * x, R.subtract))(
-									R.prop("x"),
-								),
-							)(
-								C.Psi(R.compose((x) => x * x, R.subtract))(
-									R.prop("y"),
-								),
-							),
-						),
-					),
-				),
-			),
-			L.setter((n, o) => (n ? [...o, n] : [])),
-			L.removable("x", "y"),
-			L.defaults(false),
-		],
-		lasso,
-	);
-
-	const lassoPath = view(
-		L.iso(
-			(l) =>
-				R.join(
-					",",
-					R.map(R.compose(R.join(" "), R.props(["x", "y"])), l),
-				),
-			(p) =>
-				R.map(
-					R.compose(R.zipWith(R.assoc, ["x", "y"]), R.split(" ")),
-					p,
-				),
-		),
-		lasso,
-	);
 
 	const tools = {
-		create: combine({
-			final: newNode,
-			start: isDrafting,
-			current: lastDraft,
-			root: rotEl,
-		}),
-		select: combine({
-			start: rubberBandStart,
-			current: rubberBandEnd,
-			root: el,
-		}),
-		lasso: combine({
-			start: startLasso,
-			current: currentLasso,
-			root: rotEl,
-		}),
+		lasso: Lasso,
+		rubber: RubberBand,
+		create: Creator,
 	};
-
-	const dragTool = $derived(tools[tool.value]);
-
-	// const dragTool = combine({
-	// 	start: rubberBandStart,
-	// 	current: rubberBandEnd,
-	// 	final: L.zero,
-	// });
-
-	const dragToolStart = $derived(view("start", dragTool));
-	const dragToolCurrent = $derived(view("current", dragTool));
-	const dragToolFinal = $derived(view("final", dragTool));
-	const dragRoot = $derived(view("root", dragTool));
 
 	const makeSquare = L.lens(R.identity, (n, o) => ({
 		...n,
@@ -388,95 +294,34 @@
 			camera,
 		)}
 		use:bindSize={view(["frame", "size"], camera)}
-		tabindex="-1"
 		{viewBox}
 		{preserveAspectRatio}
-		role="button"
-		onkeydown={(evt) => {
-			dragToolCurrent.value = undefined;
-		}}
-		onpointerdown={(evt) => {
-			evt.currentTarget.setPointerCapture(evt.pointerId);
-			const pt = svgPoint;
-			pt.x = evt.clientX;
-			pt.y = evt.clientY;
-			const svgP = pt.matrixTransform(
-				dragRoot.value.getScreenCTM().inverse(),
-			);
-
-			///newDraft.value = { x: svgP.x, y: svgP.y };
-			dragToolStart.value = { x: svgP.x, y: svgP.y };
-			dragToolCurrent.value = { x: svgP.x, y: svgP.y };
-		}}
-		onpointermove={(evt) => {
-			if (dragToolStart.value) {
-				const pt = svgPoint;
-				pt.x = evt.clientX;
-				pt.y = evt.clientY;
-				const svgP = pt.matrixTransform(
-					dragRoot.value.getScreenCTM().inverse(),
-				);
-
-				//lastDraft.value = { x: svgP.x, y: svgP.y };
-				dragToolCurrent.value = { x: svgP.x, y: svgP.y };
-			}
-		}}
-		onpointerup={(evt) => {
-			if (dragToolStart.value) {
-				const pt = svgPoint;
-				pt.x = evt.clientX;
-				pt.y = evt.clientY;
-				const svgP = pt.matrixTransform(
-					dragRoot.value.getScreenCTM().inverse(),
-				);
-
-				//newNode.value = lastDraft.value;
-				//lastDraft.value = undefined;
-				//rubberBandStart.value = undefined;
-				dragToolCurrent.value = undefined;
-				dragToolFinal.value = { x: svgP.x, y: svgP.y };
-			}
-		}}
 	>
-		<path d={viewBoxPath} fill="#ddffee" />
-		<path
-			d={frameBoxPath}
-			stroke="#ffaaaa"
-			fill="none"
-			vector-effect="non-scaling-stroke"
-			stroke-width="5px"
-			shape-rendering="crispEdges"
-		/>
+		<g pointer-events="none">
+			<path d={viewBoxPath} fill="#ddffee" />
+			<path
+				d={frameBoxPath}
+				stroke="#ffaaaa"
+				fill="none"
+				vector-effect="non-scaling-stroke"
+				stroke-width="5px"
+				shape-rendering="crispEdges"
+			/>
 
-		<g transform={rotationTransform} bind:this={rotEl.value}>
-			<g>
-				{#each nodes.value as v, i (i)}
-					<circle class="node" cx={v.x} cy={v.y} r="20"></circle>
-				{/each}
-			</g>
-			<g>
-				{#each drafts.value as v, i (i)}
-					<circle class="node" opacity="0.2" cx={v.x} cy={v.y} r="20"
-					></circle>
-				{/each}
-			</g>
-			<g>
-				<polygon points={lassoPath.value} class="lasso-area" />
-				<!-- {#each lasso.value as v, i (i)}
-					<circle class="lasso" cx={v.x} cy={v.y} r="4"></circle>
-				{/each} -->
-			</g>
+			<Bounds nodes={nodes} rotationTransform={rotationTransform} />
+			<Nodes nodes={nodes} rotationTransform={rotationTransform} />
 		</g>
 
-		<path
-			d={rubberBandPath.value}
-			fill-opacity="0.2"
-			fill="blue"
-			stroke="blue"
-			vector-effect="non-scaling-stroke"
-			stroke-width="1px"
-			shape-rendering="crispEdges"
-		/>
+		<svelte:component this={tools[tool.value]} {newNode} rotationTransform={rotationTransform}>
+			{#snippet frame()}
+				<path
+					d={frameBoxPath}
+					stroke="none"
+					fill="none"
+					pointer-events="all"
+				/>
+			{/snippet}
+		</svelte:component>
 	</svg>
 </div>
 
@@ -500,28 +345,6 @@
 		width: 100%;
 		height: 100%;
 		grid-area: 1/1/1/1;
-	}
-
-	.node {
-		fill: #dd4e40;
-		stroke: #aa0b10;
-		stroke-width: 2px;
-		vector-effect: non-scaling-stroke;
-	}
-
-	.lasso {
-		fill: #100baa;
-		stroke-width: 2px;
-		vector-effect: non-scaling-stroke;
-	}
-
-	.lasso-area {
-		fill: #100baa;
-		fill-opacity: 0.2;
-		fill-rule: evenodd;
-		stroke-dasharray: 5 5;
-		stroke: #100baa;
-		stroke-width: 1px;
 	}
 
 	textarea {

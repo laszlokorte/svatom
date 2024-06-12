@@ -29,6 +29,9 @@ export function combine(mapOfAtoms) {
 		},
 		set value(newVal) {
 			R.forEachObjIndexed((v, k) => {
+				if(v.value === undefined && newVal[k] === undefined) {
+					return
+				}
 				if(!$state.is(v.value, newVal[k])) {
 					v.value = newVal[k]
 				}
@@ -154,7 +157,7 @@ export function read(opticLense, someAtom) {
 		},
 
 		get max() {
-			return foldl((a,b) => b===undefined?a:Math.max(a,b), -Infinity, opticLense, someAtomsomeAtom.value)
+			return foldl((a,b) => b===undefined?a:Math.max(a,b), -Infinity, opticLense, someAtom.value)
 		},
 
 		get min() {

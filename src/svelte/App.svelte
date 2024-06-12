@@ -16,7 +16,7 @@
 	} from "./svatom.svelte.js";
 	import Nested from "./Nested.svelte";
 	import Table from "./Table.svelte";
-	import Canvas from "./Canvas.svelte";
+	import Canvas from "./Canvas/Root.svelte";
 	import asciiLogo from "./asciiLogo.txt?raw";
 	import { clamp } from "./utils.js";
 	import favicon from "../../favicon.svg";
