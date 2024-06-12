@@ -54,6 +54,10 @@
 		rubberBandEnd.value = undefined;
 	}}
 	onpointerdown={(evt) => {
+		
+		if(!U.isLeftButton(evt)) {
+			return
+		}
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 		const pt = svgPoint;
 		pt.x = evt.clientX;

@@ -29,6 +29,7 @@
 
 	const lastOrNew = L.ifElse(R.length, [L.index(0)], [L.appendTo]);
 
+	const debugFrames = atom(true);
 	const camera = atom({
 		focus: {
 			x: 0,
@@ -67,11 +68,11 @@
 	);
 
 	const viewBoxPath = $derived(
-		`M${camera.value.focus.x - (camera.value.plane.x / 2 - camera.value.frame.padding) * Math.exp(-camera.value.focus.z)},
-		${camera.value.focus.y - (camera.value.plane.y / 2 - camera.value.frame.padding) * Math.exp(-camera.value.focus.z)}
-		H${camera.value.focus.x + (camera.value.plane.x / 2 - camera.value.frame.padding) * Math.exp(-camera.value.focus.z)}
-		V${camera.value.focus.y + (camera.value.plane.y / 2 - camera.value.frame.padding) * Math.exp(-camera.value.focus.z)}
-		H${camera.value.focus.x - (camera.value.plane.x / 2 - camera.value.frame.padding) * Math.exp(-camera.value.focus.z)}z`,
+		`M${camera.value.focus.x - (camera.value.plane.x / 2) * Math.exp(-camera.value.focus.z)},
+		${camera.value.focus.y - (camera.value.plane.y / 2) * Math.exp(-camera.value.focus.z)}
+		H${camera.value.focus.x + (camera.value.plane.x / 2) * Math.exp(-camera.value.focus.z)}
+		V${camera.value.focus.y + (camera.value.plane.y / 2) * Math.exp(-camera.value.focus.z)}
+		H${camera.value.focus.x - (camera.value.plane.x / 2) * Math.exp(-camera.value.focus.z)}z`,
 	);
 
 	const frameBoxPath = $derived.by(() => {
@@ -113,9 +114,9 @@
 	const newNode = view([L.appendTo, L.required("x", "y")], nodes);
 
 	const tools = {
-		lasso: Lasso,
 		rubber: RubberBand,
 		create: Creator,
+		lasso: Lasso,
 	};
 
 	const makeSquare = L.lens(R.identity, (n, o) => ({
@@ -187,7 +188,7 @@
 			bind:value={cameraX.value}
 			min="-400"
 			max="400"
-			step="0.1"
+			step="0.01"
 		/>
 		Y:
 		<input
@@ -195,7 +196,7 @@
 			bind:value={cameraY.value}
 			min="-400"
 			max="400"
-			step="0.1"
+			step="0.01"
 		/>
 		<br />
 		Zoom:
@@ -204,7 +205,7 @@
 			bind:value={cameraZoom.value}
 			min="-2"
 			max="5"
-			step="0.1"
+			step="0.01"
 		/>
 		Rotation:
 		<input
@@ -212,7 +213,7 @@
 			bind:value={cameraAngle.value}
 			min="-90"
 			max="90"
-			step="0.1"
+			step="0.01"
 		/>
 	</div>
 </fieldset>
@@ -226,6 +227,10 @@
 				type="checkbox"
 				bind:checked={autosize.value}
 			/>Autofit</label
+		>
+
+		<label
+			><input type="checkbox" value={true} bind:checked={debugFrames.value} /> Show Debug Frames</label
 		>
 	</div>
 
@@ -274,8 +279,8 @@
 	<div class="alignment-grid">
 		{#each alignments as ay (ay)}
 			{#each alignments as ax (ax)}
-				<label class="alignment-grid-label"
-					><input  disabled={autosize.value} type="radio" value={`x${ax}Y${ay}`} bind:group={alignCombi.value} />
+				<label tabindex="-1" class="alignment-grid-label"
+					><input disabled={autosize.value} type="radio" value={`x${ax}Y${ay}`} bind:group={alignCombi.value} />
 					x{ax}Y{ay}</label
 				>
 			{/each}
@@ -320,8 +325,8 @@
 		{viewBox}
 		{preserveAspectRatio}
 	>
-		<g pointer-events="none">
-			<path d={viewBoxPath} fill="#ddffee" />
+		<g class:hidden={!debugFrames.value}>
+			<path d={viewBoxPath} class="view-box" stroke-opacity="0.5" stroke="magenta" vector-effect="non-scaling-stroke" stroke-width="8px" fill="#ddffee" />
 			<path
 				d={frameBoxPath}
 				stroke="#ffaaaa"
@@ -330,6 +335,9 @@
 				stroke-width="5px"
 				shape-rendering="crispEdges"
 			/>
+		</g>
+
+		<g pointer-events="none">
 
 			<Bounds nodes={nodes} rotationTransform={rotationTransform} cameraScale={cameraScale} />
 			<Nodes nodes={nodes} rotationTransform={rotationTransform} cameraScale={cameraScale} />
@@ -381,11 +389,47 @@
 		width: max-content;
 		gap: 2px;
 		font-family: monospace;
+		user-select: none;
+	}
+
+	.alignment-grid-label:has(:focus-visible) {
+		outline: 2px solid #dd4e40;
+	}
+
+	.alignment-grid-label:hover {
+		color: #888;
+		background: #f8f8f8;
+	}
+
+	.alignment-grid-label:active {
+		color: #666;
+		background: #e0e0e0;
 	}
 
 	.alignment-grid-label:has(:checked) {
-		background: black;
+		background: #dd4e40;
 		color: #fff;
+	}
+
+	.alignment-grid-label:has(:checked):hover {
+		background: #ed5e50;
+		color: #fff;
+	}
+
+	.alignment-grid-label:has(:checked):active {
+		background: #cd3e30;
+		color: #fff;
+	}
+
+	.alignment-grid-label:has(:disabled) {
+		background: #ddd;
+		color: #aaa;
+		cursor: default;
+	}
+
+	.alignment-grid-label:has(:disabled):hover {
+		background: #ddd;
+		color: #aaa;
 	}
 
 	.alignment-grid-label {
@@ -396,7 +440,19 @@
 		cursor: pointer;
 	}
 
-	.alignment-grid-label > * {
+	.alignment-grid-label > input {
+		background: transparent;
+		color: transparent;
+		border: none;
+		opacity: 0;
+		width: 0;
+		height: 0;
+		padding: 0;
+		display: block;
+		position: absolute;
+	}
+
+	.hidden {
 		display: none;
 	}
 </style>
