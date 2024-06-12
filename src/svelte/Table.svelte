@@ -44,23 +44,26 @@
 		endAccum(0, rowHeadHeights.value),
 	);
 
-	const columnWidths = atom(
+	const columnPins = atom(R.repeat(false, 1120));
+	const rowPins = atom(R.repeat(false, 15000));
+
+	const columnSizes = atom(
 		R.addIndex(R.map)(blueNoiseSequence)(R.repeat(100, 1120)),
 	);
-	const rowHeights = atom(
+	const rowSizes = atom(
 		R.addIndex(R.map)(blueNoiseSequence)(R.repeat(30, 15000)),
 	);
 	const columnStarts = $derived(
-		R.last(startAccum(columnHeadWidthSum, columnWidths.value)),
+		R.last(startAccum(columnHeadWidthSum, columnSizes.value)),
 	);
-	const [columnWidthSum, columnEnds] = $derived(
-		endAccum(columnHeadWidthSum, columnWidths.value),
+	const [columnSizeSum, columnEnds] = $derived(
+		endAccum(columnHeadWidthSum, columnSizes.value),
 	);
 	const rowStarts = $derived(
-		R.last(startAccum(rowHeadHeightSum, rowHeights.value)),
+		R.last(startAccum(rowHeadHeightSum, rowSizes.value)),
 	);
-	const [rowHeightSum, rowEnds] = $derived(
-		endAccum(rowHeadHeightSum, rowHeights.value),
+	const [rowSizeSum, rowEnds] = $derived(
+		endAccum(rowHeadHeightSum, rowSizes.value),
 	);
 	const firstColumn = $derived(
 		R.findIndex(R.lte(tableScroller.value.x), columnEnds),
@@ -139,8 +142,8 @@
 <div
 	class="scroller"
 	use:bindScroll={tableScroller}
-	style:--scroll-total-x={columnWidthSum}
-	style:--scroll-total-y={rowHeightSum}
+	style:--scroll-total-x={columnSizeSum}
+	style:--scroll-total-y={rowSizeSum}
 	style:--scroll-x={tableScroller.value.x}
 	style:--scroll-y={tableScroller.value.y}
 >
@@ -154,12 +157,67 @@
 			<br />
 			<span>y: {tableScroller.value.y}</span>
 		</div>
+		{#each visibleHeadRows() as y, i (i)}
+			<div
+				class="scroller-head-row"
+				style:--row-height={rowHeadHeights.value[y]}
+				style:--row-start={rowHeadStarts[y]}
+			>
+				{#each visibleColumns() as x, j (j)}
+					<label
+						class="scroller-head-cell"
+						style:--column-width={columnSizes.value[x]}
+						style:--column-start={columnStarts[x] -
+							tableScroller.value.x}
+					>
+						{#if i == 0}
+							{String.fromCharCode(65 + (x % 26))}{Math.floor(
+								x / 26,
+							)}
+						{:else}
+							{@const pinnedColumn = view(
+								[x, L.valueOr(false)],
+								columnPins,
+							)}
+
+							<input
+								type="checkbox"
+								bind:checked={pinnedColumn.value}
+							/>
+						{/if}
+					</label>
+				{/each}
+			</div>
+		{/each}
+
 		{#each visibleRows() as y, i (i)}
+			{@const pinnedRow = view([y, L.valueOr(false)], rowPins)}
 			<div
 				class="scroller-row"
-				style:--row-height={rowHeights.value[y]}
+				style:--row-height={rowSizes.value[y]}
 				style:--row-start={rowStarts[y]}
 			>
+				<div key="heads">
+					{#each visibleHeadColumns() as x, j (j)}
+						<label
+							class="scroller-head-column"
+							style:--column-width={columnHeadWidths.value[x]}
+							style:--column-start={columnHeadStarts[x]}
+						>
+							{#if j == 0}
+								{String.fromCharCode(65 + (y % 26))}{Math.floor(
+									y / 26,
+								)}
+							{:else}
+								<input
+									type="checkbox"
+									bind:checked={pinnedRow.value}
+								/>
+							{/if}
+						</label>
+					{/each}
+				</div>
+
 				{#each visibleColumns() as x, j (j)}
 					{@const val = view(
 						[`val-${y}-${x}`, L.defaults("")],
@@ -167,7 +225,7 @@
 					)}
 					<div
 						class="scroller-cell"
-						style:--column-width={columnWidths.value[x]}
+						style:--column-width={columnSizes.value[x]}
 						style:--column-start={columnStarts[x]}
 					>
 						<input
@@ -181,49 +239,6 @@
 							onfocus={onFocus}
 							onblur={onBlur}
 						/>
-					</div>
-				{/each}
-
-				<div key="heads">
-					{#each visibleHeadColumns() as x, j (j)}
-						<div
-							class="scroller-head-column"
-							style:--column-width={columnHeadWidths.value[x]}
-							style:--column-start={columnHeadStarts[x]}
-						>
-							{#if j == 0}
-								{String.fromCharCode(65 + (y % 26))}{Math.floor(
-									y / 26,
-								)}
-							{:else}
-								{y}
-							{/if}
-						</div>
-					{/each}
-				</div>
-			</div>
-		{/each}
-
-		{#each visibleHeadRows() as y, i (i)}
-			<div
-				class="scroller-head-row"
-				style:--row-height={rowHeadHeights.value[y]}
-				style:--row-start={rowHeadStarts[y]}
-			>
-				{#each visibleColumns() as x, j (j)}
-					<div
-						class="scroller-head-cell"
-						style:--column-width={columnWidths.value[x]}
-						style:--column-start={columnStarts[x] -
-							tableScroller.value.x}
-					>
-						{#if i == 0}
-							{String.fromCharCode(65 + (x % 26))}{Math.floor(
-								x / 26,
-							)}
-						{:else}
-							{x}
-						{/if}
 					</div>
 				{/each}
 			</div>
