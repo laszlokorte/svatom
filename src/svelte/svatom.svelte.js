@@ -28,11 +28,12 @@ export function combine(mapOfAtoms) {
 			}, mapOfAtoms)
 		},
 		set value(newVal) {
+			const oldValues = R.mapObjIndexed((v, k) => {
+				return $state.snapshot(v.value)
+			}, mapOfAtoms)
+
 			R.forEachObjIndexed((v, k) => {
-				if(v.value === undefined && newVal[k] === undefined) {
-					return
-				}
-				if(!$state.is(v.value, newVal[k])) {
+				if(!$state.is(oldValues[k], newVal[k])) {
 					v.value = newVal[k]
 				}
 			}, mapOfAtoms)

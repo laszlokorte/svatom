@@ -238,8 +238,8 @@
 	const scrollIso = [L.iso(R.compose(R.add(2000)), R.compose(R.multiply(-1), R.subtract(2000)))];
 
 	const scrollPosition = combine({
-		x: view([scrollIso, integerLens], cameraXScreen),
-		y: view([scrollIso, integerLens], cameraYScreen),
+		x: view([scrollIso], cameraXScreen),
+		y: view([scrollIso], cameraYScreen),
 	})
 </script>
 
