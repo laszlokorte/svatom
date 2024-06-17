@@ -240,12 +240,13 @@
 		camera,
 	);
 
-	const integerLens = L.lens(x=> Math.round(x), (newV, oldV) => Math.round(newV) + (oldV - Math.round(oldV)))
-	const scrollIso = [L.iso(R.compose(R.add(2000)), R.compose(R.multiply(-1), R.subtract(2000)))];
+	// Actually not needed:
+	// const integerLens = L.lens(x=> Math.round(x), (newV, oldV) => Math.round(newV) + (oldV - Math.round(oldV)))
+	const scrollIso = L.iso(R.add(R.__, 2000), R.subtract(R.__, 2000))
 
 	const scrollPosition = combine({
-		x: view([scrollIso, integerLens], cameraXScreen),
-		y: view([scrollIso, integerLens], cameraYScreen),
+		x: view([scrollIso], cameraXScreen),
+		y: view([scrollIso], cameraYScreen),
 	})
 </script>
 
@@ -445,7 +446,7 @@
 	</div>
 
 	<div class="form-grid">
-		<label class="number-picker"><span>X:</span>
+		<label class="number-picker"><span>Scroll X:</span>
 		<input
 			type="range"
 			bind:value={cameraXScreen.value}
@@ -455,7 +456,7 @@
 		/>
 		<output>{cameraXScreen.value}</output>
 		</label>
-		<label class="number-picker"><span>Y:</span>
+		<label class="number-picker"><span>Scroll Y:</span>
 		<input
 			type="range"
 			bind:value={cameraYScreen.value}
