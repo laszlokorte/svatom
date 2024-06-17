@@ -274,7 +274,7 @@
 	}
 
 	.scroller::after {
-		display: "block";
+		display: block;
 		content: " ";
 		height: calc(var(--scroll-total-y, 1) * 1px);
 		width: calc(var(--scroll-total-x, 1) * 1px);

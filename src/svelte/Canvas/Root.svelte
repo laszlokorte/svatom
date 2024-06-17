@@ -18,6 +18,16 @@
 		string,
 	} from "../svatom.svelte.js";
 
+	const numberFormat = new Intl.NumberFormat("en-US", {
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2,
+		useGrouping: false,
+	});
+
+	const numberLens = L.lens(x => numberFormat.format(x), x => {
+		return parseFloat(x)
+	})
+
 	import Creator from "./tools/Creator.svelte";
 	import Lasso from "./tools/Lasso.svelte";
 	import RubberBand from "./tools/RubberBand.svelte";
@@ -102,10 +112,57 @@
 	const rotationTransform = read(L.getter((c) => `rotate(${c.focus.w}, ${c.focus.x}, ${c.focus.y})`), camera);
 	const cameraScale = read(L.getter(c => Math.exp(-c.focus.z)), camera)
 
-	const cameraZoom = view(["focus", "z"], camera);
-	const cameraX = view(["focus", "x"], camera);
-	const cameraY = view(["focus", "y"], camera);
-	const cameraAngle = view(["focus", "w"], camera);
+	const degree2rad = (x) => x*Math.PI / 180
+	const rad2degree = (x) => x*180 / Math.PI
+
+	const affineLens = (dim, xDim, yDim, angleDim) => {
+		if (dim == xDim) {
+			return L.lens(o=>{
+				const rad = -degree2rad(o[angleDim])
+				const cos = Math.cos(rad)
+				const sin = Math.sin(rad)
+				return (cos * o[xDim] + sin * o[yDim])
+			}, (n, o) => {
+				const rad = -degree2rad(o[angleDim])
+				const cos = Math.cos(rad)
+				const sin = Math.sin(rad)
+
+				return {
+					...o,
+					[xDim]: cos * n,
+					[yDim]: sin * n,
+				}
+			})
+		} else if ((dim == yDim)) {
+
+			return L.lens(o=>{
+				const rad = -degree2rad(o[angleDim])
+				const cos = Math.cos(rad)
+				const sin = Math.sin(rad)
+				return (-sin * o[xDim] + cos * o[yDim])
+			}, (n, o) => {
+				const rad = -degree2rad(o[angleDim])
+				const cos = Math.cos(rad)
+				const sin = Math.sin(rad)
+
+				return {
+					...o,
+					[xDim]: -sin * n,
+					[yDim]: cos * n,
+				}
+			})
+		} else {
+			throw "dim must be xDim or yDim"
+		}
+
+	}
+
+	const cameraZoom = view(["focus", "z", numberLens], camera);
+	const cameraX = view(["focus", "x", numberLens], camera);
+	const cameraY = view(["focus", "y", numberLens], camera);
+	const cameraAngle = view(["focus", "w", numberLens], camera);
+	const cameraXScreen = view(["focus", affineLens('x', 'x', 'y', 'w'), numberLens], camera);
+	const cameraYScreen = view(["focus", affineLens('y', 'x', 'y', 'w'), numberLens], camera);
 
 	const tool = atom("lasso");
 	const nodes = atom([{ x: 200, y: 100 }]);
@@ -176,47 +233,16 @@
 		]),
 		camera,
 	);
+
+	const integerLens = L.lens(x=> Math.round(x), (newV, oldV) => Math.round(newV) + (oldV - Math.ceil(oldV)))
+	const scrollIso = [L.iso(R.compose(R.add(2000)), R.compose(R.multiply(-1), R.subtract(2000)))];
+
+	const scrollPosition = combine({
+		x: view([scrollIso, integerLens], cameraXScreen),
+		y: view([scrollIso, integerLens], cameraYScreen),
+	})
 </script>
 
-<fieldset>
-	<legend>Focus</legend>
-
-	<div>
-		X:
-		<input
-			type="range"
-			bind:value={cameraX.value}
-			min="-400"
-			max="400"
-			step="0.01"
-		/>
-		Y:
-		<input
-			type="range"
-			bind:value={cameraY.value}
-			min="-400"
-			max="400"
-			step="0.01"
-		/>
-		<br />
-		Zoom:
-		<input
-			type="range"
-			bind:value={cameraZoom.value}
-			min="-2"
-			max="5"
-			step="0.01"
-		/>
-		Rotation:
-		<input
-			type="range"
-			bind:value={cameraAngle.value}
-			min="-90"
-			max="90"
-			step="0.01"
-		/>
-	</div>
-</fieldset>
 
 <fieldset>
 	<legend>Frame</legend>
@@ -288,6 +314,8 @@
 	</div>
 </fieldset>
 
+
+
 <fieldset>
 	<legend>Tools</legend>
 
@@ -306,8 +334,14 @@
 	{/each}
 </fieldset>
 
-<div class="resizer">
-	<svg
+<div class="scroller"
+
+	use:bindScroll={scrollPosition}
+	style:--scroll-total-x={5000}
+	style:--scroll-total-y={6000}
+	>
+	<div class="scroller-body">
+		<svg
 		bind:this={el.value}
 		use:bindSize={view(
 			[
@@ -354,23 +388,121 @@
 			{/snippet}
 		</svelte:component>
 	</svg>
+	</div>
 </div>
+
+
+<fieldset>
+	<legend>Focus</legend>
+
+	<div class="form-grid">
+		<label class="number-picker"><span>X:</span>
+		<input
+			type="range"
+			bind:value={cameraX.value}
+			min="-4000"
+			max="4000"
+			step="0.1"
+		/>
+		<output>{cameraX.value}</output>
+		</label>
+		<label class="number-picker"><span>Y:</span>
+		<input
+			type="range"
+			bind:value={cameraY.value}
+			min="-4000"
+			max="4000"
+			step="0.1"
+		/>
+		<output>{cameraY.value}</output>
+		</label>
+		<label class="number-picker"><span>Zoom:</span>
+		<input
+			type="range"
+			bind:value={cameraZoom.value}
+			min="-2"
+			max="5"
+			step="0.01"
+		/>
+		<output>{cameraZoom.value}</output>
+		</label>
+		<label class="number-picker"><span>Rotation:</span>
+		<input
+			type="range"
+			bind:value={cameraAngle.value}
+			min="-90"
+			max="90"
+			step="0.01"
+		/>
+		<output>{cameraAngle.value}</output>
+		</label>
+	</div>
+
+	<div class="form-grid">
+		<label class="number-picker"><span>X:</span>
+		<input
+			type="range"
+			bind:value={cameraXScreen.value}
+			min="-4000"
+			max="4000"
+			step="0.1"
+		/>
+		<output>{cameraXScreen.value}</output>
+		</label>
+		<label class="number-picker"><span>Y:</span>
+		<input
+			type="range"
+			bind:value={cameraYScreen.value}
+			min="-4000"
+			max="4000"
+			step="0.1"
+		/>
+		<output>{cameraYScreen.value}</output>
+		</label>
+	</div>
+</fieldset>
 
 <h3>Camera Parameter</h3>
 <textarea use:bindValue={cameraJson.stableAtom}></textarea>
 
 <style>
-	.resizer {
+	.scroller {
+		position: relative;
 		display: grid;
 		min-height: 10em;
 		height: 40em;
 		width: 100%;
 		resize: both;
-		overflow: hidden;
+		overflow: auto;
 		grid-template-columns: 1fr;
 		grid-template-rows: 1fr;
 		border: 3px solid #333;
+		overflow: scroll;
 	}
+
+	.scroller::after {
+		display: block;
+		content: " ";
+		height: calc(var(--scroll-total-y, 1) * 1px);
+		width: calc(var(--scroll-total-x, 1) * 1px);
+		position: absolute;
+		top: 0;
+		left: 0;
+		pointer-events: none;
+	}
+
+	.scroller-body {
+		position: sticky;
+		top: 0;
+		left: 0;
+		display: grid;
+		width: 100%;
+		height: 100%;
+		overflow: hidden;
+		grid-template-columns: 1fr;
+		grid-template-rows: 1fr;
+	}
+
 	svg {
 		display: block;
 		width: 100%;
@@ -454,5 +586,18 @@
 
 	.hidden {
 		display: none;
+	}
+
+	.form-grid {
+		display: grid;
+		grid-template-columns: max-content max-content max-content;
+		grid-auto-rows: 1fr;
+	}
+
+	.form-grid > .number-picker {
+		grid-column: span 3;
+		display: grid;
+		grid-template-columns: subgrid;
+		grid-template-rows: 1fr;
 	}
 </style>
