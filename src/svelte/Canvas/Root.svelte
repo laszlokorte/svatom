@@ -45,7 +45,7 @@
 			x: 0,
 			y: 0,
 			z: 0,
-			w: 0,
+			w: 20,
 		},
 		plane: {
 			autosize: true,
@@ -127,10 +127,13 @@
 				const cos = Math.cos(rad)
 				const sin = Math.sin(rad)
 
+				const oldX= (cos * o[xDim] + sin * o[yDim])
+				const delta = n - oldX
+
 				return {
 					...o,
-					[xDim]: cos * n,
-					[yDim]: sin * n,
+					[xDim]: cos * delta + o[xDim],
+					[yDim]: sin * delta + o[yDim],
 				}
 			})
 		} else if ((dim == yDim)) {
@@ -145,10 +148,13 @@
 				const cos = Math.cos(rad)
 				const sin = Math.sin(rad)
 
+				const oldY= (-sin * o[xDim] + cos * o[yDim])
+				const delta = n - oldY
+
 				return {
 					...o,
-					[xDim]: -sin * n,
-					[yDim]: cos * n,
+					[xDim]: -sin * delta + o[xDim],
+					[yDim]: cos * delta + o[yDim],
 				}
 			})
 		} else {
@@ -234,12 +240,12 @@
 		camera,
 	);
 
-	const integerLens = L.lens(x=> Math.round(x), (newV, oldV) => Math.round(newV) + (oldV - Math.ceil(oldV)))
+	const integerLens = L.lens(x=> Math.round(x), (newV, oldV) => Math.round(newV) + (oldV - Math.round(oldV)))
 	const scrollIso = [L.iso(R.compose(R.add(2000)), R.compose(R.multiply(-1), R.subtract(2000)))];
 
 	const scrollPosition = combine({
-		x: view([scrollIso], cameraXScreen),
-		y: view([scrollIso], cameraYScreen),
+		x: view([scrollIso, integerLens], cameraXScreen),
+		y: view([scrollIso, integerLens], cameraYScreen),
 	})
 </script>
 
