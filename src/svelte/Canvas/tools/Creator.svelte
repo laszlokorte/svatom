@@ -33,6 +33,7 @@
 </script>
 
 <g
+	class="creator-surface"
 	role="button"
 	tabindex="-1"
 	onkeydown={(evt) => {
@@ -90,6 +91,9 @@
 
 <style>
 	
+	.creator-surface {
+		cursor: copy;
+	}
 	.node {
 		fill: #dd4e40;
 		stroke: #aa0b10;

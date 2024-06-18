@@ -4,6 +4,7 @@
 	import * as R from "ramda";
 	import * as U from "../utils";
 	import * as C from "../combinators";
+	import * as Cam from "./camControl.svelte";
 	import {
 		atom,
 		view,
@@ -24,6 +25,12 @@
 		useGrouping: false,
 	});
 
+	const numberSvgFormat = new Intl.NumberFormat("en-US", {
+		minimumFractionDigits: 5,
+		maximumFractionDigits: 5,
+		useGrouping: false,
+	});
+
 	const numberLens = L.lens(x => numberFormat.format(x), x => {
 		return parseFloat(x)
 	})
@@ -33,6 +40,7 @@
 	import RubberBand from "./tools/RubberBand.svelte";
 	import Nodes from "./tools/Nodes.svelte";
 	import Bounds from "./tools/Bounds.svelte";
+	import Magnifier from "./tools/Magnifier.svelte";
 
 	const el = atom(null);
 	const svgPoint = $derived(el.value ? el.value.createSVGPoint() : null);
@@ -71,18 +79,18 @@
 	);
 
 	const viewBox = $derived(
-		`${camera.value.focus.x - (camera.value.plane.x / 2) * Math.exp(-camera.value.focus.z)} 
-		${camera.value.focus.y - (camera.value.plane.y / 2) * Math.exp(-camera.value.focus.z)} 
-		${camera.value.plane.x * Math.exp(-camera.value.focus.z)} 
-		${camera.value.plane.y * Math.exp(-camera.value.focus.z)}`,
+		`${numberSvgFormat.format(camera.value.focus.x - (camera.value.plane.x / 2) * Math.exp(-camera.value.focus.z))} 
+		${numberSvgFormat.format(camera.value.focus.y - (camera.value.plane.y / 2) * Math.exp(-camera.value.focus.z))} 
+		${numberSvgFormat.format(camera.value.plane.x * Math.exp(-camera.value.focus.z))} 
+		${numberSvgFormat.format(camera.value.plane.y * Math.exp(-camera.value.focus.z))}`,
 	);
 
 	const viewBoxPath = $derived(
-		`M${camera.value.focus.x - (camera.value.plane.x / 2) * Math.exp(-camera.value.focus.z)},
-		${camera.value.focus.y - (camera.value.plane.y / 2) * Math.exp(-camera.value.focus.z)}
-		H${camera.value.focus.x + (camera.value.plane.x / 2) * Math.exp(-camera.value.focus.z)}
-		V${camera.value.focus.y + (camera.value.plane.y / 2) * Math.exp(-camera.value.focus.z)}
-		H${camera.value.focus.x - (camera.value.plane.x / 2) * Math.exp(-camera.value.focus.z)}z`,
+		`M${numberSvgFormat.format(camera.value.focus.x - (camera.value.plane.x / 2) * Math.exp(-camera.value.focus.z))},
+		${numberSvgFormat.format(camera.value.focus.y - (camera.value.plane.y / 2) * Math.exp(-camera.value.focus.z))}
+		H${numberSvgFormat.format(camera.value.focus.x + (camera.value.plane.x / 2) * Math.exp(-camera.value.focus.z))}
+		V${numberSvgFormat.format(camera.value.focus.y + (camera.value.plane.y / 2) * Math.exp(-camera.value.focus.z))}
+		H${numberSvgFormat.format(camera.value.focus.x - (camera.value.plane.x / 2) * Math.exp(-camera.value.focus.z))}z`,
 	);
 
 	const frameBoxPath = $derived.by(() => {
@@ -104,9 +112,32 @@
 			},
 			camera.value.frame.size.x,
 			camera.value.frame.size.y,
+		);
+		return `M${numberSvgFormat.format(minX)},${numberSvgFormat.format(minY)}h${numberSvgFormat.format(width)}v${numberSvgFormat.format(height)}h${numberSvgFormat.format(-width)}z`;
+	});
+
+	const frameBoxPathPadded = $derived.by(() => {
+		const { minX, minY, width, height } = U.scaleViewBox(
+			{
+				alignmentX: camera.value.frame.alignX,
+				alignmentY: camera.value.frame.alignY,
+				width: camera.value.plane.x * Math.exp(-camera.value.focus.z),
+				height: camera.value.plane.y * Math.exp(-camera.value.focus.z),
+				minX:
+					camera.value.focus.x -
+					(camera.value.plane.x / 2) *
+						Math.exp(-camera.value.focus.z),
+				minY:
+					camera.value.focus.y -
+					(camera.value.plane.y / 2) *
+						Math.exp(-camera.value.focus.z),
+				scaling: camera.value.frame.aspect,
+			},
+			camera.value.frame.size.x,
+			camera.value.frame.size.y,
 			camera.value.frame.padding,
 		);
-		return `M${minX},${minY}h${width}v${height}h${-width}z`;
+		return `M${numberSvgFormat.format(minX)},${numberSvgFormat.format(minY)}h${numberSvgFormat.format(width)}v${numberSvgFormat.format(height)}h${numberSvgFormat.format(-width)}z`;
 	});
 
 	const rotationTransform = read(L.getter((c) => `rotate(${c.focus.w}, ${c.focus.x}, ${c.focus.y})`), camera);
@@ -170,7 +201,31 @@
 	const cameraXScreen = view(["focus", affineLens('x', 'x', 'y', 'w'), numberLens], camera);
 	const cameraYScreen = view(["focus", affineLens('y', 'x', 'y', 'w'), numberLens], camera);
 
-	const tool = atom("lasso");
+	const zoomDelta = view(['focus', L.setter((delta, oldFocus) => {
+		return {
+			...oldFocus,
+			z: oldFocus.z + delta.dz
+		}
+	})], camera)
+
+	const zoomFrame = view(['focus', L.setter((frame, oldFocus) => {
+		const rad = degree2rad(oldFocus.w)
+		const cos = Math.cos(rad)
+		const sin = Math.sin(rad)
+
+		const cx = (frame.start.x + frame.end.x) / 2
+		const cy = (frame.start.y + frame.end.y) / 2
+		const dx = cx - oldFocus.x
+		const dy = cy - oldFocus.y
+
+		return {
+			...oldFocus,
+			x: oldFocus.x + cos * dx + sin * dy,
+			y: oldFocus.y + -sin * dx + cos * dy,
+		}
+	})], camera)
+
+	const tool = atom("magnifier");
 	const nodes = atom([{ x: 200, y: 100 }]);
 	const drafts = atom([]);
 	const rubberBand = atom(undefined);
@@ -180,6 +235,7 @@
 		rubber: RubberBand,
 		create: Creator,
 		lasso: Lasso,
+		magnifier: Magnifier,
 	};
 
 	const makeSquare = L.lens(R.identity, (n, o) => ({
@@ -240,13 +296,13 @@
 		camera,
 	);
 
-	// Actually not needed:
-	// const integerLens = L.lens(x=> Math.round(x), (newV, oldV) => Math.round(newV) + (oldV - Math.round(oldV)))
+	// This is needed to prevent a ceil/floor feedback loop between integer scroll positions of scrollbars and camera position
+	const integerLens = L.lens(x=> Math.round(x), (newV, oldV) => Math.round(newV) + (oldV - Math.round(oldV)))
 	const scrollIso = L.iso(R.add(R.__, 2000), R.subtract(R.__, 2000))
 
 	const scrollPosition = combine({
-		x: view([scrollIso], cameraXScreen),
-		y: view([scrollIso], cameraYScreen),
+		x: view([scrollIso, integerLens], cameraXScreen),
+		y: view([scrollIso, integerLens], cameraYScreen),
 	})
 </script>
 
@@ -363,6 +419,7 @@
 			camera,
 		)}
 		use:bindSize={view(["frame", "size"], camera)}
+		use:Cam.bindEvents={camera}
 		{viewBox}
 		{preserveAspectRatio}
 	>
@@ -373,7 +430,7 @@
 				stroke="#ffaaaa"
 				fill="none"
 				vector-effect="non-scaling-stroke"
-				stroke-width="5px"
+				stroke-width="4px"
 				shape-rendering="crispEdges"
 			/>
 		</g>
@@ -384,7 +441,7 @@
 			<Nodes nodes={nodes} rotationTransform={rotationTransform} cameraScale={cameraScale} />
 		</g>
 
-		<svelte:component this={tools[tool.value]} {newNode} rotationTransform={rotationTransform} cameraScale={cameraScale}>
+		<svelte:component {frameBoxPath} {zoomDelta} {zoomFrame} this={tools[tool.value]} {newNode} rotationTransform={rotationTransform} cameraScale={cameraScale}>
 			{#snippet frame()}
 				<path
 					d={frameBoxPath}
@@ -411,6 +468,7 @@
 			max="4000"
 			step="0.1"
 		/>
+		<button type="button" onclick={_=>{cameraX.value = 0}}>reset</button>
 		<output>{cameraX.value}</output>
 		</label>
 		<label class="number-picker"><span>Y:</span>
@@ -421,16 +479,18 @@
 			max="4000"
 			step="0.1"
 		/>
+		<button type="button" onclick={_=>{cameraY.value = 0}}>reset</button>
 		<output>{cameraY.value}</output>
 		</label>
 		<label class="number-picker"><span>Zoom:</span>
 		<input
 			type="range"
 			bind:value={cameraZoom.value}
-			min="-2"
-			max="5"
+			min="-3"
+			max="3"
 			step="0.01"
 		/>
+		<button type="button" onclick={_=>{cameraZoom.value = 0}}>reset</button>
 		<output>{cameraZoom.value}</output>
 		</label>
 		<label class="number-picker"><span>Rotation:</span>
@@ -441,11 +501,9 @@
 			max="90"
 			step="0.01"
 		/>
+		<button type="button" onclick={_=>{cameraAngle.value = 0}}>reset</button>
 		<output>{cameraAngle.value}</output>
 		</label>
-	</div>
-
-	<div class="form-grid">
 		<label class="number-picker"><span>Scroll X:</span>
 		<input
 			type="range"
@@ -454,6 +512,7 @@
 			max="4000"
 			step="0.1"
 		/>
+		<button type="button" onclick={_=>{cameraXScreen.value = 0}}>reset</button>
 		<output>{cameraXScreen.value}</output>
 		</label>
 		<label class="number-picker"><span>Scroll Y:</span>
@@ -464,6 +523,7 @@
 			max="4000"
 			step="0.1"
 		/>
+		<button type="button" onclick={_=>{cameraYScreen.value = 0}}>reset</button>
 		<output>{cameraYScreen.value}</output>
 		</label>
 	</div>
@@ -597,12 +657,13 @@
 
 	.form-grid {
 		display: grid;
-		grid-template-columns: max-content max-content max-content;
+		grid-template-columns: max-content max-content max-content max-content;
 		grid-auto-rows: 1fr;
+		gap: 0.25em;
 	}
 
 	.form-grid > .number-picker {
-		grid-column: span 3;
+		grid-column: span 4;
 		display: grid;
 		grid-template-columns: subgrid;
 		grid-template-rows: 1fr;

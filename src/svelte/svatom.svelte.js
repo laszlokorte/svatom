@@ -50,8 +50,14 @@ export function combineWithRest(mapOfAtoms, rest = atom({})) {
 			}
 		},
 		set value(newVal) {
+			const oldValues = R.mapObjIndexed((v, k) => {
+				return $state.snapshot(v.value)
+			}, mapOfAtoms)
+
 			R.forEachObjIndexed((v, k) => {
-				v.value = newVal[k]
+				if(!$state.is(oldValues[k], newVal[k])) {
+					v.value = newVal[k]
+				}
 			}, mapOfAtoms)
 			rest.value = R.pick(R.difference(Object.keys(newVal), Object.keys(mapOfAtoms)), newVal)
 		}

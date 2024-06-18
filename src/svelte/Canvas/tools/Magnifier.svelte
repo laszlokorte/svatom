@@ -17,7 +17,7 @@
 		autofocusIf,
 		string,
 	} from "../../svatom.svelte.js";
-	const {frame} = $props();
+	const {frame, frameBoxPath, zoomDelta, zoomFrame} = $props();
 	const rootEl = atom(null);
 	const gEl = view(L.setter((g) => g.ownerSVGElement), rootEl);
 	const svgPoint = $derived(rootEl.value ? rootEl.value.createSVGPoint() : null);
@@ -36,6 +36,10 @@
 		rubberBand,
 	);
 
+	const rubberBandStretched = read([L.valueOr({}), L.getter(({start, end}) => {
+			return (start && end && start.x !== end.x && start.y !== end.y) ? true : false
+		})], rubberBand)
+
 	const rubberBandPath = read(
 		L.getter((b) =>
 			b && b.start && b.end
@@ -47,15 +51,17 @@
 </script>
 
 <g
-	class="rubber-band-surface"
+	class="magnifier-surface"
+	class:magnifier-surface-active={rubberBandStretched.value}
 	bind:this={gEl.value}
 	role="button"
 	tabindex="-1"
 	onkeydown={(evt) => {
-		rubberBandEnd.value = undefined;
+		if((evt.key === "Escape" || evt.key === "Esc")) {
+			rubberBandEnd.value = undefined;
+		}
 	}}
 	onpointerdown={(evt) => {
-		
 		if(!U.isLeftButton(evt)) {
 			return
 		}
@@ -90,45 +96,59 @@
 				rootEl.value.getScreenCTM().inverse(),
 			);
 
+			if(zoomDelta && !rubberBandStretched.value) {
+				zoomDelta.value = {dz: evt.altKey ? -.5:.5, px: svgP.x, py: svgP.y }
+			} else if (zoomFrame) {
+				zoomFrame.value = {
+					start: rubberBandStart.value,
+					end: rubberBandEnd.value,
+				}
+			}
+
+
 			rubberBandEnd.value = undefined;
+		} else if(zoomDelta) {
+			const pt = svgPoint;
+			pt.x = evt.clientX;
+			pt.y = evt.clientY;
+			const svgP = pt.matrixTransform(
+				rootEl.value.getScreenCTM().inverse(),
+			);
+
+			zoomDelta.value = {dz: (evt.altKey || evt.shiftKey) ? -.5:.5, px: svgP.x, py: svgP.y }
 		}
 	}}>
 
 	{@render frame()}
 </g>
 
+{#if rubberBandStretched.value}
 <path
-	d={rubberBandPath.value}
+	d={frameBoxPath +' '+ rubberBandPath.value}
 	class="rubber-band"
 	pointer-events="none"
 />
+{/if}
 
 <style>
 
-	.rubber-band-surface {
-		cursor: default;
+	.magnifier-surface {
+		cursor: zoom-in;
+	}
+
+	.magnifier-surface-active {
+		cursor: crosshair;
 	}
 
 	.rubber-band {
-		stroke-dasharray: 5 5;
-		fill: #27b7db;
-		stroke: #2374ff;
-		fill-opacity: 0.2;
+		fill: #fff;
+		stroke: #aaa;
+		fill-opacity: 0.5;
 		fill-rule: evenodd;
 		stroke-width: 1px;
 		shape-rendering: crispEdges;
 		vector-effect: non-scaling-stroke;
-		animation: 4s linear marquee infinite;
 	}
 
-	@keyframes marquee {
-		0% {
-			stroke-dashoffset: 0;
-		}
-		100% {
-			stroke-dashoffset: -100;
-		}
-	}
 
-	
 </style>
