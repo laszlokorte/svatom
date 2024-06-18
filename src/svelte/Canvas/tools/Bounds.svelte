@@ -8,6 +8,7 @@
 		atom,
 		view,
 		read,
+		traverse,
 		combine,
 		combineWithRest,
 		failableView,
@@ -29,18 +30,31 @@
 
 	const allEntities = combine({ nodes, drawings });
 
-	const minX = $derived(read([branch, "x"], allEntities).min - padding);
-	const maxX = $derived(read([branch, "x"], allEntities).max + padding);
-	const minY = $derived(read([branch, "y"], allEntities).min - padding);
-	const maxY = $derived(read([branch, "y"], allEntities).max + padding);
+	const minX = traverse([branch, "x"], L.minimum, allEntities).map(
+		R.compose(R.subtract(R.__, padding), R.min(0), R.defaultTo(0)),
+	);
+	const maxX = traverse([branch, "x"], L.maximum, allEntities).map(
+		R.compose(R.add(padding), R.max(0), R.defaultTo(0)),
+	);
+	const minY = traverse([branch, "y"], L.minimum, allEntities).map(
+		R.compose(R.subtract(R.__, padding), R.min(0), R.defaultTo(0)),
+	);
+	const maxY = traverse([branch, "y"], L.maximum, allEntities).map(
+		R.compose(R.add(padding), R.max(0), R.defaultTo(0)),
+	);
+
+	const extend = combine({
+		minX,
+		maxX,
+		minY,
+		maxY,
+	});
+
+	const path = string`M${minX} ${minY} H${maxX} V${maxY} H ${minX} z`;
 </script>
 
 <g transform={rotationTransform.value}>
-	<path
-		fill="none"
-		class="bounds"
-		d="M{minX} {minY} H{maxX} V{maxY} H {minX} z"
-	/>
+	<path fill="none" class="bounds" d={path.value} />
 </g>
 
 <style>

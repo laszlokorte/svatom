@@ -174,6 +174,38 @@ export function read(opticLense, someAtom) {
 		folded(fn, init, skipUndefined=true) {
 			return foldl((a,b) => (skipUndefined && b===undefined) ? a : fn(a,b), init, opticLense, someAtom.value)
 		},
+
+		traverse(trav, fn = R.identity) {
+			return {
+				get value() {
+					return fn(trav(opticLense, someAtom.value))
+				},
+			}
+		}
+	}
+}
+
+export function traverse(opticLense, trav, someAtom) {
+	return {
+		get value() {
+			return fn(trav(opticLense, someAtom.value))
+		},
+
+		map(fn) {
+			return {
+				get value() {
+					return fn(trav(opticLense, someAtom.value))
+				},
+			}
+		}
+	}
+}
+
+export function map(fn, someAtom) {
+	return {
+		get value() {
+			return fn(someAtom.value)
+		},
 	}
 }
 

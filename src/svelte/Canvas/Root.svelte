@@ -45,7 +45,6 @@
 	import Magnifier from "./tools/Magnifier.svelte";
 
 	const el = atom(null);
-	const svgPoint = $derived(el.value ? el.value.createSVGPoint() : null);
 
 	const lastOrNew = L.ifElse(R.length, [L.index(0)], [L.appendTo]);
 
@@ -74,26 +73,24 @@
 		},
 	});
 
-	const preserveAspectRatio = $derived(
-		camera.value.frame.aspect
-			? `x${camera.value.frame.alignX}Y${camera.value.frame.alignY} ${camera.value.frame.aspect}`
-			: "none",
-	);
+	const preserveAspectRatio = read(cam => cam.frame.aspect
+			? `x${cam.frame.alignX}Y${cam.frame.alignY} ${cam.frame.aspect}`
+			: "none", camera);
 
-	const viewBox = $derived(
-		`${numberSvgFormat.format(camera.value.focus.x - (camera.value.plane.x / 2) * Math.exp(-camera.value.focus.z))} 
-		${numberSvgFormat.format(camera.value.focus.y - (camera.value.plane.y / 2) * Math.exp(-camera.value.focus.z))} 
-		${numberSvgFormat.format(camera.value.plane.x * Math.exp(-camera.value.focus.z))} 
-		${numberSvgFormat.format(camera.value.plane.y * Math.exp(-camera.value.focus.z))}`,
-	);
+	const viewBox = view(L.getter(cam => {
+		return `${numberSvgFormat.format(cam.focus.x - (cam.plane.x / 2) * Math.exp(-cam.focus.z))} 
+		${numberSvgFormat.format(cam.focus.y - (cam.plane.y / 2) * Math.exp(-cam.focus.z))} 
+		${numberSvgFormat.format(cam.plane.x * Math.exp(-cam.focus.z))} 
+		${numberSvgFormat.format(cam.plane.y * Math.exp(-cam.focus.z))}`;
+	}), camera);
 
-	const viewBoxPath = $derived(
-		`M${numberSvgFormat.format(camera.value.focus.x - (camera.value.plane.x / 2) * Math.exp(-camera.value.focus.z))},
-		${numberSvgFormat.format(camera.value.focus.y - (camera.value.plane.y / 2) * Math.exp(-camera.value.focus.z))}
-		H${numberSvgFormat.format(camera.value.focus.x + (camera.value.plane.x / 2) * Math.exp(-camera.value.focus.z))}
-		V${numberSvgFormat.format(camera.value.focus.y + (camera.value.plane.y / 2) * Math.exp(-camera.value.focus.z))}
-		H${numberSvgFormat.format(camera.value.focus.x - (camera.value.plane.x / 2) * Math.exp(-camera.value.focus.z))}z`,
-	);
+	const viewBoxPath = view(L.getter(cam => {
+		return `M${numberSvgFormat.format(cam.focus.x - (cam.plane.x / 2) * Math.exp(-cam.focus.z))},
+		${numberSvgFormat.format(cam.focus.y - (cam.plane.y / 2) * Math.exp(-cam.focus.z))}
+		H${numberSvgFormat.format(cam.focus.x + (cam.plane.x / 2) * Math.exp(-cam.focus.z))}
+		V${numberSvgFormat.format(cam.focus.y + (cam.plane.y / 2) * Math.exp(-cam.focus.z))}
+		H${numberSvgFormat.format(cam.focus.x - (cam.plane.x / 2) * Math.exp(-cam.focus.z))}z`;
+	}), camera);
 
 	const frameBoxLens = (padding) => L.getter((camera) => {
 		const { minX, minY, width, height } = U.scaleViewBox(
@@ -217,7 +214,7 @@
 	const rubberBand = atom(undefined);
 	const newNode = view([L.appendTo, L.required("x", "y")], nodes);
 
-	const newDrawing = view([L.appendTo], drawings);
+	const newDrawing = view([L.appendTo, L.setter((n, o) => n.length > 1 ? n : o)], drawings);
 
 	const tools = {
 		select: {component: RubberBand, parameters: {
@@ -424,11 +421,11 @@
 		)}
 		use:bindSize={view(["frame", "size"], camera)}
 		use:Cam.bindEvents={camera}
-		{viewBox}
-		{preserveAspectRatio}
+		viewBox={viewBox.value}
+		preserveAspectRatio={preserveAspectRatio.value}
 	>
 		<g class:hidden={!debugFrames.value}>
-			<path d={viewBoxPath} class="view-box" stroke-opacity="0.5" stroke="magenta" vector-effect="non-scaling-stroke" stroke-width="8px" fill="#ddffee" />
+			<path d={viewBoxPath.value} class="view-box" stroke-opacity="0.5" stroke="magenta" vector-effect="non-scaling-stroke" stroke-width="8px" fill="#ddffee" />
 			<path
 				d={frameBoxPath.value}
 				stroke="#ffaaaa"
