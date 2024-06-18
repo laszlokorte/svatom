@@ -37,6 +37,7 @@
 
 	import Creator from "./tools/Creator.svelte";
 	import Lasso from "./tools/Lasso.svelte";
+	import Draw from "./tools/Draw.svelte";
 	import RubberBand from "./tools/RubberBand.svelte";
 	import Nodes from "./tools/Nodes.svelte";
 	import Bounds from "./tools/Bounds.svelte";
@@ -227,14 +228,18 @@
 
 	const tool = atom("magnifier");
 	const nodes = atom([{ x: 200, y: 100 }]);
+	const drawings = atom([]);
 	const drafts = atom([]);
 	const rubberBand = atom(undefined);
 	const newNode = view([L.appendTo, L.required("x", "y")], nodes);
+
+	const newDrawing = view([L.appendTo], drawings);
 
 	const tools = {
 		rubber: RubberBand,
 		create: Creator,
 		lasso: Lasso,
+		draw: Draw,
 		magnifier: Magnifier,
 	};
 
@@ -386,6 +391,7 @@
 		type="button"
 		onclick={() => {
 			nodes.value = [];
+			drawings.value = [];
 		}}>Clear</button
 	>
 
@@ -439,9 +445,15 @@
 
 			<Bounds nodes={nodes} rotationTransform={rotationTransform} cameraScale={cameraScale} />
 			<Nodes nodes={nodes} rotationTransform={rotationTransform} cameraScale={cameraScale} />
+
+			<g transform={rotationTransform.value}>
+				{#each drawings.value as d} 
+				<polyline fill="none" stroke="black" points={R.compose(R.join(','), R.map(({x,y}) => `${x},${y}`))(d)} class="drawing-line" pointer-events="none" />
+				{/each}
+			</g>
 		</g>
 
-		<svelte:component {frameBoxPath} {zoomDelta} {zoomFrame} this={tools[tool.value]} {newNode} rotationTransform={rotationTransform} cameraScale={cameraScale}>
+		<svelte:component {newDrawing} {frameBoxPath} {zoomDelta} {zoomFrame} this={tools[tool.value]} {newNode} rotationTransform={rotationTransform} cameraScale={cameraScale}>
 			{#snippet frame()}
 				<path
 					d={frameBoxPath}
@@ -667,5 +679,16 @@
 		display: grid;
 		grid-template-columns: subgrid;
 		grid-template-rows: 1fr;
+	}
+
+	.drawing-line {
+		fill: none;
+		stroke: black;
+		fill-opacity: 0.2;
+		fill-rule: evenodd;
+		stroke-width: 4px;
+		vector-effect: non-scaling-stroke;
+		stroke-linecap: round;
+		stroke-linejoin: round;
 	}
 </style>
