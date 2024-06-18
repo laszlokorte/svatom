@@ -44,6 +44,9 @@
 	import Drawings from "./tools/Drawings.svelte";
 	import Bounds from "./tools/Bounds.svelte";
 	import Magnifier from "./tools/Magnifier.svelte";
+	import GuideLiner from "./tools/GuideLiner.svelte";
+	import Guides from "./tools/Guides.svelte";
+	import Axis from "./tools/Axis.svelte";
 
 	const el = atom(null);
 
@@ -115,12 +118,15 @@
 			padding ? camera.frame.padding : 0,
 		);
 
-		return `M${numberSvgFormat.format(minX)},${numberSvgFormat.format(minY)}h${numberSvgFormat.format(width)}v${numberSvgFormat.format(height)}h${numberSvgFormat.format(-width)}z`;
+		return { minX, minY, width, height }
 	})
 
-	const frameBoxPath = read(frameBoxLens(false), camera);
+	const boxPath = ({ minX, minY, width, height }) => `M${numberSvgFormat.format(minX)},${numberSvgFormat.format(minY)}h${numberSvgFormat.format(width)}v${numberSvgFormat.format(height)}h${numberSvgFormat.format(-width)}z`
 
-	const frameBoxPathPadded = read(frameBoxLens(true), camera);
+	const frameBoxObject = read(frameBoxLens(false), camera);
+	const frameBoxPath = read(R.compose(boxPath, frameBoxLens(false)), camera);
+
+	const frameBoxPathPadded = read(R.compose(boxPath, frameBoxLens(true)), camera);
 
 	const rotationTransform = read(L.getter((c) => `rotate(${c.focus.w}, ${c.focus.x}, ${c.focus.y})`), camera);
 	const cameraScale = read(L.getter(c => Math.exp(-c.focus.z)), camera)
@@ -210,12 +216,14 @@
 
 	const tool = atom("pen");
 	const nodes = atom([{ x: 200, y: 100 }]);
+	const guides = atom([]);
 	const drawings = atom([]);
 	const drafts = atom([]);
 	const rubberBand = atom(undefined);
 	const newNode = view([L.appendTo, L.required("x", "y")], nodes);
 
 	const newDrawing = view([L.appendTo, L.setter((n, o) => n.length > 1 ? n : o)], drawings);
+	const newGuide = view([L.appendTo], guides);
 
 	const tools = {
 		select: {component: RubberBand, parameters: {
@@ -232,6 +240,12 @@
 		}},
 		magnifier: {component: Magnifier, parameters: {
 			frameBoxPath, zoomDelta, zoomFrame
+		}},
+		guides: {component: GuideLiner, parameters: {
+			frameBoxPath, rotationTransform, frameBoxObject, newGuide, cameraScale
+		}},
+		axis: {component: Axis, parameters: {
+			frameBoxPath, rotationTransform, frameBoxObject, newGuide, cameraScale
 		}},
 	};
 
@@ -385,6 +399,7 @@
 			onclick={() => {
 				nodes.value = [];
 				drawings.value = [];
+				guides.value = [];
 			}}>Clear</button
 		>
 
@@ -439,10 +454,11 @@
 
 		<g pointer-events="none">
 
-			<Bounds {nodes} {drawings} rotationTransform={rotationTransform} cameraScale={cameraScale} />
-			<Nodes {nodes} rotationTransform={rotationTransform} cameraScale={cameraScale} />
+			<Bounds {nodes} {drawings} {rotationTransform} {cameraScale} />
+			<Nodes {nodes} {rotationTransform} {cameraScale} />
 
-			<Drawings {drawings} rotationTransform={rotationTransform} cameraScale={cameraScale} />
+			<Drawings {drawings} {rotationTransform} {cameraScale} />
+			<Guides {guides} {frameBoxObject} {rotationTransform} {cameraScale} />
 		</g>
 
 		<svelte:component {...tools[tool.value].parameters} this={tools[tool.value].component}>
