@@ -59,17 +59,13 @@
 	);
 
 	const lassoPath = view(
-		L.iso(
-			(l) =>
-				R.join(
-					",",
-					R.map(R.compose(R.join(" "), R.props(["x", "y"])), l),
-				),
-			(p) =>
-				R.map(
-					R.compose(R.zipWith(R.assoc, ["x", "y"]), R.split(" ")),
-					R.split(',', p),
-				),
+			L.iso(
+				R.compose(
+					R.join(" "), 
+					R.map(R.compose(R.join(","), R.props(["x", "y"])))),
+			R.compose(R.map(
+					R.compose(R.zipWith(R.assoc, ["x", "y"]), R.split(",")),
+				), R.split(' ')),
 		),
 		lasso,
 	);

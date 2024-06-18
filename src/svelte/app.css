@@ -48,11 +48,14 @@ input[type=range]{
 
     /*required for proper track sizing in FF*/
     width: 300px;
+
+    background: none;
+  	border: none;
 }
 
 input[type=range]::-moz-range-track {
     width: 15em;
-    height: 0.4em;
+    height: 4px;
     background: #ddd;
     border: none;
     border-radius: 3px;
@@ -62,12 +65,12 @@ input[type=range]::-moz-range-track {
 input[type=range]::-moz-range-thumb {
     border: none;
     border: none;
-    height: 1.5em;
-    width: 1.5em;
+    height: 1em;
+    width: 1em;
     border-radius: 50%;
-    background: #dd4e40;
+    background: var(--accent-color, #dd4e40);
     margin-top: -0.5em;
-    border: 2px solid #ffe0ee;
+    border: 2px solid var(--accent-color-light, #ffe0ee);
 }
 
 /*hide the outline behind the border*/
@@ -83,11 +86,12 @@ input[type=range]:focus::-moz-range-track {
 input[type=range]{
     -webkit-appearance: none;
     width: 15em;
+    font: inherit;
 }
 
 input[type=range]::-webkit-slider-runnable-track {
     width: 15em;
-    height: 0.4em;
+    height: 4px;
     background: #ddd;
     border: none;
     border-radius: 0.25em;
@@ -97,12 +101,12 @@ input[type=range]::-webkit-slider-runnable-track {
 input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none;
     border: none;
-    height: 1.5em;
-    width: 1.5em;
+    height: 1em;
+    width: 1em;
     border-radius: 50%;
-    background: #dd4e40;
+    background: var(--accent-color, #dd4e40);
     margin-top: -0.5em;
-    border: 2px solid #ffe0ee;
+    border: 2px solid var(--accent-color-light, #ffe0ee);
 }
 
 input[type=range]:focus {

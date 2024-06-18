@@ -23,12 +23,11 @@
 	const rootEl = atom(null);
 	const svgPoint = $derived(rootEl.value ? rootEl.value.ownerSVGElement.createSVGPoint() : null);
 
-	const lasso = atom([]);
+	const path = atom([]);
 
-	const startLasso = view([L.index(0), L.defaults(false)], lasso);
-	const currentLasso = view(
+	const startPath = view([L.index(0), L.defaults(false)], path);
+	const currentPath = view(
 		[
-			L.setter(R.takeLast(200)), // limit the lasso length just for fun
 			L.setter(
 				// discard very close samples
 				R.dropRepeatsWith(
@@ -54,23 +53,20 @@
 			L.removable("x", "y"),
 			L.defaults(false),
 		],
-		lasso,
+		path,
 	);
 
-	const lassoPath = view(
+	const pathPath = view(
 		L.iso(
-			(l) =>
-				R.join(
-					",",
-					R.map(R.compose(R.join(" "), R.props(["x", "y"])), l),
-				),
-			(p) =>
-				R.map(
-					R.compose(R.zipWith(R.assoc, ["x", "y"]), R.split(" ")),
-					R.split(',', p),
-				),
+				R.compose(
+					R.concat('M'),
+					R.join("L",), 
+					R.map(R.compose(R.join(","), R.props(["x", "y"])))),
+			R.compose(R.map(
+					R.compose(R.zipWith(R.assoc, ["x", "y"]), R.split(",")),
+				), R.split('L'), R.slice(1)),
 		),
-		lasso,
+		path,
 	);
 </script>
 
@@ -78,7 +74,7 @@
 	role="button"
 	tabindex="-1"
 	onkeydown={(evt) => {
-		currentLasso.value = undefined;
+		currentPath.value = undefined;
 	}}
 	onpointerdown={(evt) => {
 		if(!U.isLeftButton(evt)) {
@@ -91,11 +87,11 @@
 		const svgP = pt.matrixTransform(
 			rootEl.value.getScreenCTM().inverse(),
 		);
-		startLasso.value = { x: svgP.x, y: svgP.y };
-		currentLasso.value = { x: svgP.x, y: svgP.y };
+		startPath.value = { x: svgP.x, y: svgP.y };
+		currentPath.value = { x: svgP.x, y: svgP.y };
 	}}
 	onpointermove={(evt) => {
-		if (startLasso.value) {
+		if (startPath.value) {
 			const pt = svgPoint;
 			pt.x = evt.clientX;
 			pt.y = evt.clientY;
@@ -103,11 +99,11 @@
 				rootEl.value.getScreenCTM().inverse(),
 			);
 
-			currentLasso.value = { x: svgP.x, y: svgP.y };
+			currentPath.value = { x: svgP.x, y: svgP.y };
 		}
 	}}
 	onpointerup={(evt) => {
-		if (startLasso.value) {
+		if (startPath.value) {
 			const pt = svgPoint;
 			pt.x = evt.clientX;
 			pt.y = evt.clientY;
@@ -116,10 +112,10 @@
 			);
 
 			if(newDrawing) {
-				newDrawing.value = lasso.value
+				newDrawing.value = path.value
 			}
 
-			currentLasso.value = undefined;
+			currentPath.value = undefined;
 		}
 	}}>
 
@@ -133,7 +129,7 @@
 
 	bind:this={rootEl.value}>
 	
-	<polyline points={lassoPath.value} class="draft-line" pointer-events="none" />
+	<path d={pathPath.value} class="draft-line" pointer-events="none" />
 </g>
 	
 

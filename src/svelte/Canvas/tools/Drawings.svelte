@@ -1,0 +1,33 @@
+<script>
+	import * as R from "ramda";
+	import * as U from "../../utils";
+	const { drawings, rotationTransform, cameraScale } = $props();
+</script>
+
+<g transform={rotationTransform.value} pointer-events="none">
+	{#each drawings.value as d}
+		<path
+			fill="none"
+			stroke="black"
+			d={R.compose(
+				R.concat("M"),
+				R.join("L"),
+				R.map(({ x, y }) => `${x},${y}`),
+			)(d)}
+			class="drawing-line"
+			pointer-events="none"
+		/>
+	{/each}
+</g>
+
+<style>
+	.drawing-line {
+		fill: none;
+		stroke: black;
+		fill-opacity: 0.2;
+		fill-rule: evenodd;
+		stroke-width: 4px;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+</style>

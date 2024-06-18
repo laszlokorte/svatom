@@ -40,6 +40,7 @@
 	import Draw from "./tools/Draw.svelte";
 	import RubberBand from "./tools/RubberBand.svelte";
 	import Nodes from "./tools/Nodes.svelte";
+	import Drawings from "./tools/Drawings.svelte";
 	import Bounds from "./tools/Bounds.svelte";
 	import Magnifier from "./tools/Magnifier.svelte";
 
@@ -443,14 +444,10 @@
 
 		<g pointer-events="none">
 
-			<Bounds nodes={nodes} rotationTransform={rotationTransform} cameraScale={cameraScale} />
-			<Nodes nodes={nodes} rotationTransform={rotationTransform} cameraScale={cameraScale} />
+			<Bounds {nodes} {drawings} rotationTransform={rotationTransform} cameraScale={cameraScale} />
+			<Nodes {nodes} rotationTransform={rotationTransform} cameraScale={cameraScale} />
 
-			<g transform={rotationTransform.value}>
-				{#each drawings.value as d} 
-				<polyline fill="none" stroke="black" points={R.compose(R.join(','), R.map(({x,y}) => `${x},${y}`))(d)} class="drawing-line" pointer-events="none" />
-				{/each}
-			</g>
+			<Drawings {drawings} rotationTransform={rotationTransform} cameraScale={cameraScale} />
 		</g>
 
 		<svelte:component {newDrawing} {frameBoxPath} {zoomDelta} {zoomFrame} this={tools[tool.value]} {newNode} rotationTransform={rotationTransform} cameraScale={cameraScale}>
@@ -464,6 +461,16 @@
 			{/snippet}
 		</svelte:component>
 	</svg>
+
+		<div class="scroller-hud">
+			<input
+				type="range"
+				bind:value={cameraZoom.value}
+				min="-3"
+				max="3"
+				step=".1"
+			/>
+		</div>
 	</div>
 </div>
 
@@ -582,6 +589,17 @@
 		grid-template-rows: 1fr;
 	}
 
+	.scroller-hud {
+		grid-area: 1/1/1/1;
+		place-self: end;
+		z-index: 100;
+		background: none;
+		font-size: 0.8em;
+		margin: 0.5em;
+		--accent-color: #ccc;
+		--accent-color-light: #bbb;
+	}
+
 	svg {
 		display: block;
 		width: 100%;
@@ -681,14 +699,4 @@
 		grid-template-rows: 1fr;
 	}
 
-	.drawing-line {
-		fill: none;
-		stroke: black;
-		fill-opacity: 0.2;
-		fill-rule: evenodd;
-		stroke-width: 4px;
-		vector-effect: non-scaling-stroke;
-		stroke-linecap: round;
-		stroke-linejoin: round;
-	}
 </style>

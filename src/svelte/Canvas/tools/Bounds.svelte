@@ -18,13 +18,21 @@
 		string,
 	} from "../../svatom.svelte.js";
 
-	const { nodes, rotationTransform } = $props();
+	const { nodes, drawings, rotationTransform } = $props();
 
 	const padding = 100;
-	const minX = $derived(read([L.elems, "x"], nodes).min - padding);
-	const maxX = $derived(read([L.elems, "x"], nodes).max + padding);
-	const minY = $derived(read([L.elems, "y"], nodes).min - padding);
-	const maxY = $derived(read([L.elems, "y"], nodes).max + padding);
+
+	const branch = L.branch({
+		nodes: L.elems,
+		drawings: [L.elems, L.elems],
+	});
+
+	const allEntities = combine({ nodes, drawings });
+
+	const minX = $derived(read([branch, "x"], allEntities).min - padding);
+	const maxX = $derived(read([branch, "x"], allEntities).max + padding);
+	const minY = $derived(read([branch, "y"], allEntities).min - padding);
+	const maxY = $derived(read([branch, "y"], allEntities).max + padding);
 </script>
 
 <g transform={rotationTransform.value}>
