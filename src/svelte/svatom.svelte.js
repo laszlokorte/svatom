@@ -75,8 +75,12 @@ export function view(opticLense, someAtom) {
 			if (!(transformed instanceof Error)) {
 				someAtom.value = transformed
 			}
-		}
+		},
 	}
+}
+
+export function update(fn, someAtom) {
+	someAtom.value = fn(someAtom.value)
 }
 
 export function failableView(opticLense, someAtom, autoReset = true, errorAtom = atom(null), transientAtom = atom(null)) {

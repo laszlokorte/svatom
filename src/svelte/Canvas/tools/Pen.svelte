@@ -131,7 +131,7 @@
 
 	bind:this={rootEl.value}>
 	
-	<path d={pathPath.value} class="draft-line" pointer-events="none" />
+	<path d={pathPath.value} fill="none" class="draft-line" pointer-events="none" />
 </g>
 	
 
@@ -139,10 +139,10 @@
 
 	.draft-line {
 		fill: none;
-		stroke: gray;
+		stroke: #ff6e60;
 		fill-opacity: 0.2;
-		fill-rule: evenodd;
-		stroke-width: 4px;
+		stroke-width: 6px;
+		stroke-opacity: 0.6;
 		vector-effect: non-scaling-stroke;
 		stroke-linecap: round;
 		stroke-linejoin: round;

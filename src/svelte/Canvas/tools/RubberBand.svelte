@@ -17,6 +17,15 @@
 		autofocusIf,
 		string,
 	} from "../../svatom.svelte.js";
+
+
+	const numberSvgFormat = new Intl.NumberFormat("en-US", {
+		minimumFractionDigits: 5,
+		maximumFractionDigits: 5,
+		useGrouping: false,
+	});
+
+
 	const {frame} = $props();
 	const rootEl = atom(null);
 	const gEl = view(L.setter((g) => g.ownerSVGElement), rootEl);
@@ -39,7 +48,7 @@
 	const rubberBandPath = read(
 		L.getter((b) =>
 			b && b.start && b.end
-				? `M${b.start.x},${b.start.y}H${b.end.x}V${b.end.y}M${b.start.x},${b.start.y}V${b.end.y}H${b.end.x}`
+				? `M${numberSvgFormat.format(b.start.x)},${numberSvgFormat.format(b.start.y)}H${numberSvgFormat.format(b.end.x)}V${numberSvgFormat.format(b.end.y)}M${numberSvgFormat.format(b.start.x)},${numberSvgFormat.format(b.start.y)}V${numberSvgFormat.format(b.end.y)}H${numberSvgFormat.format(b.end.x)}`
 				: "",
 		),
 		rubberBand,
@@ -101,6 +110,7 @@
 
 <path
 	d={rubberBandPath.value}
+	fill="none"
 	class="rubber-band"
 	pointer-events="none"
 />

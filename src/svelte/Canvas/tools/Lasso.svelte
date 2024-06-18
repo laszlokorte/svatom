@@ -121,22 +121,22 @@
 
 	{@render frame()}
 
-
+	<!-- 
 	{#each lasso.value as v, i (i)}
 		<circle class="lasso-anchor" cx={v.x} cy={v.y} r={3 * cameraScale.value}></circle>
-	{/each}
-	<polyline points={lassoPath.value} class="lasso-area" pointer-events="none" />
+	{/each} -->
+	<polyline points={lassoPath.value} fill="none" class="lasso-area" pointer-events="none" />
 
 </g>
 
 	
 
 <style>
-	.lasso-anchor {
+	/*.lasso-anchor {
 		fill: #2374ff;
 		vector-effect: non-scaling-stroke;
 		display: none;
-	}
+	}*/
 
 	.lasso-area {
 		fill: #27b7db;

@@ -73,6 +73,11 @@ input[type=range]::-moz-range-thumb {
     border: 2px solid var(--accent-color-light, #ffe0ee);
 }
 
+input[type=range]::-moz-range-thumb:hover,
+input[type=range]::-moz-range-thumb:active {
+	outline: 1px solid var(--accent-color, #dd4e40);
+}
+
 /*hide the outline behind the border*/
 input[type=range]:-moz-focusring{
     outline: 1px solid white;
@@ -107,6 +112,10 @@ input[type=range]::-webkit-slider-thumb {
     background: var(--accent-color, #dd4e40);
     margin-top: -0.5em;
     border: 2px solid var(--accent-color-light, #ffe0ee);
+}
+input[type=range]::-webkit-slider-thumb:hover,
+input[type=range]::-webkit-slider-thumb:active {
+	outline: 1px solid var(--accent-color, #dd4e40);
 }
 
 input[type=range]:focus {
