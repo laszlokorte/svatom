@@ -76,7 +76,9 @@
 	role="button"
 	tabindex="-1"
 	onkeydown={(evt) => {
-		currentLasso.value = undefined;
+		if((evt.key === "Escape" || evt.key === "Esc")) {
+			currentLasso.value = undefined;
+		}
 	}}
 	onpointerdown={(evt) => {
 		if(!U.isLeftButton(evt)) {

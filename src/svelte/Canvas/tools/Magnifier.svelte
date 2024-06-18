@@ -124,7 +124,7 @@
 
 {#if rubberBandStretched.value}
 <path
-	d={frameBoxPath +' '+ rubberBandPath.value}
+	d={frameBoxPath.value +' '+ rubberBandPath.value}
 	class="rubber-band"
 	pointer-events="none"
 />
@@ -141,7 +141,7 @@
 	}
 
 	.rubber-band {
-		fill: #fff;
+		fill: #aaa;
 		stroke: #aaa;
 		fill-opacity: 0.5;
 		fill-rule: evenodd;

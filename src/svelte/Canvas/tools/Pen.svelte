@@ -74,7 +74,9 @@
 	role="button"
 	tabindex="-1"
 	onkeydown={(evt) => {
-		currentPath.value = undefined;
+		if((evt.key === "Escape" || evt.key === "Esc")) {
+			currentPath.value = undefined;
+		}
 	}}
 	onpointerdown={(evt) => {
 		if(!U.isLeftButton(evt)) {

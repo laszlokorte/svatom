@@ -137,7 +137,7 @@ input[type="text"] {
 	margin: 1em 0;
 }
 
-button {
+.button, button {
 	border: none;
 	background: #222;
 	color: #fff;
@@ -147,15 +147,15 @@ button {
 	cursor: pointer;
 }
 
-button:hover {
+button:hover, .button:hover {
 	background: #333;
 }
 
-button:active {
+button:active, .button:active {
 	background: #000;
 }
 
-button:focus-visible {
+button:focus-visible, .button:focus-visible {
 	outline: 3px solid #00ccdd;
 }
 

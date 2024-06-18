@@ -37,7 +37,7 @@
 
 	import Creator from "./tools/Creator.svelte";
 	import Lasso from "./tools/Lasso.svelte";
-	import Draw from "./tools/Draw.svelte";
+	import Pen from "./tools/Pen.svelte";
 	import RubberBand from "./tools/RubberBand.svelte";
 	import Nodes from "./tools/Nodes.svelte";
 	import Drawings from "./tools/Drawings.svelte";
@@ -49,7 +49,7 @@
 
 	const lastOrNew = L.ifElse(R.length, [L.index(0)], [L.appendTo]);
 
-	const debugFrames = atom(true);
+	const debugFrames = atom(false);
 	const camera = atom({
 		focus: {
 			x: 0,
@@ -95,52 +95,34 @@
 		H${numberSvgFormat.format(camera.value.focus.x - (camera.value.plane.x / 2) * Math.exp(-camera.value.focus.z))}z`,
 	);
 
-	const frameBoxPath = $derived.by(() => {
+	const frameBoxLens = (padding) => L.getter((camera) => {
 		const { minX, minY, width, height } = U.scaleViewBox(
 			{
-				alignmentX: camera.value.frame.alignX,
-				alignmentY: camera.value.frame.alignY,
-				width: camera.value.plane.x * Math.exp(-camera.value.focus.z),
-				height: camera.value.plane.y * Math.exp(-camera.value.focus.z),
+				alignmentX: camera.frame.alignX,
+				alignmentY: camera.frame.alignY,
+				width: camera.plane.x * Math.exp(-camera.focus.z),
+				height: camera.plane.y * Math.exp(-camera.focus.z),
 				minX:
-					camera.value.focus.x -
-					(camera.value.plane.x / 2) *
-						Math.exp(-camera.value.focus.z),
+					camera.focus.x -
+					(camera.plane.x / 2) *
+						Math.exp(-camera.focus.z),
 				minY:
-					camera.value.focus.y -
-					(camera.value.plane.y / 2) *
-						Math.exp(-camera.value.focus.z),
-				scaling: camera.value.frame.aspect,
+					camera.focus.y -
+					(camera.plane.y / 2) *
+						Math.exp(-camera.focus.z),
+				scaling: camera.frame.aspect,
 			},
-			camera.value.frame.size.x,
-			camera.value.frame.size.y,
+			camera.frame.size.x,
+			camera.frame.size.y,
+			padding ? camera.frame.padding : 0,
 		);
-		return `M${numberSvgFormat.format(minX)},${numberSvgFormat.format(minY)}h${numberSvgFormat.format(width)}v${numberSvgFormat.format(height)}h${numberSvgFormat.format(-width)}z`;
-	});
 
-	const frameBoxPathPadded = $derived.by(() => {
-		const { minX, minY, width, height } = U.scaleViewBox(
-			{
-				alignmentX: camera.value.frame.alignX,
-				alignmentY: camera.value.frame.alignY,
-				width: camera.value.plane.x * Math.exp(-camera.value.focus.z),
-				height: camera.value.plane.y * Math.exp(-camera.value.focus.z),
-				minX:
-					camera.value.focus.x -
-					(camera.value.plane.x / 2) *
-						Math.exp(-camera.value.focus.z),
-				minY:
-					camera.value.focus.y -
-					(camera.value.plane.y / 2) *
-						Math.exp(-camera.value.focus.z),
-				scaling: camera.value.frame.aspect,
-			},
-			camera.value.frame.size.x,
-			camera.value.frame.size.y,
-			camera.value.frame.padding,
-		);
 		return `M${numberSvgFormat.format(minX)},${numberSvgFormat.format(minY)}h${numberSvgFormat.format(width)}v${numberSvgFormat.format(height)}h${numberSvgFormat.format(-width)}z`;
-	});
+	})
+
+	const frameBoxPath = read(frameBoxLens(false), camera);
+
+	const frameBoxPathPadded = read(frameBoxLens(true), camera);
 
 	const rotationTransform = read(L.getter((c) => `rotate(${c.focus.w}, ${c.focus.x}, ${c.focus.y})`), camera);
 	const cameraScale = read(L.getter(c => Math.exp(-c.focus.z)), camera)
@@ -206,7 +188,7 @@
 	const zoomDelta = view(['focus', L.setter((delta, oldFocus) => {
 		return {
 			...oldFocus,
-			z: oldFocus.z + delta.dz
+			z: R.clamp(-3,3,oldFocus.z + delta.dz)
 		}
 	})], camera)
 
@@ -224,10 +206,11 @@
 			...oldFocus,
 			x: oldFocus.x + cos * dx + sin * dy,
 			y: oldFocus.y + -sin * dx + cos * dy,
+			z: R.clamp(-3,3,oldFocus.z + 0.5)
 		}
 	})], camera)
 
-	const tool = atom("magnifier");
+	const tool = atom("pen");
 	const nodes = atom([{ x: 200, y: 100 }]);
 	const drawings = atom([]);
 	const drafts = atom([]);
@@ -237,11 +220,21 @@
 	const newDrawing = view([L.appendTo], drawings);
 
 	const tools = {
-		rubber: RubberBand,
-		create: Creator,
-		lasso: Lasso,
-		draw: Draw,
-		magnifier: Magnifier,
+		select: {component: RubberBand, parameters: {
+			
+		}},
+		create: {component: Creator, parameters: {
+			newNode, rotationTransform, cameraScale
+		}},
+		lasso: {component: Lasso, parameters: {
+			cameraScale
+		}},
+		pen: {component: Pen, parameters: {
+			cameraScale, rotationTransform, newDrawing
+		}},
+		magnifier: {component: Magnifier, parameters: {
+			frameBoxPath, zoomDelta, zoomFrame
+		}},
 	};
 
 	const makeSquare = L.lens(R.identity, (n, o) => ({
@@ -388,20 +381,24 @@
 <fieldset>
 	<legend>Tools</legend>
 
-	<button
-		type="button"
-		onclick={() => {
-			nodes.value = [];
-			drawings.value = [];
-		}}>Clear</button
-	>
-
-	{#each Object.keys(tools) as t (t)}
-		<label
-			><input type="radio" bind:group={tool.value} value={t} />
-			{U.capitalize(t)}</label
+	<div class="tool-bar">
+		<button
+			type="button"
+			onclick={() => {
+				nodes.value = [];
+				drawings.value = [];
+			}}>Clear</button
 		>
-	{/each}
+
+		<hr class="tool-bar-sep">
+
+		{#each Object.keys(tools) as t (t)}
+			<label class="button tool-button"
+				><input  class="tool-button-radio" type="radio" bind:group={tool.value} value={t} />
+				{U.capitalize(t)}</label
+			>
+		{/each}
+		</div>
 </fieldset>
 
 <div class="scroller"
@@ -433,7 +430,7 @@
 		<g class:hidden={!debugFrames.value}>
 			<path d={viewBoxPath} class="view-box" stroke-opacity="0.5" stroke="magenta" vector-effect="non-scaling-stroke" stroke-width="8px" fill="#ddffee" />
 			<path
-				d={frameBoxPath}
+				d={frameBoxPath.value}
 				stroke="#ffaaaa"
 				fill="none"
 				vector-effect="non-scaling-stroke"
@@ -450,10 +447,10 @@
 			<Drawings {drawings} rotationTransform={rotationTransform} cameraScale={cameraScale} />
 		</g>
 
-		<svelte:component {newDrawing} {frameBoxPath} {zoomDelta} {zoomFrame} this={tools[tool.value]} {newNode} rotationTransform={rotationTransform} cameraScale={cameraScale}>
+		<svelte:component {...tools[tool.value].parameters} this={tools[tool.value].component}>
 			{#snippet frame()}
 				<path
-					d={frameBoxPath}
+					d={frameBoxPath.value}
 					stroke="none"
 					fill="none"
 					pointer-events="all"
@@ -516,8 +513,8 @@
 		<input
 			type="range"
 			bind:value={cameraAngle.value}
-			min="-90"
-			max="90"
+			min="-180"
+			max="180"
 			step="0.01"
 		/>
 		<button type="button" onclick={_=>{cameraAngle.value = 0}}>reset</button>
@@ -596,8 +593,8 @@
 		background: none;
 		font-size: 0.8em;
 		margin: 0.5em;
-		--accent-color: #ccc;
-		--accent-color-light: #bbb;
+		--accent-color: #005588;
+		--accent-color-light: #bbddff;
 	}
 
 	svg {
@@ -699,4 +696,42 @@
 		grid-template-rows: 1fr;
 	}
 
+	.tool-bar {
+		display: flex;
+		gap: 2px;
+		align-items: stretch;
+		font-family: monospace;
+	}
+
+	.tool-bar-sep {
+		background: black;
+		flex: 2px 0 0;
+		width: auto;
+		height: auto;
+		align-self: stretch;
+		justify-self: start;
+		border: none;
+		margin: 0;
+	}
+
+	.tool-button {
+		background: #555;
+	}
+
+	.tool-button:has(:checked) {
+		background: #cd3e30;
+		color: #fff;
+	}
+
+	.tool-button-radio {
+		background: transparent;
+		color: transparent;
+		border: none;
+		opacity: 0;
+		width: 0;
+		height: 0;
+		padding: 0;
+		display: block;
+		position: absolute;
+	}
 </style>

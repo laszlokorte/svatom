@@ -37,7 +37,9 @@
 	role="button"
 	tabindex="-1"
 	onkeydown={(evt) => {
-		lastDraft.value = undefined;
+		if((evt.key === "Escape" || evt.key === "Esc")) {
+			lastDraft.value = undefined;
+		}
 	}}
 	onpointerdown={(evt) => {
 		
