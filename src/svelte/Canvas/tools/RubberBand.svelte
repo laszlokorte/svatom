@@ -28,8 +28,7 @@
 
 	const {frame} = $props();
 	const rootEl = atom(null);
-	const gEl = view(L.setter((g) => g.ownerSVGElement), rootEl);
-	const svgPoint = $derived(rootEl.value ? rootEl.value.createSVGPoint() : null);
+	const svgPoint = $derived(rootEl.value ? rootEl.value.ownerSVGElement.createSVGPoint() : null);
 
 	const rubberBand = atom(undefined);
 	const rubberBandStart = view(
@@ -57,7 +56,7 @@
 
 <g
 	class="rubber-band-surface"
-	bind:this={gEl.value}
+	bind:this={rootEl.value}
 	role="button"
 	tabindex="-1"
 	onkeydown={(evt) => {

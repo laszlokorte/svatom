@@ -18,11 +18,10 @@
 		string,
 	} from "../../svatom.svelte.js";
 
-	const {frame, cameraScale} = $props();
+	const {frame, cameraScale, rotationTransform} = $props();
 
 	const rootEl = atom(null);
-	const gEl = view(L.setter((g) => g.ownerSVGElement), rootEl);
-	const svgPoint = $derived(rootEl.value ? rootEl.value.createSVGPoint() : null);
+	const svgPoint = $derived(rootEl.value ? rootEl.value.ownerSVGElement.createSVGPoint() : null);
 
 	const lasso = atom([]);
 
@@ -72,7 +71,6 @@
 </script>
 
 <g
-	bind:this={gEl.value}
 	role="button"
 	tabindex="-1"
 	onkeydown={(evt) => {
@@ -121,14 +119,20 @@
 
 	{@render frame()}
 
+
 	<!-- 
 	{#each lasso.value as v, i (i)}
 		<circle class="lasso-anchor" cx={v.x} cy={v.y} r={3 * cameraScale.value}></circle>
 	{/each} -->
-	<polyline points={lassoPath.value} fill="none" class="lasso-area" pointer-events="none" />
 
 </g>
 
+<g
+ 	transform={rotationTransform.value}
+	bind:this={rootEl.value}>
+	<polyline points={lassoPath.value} fill="none" class="lasso-area" pointer-events="none" />
+
+</g>
 	
 
 <style>

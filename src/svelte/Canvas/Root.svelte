@@ -129,7 +129,8 @@
 	const frameBoxPathPadded = read(R.compose(boxPath, frameBoxLens(true)), camera);
 
 	const rotationTransform = read(L.getter((c) => `rotate(${c.focus.w}, ${c.focus.x}, ${c.focus.y})`), camera);
-	const cameraScale = read(L.getter(c => Math.exp(-c.focus.z)), camera)
+	const cameraScale = read(L.reread(c => Math.exp(-c.focus.z)), camera)
+	const cameraOrientation = read(L.reread(c => c.focus.w), camera)
 
 	const degree2rad = (x) => x*Math.PI / 180
 	const rad2degree = (x) => x*180 / Math.PI
@@ -227,25 +228,25 @@
 
 	const tools = {
 		select: {component: RubberBand, parameters: {
-			
+			rotationTransform
 		}},
 		create: {component: Creator, parameters: {
 			newNode, rotationTransform, cameraScale
 		}},
 		lasso: {component: Lasso, parameters: {
-			cameraScale
+			cameraScale, rotationTransform
 		}},
 		pen: {component: Pen, parameters: {
 			cameraScale, rotationTransform, newDrawing
 		}},
 		magnifier: {component: Magnifier, parameters: {
-			frameBoxPath, zoomDelta, zoomFrame
+			frameBoxPath, zoomDelta, zoomFrame, rotationTransform
 		}},
 		guides: {component: GuideLiner, parameters: {
 			frameBoxPath, rotationTransform, frameBoxObject, newGuide, cameraScale
 		}},
 		axis: {component: Axis, parameters: {
-			frameBoxPath, rotationTransform, frameBoxObject, newGuide, cameraScale
+			frameBoxPath, rotationTransform, frameBoxObject, newGuide, cameraScale, cameraOrientation
 		}},
 	};
 

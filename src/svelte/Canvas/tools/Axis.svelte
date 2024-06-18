@@ -26,10 +26,9 @@
 	});
 
 
-	const {frame} = $props();
+	const {frame, rotationTransform, cameraOrientation, cameraScale} = $props();
 	const rootEl = atom(null);
-	const gEl = view(L.setter((g) => g.ownerSVGElement), rootEl);
-	const svgPoint = $derived(rootEl.value ? rootEl.value.createSVGPoint() : null);
+	const svgPoint = $derived(rootEl.value ? rootEl.value.ownerSVGElement.createSVGPoint() : null);
 
 	const axis = atom(undefined);
 	const axisStart = view(
@@ -46,22 +45,21 @@
 	);
 
 	const axisPath = read(
-		L.getter((b) =>
+		L.getter(({axis: b, cameraScale: scale}) =>
 			b && b.start && b.end
 				? `M${numberSvgFormat.format(b.start.x)},${numberSvgFormat.format(b.start.y)}H${numberSvgFormat.format(b.end.x)}
-				m${Math.sign(b.end.x-b.start.x)*(10)},0l${Math.sign(b.end.x-b.start.x)*(-10)},-10v20l${Math.sign(b.end.x-b.start.x)*(10)},-10
+				m${Math.sign(b.end.x-b.start.x)*(10*scale)},0l${Math.sign(b.end.x-b.start.x)*(-10*scale)},${-10*scale}v${2*10*scale}l${Math.sign(b.end.x-b.start.x)*(10*scale)},${-10*scale}
 				M${numberSvgFormat.format(b.start.x)},${numberSvgFormat.format(b.start.y)}V${numberSvgFormat.format(b.end.y)}
-				m0,${Math.sign(b.end.y-b.start.y)*(10)}l-10,${Math.sign(b.end.y-b.start.y)*(-10)}h20l-10,${Math.sign(b.end.y-b.start.y)*(10)}
+				m0,${Math.sign(b.end.y-b.start.y)*(10*scale)}l${-10*scale},${Math.sign(b.end.y-b.start.y)*(-10*scale)}h${2*10*scale}l${-10*scale},${Math.sign(b.end.y-b.start.y)*(10*scale)}
 				`
 				: "",
 		),
-		axis,
+		combine({axis, cameraScale}),
 	);
 </script>
 
 <g
 	class="axis-surface"
-	bind:this={gEl.value}
 	role="button"
 	tabindex="-1"
 	onkeydown={(evt) => {
@@ -112,12 +110,18 @@
 	{@render frame()}
 </g>
 
+<g pointer-events="none" bind:this={rootEl.value} transform={rotationTransform.value}>
+	
+{#if axis.value}
 <path
 	d={axisPath.value}
 	fill="none"
 	class="axis"
 	pointer-events="none"
 />
+{/if}
+</g>
+
 
 <style>
 
