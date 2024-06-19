@@ -254,7 +254,7 @@
 			cameraScale, rotationTransform, newDrawing
 		}},
 		magnifier: {component: Magnifier, parameters: {
-			frameBoxPath, zoomDelta, zoomFrame, rotationTransform, rotationTransformFunction, cameraOrientation,
+			frameBoxPath, zoomDelta, zoomFrame, rotationTransform, rotationTransformFunction, cameraOrientation, cameraScale
 		}},
 		guides: {component: GuideLiner, parameters: {
 			frameBoxPath, rotationTransform, frameBoxObject, newGuide, cameraScale

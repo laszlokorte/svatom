@@ -26,7 +26,7 @@
 	});
 
 
-	const {frame, rotationTransform, rotationTransformFunction, cameraOrientation, zoomDelta, zoomFrame, frameBoxPath } = $props();
+	const {frame, rotationTransform, rotationTransformFunction, cameraOrientation, zoomDelta, zoomFrame, frameBoxPath, cameraScale } = $props();
 	const rootEl = atom(null);
 	const svgPoint = $derived(rootEl.value ? rootEl.value.ownerSVGElement.createSVGPoint() : null);
 
@@ -59,17 +59,17 @@
 	);
 
 	const rubberBandPath = read(
-		L.reread(({b, cos, sin, t}) => {
+		L.reread(({frame, b, cos, sin, t}) => {
 			if(b && b.start && b.size) {
 				const h = cos * b.size.x - sin * b.size.y
 				const v = sin * b.size.x + cos * b.size.y
 
 				const A = L.get(['start', t], b)
-				const B = L.get(t, {x: b.start.x + h*cos, y: b.start.y + sin*h}) // h
-				const C = L.get(t, {x: b.start.x + h*cos + v * sin, y: b.start.y + sin*h - v*cos,}) //h v
-				const D = L.get(t, {x: b.start.x + v*-sin, y: b.start.y + v*cos,}) // v
+				const B = L.get(t, {x: b.start.x + cos*b.size.x, y: b.start.y + sin*b.size.x}) // h
+				const C = L.get(t, {x: b.start.x + cos*b.size.x - sin*b.size.y, y: b.start.y + sin*b.size.x + cos*b.size.y}) //h v
+				const D = L.get(t, {x: b.start.x  - sin*b.size.y, y: b.start.y + cos*b.size.y}) // v
 
-				return `M${numberSvgFormat.format(A.x)},${numberSvgFormat.format(A.y)}
+				return `${frame}M${numberSvgFormat.format(A.x)},${numberSvgFormat.format(A.y)}
 				L${numberSvgFormat.format(B.x)},${numberSvgFormat.format(B.y)}
 				L${numberSvgFormat.format(C.x)},${numberSvgFormat.format(C.y)}
 				L${numberSvgFormat.format(D.x)},${numberSvgFormat.format(D.y)}z`
@@ -78,13 +78,13 @@
 			}
 		}
 		),
-		combine({b: rubberBand, sin:rubberBandAngleSin, cos:rubberBandAngleCos, t: rotationTransformFunction}),
+		combine({frame: frameBoxPath, b: rubberBand, sin:rubberBandAngleSin, cos:rubberBandAngleCos, t: rotationTransformFunction}),
 	);
 
 	const rubberBandTransform = read(L.reread(r => ``), rubberBand)
 
 	const rubberBandStretched = read([L.valueOr({}), L.getter(({start, size}) => {
-			return (start && size && 0 !== size.x && 0 !== size.y) ? true : false
+			return (start && size && 10*cameraScale.value < size.x && 10*cameraScale.value < size.y) ? true : false
 		})], rubberBand)
 </script>
 
@@ -139,8 +139,16 @@
 			);
 
 			if(zoomDelta && !rubberBandStretched.value) {
+				const svgP = pt.matrixTransform(
+					rootEl.value.parentNode.getScreenCTM().inverse(),
+				);
+
 				zoomDelta.value = {dz: evt.altKey ? -.5:.5, px: svgP.x, py: svgP.y }
 			} else if (zoomFrame) {
+				const svgP = pt.matrixTransform(
+					rootEl.value.getScreenCTM().inverse(),
+				);
+
 				zoomFrame.value = {
 					start: rubberBandStart.value,
 					size: rubberBandSize.value,
@@ -161,7 +169,7 @@
 {#if rubberBandStretched.value}
 <path
 	transform="{rubberBandTransform.value}"
-	d={frameBoxPath.value +' '+ rubberBandPath.value}
+	d={rubberBandPath.value}
 	fill="none"
 	class="magnifier"
 	pointer-events="none"
