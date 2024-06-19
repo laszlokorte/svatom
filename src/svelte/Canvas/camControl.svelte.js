@@ -45,7 +45,7 @@ function rotateWithPivotZeroDelta(cam) {
 }
 
 
-function zoomWithPivot(delta, orig) {
+export function zoomWithPivot(delta, orig) {
 	const newZoom = R.clamp(-3, 3, orig.z + delta.dz)
 
 	const realFactor = newZoom - orig.z;

@@ -26,7 +26,7 @@
 	});
 
 
-	const {frame} = $props();
+	const {frame, rotationTransform, cameraOrientation } = $props();
 	const rootEl = atom(null);
 	const svgPoint = $derived(rootEl.value ? rootEl.value.ownerSVGElement.createSVGPoint() : null);
 
@@ -35,33 +35,48 @@
 		[L.removable("start"), "start", L.removable("x", "y")],
 		rubberBand,
 	);
-	const rubberBandEnd = view(
+	const rubberBandSize = view(
 		L.ifElse(
 			R.prop("start"),
-			[L.removable("end"), "end", L.removable("x", "y")],
+			[L.removable("size"), "size", L.removable("x", "y")],
 			L.zero,
 		),
 		rubberBand,
 	);
 
+
+	const rubberBandAngle = view(
+		[L.removable("angle"), "angle"],
+		rubberBand,
+	);
+	const rubberBandAngleCos = view(
+		[L.reread(r => Math.cos(r/180*Math.PI))],
+		rubberBandAngle,
+	);
+	const rubberBandAngleSin = view(
+		[L.reread(r => Math.sin(r/180*Math.PI))],
+		rubberBandAngle,
+	);
+
 	const rubberBandPath = read(
 		L.getter((b) =>
-			b && b.start && b.end
-				? `M${numberSvgFormat.format(b.start.x)},${numberSvgFormat.format(b.start.y)}H${numberSvgFormat.format(b.end.x)}V${numberSvgFormat.format(b.end.y)}M${numberSvgFormat.format(b.start.x)},${numberSvgFormat.format(b.start.y)}V${numberSvgFormat.format(b.end.y)}H${numberSvgFormat.format(b.end.x)}`
+			b && b.start && b.size
+				? `M${numberSvgFormat.format(b.start.x)},${numberSvgFormat.format(b.start.y)}h${numberSvgFormat.format(b.size.x)}v${numberSvgFormat.format(b.size.y)}M${numberSvgFormat.format(b.start.x)},${numberSvgFormat.format(b.start.y)}v${numberSvgFormat.format(b.size.y)}h${numberSvgFormat.format(b.size.x)}`
 				: "",
 		),
 		rubberBand,
 	);
+
+	const rubberBandTransform = read(L.reread(r => `rotate(${r.angle}, ${r.start.x}, ${r.start.y})`), rubberBand)
 </script>
 
 <g
 	class="rubber-band-surface"
-	bind:this={rootEl.value}
 	role="button"
 	tabindex="-1"
 	onkeydown={(evt) => {
 		if((evt.key === "Escape" || evt.key === "Esc")) {
-			rubberBandEnd.value = undefined;
+			rubberBandSize.value = undefined;
 		}
 	}}
 	onpointerdown={(evt) => {
@@ -77,7 +92,8 @@
 			rootEl.value.getScreenCTM().inverse(),
 		);
 		rubberBandStart.value = { x: svgP.x, y: svgP.y };
-		rubberBandEnd.value = { x: svgP.x, y: svgP.y };
+		rubberBandSize.value = { x: 0, y: 0 };
+		rubberBandAngle.value = -cameraOrientation.value
 	}}
 	onpointermove={(evt) => {
 		if (rubberBandStart.value) {
@@ -88,7 +104,10 @@
 				rootEl.value.getScreenCTM().inverse(),
 			);
 
-			rubberBandEnd.value = { x: svgP.x, y: svgP.y };
+
+			const dx = svgP.x - rubberBandStart.value.x
+			const dy = svgP.y - rubberBandStart.value.y
+			rubberBandSize.value = { x: rubberBandAngleCos.value * dx + rubberBandAngleSin.value * dy, y: -rubberBandAngleSin.value * dx + rubberBandAngleCos.value * dy};
 		}
 	}}
 	onpointerup={(evt) => {
@@ -100,19 +119,24 @@
 				rootEl.value.getScreenCTM().inverse(),
 			);
 
-			rubberBandEnd.value = undefined;
+			rubberBandSize.value = undefined;
 		}
 	}}>
 
 	{@render frame()}
 </g>
 
+<g pointer-events="none" transform={rotationTransform.value} bind:this={rootEl.value}>
+
 <path
 	d={rubberBandPath.value}
+	transform="{rubberBandTransform.value}"
 	fill="none"
 	class="rubber-band"
 	pointer-events="none"
 />
+
+</g>
 
 <style>
 

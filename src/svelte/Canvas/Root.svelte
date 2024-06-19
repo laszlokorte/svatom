@@ -129,6 +129,29 @@
 	const frameBoxPathPadded = read(R.compose(boxPath, frameBoxLens(true)), camera);
 
 	const rotationTransform = read(L.getter((c) => `rotate(${c.focus.w}, ${c.focus.x}, ${c.focus.y})`), camera);
+	const rotationTransformFunction = read(L.getter((c) => L.iso(({x,y}) => {
+		const cos = Math.cos(-c.focus.w/180*Math.PI)
+		const sin = Math.sin(-c.focus.w/180*Math.PI)
+
+		const dx = x - c.focus.x
+		const dy = y - c.focus.y
+
+		return {
+			x: c.focus.x + dx * cos + dy * sin,
+			y: c.focus.y + dx * -sin + dy * cos,
+		}
+	}, ({x,y}) => {
+		const cos = Math.cos(c.focus.w/180*Math.PI)
+		const sin = Math.sin(c.focus.w/180*Math.PI)
+
+		const dx = x - c.focus.x
+		const dy = y - c.focus.y
+
+		return {
+			x: c.focus.x + dx * cos + dy * sin,
+			y: c.focus.y + dx * -sin + dy * cos,
+		}
+	})), camera);
 	const cameraScale = read(L.reread(c => Math.exp(-c.focus.z)), camera)
 	const cameraOrientation = read(L.reread(c => c.focus.w), camera)
 
@@ -190,28 +213,19 @@
 	const cameraXScreen = view(["focus", affineLens('x', 'x', 'y', 'w'), numberLens], camera);
 	const cameraYScreen = view(["focus", affineLens('y', 'x', 'y', 'w'), numberLens], camera);
 
-	const zoomDelta = view(['focus', L.setter((delta, oldFocus) => {
-		return {
-			...oldFocus,
-			z: R.clamp(-3,3,oldFocus.z + delta.dz)
-		}
-	})], camera)
+	const zoomDelta = view(['focus', L.setter(Cam.zoomWithPivot)], camera)
 
 	const zoomFrame = view(['focus', L.setter((frame, oldFocus) => {
-		const rad = degree2rad(oldFocus.w)
+		const rad = degree2rad(-frame.angle)
 		const cos = Math.cos(rad)
 		const sin = Math.sin(rad)
 
-		const cx = (frame.start.x + frame.end.x) / 2
-		const cy = (frame.start.y + frame.end.y) / 2
-		const dx = cx - oldFocus.x
-		const dy = cy - oldFocus.y
-
 		return {
 			...oldFocus,
-			x: oldFocus.x + cos * dx + sin * dy,
-			y: oldFocus.y + -sin * dx + cos * dy,
-			z: R.clamp(-3,3,oldFocus.z + 0.5)
+			x: frame.start.x + (cos * frame.size.x + sin * frame.size.y) / 2,
+			y: frame.start.y + (-sin * frame.size.y + cos * frame.size.y) / 2,
+			z: R.clamp(-3,3,oldFocus.z + 0.5),
+			w: -frame.angle,
 		}
 	})], camera)
 
@@ -228,7 +242,7 @@
 
 	const tools = {
 		select: {component: RubberBand, parameters: {
-			rotationTransform
+			rotationTransform, cameraOrientation
 		}},
 		create: {component: Creator, parameters: {
 			newNode, rotationTransform, cameraScale
@@ -240,7 +254,7 @@
 			cameraScale, rotationTransform, newDrawing
 		}},
 		magnifier: {component: Magnifier, parameters: {
-			frameBoxPath, zoomDelta, zoomFrame, rotationTransform
+			frameBoxPath, zoomDelta, zoomFrame, rotationTransform, rotationTransformFunction, cameraOrientation,
 		}},
 		guides: {component: GuideLiner, parameters: {
 			frameBoxPath, rotationTransform, frameBoxObject, newGuide, cameraScale

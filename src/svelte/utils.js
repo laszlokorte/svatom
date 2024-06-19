@@ -68,8 +68,8 @@ export function scaleViewBox({
     }
 }
 
-export function isLeftButton(event) {
-    if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) {
+export function isLeftButton(event, allowModifiers = false) {
+    if (!allowModifiers && (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey)) {
         return false;
     } else if ('buttons' in event) {
         return event.buttons === 1;

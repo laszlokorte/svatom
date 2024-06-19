@@ -102,7 +102,7 @@
 		const intersectionA = R.compose(R.head, R.filter(R.identity), R.map((s) => RayToLineSegment(supX, supY, dirX, dirY, ...s)))(sides)
 		const intersectionB = R.compose(R.head, R.filter(R.identity), R.map((s) => RayToLineSegment(supX, supY, -dirX, -dirY, ...s)))(sides)
 
-		return `M${intersectionA.x},${intersectionA.y}L${intersectionB.x},${intersectionB.y}`
+		return intersectionA && intersectionB ? `M${intersectionA.x},${intersectionA.y}L${intersectionB.x},${intersectionB.y}` : ''
 	}), combine({
 		angle: guideAngle,
 		dist: guideDistance,
