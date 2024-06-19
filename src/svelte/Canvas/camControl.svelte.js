@@ -8,7 +8,7 @@ import {
 	combineWithRest,
 } from "../svatom.svelte.js";
 
-const normRot = R.compose(R.add(-180), R.modulo(R.__, 360), R.add(180))
+const normRot = R.compose(R.add(-180), R.modulo(R.__, 360), R.add(180), R.add(360))
 
 function rotateWithPivot(delta, orig) {
 	const newAngle = normRot(orig.w + delta.dw)
