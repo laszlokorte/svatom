@@ -17,6 +17,16 @@
 		string,
 	} from "./svatom.svelte.js";
 
+	const extractIndices = (pred = R.identity) =>
+		R.compose(
+			R.map(R.prop("i")),
+			R.filter(R.compose(pred, R.prop("v"))),
+			R.addIndex(R.map)((v, i) => ({
+				v,
+				i,
+			})),
+		);
+
 	const tableScroller = atom({ x: 0, y: 0 });
 	const tableScrollerSize = atom({ x: 0, y: 0 });
 
@@ -44,8 +54,12 @@
 		endAccum(0, rowHeadHeights.value),
 	);
 
-	const columnPins = atom(R.repeat(false, 1120));
-	const rowPins = atom(R.repeat(false, 15000));
+	const columnPins = atom(
+		R.concat(R.repeat(true, 2), R.repeat(false, 1120 - 2)),
+	);
+	const rowPins = atom(
+		R.concat(R.repeat(true, 2), R.repeat(false, 15000 - 2)),
+	);
 
 	const columnSizes = atom(
 		R.addIndex(R.map)(blueNoiseSequence)(R.repeat(100, 1120)),
@@ -53,20 +67,78 @@
 	const rowSizes = atom(
 		R.addIndex(R.map)(blueNoiseSequence)(R.repeat(30, 15000)),
 	);
+
+	const columnPinnedIndices = $derived(extractIndices()(columnPins.value));
+	const rowPinnedIndices = $derived(extractIndices()(rowPins.value));
+	const columnNotPinnedIndices = $derived(
+		extractIndices(R.not)(columnPins.value),
+	);
+	const rowNotPinnedIndices = $derived(extractIndices(R.not)(rowPins.value));
+
+	const columnPinnedSizes = $derived(
+		R.map((i) => columnSizes.value[i], columnPinnedIndices),
+	);
+	const rowPinnedSizes = $derived(
+		R.map((i) => rowSizes.value[i], rowPinnedIndices),
+	);
+	const columnNotPinnedSizes = $derived(
+		R.map((i) => columnSizes.value[i], columnNotPinnedIndices),
+	);
+	const rowNotPinnedSizes = $derived(
+		R.map((i) => rowSizes.value[i], rowNotPinnedIndices),
+	);
+
+	const columnPinnedStarts = $derived(
+		R.last(startAccum(columnHeadWidthSum, columnPinnedSizes)),
+	);
+	const [columnPinnedSizeSum, columnPinnedEnds] = $derived(
+		endAccum(columnHeadWidthSum, columnPinnedSizes),
+	);
+	const rowPinnedStarts = $derived(
+		R.last(startAccum(rowHeadHeightSum, rowPinnedSizes)),
+	);
+	const [rowPinnedSizeSum, rowPinnedEnds] = $derived(
+		endAccum(rowHeadHeightSum, rowPinnedSizes),
+	);
+	const firstPinnedColumn = 0;
+	const lastPinnedColumn = $derived(
+		R.findLastIndex(
+			R.gte(tableScroller.value.x + tableScrollerSize.value.x),
+			columnPinnedStarts,
+		),
+	);
+	const firstPinnedRow = 0;
+	const lastPinnedRow = $derived(
+		R.findLastIndex(
+			R.gte(tableScroller.value.y + tableScrollerSize.value.y),
+			rowPinnedStarts,
+		),
+	);
+
+	const visiblePinnedColumns = $derived(() =>
+		G.range(firstPinnedColumn, R.inc(lastPinnedColumn)),
+	);
+	const visiblePinnedRows = $derived(() =>
+		G.range(firstPinnedRow, R.inc(lastPinnedRow)),
+	);
+
 	const columnStarts = $derived(
-		R.last(startAccum(columnHeadWidthSum, columnSizes.value)),
+		R.last(startAccum(columnPinnedSizeSum, columnNotPinnedSizes)),
 	);
 	const [columnSizeSum, columnEnds] = $derived(
-		endAccum(columnHeadWidthSum, columnSizes.value),
+		endAccum(columnPinnedSizeSum, columnNotPinnedSizes),
 	);
 	const rowStarts = $derived(
-		R.last(startAccum(rowHeadHeightSum, rowSizes.value)),
+		R.last(startAccum(rowPinnedSizeSum, rowNotPinnedSizes)),
 	);
 	const [rowSizeSum, rowEnds] = $derived(
-		endAccum(rowHeadHeightSum, rowSizes.value),
+		endAccum(rowPinnedSizeSum, rowNotPinnedSizes),
 	);
 	const firstColumn = $derived(
-		R.findIndex(R.lte(tableScroller.value.x), columnEnds),
+		R.findIndex(
+			R.lte(tableScroller.value.x + columnPinnedSizeSum),
+			columnEnds,
+		),
 	);
 	const lastColumn = $derived(
 		R.findLastIndex(
@@ -75,7 +147,7 @@
 		),
 	);
 	const firstRow = $derived(
-		R.findIndex(R.lte(tableScroller.value.y), rowEnds),
+		R.findIndex(R.lte(tableScroller.value.y + rowPinnedSizeSum), rowEnds),
 	);
 	const lastRow = $derived(
 		R.findLastIndex(
@@ -166,17 +238,41 @@
 				{#each visibleColumns() as x, j (j)}
 					<label
 						class="scroller-head-cell"
-						style:--column-width={columnSizes.value[x]}
+						style:--column-width={columnNotPinnedSizes[x]}
 						style:--column-start={columnStarts[x] -
 							tableScroller.value.x}
 					>
 						{#if i == 0}
-							{String.fromCharCode(65 + (x % 26))}{Math.floor(
-								x / 26,
-							)}
+							{String.fromCharCode(
+								65 + (columnNotPinnedIndices[x] % 26),
+							)}{Math.floor(columnNotPinnedIndices[x] / 26)}
 						{:else}
 							{@const pinnedColumn = view(
-								[x, L.valueOr(false)],
+								[columnNotPinnedIndices[x], L.valueOr(false)],
+								columnPins,
+							)}
+
+							<input
+								type="checkbox"
+								bind:checked={pinnedColumn.value}
+							/>
+						{/if}
+					</label>
+				{/each}
+
+				{#each visiblePinnedColumns() as x, j (j)}
+					<label
+						class="scroller-head-cell scroller-pinned-column"
+						style:--column-width={columnPinnedSizes[x]}
+						style:--column-start={columnPinnedStarts[x]}
+					>
+						{#if i == 0}
+							{String.fromCharCode(
+								65 + (columnPinnedIndices[x] % 26),
+							)}{Math.floor(columnPinnedIndices[x] / 26)}
+						{:else}
+							{@const pinnedColumn = view(
+								[columnPinnedIndices[x], L.valueOr(false)],
 								columnPins,
 							)}
 
@@ -191,10 +287,13 @@
 		{/each}
 
 		{#each visibleRows() as y, i (i)}
-			{@const pinnedRow = view([y, L.valueOr(false)], rowPins)}
+			{@const pinnedRow = view(
+				[rowNotPinnedIndices[y], L.valueOr(false)],
+				rowPins,
+			)}
 			<div
 				class="scroller-row"
-				style:--row-height={rowSizes.value[y]}
+				style:--row-height={rowNotPinnedSizes[y]}
 				style:--row-start={rowStarts[y]}
 			>
 				<div key="heads">
@@ -205,9 +304,9 @@
 							style:--column-start={columnHeadStarts[x]}
 						>
 							{#if j == 0}
-								{String.fromCharCode(65 + (y % 26))}{Math.floor(
-									y / 26,
-								)}
+								{String.fromCharCode(
+									65 + (rowNotPinnedIndices[y] % 26),
+								)}{Math.floor(rowNotPinnedIndices[y] / 26)}
 							{:else}
 								<input
 									type="checkbox"
@@ -220,12 +319,15 @@
 
 				{#each visibleColumns() as x, j (j)}
 					{@const val = view(
-						[`val-${y}-${x}`, L.defaults("")],
+						[
+							`val-${rowNotPinnedIndices[y]}-${columnNotPinnedIndices[x]}`,
+							L.defaults(""),
+						],
 						cellValues,
 					)}
 					<div
 						class="scroller-cell"
-						style:--column-width={columnSizes.value[x]}
+						style:--column-width={columnNotPinnedSizes[x]}
 						style:--column-start={columnStarts[x]}
 					>
 						<input
@@ -233,9 +335,139 @@
 							type="text"
 							placeholder={"-"}
 							bind:value={val.value}
-							use:autofocusIf={isFocused(focus, x, y)}
-							data-cell-x={x}
-							data-cell-y={y}
+							use:autofocusIf={isFocused(
+								focus,
+								columnNotPinnedIndices[x],
+								rowNotPinnedIndices[y],
+							)}
+							data-cell-x={columnNotPinnedIndices[x]}
+							data-cell-y={rowNotPinnedIndices[y]}
+							onfocus={onFocus}
+							onblur={onBlur}
+						/>
+					</div>
+				{/each}
+
+				{#each visiblePinnedColumns() as x, j (j)}
+					{@const val = view(
+						[
+							`val-${rowNotPinnedIndices[y]}-${columnPinnedIndices[x]}`,
+							L.defaults(""),
+						],
+						cellValues,
+					)}
+					<div
+						class="scroller-cell scroller-pinned-column"
+						style:--column-width={columnPinnedSizes[x]}
+						style:--column-start={columnPinnedStarts[x]}
+					>
+						<input
+							class="cell-input"
+							type="text"
+							placeholder={"-"}
+							bind:value={val.value}
+							use:autofocusIf={isFocused(
+								focus,
+								columnPinnedIndices[x],
+								rowNotPinnedIndices[y],
+							)}
+							data-cell-x={columnPinnedIndices[x]}
+							data-cell-y={rowNotPinnedIndices[y]}
+							onfocus={onFocus}
+							onblur={onBlur}
+						/>
+					</div>
+				{/each}
+			</div>
+		{/each}
+
+		{#each visiblePinnedRows() as y, i (i)}
+			{@const pinnedRow = view(
+				[rowPinnedIndices[y], L.valueOr(false)],
+				rowPins,
+			)}
+			<div
+				class="scroller-row scroller-pinned-row"
+				style:--row-height={rowPinnedSizes[y]}
+				style:--row-start={rowPinnedStarts[y]}
+			>
+				<div key="heads">
+					{#each visibleHeadColumns() as x, j (j)}
+						<label
+							class="scroller-head-column"
+							style:--column-width={columnHeadWidths.value[x]}
+							style:--column-start={columnHeadStarts[x]}
+						>
+							{#if j == 0}
+								{String.fromCharCode(
+									65 + (rowPinnedIndices[y] % 26),
+								)}{Math.floor(rowPinnedIndices[y] / 26)}
+							{:else}
+								<input
+									type="checkbox"
+									bind:checked={pinnedRow.value}
+								/>
+							{/if}
+						</label>
+					{/each}
+				</div>
+
+				{#each visibleColumns() as x, j (j)}
+					{@const val = view(
+						[
+							`val-${rowPinnedIndices[y]}-${columnNotPinnedIndices[x]}`,
+							L.defaults(""),
+						],
+						cellValues,
+					)}
+					<div
+						class="scroller-cell"
+						style:--column-width={columnNotPinnedSizes[x]}
+						style:--column-start={columnStarts[x]}
+					>
+						<input
+							class="cell-input"
+							type="text"
+							placeholder={"-"}
+							bind:value={val.value}
+							use:autofocusIf={isFocused(
+								focus,
+								columnNotPinnedIndices[x],
+								rowPinnedIndices[y],
+							)}
+							data-cell-x={columnNotPinnedIndices[x]}
+							data-cell-y={rowPinnedIndices[y]}
+							onfocus={onFocus}
+							onblur={onBlur}
+						/>
+					</div>
+				{/each}
+
+				{#each visiblePinnedColumns() as x, j (j)}
+					{@const val = view(
+						[
+							`val-${rowPinnedIndices[y]}-${columnPinnedIndices[x]}`,
+							L.defaults(""),
+						],
+						cellValues,
+					)}
+					<div
+						class="scroller-cell scroller-pinned-column"
+						style:--column-width={columnPinnedSizes[x]}
+						style:--column-start={columnPinnedStarts[x]}
+					>
+						<input
+							class="cell-input"
+							type="text"
+							placeholder={"-"}
+							bind:value={val.value}
+							use:autofocusIf={isFocused(
+								focus,
+								columnPinnedIndices[x],
+								rowPinnedIndices[y],
+							)}
+							data-cell-x={columnPinnedIndices[x]}
+							data-cell-y={rowPinnedIndices[y]}
 							onfocus={onFocus}
 							onblur={onBlur}
 						/>
@@ -334,6 +566,7 @@
 	}
 
 	.scroller-head-column {
+		accent-color: #660000;
 		position: absolute;
 		text-align: center;
 		border-right: 1px solid #eee;
@@ -353,16 +586,22 @@
 		padding: 2px;
 		background: #aa0b10;
 		color: #fff;
-		z-index: 10;
+		z-index: 200;
+	}
+
+	.scroller-pinned-row .scroller-head-column {
+		background: #333;
+		accent-color: black;
 	}
 
 	.scroller-head-row {
 		position: absolute;
 		top: calc(var(--row-start, 0) * 1px);
-		z-index: 20;
+		z-index: 100;
 	}
 
 	.scroller-head-cell {
+		accent-color: #660000;
 		position: absolute;
 		left: calc(var(--column-start, 0) * 1px);
 
@@ -382,7 +621,22 @@
 		padding: 2px;
 		background: #dd4e40;
 		color: #fff;
-		z-index: 10;
+		z-index: 90;
+	}
+
+	.scroller-head-cell.scroller-pinned-column {
+		background: #333;
+		accent-color: black;
+	}
+
+	.scroller-pinned-column {
+		position: absolute;
+		left: calc(var(--column-start, 0) * 1px);
+	}
+
+	.scroller-pinned-row {
+		position: absolute;
+		top: calc(var(--row-start, 0) * 1px);
 	}
 
 	.cell-input {
@@ -396,9 +650,36 @@
 		box-sizing: border-box;
 		outline: 1px solid #eee;
 	}
+	.scroller-pinned-column .cell-input {
+		background: #fafafa;
+		z-index: 10;
+	}
+
+	.scroller-pinned-row .cell-input {
+		background: #fafafa;
+		z-index: 10;
+	}
+
+	.scroller-pinned-row .scroller-pinned-column .cell-input {
+		background: #efefef;
+		z-index: 20;
+	}
 
 	.cell-input:focus-visible {
 		outline: 3px solid #00ccdd;
-		z-index: 1;
+		background: #effeff !important;
+		z-index: 5;
+	}
+
+	.scroller-pinned-column .cell-input:focus-visible {
+		z-index: 15;
+	}
+
+	.scroller-pinned-row .cell-input:focus-visible {
+		z-index: 15;
+	}
+
+	.scroller-pinned-row .scroller-pinned-column .cell-input:focus-visible {
+		z-index: 40;
 	}
 </style>

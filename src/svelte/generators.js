@@ -1,4 +1,6 @@
-export function* range(start, stop, step = 1) {
+export function* range(start, stop, step = 1, positive = false) {
+	if(!positive && start < 0) return;
+	
 	for (let i = start; i < stop; i+=step) {
 		yield i;
 	}
