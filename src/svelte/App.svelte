@@ -357,6 +357,15 @@
 	</div>
 
 	<h3>Scroll Sync</h3>
+
+	<p>
+		The the scroll positions of the text fields are all in sync. Scrolling
+		one textfield causes the others to scroll as well. The content of the
+		bright yellow text fields can be edited. The content is also
+		synchronzied between all 6 fields. It should be impossible to make them
+		diverge.
+	</p>
+
 	<label class="number-picker"
 		>Horizontal: <input
 			type="range"
@@ -427,6 +436,12 @@
 
 	<h3>Summed Slider</h3>
 
+	<p>
+		The sliders below are setup to always sum to <code>30.0</code>.
+		Increasing the value of one slider decreases all the other slider values
+		and vice versa.
+	</p>
+
 	{#each [0, 1, 2, 3, 4, 5] as i}
 		{@const entry = view(
 			[summingLens(i, 30), L.valueOr(0), L.getter(numberFormat.format)],
@@ -452,9 +467,29 @@
 
 	<h3>Huge Table</h3>
 
+	<p>
+		The table below has 1120 columns and 15000 rows. Each cell can be
+		edited. Columns and rows can be pinned to stay visible while scrolling
+		through the table.
+	</p>
+
 	<Table />
 
 	<h3>How about Canvas</h3>
+
+	<p>
+		Below you find an classic implementation of a simple canvas drawing
+		widget.
+	</p>
+	<p>
+		You can select between various tools. Freehand shapes can be drawn and
+		various elements can be placed on the canvas.
+	</p>
+	<p>
+		Use your mouse wheel to zoom in and out. You the scrollbars to pan the
+		camera or use the controls below the canvas to position the camera in a
+		specific way.
+	</p>
 
 	<Canvas />
 </section>

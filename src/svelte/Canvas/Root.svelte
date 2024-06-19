@@ -491,7 +491,7 @@
 	<legend>Focus</legend>
 	<button type="button" onclick={_=>{
 		update(L.set(['focus', L.values], 0), camera)
-	}}>reset</button>
+	}}>Reset all</button>
 
 	<div class="form-grid">
 		<label class="number-picker"><span>X:</span>
