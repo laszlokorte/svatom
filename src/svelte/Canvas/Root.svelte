@@ -1,7 +1,8 @@
 <script>
 	import * as L from "partial.lenses";
-	import * as G from "../generators";
 	import * as R from "ramda";
+	import * as G from "../generators";
+	import * as Geo from "../geometry";
 	import * as U from "../utils";
 	import * as C from "../combinators";
 	import * as Cam from "./camControl.svelte";
