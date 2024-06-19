@@ -18,17 +18,23 @@
 		string,
 	} from "../../svatom.svelte.js";
 
-
 	const numberSvgFormat = new Intl.NumberFormat("en-US", {
 		minimumFractionDigits: 5,
 		maximumFractionDigits: 5,
 		useGrouping: false,
 	});
 
-
-	const {frame, rotationTransform, cameraOrientation } = $props();
+	const {
+		frameBoxPath,
+		clientToCanvas,
+		frame,
+		rotationTransform,
+		cameraOrientation,
+	} = $props();
 	const rootEl = atom(null);
-	const svgPoint = $derived(rootEl.value ? rootEl.value.ownerSVGElement.createSVGPoint() : null);
+	const svgPoint = $derived(
+		rootEl.value ? rootEl.value.ownerSVGElement.createSVGPoint() : null,
+	);
 
 	const rubberBand = atom(undefined);
 	const rubberBandStart = view(
@@ -44,17 +50,13 @@
 		rubberBand,
 	);
 
-
-	const rubberBandAngle = view(
-		[L.removable("angle"), "angle"],
-		rubberBand,
-	);
+	const rubberBandAngle = view([L.removable("angle"), "angle"], rubberBand);
 	const rubberBandAngleCos = view(
-		[L.reread(r => Math.cos(r/180*Math.PI))],
+		[L.reread((r) => Math.cos((r / 180) * Math.PI))],
 		rubberBandAngle,
 	);
 	const rubberBandAngleSin = view(
-		[L.reread(r => Math.sin(r/180*Math.PI))],
+		[L.reread((r) => Math.sin((r / 180) * Math.PI))],
 		rubberBandAngle,
 	);
 
@@ -67,33 +69,36 @@
 		rubberBand,
 	);
 
-	const rubberBandTransform = read(L.reread(r => `rotate(${r.angle}, ${r.start.x}, ${r.start.y})`), rubberBand)
+	const rubberBandTransform = read(
+		L.reread((r) => `rotate(${r.angle}, ${r.start.x}, ${r.start.y})`),
+		rubberBand,
+	);
 </script>
 
-<g
+<path
+	d={frameBoxPath.value}
+	pointer-events="all"
+	fill="none"
 	class="rubber-band-surface"
 	role="button"
 	tabindex="-1"
 	onkeydown={(evt) => {
-		if((evt.key === "Escape" || evt.key === "Esc")) {
+		if (evt.key === "Escape" || evt.key === "Esc") {
 			rubberBandSize.value = undefined;
 		}
 	}}
 	onpointerdown={(evt) => {
-		
-		if(!U.isLeftButton(evt)) {
-			return
+		if (!U.isLeftButton(evt)) {
+			return;
 		}
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 		const pt = svgPoint;
 		pt.x = evt.clientX;
 		pt.y = evt.clientY;
-		const svgP = pt.matrixTransform(
-			rootEl.value.getScreenCTM().inverse(),
-		);
+		const svgP = pt.matrixTransform(rootEl.value.getScreenCTM().inverse());
 		rubberBandStart.value = { x: svgP.x, y: svgP.y };
 		rubberBandSize.value = { x: 0, y: 0 };
-		rubberBandAngle.value = -cameraOrientation.value
+		rubberBandAngle.value = -cameraOrientation.value;
 	}}
 	onpointermove={(evt) => {
 		if (rubberBandStart.value) {
@@ -104,10 +109,16 @@
 				rootEl.value.getScreenCTM().inverse(),
 			);
 
-
-			const dx = svgP.x - rubberBandStart.value.x
-			const dy = svgP.y - rubberBandStart.value.y
-			rubberBandSize.value = { x: rubberBandAngleCos.value * dx + rubberBandAngleSin.value * dy, y: -rubberBandAngleSin.value * dx + rubberBandAngleCos.value * dy};
+			const dx = svgP.x - rubberBandStart.value.x;
+			const dy = svgP.y - rubberBandStart.value.y;
+			rubberBandSize.value = {
+				x:
+					rubberBandAngleCos.value * dx +
+					rubberBandAngleSin.value * dy,
+				y:
+					-rubberBandAngleSin.value * dx +
+					rubberBandAngleCos.value * dy,
+			};
 		}
 	}}
 	onpointerup={(evt) => {
@@ -121,25 +132,24 @@
 
 			rubberBandSize.value = undefined;
 		}
-	}}>
-
-	{@render frame()}
-</g>
-
-<g pointer-events="none" transform={rotationTransform.value} bind:this={rootEl.value}>
-
-<path
-	d={rubberBandPath.value}
-	transform="{rubberBandTransform.value}"
-	fill="none"
-	class="rubber-band"
-	pointer-events="none"
+	}}
 />
 
+<g
+	pointer-events="none"
+	transform={rotationTransform.value}
+	bind:this={rootEl.value}
+>
+	<path
+		d={rubberBandPath.value}
+		transform={rubberBandTransform.value}
+		fill="none"
+		class="rubber-band"
+		pointer-events="none"
+	/>
 </g>
 
 <style>
-
 	.rubber-band-surface {
 		cursor: default;
 	}
@@ -164,6 +174,4 @@
 			stroke-dashoffset: -100;
 		}
 	}
-
-	
 </style>

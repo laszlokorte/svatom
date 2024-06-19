@@ -18,13 +18,13 @@
 		string,
 	} from "../../svatom.svelte.js";
 
-	const { frame, newNode, rotationTransform, cameraScale } = $props();
-
-	const rootEl = atom(null);
-	$inspect(rootEl.value)
-	const svgPoint = $derived(
-		rootEl.value ? rootEl.value.ownerSVGElement.createSVGPoint() : null,
-	);
+	const {
+		frameBoxPath,
+		clientToCanvas,
+		newNode,
+		rotationTransform,
+		cameraScale,
+	} = $props();
 
 	const drafts = atom([]);
 
@@ -32,67 +32,58 @@
 	const lastDraft = view([L.index(0), L.removable("x", "y")], drafts);
 </script>
 
-<g
+<path
+	d={frameBoxPath.value}
+	pointer-events="all"
+	fill="none"
 	class="creator-surface"
 	role="button"
 	tabindex="-1"
 	onkeydown={(evt) => {
-		if((evt.key === "Escape" || evt.key === "Esc")) {
+		if (evt.key === "Escape" || evt.key === "Esc") {
 			lastDraft.value = undefined;
 		}
 	}}
 	onpointerdown={(evt) => {
-		
-		if(!U.isLeftButton(evt)) {
-			return
+		if (!U.isLeftButton(evt)) {
+			return;
 		}
 		evt.currentTarget.setPointerCapture(evt.pointerId);
-		const pt = svgPoint;
-		pt.x = evt.clientX;
-		pt.y = evt.clientY;
-		const svgP = pt.matrixTransform(
-			rootEl.value.getScreenCTM().inverse(),
-		);
+		const svgP = clientToCanvas(evt.clientX, evt.clientY);
+
 		isDrafting.value = { x: svgP.x, y: svgP.y };
 		lastDraft.value = { x: svgP.x, y: svgP.y };
 	}}
 	onpointermove={(evt) => {
 		if (isDrafting.value) {
-			const pt = svgPoint;
-			pt.x = evt.clientX;
-			pt.y = evt.clientY;
-			const svgP = pt.matrixTransform(
-				rootEl.value.getScreenCTM().inverse(),
-			);
+			const svgP = clientToCanvas(evt.clientX, evt.clientY);
 
 			lastDraft.value = { x: svgP.x, y: svgP.y };
 		}
 	}}
 	onpointerup={(evt) => {
 		if (isDrafting.value) {
-			const pt = svgPoint;
-			pt.x = evt.clientX;
-			pt.y = evt.clientY;
-			const svgP = pt.matrixTransform(
-				rootEl.value.getScreenCTM().inverse(),
-			);
+			const svgP = clientToCanvas(evt.clientX, evt.clientY);
 
 			lastDraft.value = undefined;
-			newNode.value = { x: svgP.x, y: svgP.y }
+			newNode.value = { x: svgP.x, y: svgP.y };
 		}
-	}}>
+	}}
+/>
 
-	{@render frame()}
-</g>
-
-<g pointer-events="none" transform={rotationTransform.value} bind:this={rootEl.value}>
+<g pointer-events="none" transform={rotationTransform.value}>
 	{#each drafts.value as v, i (i)}
-		<circle class="node" opacity="0.2" cx={v.x} cy={v.y} r={Math.min(20, cameraScale.value*20)}></circle>
+		<circle
+			class="node"
+			opacity="0.2"
+			cx={v.x}
+			cy={v.y}
+			r={Math.min(20, cameraScale.value * 20)}
+		></circle>
 	{/each}
 </g>
 
 <style>
-	
 	.creator-surface {
 		cursor: copy;
 	}

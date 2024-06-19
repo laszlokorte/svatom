@@ -33,9 +33,12 @@
 		useGrouping: false,
 	});
 
-	const numberLens = L.lens(x => numberFormat.format(x), x => {
-		return parseFloat(x)
-	})
+	const numberLens = L.lens(
+		(x) => numberFormat.format(x),
+		(x) => {
+			return parseFloat(x);
+		},
+	);
 
 	import Creator from "./tools/Creator.svelte";
 	import Lasso from "./tools/Lasso.svelte";
@@ -49,9 +52,37 @@
 	import Guides from "./tools/Guides.svelte";
 	import Axis from "./tools/Axis.svelte";
 
-	const el = atom(null);
+	const svgElement = atom(null);
+	const svgPoint = read(
+		L.reread((svg) => svg.createSVGPoint()),
+		svgElement,
+	);
 
-	const lastOrNew = L.ifElse(R.length, [L.index(0)], [L.appendTo]);
+	function clientToCanvas(x, y, screen = false) {
+		const pt = svgPoint.value;
+		pt.x = x;
+		pt.y = y;
+		const svgP = pt.matrixTransform(
+			svgElement.value.getScreenCTM().inverse(),
+		);
+
+		if (screen) {
+			return {
+				x: svgP.x,
+				y: svgP.y,
+			};
+		} else {
+			return Geo.rotatePivotXYDegree(
+				camera.value.focus.x,
+				camera.value.focus.y,
+				camera.value.focus.w,
+				{
+					x: svgP.x,
+					y: svgP.y,
+				},
+			);
+		}
+	}
 
 	const debugFrames = atom(false);
 	const camera = atom({
@@ -78,157 +109,195 @@
 		},
 	});
 
-	const preserveAspectRatio = read(cam => cam.frame.aspect
+	const preserveAspectRatioLens = L.reread((cam) =>
+		cam.frame.aspect
 			? `x${cam.frame.alignX}Y${cam.frame.alignY} ${cam.frame.aspect}`
-			: "none", camera);
+			: "none",
+	);
+	const preserveAspectRatio = read(preserveAspectRatioLens, camera);
 
-	const viewBox = view(L.getter(cam => {
+	const viewBoxLens = L.reread((cam) => {
 		return `${numberSvgFormat.format(cam.focus.x - (cam.plane.x / 2) * Math.exp(-cam.focus.z))} 
 		${numberSvgFormat.format(cam.focus.y - (cam.plane.y / 2) * Math.exp(-cam.focus.z))} 
 		${numberSvgFormat.format(cam.plane.x * Math.exp(-cam.focus.z))} 
 		${numberSvgFormat.format(cam.plane.y * Math.exp(-cam.focus.z))}`;
-	}), camera);
+	});
+	const viewBox = view(viewBoxLens, camera);
 
-	const viewBoxPath = view(L.getter(cam => {
+	const viewBoxPathLens = L.reread((cam) => {
 		return `M${numberSvgFormat.format(cam.focus.x - (cam.plane.x / 2) * Math.exp(-cam.focus.z))},
 		${numberSvgFormat.format(cam.focus.y - (cam.plane.y / 2) * Math.exp(-cam.focus.z))}
 		H${numberSvgFormat.format(cam.focus.x + (cam.plane.x / 2) * Math.exp(-cam.focus.z))}
 		V${numberSvgFormat.format(cam.focus.y + (cam.plane.y / 2) * Math.exp(-cam.focus.z))}
 		H${numberSvgFormat.format(cam.focus.x - (cam.plane.x / 2) * Math.exp(-cam.focus.z))}z`;
-	}), camera);
+	});
 
-	const frameBoxLens = (padding) => L.getter((camera) => {
-		const { minX, minY, width, height } = U.scaleViewBox(
-			{
-				alignmentX: camera.frame.alignX,
-				alignmentY: camera.frame.alignY,
-				width: camera.plane.x * Math.exp(-camera.focus.z),
-				height: camera.plane.y * Math.exp(-camera.focus.z),
-				minX:
-					camera.focus.x -
-					(camera.plane.x / 2) *
-						Math.exp(-camera.focus.z),
-				minY:
-					camera.focus.y -
-					(camera.plane.y / 2) *
-						Math.exp(-camera.focus.z),
-				scaling: camera.frame.aspect,
-			},
-			camera.frame.size.x,
-			camera.frame.size.y,
-			padding ? camera.frame.padding : 0,
-		);
+	const viewBoxPath = view(viewBoxPathLens, camera);
 
-		return { minX, minY, width, height }
-	})
+	const frameBoxLens = (padding) =>
+		L.getter((camera) => {
+			const { minX, minY, width, height } = U.scaleViewBox(
+				{
+					alignmentX: camera.frame.alignX,
+					alignmentY: camera.frame.alignY,
+					width: camera.plane.x * Math.exp(-camera.focus.z),
+					height: camera.plane.y * Math.exp(-camera.focus.z),
+					minX:
+						camera.focus.x -
+						(camera.plane.x / 2) * Math.exp(-camera.focus.z),
+					minY:
+						camera.focus.y -
+						(camera.plane.y / 2) * Math.exp(-camera.focus.z),
+					scaling: camera.frame.aspect,
+				},
+				camera.frame.size.x,
+				camera.frame.size.y,
+				padding ? camera.frame.padding : 0,
+			);
 
-	const boxPath = ({ minX, minY, width, height }) => `M${numberSvgFormat.format(minX)},${numberSvgFormat.format(minY)}h${numberSvgFormat.format(width)}v${numberSvgFormat.format(height)}h${numberSvgFormat.format(-width)}z`
+			return { minX, minY, width, height };
+		});
+
+	const boxPathLens = L.reread(
+		({ minX, minY, width, height }) =>
+			`M${numberSvgFormat.format(minX)},${numberSvgFormat.format(minY)}h${numberSvgFormat.format(width)}v${numberSvgFormat.format(height)}h${numberSvgFormat.format(-width)}z`,
+	);
 
 	const frameBoxObject = read(frameBoxLens(false), camera);
-	const frameBoxPath = read(R.compose(boxPath, frameBoxLens(false)), camera);
+	const frameBoxPath = read([frameBoxLens(false), boxPathLens], camera);
 
-	const frameBoxPathPadded = read(R.compose(boxPath, frameBoxLens(true)), camera);
+	const frameBoxPathPadded = read([frameBoxLens(true), boxPathLens], camera);
+	const cameraRotationTransformLens = L.reread(
+		(c) => `rotate(${c.focus.w}, ${c.focus.x}, ${c.focus.y})`,
+	);
 
-	const rotationTransform = read(L.getter((c) => `rotate(${c.focus.w}, ${c.focus.x}, ${c.focus.y})`), camera);
-	const rotationTransformFunction = read(L.getter((c) => L.iso(({x,y}) => {
-		const cos = Math.cos(-c.focus.w/180*Math.PI)
-		const sin = Math.sin(-c.focus.w/180*Math.PI)
+	const rotationTransform = read(cameraRotationTransformLens, camera);
+	const rotationTransformFunction = read(
+		L.getter((c) =>
+			L.iso(
+				({ x, y }) => {
+					const cos = Math.cos((-c.focus.w / 180) * Math.PI);
+					const sin = Math.sin((-c.focus.w / 180) * Math.PI);
 
-		const dx = x - c.focus.x
-		const dy = y - c.focus.y
+					const dx = x - c.focus.x;
+					const dy = y - c.focus.y;
 
-		return {
-			x: c.focus.x + dx * cos + dy * sin,
-			y: c.focus.y + dx * -sin + dy * cos,
-		}
-	}, ({x,y}) => {
-		const cos = Math.cos(c.focus.w/180*Math.PI)
-		const sin = Math.sin(c.focus.w/180*Math.PI)
+					return {
+						x: c.focus.x + dx * cos + dy * sin,
+						y: c.focus.y + dx * -sin + dy * cos,
+					};
+				},
+				({ x, y }) => {
+					const cos = Math.cos((c.focus.w / 180) * Math.PI);
+					const sin = Math.sin((c.focus.w / 180) * Math.PI);
 
-		const dx = x - c.focus.x
-		const dy = y - c.focus.y
+					const dx = x - c.focus.x;
+					const dy = y - c.focus.y;
 
-		return {
-			x: c.focus.x + dx * cos + dy * sin,
-			y: c.focus.y + dx * -sin + dy * cos,
-		}
-	})), camera);
-	const cameraScale = read(L.reread(c => Math.exp(-c.focus.z)), camera)
-	const cameraOrientation = read(L.reread(c => c.focus.w), camera)
+					return {
+						x: c.focus.x + dx * cos + dy * sin,
+						y: c.focus.y + dx * -sin + dy * cos,
+					};
+				},
+			),
+		),
+		camera,
+	);
 
-	const degree2rad = (x) => x*Math.PI / 180
-	const rad2degree = (x) => x*180 / Math.PI
+	const cameraScaleLens = L.reread((c) => Math.exp(-c.focus.z));
+	const cameraScale = read(cameraScaleLens, camera);
+	const cameraOrientationLens = L.reread((c) => c.focus.w);
+	const cameraOrientation = read(cameraOrientationLens, camera);
 
 	const affineLens = (dim, xDim, yDim, angleDim) => {
 		if (dim == xDim) {
-			return L.lens(o=>{
-				const rad = -degree2rad(o[angleDim])
-				const cos = Math.cos(rad)
-				const sin = Math.sin(rad)
-				return (cos * o[xDim] + sin * o[yDim])
-			}, (n, o) => {
-				const rad = -degree2rad(o[angleDim])
-				const cos = Math.cos(rad)
-				const sin = Math.sin(rad)
+			return L.lens(
+				(o) => {
+					const rad = -Geo.degree2rad(o[angleDim]);
+					const cos = Math.cos(rad);
+					const sin = Math.sin(rad);
+					return cos * o[xDim] + sin * o[yDim];
+				},
+				(n, o) => {
+					const rad = -Geo.degree2rad(o[angleDim]);
+					const cos = Math.cos(rad);
+					const sin = Math.sin(rad);
 
-				const oldX= (cos * o[xDim] + sin * o[yDim])
-				const delta = n - oldX
+					const oldX = cos * o[xDim] + sin * o[yDim];
+					const delta = n - oldX;
 
-				return {
-					...o,
-					[xDim]: cos * delta + o[xDim],
-					[yDim]: sin * delta + o[yDim],
-				}
-			})
-		} else if ((dim == yDim)) {
+					return {
+						...o,
+						[xDim]: cos * delta + o[xDim],
+						[yDim]: sin * delta + o[yDim],
+					};
+				},
+			);
+		} else if (dim == yDim) {
+			return L.lens(
+				(o) => {
+					const rad = -Geo.degree2rad(o[angleDim]);
+					const cos = Math.cos(rad);
+					const sin = Math.sin(rad);
+					return -sin * o[xDim] + cos * o[yDim];
+				},
+				(n, o) => {
+					const rad = -Geo.degree2rad(o[angleDim]);
+					const cos = Math.cos(rad);
+					const sin = Math.sin(rad);
 
-			return L.lens(o=>{
-				const rad = -degree2rad(o[angleDim])
-				const cos = Math.cos(rad)
-				const sin = Math.sin(rad)
-				return (-sin * o[xDim] + cos * o[yDim])
-			}, (n, o) => {
-				const rad = -degree2rad(o[angleDim])
-				const cos = Math.cos(rad)
-				const sin = Math.sin(rad)
+					const oldY = -sin * o[xDim] + cos * o[yDim];
+					const delta = n - oldY;
 
-				const oldY= (-sin * o[xDim] + cos * o[yDim])
-				const delta = n - oldY
-
-				return {
-					...o,
-					[xDim]: -sin * delta + o[xDim],
-					[yDim]: cos * delta + o[yDim],
-				}
-			})
+					return {
+						...o,
+						[xDim]: -sin * delta + o[xDim],
+						[yDim]: cos * delta + o[yDim],
+					};
+				},
+			);
 		} else {
-			throw "dim must be xDim or yDim"
+			throw "dim must be xDim or yDim";
 		}
-
-	}
+	};
 
 	const cameraZoom = view(["focus", "z", numberLens], camera);
 	const cameraX = view(["focus", "x", numberLens], camera);
 	const cameraY = view(["focus", "y", numberLens], camera);
 	const cameraAngle = view(["focus", "w", numberLens], camera);
-	const cameraXScreen = view(["focus", affineLens('x', 'x', 'y', 'w'), numberLens], camera);
-	const cameraYScreen = view(["focus", affineLens('y', 'x', 'y', 'w'), numberLens], camera);
+	const cameraXScreen = view(
+		["focus", affineLens("x", "x", "y", "w"), numberLens],
+		camera,
+	);
+	const cameraYScreen = view(
+		["focus", affineLens("y", "x", "y", "w"), numberLens],
+		camera,
+	);
 
-	const zoomDelta = view(['focus', L.setter(Cam.zoomWithPivot)], camera)
+	const zoomDelta = view(["focus", L.setter(Cam.zoomWithPivot)], camera);
 
-	const zoomFrame = view(['focus', L.setter((frame, oldFocus) => {
-		const rad = degree2rad(-frame.angle)
-		const cos = Math.cos(rad)
-		const sin = Math.sin(rad)
+	const cameraZoomFrameLens = [
+		"focus",
+		L.setter((frame, oldFocus) => {
+			const rad = Geo.degree2rad(-frame.angle);
+			const cos = Math.cos(rad);
+			const sin = Math.sin(rad);
 
-		return {
-			...oldFocus,
-			x: frame.start.x + (cos * frame.size.x + sin * frame.size.y) / 2,
-			y: frame.start.y + (-sin * frame.size.y + cos * frame.size.y) / 2,
-			z: R.clamp(-3,3,oldFocus.z + 0.5),
-			w: -frame.angle,
-		}
-	})], camera)
+			return {
+				...oldFocus,
+				x:
+					frame.start.x +
+					(cos * frame.size.x + sin * frame.size.y) / 2,
+				y:
+					frame.start.y +
+					(-sin * frame.size.y + cos * frame.size.y) / 2,
+				z: R.clamp(-3, 3, oldFocus.z + 0.5),
+				w: -frame.angle,
+			};
+		}),
+	];
+
+	const zoomFrame = view(cameraZoomFrameLens, camera);
 
 	const tool = atom("pen");
 	const nodes = atom([{ x: 200, y: 100 }]);
@@ -238,40 +307,96 @@
 	const rubberBand = atom(undefined);
 	const newNode = view([L.appendTo, L.required("x", "y")], nodes);
 
-	const newDrawing = view([L.appendTo, L.setter((n, o) => n.length > 1 ? n : o)], drawings);
+	const newDrawing = view(
+		[L.appendTo, L.setter((n, o) => (n.length > 1 ? n : o))],
+		drawings,
+	);
 	const newGuide = view([L.appendTo], guides);
 
 	const tools = {
-		select: {component: RubberBand, parameters: {
-			rotationTransform, cameraOrientation
-		}},
-		create: {component: Creator, parameters: {
-			newNode, rotationTransform, cameraScale
-		}},
-		lasso: {component: Lasso, parameters: {
-			cameraScale, rotationTransform
-		}},
-		pen: {component: Pen, parameters: {
-			cameraScale, rotationTransform, newDrawing
-		}},
-		magnifier: {component: Magnifier, parameters: {
-			frameBoxPath, zoomDelta, zoomFrame, rotationTransform, rotationTransformFunction, cameraOrientation, cameraScale
-		}},
-		guides: {component: GuideLiner, parameters: {
-			frameBoxPath, rotationTransform, frameBoxObject, newGuide, cameraScale
-		}},
-		axis: {component: Axis, parameters: {
-			frameBoxPath, rotationTransform, frameBoxObject, newGuide, cameraScale, cameraOrientation
-		}},
+		select: {
+			component: RubberBand,
+			parameters: {
+				clientToCanvas,
+				frameBoxPath,
+				rotationTransform,
+				cameraOrientation,
+			},
+		},
+		create: {
+			component: Creator,
+			parameters: {
+				clientToCanvas,
+				frameBoxPath,
+				newNode,
+				rotationTransform,
+				cameraScale,
+			},
+		},
+		lasso: {
+			component: Lasso,
+			parameters: {
+				clientToCanvas,
+				frameBoxPath,
+				cameraScale,
+				rotationTransform,
+			},
+		},
+		pen: {
+			component: Pen,
+			parameters: {
+				clientToCanvas,
+				frameBoxPath,
+				cameraScale,
+				rotationTransform,
+				newDrawing,
+			},
+		},
+		magnifier: {
+			component: Magnifier,
+			parameters: {
+				frameBoxPath,
+				clientToCanvas,
+				zoomDelta,
+				zoomFrame,
+				rotationTransform,
+				rotationTransformFunction,
+				cameraOrientation,
+				cameraScale,
+			},
+		},
+		guides: {
+			component: GuideLiner,
+			parameters: {
+				frameBoxPath,
+				clientToCanvas,
+				rotationTransform,
+				frameBoxObject,
+				newGuide,
+				cameraScale,
+			},
+		},
+		axis: {
+			component: Axis,
+			parameters: {
+				frameBoxPath,
+				clientToCanvas,
+				rotationTransform,
+				frameBoxObject,
+				newGuide,
+				cameraScale,
+				cameraOrientation,
+			},
+		},
 	};
 
-	const makeSquare = L.lens(R.identity, (n, o) => ({
+	const makeSquareLens = L.lens(R.identity, (n, o) => ({
 		...n,
 		x: Math.min(n.x, n.y),
 		y: Math.min(n.x, n.y),
 	}));
 
-	const keepAspect = (xprop, yprop) =>
+	const keepAspectLens = (xprop, yprop) =>
 		L.lens(R.identity, (n, o) => {
 			const oldAspect = yprop(o) / xprop(o);
 
@@ -282,7 +407,7 @@
 			};
 		});
 
-	const makeXSquare = L.lens(R.identity, (n, o) => ({
+	const makeXSquareLens = L.lens(R.identity, (n, o) => ({
 		...n,
 		x: n.y,
 		y: n.y,
@@ -301,7 +426,14 @@
 	const planeHeight = view(["plane", "y"], camera);
 	const alignX = view(["frame", "alignX", L.normalize(U.capitalize)], camera);
 	const alignY = view(["frame", "alignY", L.normalize(U.capitalize)], camera);
-	const alignCombi = view(L.iso(({alignX, alignY}) => `x${alignX}Y${alignY}`, R.compose(R.prop('groups'), R.match(/x(?<alignX>Min|Mid|Max)Y(?<alignY>Min|Mid|Max)/))) , combine({alignX, alignY}))
+	const aspectRatioAlignLens = L.iso(
+		({ alignX, alignY }) => `x${alignX}Y${alignY}`,
+		R.compose(
+			R.prop("groups"),
+			R.match(/x(?<alignX>Min|Mid|Max)Y(?<alignY>Min|Mid|Max)/),
+		),
+	);
+	const alignCombi = view(aspectRatioAlignLens, combine({ alignX, alignY }));
 	const autosize = view(["plane", "autosize"], camera);
 	const alignments = ["Min", "Mid", "Max"];
 
@@ -324,15 +456,17 @@
 	);
 
 	// This is needed to prevent a ceil/floor feedback loop between integer scroll positions of scrollbars and camera position
-	const integerLens = L.lens(x=> Math.round(x), (newV, oldV) => Math.round(newV) + (oldV - Math.round(oldV)))
-	const scrollIso = L.iso(R.add(R.__, 2000), R.subtract(R.__, 2000))
+	const integerLens = L.lens(
+		(x) => Math.round(x),
+		(newV, oldV) => Math.round(newV) + (oldV - Math.round(oldV)),
+	);
+	const scrollIso = L.iso(R.add(R.__, 2000), R.subtract(R.__, 2000));
 
 	const scrollPosition = combine({
 		x: view([scrollIso, integerLens], cameraXScreen),
 		y: view([scrollIso, integerLens], cameraYScreen),
-	})
+	});
 </script>
-
 
 <fieldset>
 	<legend>Frame</legend>
@@ -346,30 +480,60 @@
 		>
 
 		<label
-			><input type="checkbox" value={true} bind:checked={debugFrames.value} /> Show Debug Frames</label
+			><input
+				type="checkbox"
+				value={true}
+				bind:checked={debugFrames.value}
+			/> Show Debug Frames</label
 		>
 	</div>
 
 	<div>
-		
 		<label
-			>Camera Width:<input type="range" min="100" max="1500" bind:value={planeWidth.value}  disabled={autosize.value} /></label
-		><br>
+			>Camera Width:<input
+				type="range"
+				min="100"
+				max="1500"
+				bind:value={planeWidth.value}
+				disabled={autosize.value}
+			/></label
+		><br />
 		<label
-			>Camera Height:<input type="range" min="100" max="1500" bind:value={planeHeight.value}  disabled={autosize.value} /></label
+			>Camera Height:<input
+				type="range"
+				min="100"
+				max="1500"
+				bind:value={planeHeight.value}
+				disabled={autosize.value}
+			/></label
 		>
 	</div>
 
 	<div>
 		Aspect:
 		<label
-			><input type="radio" value="meet" bind:group={aspect.value}  disabled={autosize.value} /> meet</label
+			><input
+				type="radio"
+				value="meet"
+				bind:group={aspect.value}
+				disabled={autosize.value}
+			/> meet</label
 		>
 		<label
-			><input type="radio" value="slice" bind:group={aspect.value}  disabled={autosize.value} /> slice</label
+			><input
+				type="radio"
+				value="slice"
+				bind:group={aspect.value}
+				disabled={autosize.value}
+			/> slice</label
 		>
 		<label
-			><input type="radio" value="none" bind:group={aspect.value}  disabled={autosize.value} /> none</label
+			><input
+				type="radio"
+				value="none"
+				bind:group={aspect.value}
+				disabled={autosize.value}
+			/> none</label
 		>
 	</div>
 	<!-- <div>
@@ -391,20 +555,23 @@
 		{/each}
 	</div> -->
 
-	Alignment: 
+	Alignment:
 	<div class="alignment-grid">
 		{#each alignments as ay (ay)}
 			{#each alignments as ax (ax)}
 				<label tabindex="-1" class="alignment-grid-label"
-					><input disabled={autosize.value} type="radio" value={`x${ax}Y${ay}`} bind:group={alignCombi.value} />
+					><input
+						disabled={autosize.value}
+						type="radio"
+						value={`x${ax}Y${ay}`}
+						bind:group={alignCombi.value}
+					/>
 					x{ax}Y{ay}</label
 				>
 			{/each}
 		{/each}
 	</div>
 </fieldset>
-
-
 
 <fieldset>
 	<legend>Tools</legend>
@@ -419,75 +586,86 @@
 			}}>Clear</button
 		>
 
-		<hr class="tool-bar-sep">
+		<hr class="tool-bar-sep" />
 
 		{#each Object.keys(tools) as t (t)}
 			<label class="button tool-button"
-				><input  class="tool-button-radio" type="radio" bind:group={tool.value} value={t} />
+				><input
+					class="tool-button-radio"
+					type="radio"
+					bind:group={tool.value}
+					value={t}
+				/>
 				{U.capitalize(t)}</label
 			>
 		{/each}
-		</div>
+	</div>
 </fieldset>
 
-<div class="scroller"
-
+<div
+	class="scroller"
 	use:bindScroll={scrollPosition}
 	style:--scroll-total-x={5000}
 	style:--scroll-total-y={6000}
-	>
+>
 	<div class="scroller-body">
 		<svg
-		bind:this={el.value}
-		use:bindSize={view(
-			[
-				"plane",
-				L.ifElse(
-					R.prop("autosize"),
-					L.identity,
-					L.lens(R.identity, (_,o) => o),
-				),
-				L.props("x", "y"),
-			],
-			camera,
-		)}
-		use:bindSize={view(["frame", "size"], camera)}
-		use:Cam.bindEvents={camera}
-		viewBox={viewBox.value}
-		preserveAspectRatio={preserveAspectRatio.value}
-	>
-		<g class:hidden={!debugFrames.value}>
-			<path d={viewBoxPath.value} class="view-box" stroke-opacity="0.5" stroke="magenta" vector-effect="non-scaling-stroke" stroke-width="8px" fill="#ddffee" />
-			<path
-				d={frameBoxPath.value}
-				stroke="#ffaaaa"
-				fill="none"
-				vector-effect="non-scaling-stroke"
-				stroke-width="4px"
-				shape-rendering="crispEdges"
-			/>
-		</g>
-
-		<g pointer-events="none">
-
-			<Bounds {nodes} {drawings} {rotationTransform} {cameraScale} />
-			<Nodes {nodes} {rotationTransform} {cameraScale} />
-
-			<Drawings {drawings} {rotationTransform} {cameraScale} />
-			<Guides {guides} {frameBoxObject} {rotationTransform} {cameraScale} />
-		</g>
-
-		<svelte:component {...tools[tool.value].parameters} this={tools[tool.value].component}>
-			{#snippet frame()}
+			bind:this={svgElement.value}
+			use:bindSize={view(
+				[
+					"plane",
+					L.ifElse(
+						R.prop("autosize"),
+						L.identity,
+						L.lens(R.identity, (_, o) => o),
+					),
+					L.props("x", "y"),
+				],
+				camera,
+			)}
+			use:bindSize={view(["frame", "size"], camera)}
+			use:Cam.bindEvents={camera}
+			viewBox={viewBox.value}
+			preserveAspectRatio={preserveAspectRatio.value}
+		>
+			<g class:hidden={!debugFrames.value}>
+				<path
+					d={viewBoxPath.value}
+					class="view-box"
+					stroke-opacity="0.5"
+					stroke="magenta"
+					vector-effect="non-scaling-stroke"
+					stroke-width="8px"
+					fill="#ddffee"
+				/>
 				<path
 					d={frameBoxPath.value}
-					stroke="none"
+					stroke="#ffaaaa"
 					fill="none"
-					pointer-events="all"
+					vector-effect="non-scaling-stroke"
+					stroke-width="4px"
+					shape-rendering="crispEdges"
 				/>
-			{/snippet}
-		</svelte:component>
-	</svg>
+			</g>
+
+			<g pointer-events="none">
+				<Bounds {nodes} {drawings} {rotationTransform} {cameraScale} />
+				<Nodes {nodes} {rotationTransform} {cameraScale} />
+
+				<Drawings {drawings} {rotationTransform} {cameraScale} />
+				<Guides
+					{guides}
+					{frameBoxObject}
+					{rotationTransform}
+					{cameraScale}
+				/>
+			</g>
+
+			<svelte:component
+				this={tools[tool.value].component}
+				{...tools[tool.value].parameters}
+			></svelte:component>
+		</svg>
 
 		<div class="scroller-hud">
 			<input
@@ -501,79 +679,117 @@
 	</div>
 </div>
 
-
 <fieldset>
 	<legend>Focus</legend>
-	<button type="button" onclick={_=>{
-		update(L.set(['focus', L.values], 0), camera)
-	}}>Reset all</button>
+	<button
+		type="button"
+		onclick={(_) => {
+			update(L.set(["focus", L.values], 0), camera);
+		}}>Reset all</button
+	>
 
 	<div class="form-grid">
-		<label class="number-picker"><span>X:</span>
-		<input
-			type="range"
-			bind:value={cameraX.value}
-			min="-4000"
-			max="4000"
-			step="0.1"
-		/>
-		<button type="button" onclick={_=>{cameraX.value = 0}}>reset</button>
-		<output>{cameraX.value}</output>
+		<label class="number-picker"
+			><span>X:</span>
+			<input
+				type="range"
+				bind:value={cameraX.value}
+				min="-4000"
+				max="4000"
+				step="0.1"
+			/>
+			<button
+				type="button"
+				onclick={(_) => {
+					cameraX.value = 0;
+				}}>reset</button
+			>
+			<output>{cameraX.value}</output>
 		</label>
-		<label class="number-picker"><span>Y:</span>
-		<input
-			type="range"
-			bind:value={cameraY.value}
-			min="-4000"
-			max="4000"
-			step="0.1"
-		/>
-		<button type="button" onclick={_=>{cameraY.value = 0}}>reset</button>
-		<output>{cameraY.value}</output>
+		<label class="number-picker"
+			><span>Y:</span>
+			<input
+				type="range"
+				bind:value={cameraY.value}
+				min="-4000"
+				max="4000"
+				step="0.1"
+			/>
+			<button
+				type="button"
+				onclick={(_) => {
+					cameraY.value = 0;
+				}}>reset</button
+			>
+			<output>{cameraY.value}</output>
 		</label>
-		<label class="number-picker"><span>Zoom:</span>
-		<input
-			type="range"
-			bind:value={cameraZoom.value}
-			min="-3"
-			max="3"
-			step="0.01"
-		/>
-		<button type="button" onclick={_=>{cameraZoom.value = 0}}>reset</button>
-		<output>{cameraZoom.value}</output>
+		<label class="number-picker"
+			><span>Zoom:</span>
+			<input
+				type="range"
+				bind:value={cameraZoom.value}
+				min="-3"
+				max="3"
+				step="0.01"
+			/>
+			<button
+				type="button"
+				onclick={(_) => {
+					cameraZoom.value = 0;
+				}}>reset</button
+			>
+			<output>{cameraZoom.value}</output>
 		</label>
-		<label class="number-picker"><span>Rotation:</span>
-		<input
-			type="range"
-			bind:value={cameraAngle.value}
-			min="-180"
-			max="180"
-			step="0.01"
-		/>
-		<button type="button" onclick={_=>{cameraAngle.value = 0}}>reset</button>
-		<output>{cameraAngle.value}</output>
+		<label class="number-picker"
+			><span>Rotation:</span>
+			<input
+				type="range"
+				bind:value={cameraAngle.value}
+				min="-180"
+				max="180"
+				step="0.01"
+			/>
+			<button
+				type="button"
+				onclick={(_) => {
+					cameraAngle.value = 0;
+				}}>reset</button
+			>
+			<output>{cameraAngle.value}</output>
 		</label>
-		<label class="number-picker"><span>Scroll X:</span>
-		<input
-			type="range"
-			bind:value={cameraXScreen.value}
-			min="-4000"
-			max="4000"
-			step="0.1"
-		/>
-		<button type="button" onclick={_=>{cameraXScreen.value = 0}}>reset</button>
-		<output>{cameraXScreen.value}</output>
+		<label class="number-picker"
+			><span>Scroll X:</span>
+			<input
+				type="range"
+				bind:value={cameraXScreen.value}
+				min="-4000"
+				max="4000"
+				step="0.1"
+			/>
+			<button
+				type="button"
+				onclick={(_) => {
+					cameraXScreen.value = 0;
+				}}>reset</button
+			>
+			<output>{cameraXScreen.value}</output>
 		</label>
-		<label class="number-picker"><span>Scroll Y:</span>
-		<input
-			type="range"
-			bind:value={cameraYScreen.value}
-			min="-4000"
-			max="4000"
-			step="0.1"
-		/>
-		<button type="button" onclick={_=>{cameraYScreen.value = 0}}>reset</button>
-		<output>{cameraYScreen.value}</output>
+		<label class="number-picker"
+			><span>Scroll Y:</span>
+			<input
+				type="range"
+				bind:value={cameraYScreen.value}
+				min="-4000"
+				max="4000"
+				step="0.1"
+			/>
+			<button
+				type="button"
+				onclick={(_) => {
+					cameraYScreen.value = 0;
+				}}>reset</button
+			>
+			<output>{cameraYScreen.value}</output>
 		</label>
 	</div>
 </fieldset>

@@ -68,8 +68,8 @@ export function rotateRad(rad, vec) {
 	const sin = Math.sin(rad)
 
 	return {
-		x: cos * vec.x +  sin * vec.y,
-		x: -sin * vec.x +  cos * vec.y,
+		x: cos * vec.x + sin * vec.y,
+		y: -sin * vec.x + cos * vec.y,
 	}
 }
 
@@ -90,11 +90,11 @@ export function rotatePivotXYRad(px, py, rad, vec) {
 }
 
 export function rad2degree(rad) {
-	return rad * Math.PI / 180
+	return rad / Math.PI * 180
 }
 
 export function degree2rad(deg) {
-	return deg / Math.PI * 180
+	return deg * Math.PI / 180
 }
 
 export function cosDegree(deg) {
