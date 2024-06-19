@@ -232,6 +232,7 @@
 		<div key="head-rows">
 			{#each visibleHeadRows() as y, i (i)}
 				<div
+					name="virtual-{i}"
 					class="scroller-head-row"
 					style:--row-height={rowHeadHeights.value[y]}
 					style:--row-start={rowHeadStarts[y]}
@@ -239,6 +240,7 @@
 					<div key="pinned">
 						{#each visiblePinnedColumns() as x, j (j)}
 							<label
+								name="virtual-{j}"
 								class="scroller-head-cell scroller-pinned-column"
 								style:--column-width={columnPinnedSizes[x]}
 								style:--column-start={columnPinnedStarts[x]}
@@ -268,10 +270,10 @@
 					<div key="not-pinned">
 						{#each visibleColumns() as x, j (j)}
 							<label
+								name="virtual-{j}"
 								class="scroller-head-cell"
 								style:--column-width={columnNotPinnedSizes[x]}
-								style:--column-start={columnStarts[x] -
-									tableScroller.value.x}
+								style:--column-start={columnStarts[x]}
 							>
 								{#if i == 1}
 									{String.fromCharCode(
@@ -307,6 +309,7 @@
 					rowPins,
 				)}
 				<div
+					name="virtual-{i}"
 					class="scroller-row scroller-pinned-row"
 					style:--row-height={rowPinnedSizes[y]}
 					style:--row-start={rowPinnedStarts[y]}
@@ -314,6 +317,7 @@
 					<div key="heads">
 						{#each visibleHeadColumns() as x, j (j)}
 							<label
+								name="virtual-{j}"
 								class="scroller-head-column"
 								style:--column-width={columnHeadWidths.value[x]}
 								style:--column-start={columnHeadStarts[x]}
@@ -342,6 +346,7 @@
 								cellValues,
 							)}
 							<div
+								name="virtual-{j}"
 								class="scroller-cell scroller-pinned-column"
 								style:--column-width={columnPinnedSizes[x]}
 								style:--column-start={columnPinnedStarts[x]}
@@ -375,6 +380,7 @@
 								cellValues,
 							)}
 							<div
+								name="virtual-{j}"
 								class="scroller-cell"
 								style:--column-width={columnNotPinnedSizes[x]}
 								style:--column-start={columnStarts[x]}
@@ -408,6 +414,7 @@
 					rowPins,
 				)}
 				<div
+					name="virtual-{i}"
 					class="scroller-row"
 					style:--row-height={rowNotPinnedSizes[y]}
 					style:--row-start={rowStarts[y]}
@@ -415,6 +422,7 @@
 					<div key="heads">
 						{#each visibleHeadColumns() as x, j (j)}
 							<label
+								name="virtual-{j}"
 								class="scroller-head-column"
 								style:--column-width={columnHeadWidths.value[x]}
 								style:--column-start={columnHeadStarts[x]}
@@ -443,6 +451,7 @@
 								cellValues,
 							)}
 							<div
+								name="virtual-{j}"
 								class="scroller-cell scroller-pinned-column"
 								style:--column-width={columnPinnedSizes[x]}
 								style:--column-start={columnPinnedStarts[x]}
@@ -476,6 +485,7 @@
 								cellValues,
 							)}
 							<div
+								name="virtual-{j}"
 								class="scroller-cell"
 								style:--column-width={columnNotPinnedSizes[x]}
 								style:--column-start={columnStarts[x]}
@@ -630,7 +640,7 @@
 	.scroller-head-cell {
 		accent-color: #660000;
 		position: absolute;
-		left: calc(var(--column-start, 0) * 1px);
+		left: calc(var(--column-start, 0) * 1px - var(--scroll-x, 0) * 1px);
 
 		text-align: center;
 		border-right: 1px solid #eee;
@@ -649,6 +659,18 @@
 		background: #dd4e40;
 		color: #fff;
 		z-index: 90;
+	}
+
+	label.scroller-head-cell:has(input[type="checkbox"]) {
+		cursor: pointer;
+	}
+
+	label.scroller-head-column:has(input[type="checkbox"]) {
+		cursor: pointer;
+	}
+
+	label input[type="checkbox"] {
+		cursor: pointer;
 	}
 
 	.scroller-head-cell.scroller-pinned-column {
@@ -691,6 +713,15 @@
 	.scroller-pinned-row .scroller-pinned-column .cell-input {
 		background: #efefef;
 		z-index: 20;
+	}
+
+	.scroller-cell:has(.cell-input:focus-visible)::after {
+		content: " ";
+		position: absolute;
+		inset: 0;
+		outline: 3px solid #00ccdd;
+		pointer-events: none;
+		z-index: 9999;
 	}
 
 	.cell-input:focus-visible {
