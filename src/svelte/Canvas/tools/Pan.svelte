@@ -31,6 +31,7 @@
 <style>
 	.pan-surface {
 		cursor: grab;
+		outline: none;
 	}
 	.pan-surface.grabbing {
 		cursor: grabbing;

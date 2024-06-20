@@ -63,6 +63,7 @@
 	fill="none"
 	role="button"
 	tabindex="-1"
+	class="lasso-surface"
 	onkeydown={(evt) => {
 		if (evt.key === "Escape" || evt.key === "Esc") {
 			currentLasso.value = undefined;
@@ -109,6 +110,10 @@
 		vector-effect: non-scaling-stroke;
 		display: none;
 	}*/
+
+	.lasso-surface {
+		outline: none;
+	}
 
 	.lasso-area {
 		fill: #27b7db;

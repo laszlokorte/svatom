@@ -72,6 +72,7 @@
 <style>
 	.creator-surface {
 		cursor: copy;
+		outline: none;
 	}
 	.node {
 		fill: #dd4e40;

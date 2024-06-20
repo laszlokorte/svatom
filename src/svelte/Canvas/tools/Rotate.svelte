@@ -56,6 +56,7 @@
 
 <style>
 	.rotate-surface {
+		outline: none;
 		cursor:
 			var(--cursor-a) 16 16,
 			default;

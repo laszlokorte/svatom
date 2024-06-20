@@ -188,6 +188,7 @@
 <style>
 	.magnifier-surface {
 		cursor: zoom-in;
+		outline: none;
 	}
 
 	.magnifier-surface-active {

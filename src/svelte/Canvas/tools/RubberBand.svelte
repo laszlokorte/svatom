@@ -150,6 +150,7 @@
 <style>
 	.rubber-band-surface {
 		cursor: default;
+		outline: none;
 	}
 
 	.rubber-band {

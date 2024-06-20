@@ -48,10 +48,14 @@
 
 	const pathPath = view(
 		L.iso(
-			R.compose(
-				R.concat("M"),
-				R.join("L"),
-				R.map(R.compose(R.join(","), R.props(["x", "y"]))),
+			R.ifElse(
+				R.length,
+				R.compose(
+					R.concat("M"),
+					R.join("L"),
+					R.map(R.compose(R.join(","), R.props(["x", "y"]))),
+				),
+				R.always(""),
 			),
 			R.compose(
 				R.map(R.compose(R.zipWith(R.assoc, ["x", "y"]), R.split(","))),
@@ -64,8 +68,10 @@
 </script>
 
 <path
+	class="pen-surface"
 	d={frameBoxPath.value}
 	pointer-events="all"
+	stroke="none"
 	fill="none"
 	role="button"
 	tabindex="-1"
@@ -114,6 +120,11 @@
 </g>
 
 <style>
+	.pen-surface {
+		cursor: default;
+		outline: none;
+	}
+
 	.draft-line {
 		fill: none;
 		stroke: #ff6e60;
@@ -123,5 +134,9 @@
 		vector-effect: non-scaling-stroke;
 		stroke-linecap: round;
 		stroke-linejoin: round;
+	}
+
+	[role="button"] {
+		outline: none;
 	}
 </style>

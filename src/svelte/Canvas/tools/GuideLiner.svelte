@@ -18,6 +18,7 @@
 		rotationTransform,
 		newGuide,
 		frameBoxObject,
+		cameraScale,
 	} = $props();
 
 	const guide = atom(undefined);
@@ -78,12 +79,12 @@
 
 	const newGuideValid = read(
 		[
-			L.reread((g) => {
-				return g > minDragDistance;
+			L.reread(({ len, scale }) => {
+				return len / scale > minDragDistance;
 			}),
 			L.valueOr(false),
 		],
-		guideLength,
+		combine({ len: guideLength, scale: cameraScale }),
 	);
 
 	const guidePath = read(
@@ -119,7 +120,7 @@
 	d={frameBoxPath.value}
 	pointer-events="all"
 	fill="none"
-	class="guideliner-band-surface"
+	class="guideliner-surface"
 	role="button"
 	tabindex="-1"
 	onkeydown={(evt) => {
@@ -180,8 +181,9 @@
 </g>
 
 <style>
-	.guideliner-band-surface {
+	.guideliner-surface {
 		cursor: default;
+		outline: none;
 	}
 
 	.guide-ray {

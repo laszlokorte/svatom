@@ -114,6 +114,7 @@
 <style>
 	.axis-surface {
 		cursor: default;
+		outline: none;
 	}
 
 	.axis {
