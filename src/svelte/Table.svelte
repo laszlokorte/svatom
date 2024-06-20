@@ -58,11 +58,20 @@
 		endAccum(0, rowHeadHeights.value),
 	);
 
+	const defaultPinNumX = 1;
+	const defaultPinNumY = 2;
+
 	const columnPins = atom(
-		R.concat(R.repeat(true, 2), R.repeat(false, 1120 - 2)),
+		R.concat(
+			R.repeat(true, defaultPinNumX),
+			R.repeat(false, 1120 - defaultPinNumX),
+		),
 	);
 	const rowPins = atom(
-		R.concat(R.repeat(true, 2), R.repeat(false, 15000 - 2)),
+		R.concat(
+			R.repeat(true, defaultPinNumY),
+			R.repeat(false, 15000 - defaultPinNumY),
+		),
 	);
 
 	const columnSizes = atom(
@@ -537,14 +546,24 @@
 		overflow: scroll;
 		height: 30em;
 		position: relative;
+		display: grid;
+		grid-template-columns: 1fr;
+		grid-template-rows: 1fr;
+	}
+
+	.scroller > * {
+		grid-area: 1 / 1;
 	}
 
 	.scroller-measure {
-		position: absolute;
-		top: 0;
+		position: sticky;
 		left: 0;
-		width: 100%;
-		height: 100%;
+		top: 0;
+		display: block;
+		pointer-events: none;
+		border: 1px solid lime;
+		z-index: 10000;
+		place-self: stretch;
 		pointer-events: none;
 	}
 

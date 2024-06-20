@@ -670,25 +670,12 @@
 <div
 	class="scroller"
 	use:bindScroll={scrollPosition}
-	style:--scroll-total-x={Math.max(15000, camera.value.focus.x)}
-	style:--scroll-total-y={Math.max(15000, camera.value.focus.y)}
+	style:--scroll-total-x={5000}
+	style:--scroll-total-y={5000}
 >
 	<div class="scroller-body">
 		<svg
 			bind:this={svgElement.value}
-			use:bindSize={view(
-				[
-					"plane",
-					L.ifElse(
-						R.prop("autosize"),
-						L.identity,
-						L.lens(R.identity, (_, o) => o),
-					),
-					L.props("x", "y"),
-				],
-				camera,
-			)}
-			use:bindSize={view(["frame", "size"], camera)}
 			use:Cam.bindEvents={camera}
 			viewBox={viewBox.value}
 			preserveAspectRatio={preserveAspectRatio.value}
@@ -739,6 +726,23 @@
 				{...tools[tool.value].parameters}
 			></svelte:component>
 		</svg>
+
+		<div
+			class="scroller-measure"
+			use:bindSize={view(
+				[
+					"plane",
+					L.ifElse(
+						R.prop("autosize"),
+						L.identity,
+						L.lens(R.identity, (_, o) => o),
+					),
+					L.props("x", "y"),
+				],
+				camera,
+			)}
+			use:bindSize={view(["frame", "size"], camera)}
+		></div>
 
 		<div class="scroller-hud">
 			<input
@@ -886,6 +890,19 @@
 		box-sizing: border-box;
 	}
 
+	.scroller-measure {
+		position: sticky;
+		left: 0;
+		top: 0;
+		display: block;
+		grid-area: 1/1/1/1;
+		pointer-events: none;
+		border: 1px solid lime;
+		z-index: 10000;
+		place-self: stretch;
+		pointer-events: none;
+	}
+
 	.scroller::after {
 		display: block;
 		content: " ";
@@ -923,9 +940,8 @@
 
 	svg {
 		display: block;
-		width: 100%;
-		height: 100%;
 		grid-area: 1/1/1/1;
+		place-self: stretch;
 	}
 
 	textarea {
