@@ -11,7 +11,7 @@
 		combineWithRest,
 		failableView,
 		bindValue,
-		bindScroll,
+		readScroll,
 		bindSize,
 		autofocusIf,
 		string,
@@ -28,6 +28,10 @@
 		);
 
 	const tableScroller = atom({ x: 0, y: 0 });
+	const tableScrollerPositive = view(
+		L.reread(R.map(R.max(0))),
+		tableScroller,
+	);
 	const tableScrollerSize = atom({ x: 0, y: 0 });
 
 	const focus = atom(null);
@@ -103,14 +107,14 @@
 	const firstPinnedColumn = 0;
 	const lastPinnedColumn = $derived(
 		R.findLastIndex(
-			R.gte(tableScroller.value.x + tableScrollerSize.value.x),
+			R.gte(tableScrollerPositive.value.x + tableScrollerSize.value.x),
 			columnPinnedStarts,
 		),
 	);
 	const firstPinnedRow = 0;
 	const lastPinnedRow = $derived(
 		R.findLastIndex(
-			R.gte(tableScroller.value.y + tableScrollerSize.value.y),
+			R.gte(tableScrollerPositive.value.y + tableScrollerSize.value.y),
 			rowPinnedStarts,
 		),
 	);
@@ -136,22 +140,25 @@
 	);
 	const firstColumn = $derived(
 		R.findIndex(
-			R.lte(tableScroller.value.x + columnPinnedSizeSum),
+			R.lte(tableScrollerPositive.value.x + columnPinnedSizeSum),
 			columnEnds,
 		),
 	);
 	const lastColumn = $derived(
 		R.findLastIndex(
-			R.gte(tableScroller.value.x + tableScrollerSize.value.x),
+			R.gte(tableScrollerPositive.value.x + tableScrollerSize.value.x),
 			columnStarts,
 		),
 	);
 	const firstRow = $derived(
-		R.findIndex(R.lte(tableScroller.value.y + rowPinnedSizeSum), rowEnds),
+		R.findIndex(
+			R.lte(tableScrollerPositive.value.y + rowPinnedSizeSum),
+			rowEnds,
+		),
 	);
 	const lastRow = $derived(
 		R.findLastIndex(
-			R.gte(tableScroller.value.y + tableScrollerSize.value.y),
+			R.gte(tableScrollerPositive.value.y + tableScrollerSize.value.y),
 			rowStarts,
 		),
 	);
@@ -213,11 +220,11 @@
 
 <div
 	class="scroller"
-	use:bindScroll={tableScroller}
+	use:readScroll={tableScroller}
 	style:--scroll-total-x={columnSizeSum}
 	style:--scroll-total-y={rowSizeSum}
-	style:--scroll-x={tableScroller.value.x}
-	style:--scroll-y={tableScroller.value.y}
+	style:--scroll-x={tableScrollerPositive.value.x}
+	style:--scroll-y={tableScrollerPositive.value.y}
 >
 	<div class="scroller-body">
 		<div
@@ -225,9 +232,9 @@
 			style:--row-height={rowHeadHeightSum}
 			style:--column-width={columnHeadWidthSum}
 		>
-			<span>x: {tableScroller.value.x}</span>
+			<span>x: {tableScrollerPositive.value.x}</span>
 			<br />
-			<span>y: {tableScroller.value.y}</span>
+			<span>y: {tableScrollerPositive.value.y}</span>
 		</div>
 		<div key="head-rows">
 			{#each visibleHeadRows() as y, i (i)}

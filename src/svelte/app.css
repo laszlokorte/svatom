@@ -39,22 +39,38 @@ textarea {
 .number-picker {
 	display: flex;
 	align-items: center;
+	flex-wrap: wrap;
 	gap: 1em;
 }
 
+.number-picker-numberfield {
+	width: 3em;
+}
+
+fieldset {
+	margin-inline: 0;
+	border: 1px solid #aaa;
+	display: block;
+}
+
 input[type=range]{
+    -webkit-appearance: none;
+    width: 100%;
+    font: inherit;
+
+    flex-basis: 15em;
     /* fix for FF unable to apply focus style bug  */
     border: 1px solid white; 
 
     /*required for proper track sizing in FF*/
-    width: 300px;
+    width: 100%;
 
     background: none;
   	border: none;
 }
 
 input[type=range]::-moz-range-track {
-    width: 15em;
+    width: 100%;
     height: 4px;
     background: #ddd;
     border: none;
@@ -88,14 +104,8 @@ input[type=range]:focus::-moz-range-track {
     background: #aaa;
 }
 
-input[type=range]{
-    -webkit-appearance: none;
-    width: 15em;
-    font: inherit;
-}
-
 input[type=range]::-webkit-slider-runnable-track {
-    width: 15em;
+    width: 100%;
     height: 4px;
     background: #ddd;
     border: none;
@@ -229,6 +239,8 @@ button:focus-visible, .button:focus-visible {
 	vertical-align: baseline;
 	appearance: revert;
 	padding: 2px;
+   -webkit-overflow-scrolling: none;
+	overflow-scrolling: none;
 }
 
 .asciiart::after {

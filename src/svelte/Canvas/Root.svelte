@@ -554,7 +554,7 @@
 	</div>
 
 	<div>
-		<label
+		<label class="number-picker"
 			>Camera Width:<input
 				type="range"
 				min="100"
@@ -563,7 +563,7 @@
 				disabled={autosize.value}
 			/></label
 		><br />
-		<label
+		<label class="number-picker"
 			>Camera Height:<input
 				type="range"
 				min="100"
@@ -670,8 +670,8 @@
 <div
 	class="scroller"
 	use:bindScroll={scrollPosition}
-	style:--scroll-total-x={5000}
-	style:--scroll-total-y={6000}
+	style:--scroll-total-x={Math.max(15000, camera.value.focus.x)}
+	style:--scroll-total-y={Math.max(15000, camera.value.focus.y)}
 >
 	<div class="scroller-body">
 		<svg
@@ -879,10 +879,11 @@
 		width: 100%;
 		resize: both;
 		overflow: auto;
-		grid-template-columns: 1fr;
-		grid-template-rows: 1fr;
+		grid-template-columns: 100%;
+		grid-template-rows: 100%;
 		border: 3px solid #333;
 		overflow: scroll;
+		box-sizing: border-box;
 	}
 
 	.scroller::after {
@@ -906,6 +907,7 @@
 		overflow: hidden;
 		grid-template-columns: 1fr;
 		grid-template-rows: 1fr;
+		box-sizing: border-box;
 	}
 
 	.scroller-hud {
@@ -1020,6 +1022,7 @@
 
 	.tool-bar {
 		display: flex;
+		flex-wrap: wrap;
 		gap: 2px;
 		align-items: stretch;
 		font-family: monospace;

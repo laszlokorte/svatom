@@ -313,10 +313,27 @@ export function bindScroll(node, someAtom) {
 		node.scrollTop = newY
 	});
 
-	node.addEventListener("scroll", onscroll, { passive: true });
+	node.addEventListener("scroll", onscroll, { passive: false });
 
 	return () => {
-		node.removeEventListener("scroll", onscroll, { passive: true });
+		node.removeEventListener("scroll", onscroll, { passive: false });
+	};
+}
+
+export function readScroll(node, someAtom) {
+	 function onscroll(e) {
+	 	if((!$state.is(someAtom.value.x, node.scrollLeft) || !$state.is(someAtom.value.y, node.scrollTop))) {
+			someAtom.value = {
+				x: node.scrollLeft,
+				y: node.scrollTop,
+			}
+	 	}
+	}
+
+	node.addEventListener("scroll", onscroll, { passive: false });
+
+	return () => {
+		node.removeEventListener("scroll", onscroll, { passive: false });
 	};
 }
 
