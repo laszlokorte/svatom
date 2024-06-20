@@ -8,13 +8,11 @@
 		view,
 		read,
 		combine,
-		combineWithRest,
 		failableView,
 		bindValue,
 		readScroll,
 		bindSize,
 		autofocusIf,
-		string,
 	} from "./svatom.svelte.js";
 
 	const extractIndices = (pred = R.identity) =>
@@ -33,6 +31,14 @@
 		tableScroller,
 	);
 	const tableScrollerSize = atom({ x: 0, y: 0 });
+
+	const tableScrollerEnd = read(
+		({ pos, size }) => ({
+			x: pos.x + size.x,
+			y: pos.y + size.y,
+		}),
+		combine({ pos: tableScrollerPositive, size: tableScrollerSize }),
+	);
 
 	const focus = atom(null);
 
@@ -58,27 +64,29 @@
 		endAccum(0, rowHeadHeights.value),
 	);
 
+	const numColumns = 4000;
+	const numRows = 15000;
 	const defaultPinNumX = 1;
 	const defaultPinNumY = 2;
 
 	const columnPins = atom(
 		R.concat(
 			R.repeat(true, defaultPinNumX),
-			R.repeat(false, 1120 - defaultPinNumX),
+			R.repeat(false, numColumns - defaultPinNumX),
 		),
 	);
 	const rowPins = atom(
 		R.concat(
 			R.repeat(true, defaultPinNumY),
-			R.repeat(false, 15000 - defaultPinNumY),
+			R.repeat(false, numRows - defaultPinNumY),
 		),
 	);
 
 	const columnSizes = atom(
-		R.addIndex(R.map)(blueNoiseSequence)(R.repeat(100, 1120)),
+		R.addIndex(R.map)(blueNoiseSequence)(R.repeat(100, numColumns)),
 	);
 	const rowSizes = atom(
-		R.addIndex(R.map)(blueNoiseSequence)(R.repeat(30, 15000)),
+		R.addIndex(R.map)(blueNoiseSequence)(R.repeat(30, numRows)),
 	);
 
 	const columnPinnedIndices = $derived(extractIndices()(columnPins.value));
@@ -147,27 +155,51 @@
 	const [rowSizeSum, rowEnds] = $derived(
 		endAccum(rowPinnedSizeSum, rowNotPinnedSizes),
 	);
+
+	const tableScrollerOverscrollX = $derived(
+		Math.max(0, tableScrollerEnd.value.x - columnSizeSum),
+	);
+	const tableScrollerOverscrollY = $derived(
+		Math.max(0, tableScrollerEnd.value.y - rowSizeSum),
+	);
+
 	const firstColumn = $derived(
 		R.findIndex(
-			R.lte(tableScrollerPositive.value.x + columnPinnedSizeSum),
+			R.lte(
+				tableScrollerPositive.value.x -
+					tableScrollerOverscrollX +
+					columnPinnedSizeSum,
+			),
 			columnEnds,
 		),
 	);
 	const lastColumn = $derived(
 		R.findLastIndex(
-			R.gte(tableScrollerPositive.value.x + tableScrollerSize.value.x),
+			R.gte(
+				tableScrollerPositive.value.x -
+					tableScrollerOverscrollX +
+					tableScrollerSize.value.x,
+			),
 			columnStarts,
 		),
 	);
 	const firstRow = $derived(
 		R.findIndex(
-			R.lte(tableScrollerPositive.value.y + rowPinnedSizeSum),
+			R.lte(
+				tableScrollerPositive.value.y -
+					tableScrollerOverscrollY +
+					rowPinnedSizeSum,
+			),
 			rowEnds,
 		),
 	);
 	const lastRow = $derived(
 		R.findLastIndex(
-			R.gte(tableScrollerPositive.value.y + tableScrollerSize.value.y),
+			R.gte(
+				tableScrollerPositive.value.y -
+					tableScrollerOverscrollY +
+					tableScrollerSize.value.y,
+			),
 			rowStarts,
 		),
 	);
@@ -232,8 +264,8 @@
 	use:readScroll={tableScroller}
 	style:--scroll-total-x={columnSizeSum}
 	style:--scroll-total-y={rowSizeSum}
-	style:--scroll-x={tableScrollerPositive.value.x}
-	style:--scroll-y={tableScrollerPositive.value.y}
+	style:--scroll-x={tableScrollerPositive.value.x - tableScrollerOverscrollX}
+	style:--scroll-y={tableScrollerPositive.value.y - tableScrollerOverscrollY}
 >
 	<div class="scroller-body">
 		<div

@@ -239,8 +239,7 @@ button:focus-visible, .button:focus-visible {
 	vertical-align: baseline;
 	appearance: revert;
 	padding: 2px;
-   -webkit-overflow-scrolling: none;
-	overflow-scrolling: none;
+    overscroll-behavior: none;
 }
 
 .asciiart::after {
