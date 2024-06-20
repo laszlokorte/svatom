@@ -3,6 +3,7 @@
 	import * as G from "../../generators";
 	import * as R from "ramda";
 	import * as U from "../../utils";
+	import * as Geo from "../../geometry";
 	import * as C from "../../combinators";
 	import {
 		atom,
@@ -31,7 +32,6 @@
 		rotationTransform,
 		newGuide,
 		frameBoxObject,
-		cameraScale,
 	} = $props();
 
 	const guide = atom(undefined);
@@ -109,74 +109,24 @@
 		guide,
 	);
 
-	const newGuideRayPath = read(
-		L.reread(({ angle, dist, frame }) => {
-			const cx = frame.minX + frame.width / 2;
-			const cy = frame.minY + frame.height / 2;
-			const len = Math.sqrt(
-				frame.width * frame.width + frame.height * frame.height,
-			);
-
-			const supX = Math.cos(angle + Math.PI / 2) * dist;
-			const supY = Math.sin(angle + Math.PI / 2) * dist;
-			const dirX = Math.cos(angle);
-			const dirY = Math.sin(angle);
-
-			const sides = [
-				//TOP
-				[frame.minX, frame.minY, frame.minX + frame.width, frame.minY],
-				//LEFT
-				[frame.minX, frame.minY, frame.minX, frame.minY + frame.height],
-				//BOTTOM
-				[
-					frame.minX,
-					frame.minY + frame.height,
-					frame.minX + frame.width,
-					frame.minY + frame.height,
-				],
-				// RIGHT
-				[
-					frame.minX + frame.width,
-					frame.minY,
-					frame.minX + frame.width,
-					frame.minY + frame.height,
-				],
-			];
-
-			const intersectionA = R.compose(
-				R.head,
-				R.filter(R.identity),
-				R.map((s) => RayToLineSegment(supX, supY, dirX, dirY, ...s)),
-			)(sides);
-			const intersectionB = R.compose(
-				R.head,
-				R.filter(R.identity),
-				R.map((s) => RayToLineSegment(supX, supY, -dirX, -dirY, ...s)),
-			)(sides);
-
-			return intersectionA && intersectionB
-				? `M${intersectionA.x},${intersectionA.y}L${intersectionB.x},${intersectionB.y}`
-				: "";
-		}),
+	const newGuideEdgePoints = read(
+		L.reread(
+			R.compose(
+				R.apply(Geo.rayInsideQuad),
+				R.props(["angle", "dist", "quad"]),
+			),
+		),
 		combine({
 			angle: guideAngle,
 			dist: guideDistance,
-			frame: frameBoxObject,
+			quad: read("worldSpace", frameBoxObject),
 		}),
 	);
 
-	function RayToLineSegment(x, y, dx, dy, x1, y1, x2, y2) {
-		let r, s;
-		const d = dx * (y2 - y1) - dy * (x2 - x1);
-		if (d != 0) {
-			r = ((y - y1) * (x2 - x1) - (x - x1) * (y2 - y1)) / d;
-			s = ((y - y1) * dx - (x - x1) * dy) / d;
-			if (r >= 0 && s >= 0 && s <= 1) {
-				return { x: x + r * dx, y: y + r * dy };
-			}
-		}
-		return null;
-	}
+	const newGuideRayPath = read(
+		L.reread(({ a, b }) => `M${a.x},${a.y}L${b.x},${b.y}`),
+		newGuideEdgePoints,
+	);
 </script>
 
 <path
@@ -241,6 +191,22 @@
 		class:valid={newGuideValid.value}
 		pointer-events="none"
 	/>
+
+	{#if newGuideEdgePoints.value}
+		<circle
+			fill="cyan"
+			cx={newGuideEdgePoints.value.a.x}
+			r={20}
+			cy={newGuideEdgePoints.value.a.y}
+		/>
+
+		<circle
+			fill="cyan"
+			cx={newGuideEdgePoints.value.b.x}
+			r={20}
+			cy={newGuideEdgePoints.value.b.y}
+		/>
+	{/if}
 </g>
 
 <style>

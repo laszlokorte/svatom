@@ -114,3 +114,53 @@ export const isoRotationRad = (rad) => L.iso(R.partial(rotateRad, [rad]), R.part
 export const isoScalePivot = (pivot, s) => L.compose(L.inverse(isoTranslation(pivot)), isoScale(s), isoTranslation(pivot))
 export const isoRotationPivotRad = (pivot, rad) => L.compose(L.inverse(isoTranslation(pivot)), isoRotationRad(rad), isoTranslation(pivot))
 export const isoRotationPivotDegree = (pivot, degree) => L.compose(L.inverse(isoTranslation(pivot)), isoRotationRad(degree), isoTranslation(pivot))
+
+export function rayInsideQuad(angle, dist, quad) {
+	const supX = Math.cos(angle + Math.PI / 2) * dist;
+	const supY = Math.sin(angle + Math.PI / 2) * dist;
+
+	const dirX = Math.cos(angle);
+	const dirY = Math.sin(angle);
+
+	const sides = [
+		[quad.a, quad.b],
+		[quad.b, quad.c],
+		[quad.d, quad.c],
+		[quad.a, quad.d],
+	];
+	const intersectionA = R.compose(
+		R.head,
+		R.reject(R.isNil),
+		R.map(([from, to]) => RayToLineSegment(supX, supY, dirX, dirY, 1, from, to)),
+	)(sides);
+
+	const intersectionB = R.compose(
+		R.head,
+		R.reject(R.isNil),
+		R.map(([from, to]) => RayToLineSegment(supX, supY, dirX, dirY, -1, to, from)),
+	)(sides);
+
+
+	return (intersectionA && intersectionB) ? ({a: intersectionA, b: intersectionB}) : undefined
+};
+
+
+function RayToLineSegment(
+	x,
+	y,
+	dx,
+	dy,
+	dir,
+	{ x: x1, y: y1 },
+	{ x: x2, y: y2 }
+) {
+	const d = dx * (y2 - y1) - dy * (x2 - x1);
+	if (d != 0) {
+		const r = ((y - y1) * (x2 - x1) - (x - x1) * (y2 - y1)) / d;
+		const s = ((y - y1) * dx - (x - x1) * dy) / d;
+		if (r*dir >= 0 && s >= 0 && s <= 1) {
+			return { x: x + r * dx, y: y + r * dy };
+		}
+	}
+	return null;
+}

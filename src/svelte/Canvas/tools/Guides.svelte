@@ -1,19 +1,48 @@
 <script>
 	import * as R from "ramda";
+	import * as L from "partial.lenses";
 	import * as U from "../../utils";
+	import * as Geo from "../../geometry";
+	import { read, combine } from "../../svatom.svelte.js";
 	const { guides, rotationTransform, cameraScale, frameBoxObject } = $props();
+
+	const worldQuad = read("worldSpace", frameBoxObject);
+	const segmentPaths = read(
+		L.reread(({ gs, quad }) => {
+			return R.compose(
+				R.map(({ a, b }) => `M${a.x},${a.y}L${b.x},${b.y}`),
+				R.reject(R.isNil),
+				R.map(({ distance, angle }) =>
+					Geo.rayInsideQuad(angle, distance, quad),
+				),
+			)(gs);
+		}),
+		combine({
+			gs: guides,
+			quad: worldQuad,
+		}),
+	);
 </script>
 
 <g transform={rotationTransform.value} pointer-events="none">
-	{#each guides.value as d, i (i)}
+	{#each segmentPaths.value as d, i (i)}
 		<path
 			fill="none"
 			stroke="black"
-			d={`M${Math.cos(d.angle + Math.PI / 2) * d.distance}, ${Math.sin(d.angle + Math.PI / 2) * d.distance} m ${Math.cos(d.angle) * 2500}, ${Math.sin(d.angle) * 2500} l ${Math.cos(d.angle) * -5000}, ${Math.sin(d.angle) * -5000}`}
+			{d}
 			class="drawing-line"
 			pointer-events="none"
 		/>
 	{/each}
+
+	<polygon
+		fill="none"
+		stroke="magenta"
+		stroke-width="2"
+		points="{worldQuad.value.a.x} {worldQuad.value.a.y} {worldQuad.value.b
+			.x} {worldQuad.value.b.y} {worldQuad.value.c.x} {worldQuad.value.c
+			.y} {worldQuad.value.d.x} {worldQuad.value.d.y}"
+	/>
 </g>
 
 <style>

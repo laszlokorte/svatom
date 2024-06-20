@@ -109,11 +109,34 @@
 		},
 	});
 
-	const preserveAspectRatioLens = L.reread((cam) =>
-		cam.frame.aspect
-			? `x${cam.frame.alignX}Y${cam.frame.alignY} ${cam.frame.aspect}`
-			: "none",
+	const aspectRatioAlignLens = L.iso(
+		({ alignX, alignY }) => `x${alignX}Y${alignY}`,
+		R.compose(
+			R.prop("groups"),
+			R.match(/x(?<alignX>Min|Mid|Max)Y(?<alignY>Min|Mid|Max)/),
+		),
 	);
+	const preserveAspectRatioLens = [
+		"frame",
+		L.props("aspect", "alignX", "alignY"),
+		L.iso(
+			(frame) =>
+				frame.aspect
+					? `x${frame.alignX}Y${frame.alignY} ${frame.aspect}`
+					: "none",
+			R.compose(
+				R.ifElse(
+					R.prop("noAspect"),
+					R.compose(R.objOf("aspect"), R.prop("noAspect")),
+					R.props(["alignX", "alignY", "aspect"]),
+				),
+				R.prop("groups"),
+				R.match(
+					/^((?<noAspect>none)|x(?:(?<alignX>Min|Mid|Max)Y(?<alignY>Min|Mid|Max) (?<aspect>meet|slice)))$/,
+				),
+			),
+		),
+	];
 	const preserveAspectRatio = read(preserveAspectRatioLens, camera);
 
 	const viewBoxLens = L.reread((cam) => {
@@ -135,7 +158,7 @@
 	const viewBoxPath = view(viewBoxPathLens, camera);
 
 	const frameBoxLens = (padding) =>
-		L.getter((camera) => {
+		L.reread((camera) => {
 			const { minX, minY, width, height } = U.scaleViewBox(
 				{
 					alignmentX: camera.frame.alignX,
@@ -155,7 +178,35 @@
 				padding ? camera.frame.padding : 0,
 			);
 
-			return { minX, minY, width, height };
+			return {
+				screenSpaceAligned: { minX, minY, width, height },
+				worldSpace: {
+					a: Geo.rotatePivotXYDegree(
+						camera.focus.x,
+						camera.focus.y,
+						camera.focus.w,
+						{ x: minX, y: minY },
+					),
+					b: Geo.rotatePivotXYDegree(
+						camera.focus.x,
+						camera.focus.y,
+						camera.focus.w,
+						{ x: minX + width, y: minY },
+					),
+					c: Geo.rotatePivotXYDegree(
+						camera.focus.x,
+						camera.focus.y,
+						camera.focus.w,
+						{ x: minX + width, y: minY + height },
+					),
+					d: Geo.rotatePivotXYDegree(
+						camera.focus.x,
+						camera.focus.y,
+						camera.focus.w,
+						{ x: minX, y: minY + height },
+					),
+				},
+			};
 		});
 
 	const boxPathLens = L.reread(
@@ -164,16 +215,22 @@
 	);
 
 	const frameBoxObject = read(frameBoxLens(false), camera);
-	const frameBoxPath = read([frameBoxLens(false), boxPathLens], camera);
+	const frameBoxPath = read(
+		[frameBoxLens(false), "screenSpaceAligned", boxPathLens],
+		camera,
+	);
 
-	const frameBoxPathPadded = read([frameBoxLens(true), boxPathLens], camera);
+	const frameBoxPathPadded = read(
+		[frameBoxLens(true), "screenSpaceAligned", boxPathLens],
+		camera,
+	);
 	const cameraRotationTransformLens = L.reread(
 		(c) => `rotate(${c.focus.w}, ${c.focus.x}, ${c.focus.y})`,
 	);
 
 	const rotationTransform = read(cameraRotationTransformLens, camera);
 	const rotationTransformFunction = read(
-		L.getter((c) =>
+		L.reread((c) =>
 			L.iso(
 				({ x, y }) => {
 					const cos = Math.cos((-c.focus.w / 180) * Math.PI);
@@ -382,7 +439,6 @@
 				frameBoxPath,
 				clientToCanvas,
 				rotationTransform,
-				frameBoxObject,
 				newGuide,
 				cameraScale,
 				cameraOrientation,
@@ -426,13 +482,6 @@
 	const planeHeight = view(["plane", "y"], camera);
 	const alignX = view(["frame", "alignX", L.normalize(U.capitalize)], camera);
 	const alignY = view(["frame", "alignY", L.normalize(U.capitalize)], camera);
-	const aspectRatioAlignLens = L.iso(
-		({ alignX, alignY }) => `x${alignX}Y${alignY}`,
-		R.compose(
-			R.prop("groups"),
-			R.match(/x(?<alignX>Min|Mid|Max)Y(?<alignY>Min|Mid|Max)/),
-		),
-	);
 	const alignCombi = view(aspectRatioAlignLens, combine({ alignX, alignY }));
 	const autosize = view(["plane", "autosize"], camera);
 	const alignments = ["Min", "Mid", "Max"];
@@ -840,10 +889,10 @@
 		place-self: end;
 		z-index: 100;
 		background: none;
-		font-size: 0.8em;
-		margin: 0.5em;
-		--accent-color: #005588;
-		--accent-color-light: #bbddff;
+		font-size: 0.5em;
+		margin: 0.5em 1em;
+		--accent-color: #aa4466;
+		--accent-color-light: #cc4466;
 	}
 
 	svg {

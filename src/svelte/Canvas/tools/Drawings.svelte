@@ -1,6 +1,7 @@
 <script>
 	import * as R from "ramda";
 	import * as U from "../../utils";
+
 	const { drawings, rotationTransform, cameraScale } = $props();
 </script>
 
