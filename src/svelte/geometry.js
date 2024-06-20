@@ -128,20 +128,13 @@ export function rayInsideQuad(angle, dist, quad) {
 		[quad.d, quad.c],
 		[quad.a, quad.d],
 	];
-	const intersectionA = R.compose(
-		R.head,
+	const [intersectionA, intersectionB] = R.compose(
+		R.take(2),
 		R.reject(R.isNil),
-		R.map(([from, to]) => RayToLineSegment(supX, supY, dirX, dirY, 1, from, to)),
+		R.map(([from, to]) => RayToLineSegment(supX, supY, dirX, dirY, from, to)),
 	)(sides);
 
-	const intersectionB = R.compose(
-		R.head,
-		R.reject(R.isNil),
-		R.map(([from, to]) => RayToLineSegment(supX, supY, dirX, dirY, -1, to, from)),
-	)(sides);
-
-
-	return (intersectionA && intersectionB) ? ({a: intersectionA, b: intersectionB}) : undefined
+	return (intersectionA && intersectionB) ? ({a: intersectionA, b: intersectionB, sup: {x: supX, y:supY, dx: dirX, dy: dirY}}) : undefined
 };
 
 
@@ -150,7 +143,6 @@ function RayToLineSegment(
 	y,
 	dx,
 	dy,
-	dir,
 	{ x: x1, y: y1 },
 	{ x: x2, y: y2 }
 ) {
@@ -158,7 +150,7 @@ function RayToLineSegment(
 	if (d != 0) {
 		const r = ((y - y1) * (x2 - x1) - (x - x1) * (y2 - y1)) / d;
 		const s = ((y - y1) * dx - (x - x1) * dy) / d;
-		if (r*dir >= 0 && s >= 0 && s <= 1) {
+		if (s >= 0 && s <= 1) {
 			return { x: x + r * dx, y: y + r * dy };
 		}
 	}

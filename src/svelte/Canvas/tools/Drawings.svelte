@@ -1,8 +1,7 @@
 <script>
 	import * as R from "ramda";
-	import * as U from "../../utils";
 
-	const { drawings, rotationTransform, cameraScale } = $props();
+	const { drawings, rotationTransform } = $props();
 </script>
 
 <g transform={rotationTransform.value} pointer-events="none">

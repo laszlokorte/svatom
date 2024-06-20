@@ -1,22 +1,8 @@
 <script>
 	import * as L from "partial.lenses";
-	import * as G from "../../generators";
 	import * as R from "ramda";
 	import * as U from "../../utils";
-	import * as C from "../../combinators";
-	import {
-		atom,
-		view,
-		read,
-		combine,
-		combineWithRest,
-		failableView,
-		bindValue,
-		bindScroll,
-		bindSize,
-		autofocusIf,
-		string,
-	} from "../../svatom.svelte.js";
+	import { atom, view, read, combine } from "../../svatom.svelte.js";
 
 	const numberSvgFormat = new Intl.NumberFormat("en-US", {
 		minimumFractionDigits: 5,
@@ -35,34 +21,34 @@
 		cameraScale,
 	} = $props();
 
-	const rubberBand = atom(undefined);
-	const rubberBandStart = view(
+	const magnifierFrame = atom(undefined);
+	const magnifierFrameStart = view(
 		[L.removable("start"), "start", L.removable("x", "y")],
-		rubberBand,
+		magnifierFrame,
 	);
-	const rubberBandSize = view(
+	const magnifierFrameSize = view(
 		L.ifElse(
 			R.prop("start"),
 			[L.removable("size"), "size", L.removable("x", "y")],
 			L.zero,
 		),
-		rubberBand,
+		magnifierFrame,
 	);
 
-	const rubberBandAngle = view(
+	const magnifierFrameAngle = view(
 		[L.removable("angle"), "angle", L.valueOr(0)],
-		rubberBand,
+		magnifierFrame,
 	);
-	const rubberBandAngleCos = view(
+	const magnifierFrameAngleCos = view(
 		[L.reread((r) => Math.cos((r / 180) * Math.PI))],
-		rubberBandAngle,
+		magnifierFrameAngle,
 	);
-	const rubberBandAngleSin = view(
+	const magnifierFrameAngleSin = view(
 		[L.reread((r) => Math.sin((r / 180) * Math.PI))],
-		rubberBandAngle,
+		magnifierFrameAngle,
 	);
 
-	const rubberBandPath = read(
+	const magnifierFramePath = read(
 		L.reread(({ frame, b, cos, sin, t }) => {
 			if (b && b.start && b.size) {
 				const h = cos * b.size.x - sin * b.size.y;
@@ -92,19 +78,19 @@
 		}),
 		combine({
 			frame: frameBoxPath,
-			b: rubberBand,
-			sin: rubberBandAngleSin,
-			cos: rubberBandAngleCos,
+			b: magnifierFrame,
+			sin: magnifierFrameAngleSin,
+			cos: magnifierFrameAngleCos,
 			t: rotationTransformFunction,
 		}),
 	);
 
-	const rubberBandTransform = read(
+	const magnifierFrameTransform = read(
 		L.reread((r) => ``),
-		rubberBand,
+		magnifierFrame,
 	);
 
-	const rubberBandStretched = read(
+	const magnifierFrameStretched = read(
 		[
 			L.valueOr({}),
 			L.getter(({ start, size }) => {
@@ -116,7 +102,7 @@
 					: false;
 			}),
 		],
-		rubberBand,
+		magnifierFrame,
 	);
 </script>
 
@@ -125,12 +111,12 @@
 	pointer-events="all"
 	fill="none"
 	class="magnifier-surface"
-	class:magnifier-surface-active={rubberBandStretched.value}
+	class:magnifier-surface-active={magnifierFrameStretched.value}
 	role="button"
 	tabindex="-1"
 	onkeydown={(evt) => {
 		if (evt.key === "Escape" || evt.key === "Esc") {
-			rubberBandStart.value = undefined;
+			magnifierFrameStart.value = undefined;
 		}
 	}}
 	onpointerdown={(evt) => {
@@ -142,29 +128,29 @@
 
 		const svgP = clientToCanvas(evt.clientX, evt.clientY);
 
-		rubberBandStart.value = { x: svgP.x, y: svgP.y };
-		rubberBandSize.value = { x: 0, y: 0 };
-		rubberBandAngle.value = -cameraOrientation.value;
+		magnifierFrameStart.value = { x: svgP.x, y: svgP.y };
+		magnifierFrameSize.value = { x: 0, y: 0 };
+		magnifierFrameAngle.value = -cameraOrientation.value;
 	}}
 	onpointermove={(evt) => {
-		if (rubberBandStart.value) {
+		if (magnifierFrameStart.value) {
 			const svgP = clientToCanvas(evt.clientX, evt.clientY);
 
-			const dx = svgP.x - rubberBandStart.value.x;
-			const dy = svgP.y - rubberBandStart.value.y;
-			rubberBandSize.value = {
+			const dx = svgP.x - magnifierFrameStart.value.x;
+			const dy = svgP.y - magnifierFrameStart.value.y;
+			magnifierFrameSize.value = {
 				x:
-					rubberBandAngleCos.value * dx +
-					rubberBandAngleSin.value * dy,
+					magnifierFrameAngleCos.value * dx +
+					magnifierFrameAngleSin.value * dy,
 				y:
-					-rubberBandAngleSin.value * dx +
-					rubberBandAngleCos.value * dy,
+					-magnifierFrameAngleSin.value * dx +
+					magnifierFrameAngleCos.value * dy,
 			};
 		}
 	}}
 	onpointerup={(evt) => {
-		if (rubberBandStart.value) {
-			if (zoomDelta && !rubberBandStretched.value) {
+		if (magnifierFrameStart.value) {
+			if (zoomDelta && !magnifierFrameStretched.value) {
 				const svgP = clientToCanvas(evt.clientX, evt.clientY, true);
 
 				zoomDelta.value = {
@@ -176,23 +162,23 @@
 				const svgP = clientToCanvas(evt.clientX, evt.clientY);
 
 				zoomFrame.value = {
-					start: rubberBandStart.value,
-					size: rubberBandSize.value,
-					angle: rubberBandAngle.value,
+					start: magnifierFrameStart.value,
+					size: magnifierFrameSize.value,
+					angle: magnifierFrameAngle.value,
 				};
 			}
 
-			rubberBandSize.value = undefined;
+			magnifierFrameSize.value = undefined;
 		}
 	}}
 />
 
 <g pointer-events="none" transform={rotationTransform.value}></g>
 
-{#if rubberBandStretched.value}
+{#if magnifierFrameStretched.value}
 	<path
-		transform={rubberBandTransform.value}
-		d={rubberBandPath.value}
+		transform={magnifierFrameTransform.value}
+		d={magnifierFramePath.value}
 		fill="none"
 		class="magnifier"
 		pointer-events="none"

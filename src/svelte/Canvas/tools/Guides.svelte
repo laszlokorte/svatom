@@ -1,10 +1,9 @@
 <script>
 	import * as R from "ramda";
 	import * as L from "partial.lenses";
-	import * as U from "../../utils";
 	import * as Geo from "../../geometry";
 	import { read, combine } from "../../svatom.svelte.js";
-	const { guides, rotationTransform, cameraScale, frameBoxObject } = $props();
+	const { guides, rotationTransform, frameBoxObject } = $props();
 
 	const worldQuad = read("worldSpace", frameBoxObject);
 	const segmentPaths = read(
@@ -34,15 +33,6 @@
 			pointer-events="none"
 		/>
 	{/each}
-
-	<polygon
-		fill="none"
-		stroke="magenta"
-		stroke-width="2"
-		points="{worldQuad.value.a.x} {worldQuad.value.a.y} {worldQuad.value.b
-			.x} {worldQuad.value.b.y} {worldQuad.value.c.x} {worldQuad.value.c
-			.y} {worldQuad.value.d.x} {worldQuad.value.d.y}"
-	/>
 </g>
 
 <style>

@@ -1,22 +1,8 @@
 <script>
 	import * as L from "partial.lenses";
-	import * as G from "../../generators";
 	import * as R from "ramda";
 	import * as U from "../../utils";
-	import * as C from "../../combinators";
-	import {
-		atom,
-		view,
-		read,
-		combine,
-		combineWithRest,
-		failableView,
-		bindValue,
-		bindScroll,
-		bindSize,
-		autofocusIf,
-		string,
-	} from "../../svatom.svelte.js";
+	import { atom, view, read, combine } from "../../svatom.svelte.js";
 
 	const numberSvgFormat = new Intl.NumberFormat("en-US", {
 		minimumFractionDigits: 5,

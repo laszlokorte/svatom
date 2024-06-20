@@ -1,23 +1,9 @@
 <script>
 	import * as L from "partial.lenses";
-	import * as G from "../../generators";
 	import * as R from "ramda";
 	import * as U from "../../utils";
 	import * as Geo from "../../geometry";
-	import * as C from "../../combinators";
-	import {
-		atom,
-		view,
-		read,
-		combine,
-		combineWithRest,
-		failableView,
-		bindValue,
-		bindScroll,
-		bindSize,
-		autofocusIf,
-		string,
-	} from "../../svatom.svelte.js";
+	import { atom, view, read, combine } from "../../svatom.svelte.js";
 
 	const minDragDistance = 25;
 	const numberSvgFormat = new Intl.NumberFormat("en-US", {
@@ -133,7 +119,7 @@
 	d={frameBoxPath.value}
 	pointer-events="all"
 	fill="none"
-	class="rubber-band-surface"
+	class="guideliner-band-surface"
 	role="button"
 	tabindex="-1"
 	onkeydown={(evt) => {
@@ -191,26 +177,10 @@
 		class:valid={newGuideValid.value}
 		pointer-events="none"
 	/>
-
-	{#if newGuideEdgePoints.value}
-		<circle
-			fill="cyan"
-			cx={newGuideEdgePoints.value.a.x}
-			r={20}
-			cy={newGuideEdgePoints.value.a.y}
-		/>
-
-		<circle
-			fill="cyan"
-			cx={newGuideEdgePoints.value.b.x}
-			r={20}
-			cy={newGuideEdgePoints.value.b.y}
-		/>
-	{/if}
 </g>
 
 <style>
-	.rubber-band-surface {
+	.guideliner-band-surface {
 		cursor: default;
 	}
 
@@ -224,7 +194,8 @@
 	.guide-handle {
 		fill: none;
 		stroke: #ff9999;
-		stroke-width: 2px;
+		stroke-opacity: 0.2;
+		stroke-width: 4px;
 		vector-effect: non-scaling-stroke;
 		stroke-linecap: round;
 	}

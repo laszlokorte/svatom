@@ -1,23 +1,7 @@
 <script>
 	import * as L from "partial.lenses";
-	import * as G from "../../generators";
 	import * as R from "ramda";
-	import * as U from "../../utils";
-	import * as C from "../../combinators";
-	import {
-		atom,
-		view,
-		read,
-		traverse,
-		combine,
-		combineWithRest,
-		failableView,
-		bindValue,
-		bindScroll,
-		bindSize,
-		autofocusIf,
-		string,
-	} from "../../svatom.svelte.js";
+	import { traverse, combine, string } from "../../svatom.svelte.js";
 
 	const { nodes, drawings, rotationTransform } = $props();
 
