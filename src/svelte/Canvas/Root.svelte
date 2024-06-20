@@ -1,24 +1,19 @@
 <script>
 	import * as L from "partial.lenses";
 	import * as R from "ramda";
-	import * as G from "../generators";
 	import * as Geo from "../geometry";
 	import * as U from "../utils";
-	import * as C from "../combinators";
 	import * as Cam from "./camControl.svelte";
 	import {
 		atom,
 		view,
 		read,
 		combine,
-		combineWithRest,
 		update,
 		failableView,
 		bindValue,
 		bindScroll,
 		bindSize,
-		autofocusIf,
-		string,
 	} from "../svatom.svelte.js";
 
 	const numberFormat = new Intl.NumberFormat("en-US", {
@@ -51,6 +46,8 @@
 	import GuideLiner from "./tools/GuideLiner.svelte";
 	import Guides from "./tools/Guides.svelte";
 	import Axis from "./tools/Axis.svelte";
+	import Pan from "./tools/Pan.svelte";
+	import Rotate from "./tools/Rotate.svelte";
 
 	const svgElement = atom(null);
 	const svgPoint = read(
@@ -444,7 +441,26 @@
 				cameraOrientation,
 			},
 		},
+		pan: {
+			component: Pan,
+			parameters: {
+				frameBoxPath,
+			},
+		},
+		rotate: {
+			component: Rotate,
+			parameters: {
+				frameBoxPath,
+			},
+		},
 	};
+
+	const toolGroups = [
+		["select", "lasso"],
+		["magnifier", "pan", "rotate"],
+		["pen", "create"],
+		["axis", "guides"],
+	];
 
 	const makeSquareLens = L.lens(R.identity, (n, o) => ({
 		...n,
@@ -634,19 +650,19 @@
 				guides.value = [];
 			}}>Clear</button
 		>
-
-		<hr class="tool-bar-sep" />
-
-		{#each Object.keys(tools) as t (t)}
-			<label class="button tool-button"
-				><input
-					class="tool-button-radio"
-					type="radio"
-					bind:group={tool.value}
-					value={t}
-				/>
-				{U.capitalize(t)}</label
-			>
+		{#each toolGroups as g}
+			<hr class="tool-bar-sep" />
+			{#each g as t}
+				<label class="button tool-button"
+					><input
+						class="tool-button-radio"
+						type="radio"
+						bind:group={tool.value}
+						value={t}
+					/>
+					{U.capitalize(t)}</label
+				>
+			{/each}
 		{/each}
 	</div>
 </fieldset>
@@ -677,7 +693,7 @@
 			viewBox={viewBox.value}
 			preserveAspectRatio={preserveAspectRatio.value}
 		>
-			<g class:hidden={!debugFrames.value}>
+			<g class:hidden={!debugFrames.value} pointer-events="none">
 				<path
 					d={viewBoxPath.value}
 					class="view-box"
@@ -693,6 +709,14 @@
 					fill="none"
 					vector-effect="non-scaling-stroke"
 					stroke-width="4px"
+					shape-rendering="crispEdges"
+				/>
+				<path
+					d={frameBoxPathPadded.value}
+					stroke="#aaccff"
+					fill="none"
+					vector-effect="non-scaling-stroke"
+					stroke-width="2px"
 					shape-rendering="crispEdges"
 				/>
 			</g>
@@ -1002,14 +1026,14 @@
 	}
 
 	.tool-bar-sep {
-		background: black;
+		background: #aaa;
 		flex: 2px 0 0;
 		width: auto;
 		height: auto;
 		align-self: stretch;
 		justify-self: start;
 		border: none;
-		margin: 0;
+		margin: 2px;
 	}
 
 	.tool-button {

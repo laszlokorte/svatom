@@ -28,7 +28,7 @@ export function combine(mapOfAtoms) {
 			}, mapOfAtoms)
 		},
 		set value(newVal) {
-			const oldValues = R.mapObjIndexed((v, k) => {
+			const oldValues = R.map((v) => {
 				return $state.snapshot(v.value)
 			}, mapOfAtoms)
 
@@ -50,7 +50,7 @@ export function combineWithRest(mapOfAtoms, rest = atom({})) {
 			}
 		},
 		set value(newVal) {
-			const oldValues = R.mapObjIndexed((v, k) => {
+			const oldValues = R.map((v) => {
 				return $state.snapshot(v.value)
 			}, mapOfAtoms)
 
@@ -60,6 +60,29 @@ export function combineWithRest(mapOfAtoms, rest = atom({})) {
 				}
 			}, mapOfAtoms)
 			rest.value = R.pick(R.difference(Object.keys(newVal), Object.keys(mapOfAtoms)), newVal)
+		}
+	}
+}
+
+export function combineArray(listOfAtoms) {
+	return {
+		get value() {
+			return R.map((v) => {
+				const s = $state.snapshot(v.value);
+
+				return s
+			}, listOfAtoms)
+		},
+		set value(newVal) {
+			const oldValues = R.map((v) => {
+				return $state.snapshot(v.value)
+			}, listOfAtoms)
+
+			R.addIndex(R.forEach)((v, i) => {
+				if(!$state.is(oldValues[i], newVal[i])) {
+					v.value = newVal[i]
+				}
+			}, listOfAtoms)
 		}
 	}
 }
