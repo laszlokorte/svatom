@@ -779,6 +779,15 @@
 			{...tools[tool.value].parameters}
 		></svelte:component>
 	</svg>
+	<div class="scroller-hud">
+		<input
+			type="range"
+			bind:value={cameraZoom.value}
+			min="-3"
+			max="3"
+			step="0.01"
+		/>
+	</div>
 </Scroller>
 
 <fieldset>
@@ -905,7 +914,7 @@
 		place-self: end;
 		z-index: 100;
 		background: none;
-		font-size: 0.5em;
+		font-size: 0.7em;
 		margin: 0.5em 1em;
 		--accent-color: #aa4466;
 		--accent-color-light: #cc4466;
