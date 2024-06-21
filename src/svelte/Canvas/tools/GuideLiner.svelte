@@ -117,6 +117,11 @@
 </script>
 
 <path
+	use:U.activeTouchMove={(evt) => {
+		if (guideStart.value) {
+			evt.preventDefault();
+		}
+	}}
 	d={frameBoxPath.value}
 	pointer-events="all"
 	fill="none"
@@ -129,6 +134,9 @@
 		}
 	}}
 	onpointerdown={(evt) => {
+		if (guideStart.value) {
+			return;
+		}
 		if (!U.isLeftButton(evt)) {
 			return;
 		}
@@ -155,6 +163,11 @@
 					distance: guideDistance.value,
 				};
 			}
+			guideEnd.value = undefined;
+		}
+	}}
+	onpointercancel={(evt) => {
+		if (guideStart.value) {
 			guideEnd.value = undefined;
 		}
 	}}

@@ -80,3 +80,13 @@ export function isLeftButton(event, allowModifiers = false) {
     }
 }
 
+
+export function activeTouchMove (node, fn) {
+    node.addEventListener("touchmove", fn, { passive: false });
+
+    return {
+        destroy() {
+            node.removeEventListener("touchmove", fn, { passive: false });
+        },
+    };
+};

@@ -19,6 +19,11 @@
 </script>
 
 <path
+	use:U.activeTouchMove={(evt) => {
+		if (isDrafting.value) {
+			evt.preventDefault();
+		}
+	}}
 	d={frameBoxPath.value}
 	pointer-events="all"
 	fill="none"
@@ -31,6 +36,9 @@
 		}
 	}}
 	onpointerdown={(evt) => {
+		if (isDrafting.value) {
+			return;
+		}
 		if (!U.isLeftButton(evt)) {
 			return;
 		}
@@ -53,6 +61,11 @@
 
 			lastDraft.value = undefined;
 			newNode.value = { x: svgP.x, y: svgP.y };
+		}
+	}}
+	onpointercancel={(evt) => {
+		if (isDrafting.value) {
+			lastDraft.value = undefined;
 		}
 	}}
 />

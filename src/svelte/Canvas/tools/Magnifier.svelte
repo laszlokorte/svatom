@@ -107,6 +107,11 @@
 </script>
 
 <path
+	use:U.activeTouchMove={(evt) => {
+		if (magnifierFrameStart.value) {
+			evt.preventDefault();
+		}
+	}}
 	d={frameBoxPath.value}
 	pointer-events="all"
 	fill="none"
@@ -120,6 +125,9 @@
 		}
 	}}
 	onpointerdown={(evt) => {
+		if (magnifierFrameStart.value) {
+			return;
+		}
 		if (!U.isLeftButton(evt, true)) {
 			return;
 		}
@@ -170,6 +178,9 @@
 
 			magnifierFrameSize.value = undefined;
 		}
+	}}
+	onpointercancel={(evt) => {
+		magnifierFrameSize.value = undefined;
 	}}
 />
 

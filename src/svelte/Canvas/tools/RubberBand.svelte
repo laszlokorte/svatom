@@ -29,10 +29,6 @@
 		rotationTransform,
 		cameraOrientation,
 	} = $props();
-	const rootEl = atom(null);
-	const svgPoint = $derived(
-		rootEl.value ? rootEl.value.ownerSVGElement.createSVGPoint() : null,
-	);
 
 	const rubberBand = atom(undefined);
 	const rubberBandStart = view(
@@ -74,6 +70,11 @@
 </script>
 
 <path
+	use:U.activeTouchMove={(evt) => {
+		if (rubberBandStart.value) {
+			evt.preventDefault();
+		}
+	}}
 	d={frameBoxPath.value}
 	pointer-events="all"
 	fill="none"
@@ -86,26 +87,22 @@
 		}
 	}}
 	onpointerdown={(evt) => {
+		if (rubberBandStart.value) {
+			evt.preventDefault();
+			return;
+		}
 		if (!U.isLeftButton(evt)) {
 			return;
 		}
 		evt.currentTarget.setPointerCapture(evt.pointerId);
-		const pt = svgPoint;
-		pt.x = evt.clientX;
-		pt.y = evt.clientY;
-		const svgP = pt.matrixTransform(rootEl.value.getScreenCTM().inverse());
+		const svgP = clientToCanvas(evt.clientX, evt.clientY);
 		rubberBandStart.value = { x: svgP.x, y: svgP.y };
 		rubberBandSize.value = { x: 0, y: 0 };
 		rubberBandAngle.value = -cameraOrientation.value;
 	}}
 	onpointermove={(evt) => {
 		if (rubberBandStart.value) {
-			const pt = svgPoint;
-			pt.x = evt.clientX;
-			pt.y = evt.clientY;
-			const svgP = pt.matrixTransform(
-				rootEl.value.getScreenCTM().inverse(),
-			);
+			const svgP = clientToCanvas(evt.clientX, evt.clientY);
 
 			const dx = svgP.x - rubberBandStart.value.x;
 			const dy = svgP.y - rubberBandStart.value.y;
@@ -121,23 +118,17 @@
 	}}
 	onpointerup={(evt) => {
 		if (rubberBandStart.value) {
-			const pt = svgPoint;
-			pt.x = evt.clientX;
-			pt.y = evt.clientY;
-			const svgP = pt.matrixTransform(
-				rootEl.value.getScreenCTM().inverse(),
-			);
-
+			rubberBandSize.value = undefined;
+		}
+	}}
+	onpointercancel={(evt) => {
+		if (rubberBandStart.value) {
 			rubberBandSize.value = undefined;
 		}
 	}}
 />
 
-<g
-	pointer-events="none"
-	transform={rotationTransform.value}
-	bind:this={rootEl.value}
->
+<g pointer-events="none" transform={rotationTransform.value}>
 	<path
 		d={rubberBandPath.value}
 		transform={rubberBandTransform.value}

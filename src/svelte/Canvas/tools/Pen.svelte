@@ -68,6 +68,11 @@
 </script>
 
 <path
+	use:U.activeTouchMove={(evt) => {
+		if (startPath.value) {
+			evt.preventDefault();
+		}
+	}}
 	class="pen-surface"
 	d={frameBoxPath.value}
 	pointer-events="all"
@@ -81,6 +86,9 @@
 		}
 	}}
 	onpointerdown={(evt) => {
+		if (startPath.value) {
+			return;
+		}
 		if (!U.isLeftButton(evt)) {
 			return;
 		}
@@ -105,6 +113,11 @@
 				newDrawing.value = path.value;
 			}
 
+			currentPath.value = undefined;
+		}
+	}}
+	onpointercancel={(evt) => {
+		if (startPath.value) {
 			currentPath.value = undefined;
 		}
 	}}

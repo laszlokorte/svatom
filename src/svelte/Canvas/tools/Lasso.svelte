@@ -8,9 +8,11 @@
 	const { frameBoxPath, clientToCanvas, cameraScale, rotationTransform } =
 		$props();
 
-	const lasso = atom([]);
+	const lasso = atom({});
 
-	const startLasso = view([L.index(0), L.defaults(false)], lasso);
+	const lassoPoints = view(["points", L.valueOr([])], lasso);
+	const pointerId = view([L.removable("pointerId"), "pointerId"], lasso);
+	const startLasso = view([L.index(0), L.defaults(false)], lassoPoints);
 	const currentLasso = view(
 		[
 			L.setter(R.takeLast(200)), // limit the lasso length just for fun
@@ -39,25 +41,34 @@
 			L.removable("x", "y"),
 			L.defaults(false),
 		],
-		lasso,
+		lassoPoints,
 	);
 
 	const lassoPath = view(
-		L.iso(
-			R.compose(
-				R.join(" "),
-				R.map(R.compose(R.join(","), R.props(["x", "y"]))),
+		[
+			L.iso(
+				R.compose(
+					R.join(" "),
+					R.map(R.compose(R.join(","), R.props(["x", "y"]))),
+				),
+				R.compose(
+					R.map(
+						R.compose(R.zipWith(R.assoc, ["x", "y"]), R.split(",")),
+					),
+					R.split(" "),
+				),
 			),
-			R.compose(
-				R.map(R.compose(R.zipWith(R.assoc, ["x", "y"]), R.split(","))),
-				R.split(" "),
-			),
-		),
-		lasso,
+		],
+		lassoPoints,
 	);
 </script>
 
 <path
+	use:U.activeTouchMove={(evt) => {
+		if (startLasso.value) {
+			evt.preventDefault();
+		}
+	}}
 	d={frameBoxPath.value}
 	pointer-events="all"
 	fill="none"
@@ -70,9 +81,14 @@
 		}
 	}}
 	onpointerdown={(evt) => {
+		if (startLasso.value) {
+			return;
+		}
 		if (!U.isLeftButton(evt)) {
 			return;
 		}
+
+		pointerId.value = evt.pointerId;
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 
 		const svgP = clientToCanvas(evt.clientX, evt.clientY);
@@ -80,17 +96,20 @@
 		currentLasso.value = { x: svgP.x, y: svgP.y };
 	}}
 	onpointermove={(evt) => {
-		if (startLasso.value) {
+		if (evt.pointerId === pointerId.value) {
 			const svgP = clientToCanvas(evt.clientX, evt.clientY);
 
 			currentLasso.value = { x: svgP.x, y: svgP.y };
 		}
 	}}
 	onpointerup={(evt) => {
-		if (startLasso.value) {
-			const svgP = clientToCanvas(evt.clientX, evt.clientY);
-
-			currentLasso.value = undefined;
+		if (evt.pointerId === pointerId.value) {
+			pointerId.value = undefined;
+		}
+	}}
+	onpointercancel={(evt) => {
+		if (evt.pointerId === pointerId.value) {
+			pointerId.value = undefined;
 		}
 	}}
 />

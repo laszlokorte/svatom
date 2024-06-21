@@ -13,6 +13,11 @@
 </script>
 
 <path
+	use:U.activeTouchMove={(evt) => {
+		if (grabbing.value) {
+			evt.preventDefault();
+		}
+	}}
 	d={frameBoxPath.value}
 	class="pan-surface"
 	class:grabbing={grabbing.value}
@@ -21,6 +26,9 @@
 	role="button"
 	tabindex="-1"
 	onpointerdown={(evt) => {
+		if (grabbing.value) {
+			return;
+		}
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 		grabbing.value = true;
 		grabPosition.value = clientToCanvas(evt.clientX, evt.clientY);
@@ -35,6 +43,9 @@
 		}
 	}}
 	onpointerup={(evt) => {
+		grabbing.value = false;
+	}}
+	onpointercancel={(evt) => {
 		grabbing.value = false;
 	}}
 />

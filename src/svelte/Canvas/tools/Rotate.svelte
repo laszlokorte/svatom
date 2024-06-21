@@ -96,7 +96,15 @@
 	fill="none"
 	role="button"
 	tabindex="-1"
+	use:U.activeTouchMove={(evt) => {
+		if (rotating.value) {
+			evt.preventDefault();
+		}
+	}}
 	onpointerdown={(evt) => {
+		if (rotating.value) {
+			return;
+		}
 		const pos = clientToCanvas(evt.clientX, evt.clientY);
 
 		evt.currentTarget.setPointerCapture(evt.pointerId);
@@ -133,7 +141,14 @@
 		}
 	}}
 	onpointerup={(evt) => {
-		rotationPivot.value = undefined;
+		if (rotating.value) {
+			rotationPivot.value = undefined;
+		}
+	}}
+	onpointercancel={(evt) => {
+		if (rotating.value) {
+			rotationPivot.value = undefined;
+		}
 	}}
 />
 

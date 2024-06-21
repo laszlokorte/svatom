@@ -56,6 +56,11 @@
 </script>
 
 <path
+	use:U.activeTouchMove={(evt) => {
+		if (axisStart.value) {
+			evt.preventDefault();
+		}
+	}}
 	d={frameBoxPath.value}
 	pointer-events="all"
 	fill="none"
@@ -68,6 +73,9 @@
 		}
 	}}
 	onpointerdown={(evt) => {
+		if (axisStart.value) {
+			return;
+		}
 		if (!U.isLeftButton(evt)) {
 			return;
 		}
