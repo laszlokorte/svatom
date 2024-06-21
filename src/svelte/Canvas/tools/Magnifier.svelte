@@ -96,8 +96,8 @@
 			L.getter(({ start, size }) => {
 				return start &&
 					size &&
-					10 * cameraScale.value < size.x &&
-					10 * cameraScale.value < size.y
+					(1 * cameraScale.value < Math.abs(size.x) ||
+						1 * cameraScale.value < Math.abs(size.y))
 					? true
 					: false;
 			}),

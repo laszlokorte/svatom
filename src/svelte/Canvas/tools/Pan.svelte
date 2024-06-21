@@ -5,9 +5,11 @@
 	import * as C from "../../combinators";
 	import { atom, view } from "../../svatom.svelte.js";
 
-	const { frameBoxPath } = $props();
+	const { frameBoxPath, clientToCanvas, panMovement } = $props();
 
-	const grabbing = atom(false);
+	const grab = atom({ active: false });
+	const grabPosition = view("position", grab);
+	const grabbing = view("active", grab);
 </script>
 
 <path
@@ -21,8 +23,17 @@
 	onpointerdown={(evt) => {
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 		grabbing.value = true;
+		grabPosition.value = clientToCanvas(evt.clientX, evt.clientY);
 	}}
-	onpointermove={(evt) => {}}
+	onpointermove={(evt) => {
+		if (grabbing.value) {
+			const newPos = clientToCanvas(evt.clientX, evt.clientY);
+			panMovement.value = {
+				x: grabPosition.value.x - newPos.x,
+				y: grabPosition.value.y - newPos.y,
+			};
+		}
+	}}
 	onpointerup={(evt) => {
 		grabbing.value = false;
 	}}

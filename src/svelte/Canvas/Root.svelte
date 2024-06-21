@@ -352,7 +352,33 @@
 		}),
 	];
 
+	const panMovementLens = [
+		"focus",
+		L.props("x", "y"),
+		L.lens(R.always({ x: 0, y: 0 }), (delta, { x, y }) => {
+			return {
+				x: x + delta.x,
+				y: y + delta.y,
+			};
+		}),
+	];
+
+	const rotateMovementLens = [
+		"focus",
+		L.props("w", "x", "y"),
+		L.lens(
+			R.compose(
+				R.assoc("dw", 0),
+				R.zipObj(["px", "py"]),
+				R.props(["x", "y"]),
+			),
+			Cam.rotateWithPivot,
+		),
+	];
+
 	const zoomFrame = view(cameraZoomFrameLens, camera);
+	const panMovement = view(panMovementLens, camera);
+	const rotateMovement = view(rotateMovementLens, camera);
 
 	const tool = atom("pen");
 	const nodes = atom([{ x: 200, y: 100 }]);
@@ -446,12 +472,18 @@
 			component: Pan,
 			parameters: {
 				frameBoxPath,
+				clientToCanvas,
+				panMovement,
 			},
 		},
 		rotate: {
 			component: Rotate,
 			parameters: {
 				frameBoxPath,
+				clientToCanvas,
+				rotateMovement,
+				rotationTransform,
+				cameraScale,
 			},
 		},
 	};
