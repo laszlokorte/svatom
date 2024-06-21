@@ -10,10 +10,9 @@
 		combine,
 		failableView,
 		bindValue,
-		readScroll,
-		bindSize,
 		autofocusIf,
 	} from "./svatom.svelte.js";
+	import Scroller from "./Scroller.svelte";
 
 	const extractIndices = (pred = R.identity) =>
 		R.compose(
@@ -25,27 +24,16 @@
 			})),
 		);
 
-	const tableScroller = atom({ x: 0, y: 0 });
-	const tableScrollerPositive = view(
-		L.reread(R.map(R.max(0))),
-		tableScroller,
-	);
-	const tableScrollerSize = atom({ x: 0, y: 0 });
-
-	const tableScrollerEnd = read(
-		({ pos, size }) => ({
-			x: pos.x + size.x,
-			y: pos.y + size.y,
-		}),
-		combine({ pos: tableScrollerPositive, size: tableScrollerSize }),
-	);
-
-	const focus = atom(null);
-
 	const blueNoiseSequence = (w, i) =>
 		Math.round((((i * 1.61803) % 1) + 1) * w);
+
 	const startAccum = R.mapAccum((acc, size) => [acc + size, acc]);
 	const endAccum = R.mapAccum((acc, size) => [acc + size, acc + size]);
+
+	const numColumns = 4000;
+	const numRows = 15000;
+	const defaultPinNumX = 1;
+	const defaultPinNumY = 2;
 
 	const columnHeadWidths = atom(
 		R.addIndex(R.map)(blueNoiseSequence)(R.repeat(30, 2)),
@@ -53,21 +41,6 @@
 	const rowHeadHeights = atom(
 		R.addIndex(R.map)(blueNoiseSequence)(R.repeat(20, 2)),
 	);
-	const columnHeadStarts = $derived(
-		R.last(startAccum(0, columnHeadWidths.value)),
-	);
-	const [columnHeadWidthSum, columnHeadEnds] = $derived(
-		endAccum(0, columnHeadWidths.value),
-	);
-	const rowHeadStarts = $derived(R.last(startAccum(0, rowHeadHeights.value)));
-	const [rowHeadHeightSum, rowHeadEnds] = $derived(
-		endAccum(0, rowHeadHeights.value),
-	);
-
-	const numColumns = 4000;
-	const numRows = 15000;
-	const defaultPinNumX = 1;
-	const defaultPinNumY = 2;
 
 	const columnPins = atom(
 		R.concat(
@@ -87,6 +60,27 @@
 	);
 	const rowSizes = atom(
 		R.addIndex(R.map)(blueNoiseSequence)(R.repeat(30, numRows)),
+	);
+
+	const focus = atom(null);
+
+	const scrollPosition = atom({ x: 0, y: 0 });
+	const scrollWindowSize = atom({ x: 0, y: 0 });
+
+	const contentSize = read(
+		L.getter(R.map(R.sum)),
+		combine({ x: columnSizes, y: rowSizes }),
+	);
+
+	const columnHeadStarts = $derived(
+		R.last(startAccum(0, columnHeadWidths.value)),
+	);
+	const [columnHeadWidthSum, _columnHeadEnds] = $derived(
+		endAccum(0, columnHeadWidths.value),
+	);
+	const rowHeadStarts = $derived(R.last(startAccum(0, rowHeadHeights.value)));
+	const [rowHeadHeightSum, _rowHeadEnds] = $derived(
+		endAccum(0, rowHeadHeights.value),
 	);
 
 	const columnPinnedIndices = $derived(extractIndices()(columnPins.value));
@@ -121,19 +115,17 @@
 	const [rowPinnedSizeSum, rowPinnedEnds] = $derived(
 		endAccum(rowHeadHeightSum, rowPinnedSizes),
 	);
-	const firstPinnedColumn = 0;
-	const lastPinnedColumn = $derived(
-		R.findLastIndex(
-			R.gte(tableScrollerPositive.value.x + tableScrollerSize.value.x),
-			columnPinnedStarts,
-		),
+	const firstPinnedColumn = $derived(
+		R.findIndex(R.lte(columnHeadWidthSum), columnPinnedEnds),
 	);
-	const firstPinnedRow = 0;
+	const lastPinnedColumn = $derived(
+		R.findLastIndex(R.gte(scrollWindowSize.value.x), columnPinnedStarts),
+	);
+	const firstPinnedRow = $derived(
+		R.findIndex(R.lte(rowHeadHeightSum), rowPinnedEnds),
+	);
 	const lastPinnedRow = $derived(
-		R.findLastIndex(
-			R.gte(tableScrollerPositive.value.y + tableScrollerSize.value.y),
-			rowPinnedStarts,
-		),
+		R.findLastIndex(R.gte(scrollWindowSize.value.y), rowPinnedStarts),
 	);
 
 	const visiblePinnedColumns = $derived(() =>
@@ -156,50 +148,24 @@
 		endAccum(rowPinnedSizeSum, rowNotPinnedSizes),
 	);
 
-	const tableScrollerOverscrollX = $derived(
-		Math.max(0, tableScrollerEnd.value.x - columnSizeSum),
-	);
-	const tableScrollerOverscrollY = $derived(
-		Math.max(0, tableScrollerEnd.value.y - rowSizeSum),
-	);
-
 	const firstColumn = $derived(
 		R.findIndex(
-			R.lte(
-				tableScrollerPositive.value.x -
-					tableScrollerOverscrollX +
-					columnPinnedSizeSum,
-			),
+			R.lte(scrollPosition.value.x + columnPinnedSizeSum),
 			columnEnds,
 		),
 	);
 	const lastColumn = $derived(
 		R.findLastIndex(
-			R.gte(
-				tableScrollerPositive.value.x -
-					tableScrollerOverscrollX +
-					tableScrollerSize.value.x,
-			),
+			R.gte(scrollPosition.value.x + scrollWindowSize.value.x),
 			columnStarts,
 		),
 	);
 	const firstRow = $derived(
-		R.findIndex(
-			R.lte(
-				tableScrollerPositive.value.y -
-					tableScrollerOverscrollY +
-					rowPinnedSizeSum,
-			),
-			rowEnds,
-		),
+		R.findIndex(R.lte(scrollPosition.value.y + rowPinnedSizeSum), rowEnds),
 	);
 	const lastRow = $derived(
 		R.findLastIndex(
-			R.gte(
-				tableScrollerPositive.value.y -
-					tableScrollerOverscrollY +
-					tableScrollerSize.value.y,
-			),
+			R.gte(scrollPosition.value.y + scrollWindowSize.value.y),
 			rowStarts,
 		),
 	);
@@ -209,12 +175,16 @@
 	);
 	const visibleRows = $derived(() => G.range(firstRow, R.inc(lastRow)));
 
+	const lastHeadColumn = $derived(
+		R.findLastIndex(R.gte(scrollWindowSize.value.x), columnHeadStarts),
+	);
+	const lastHeadRow = $derived(
+		R.findLastIndex(R.gte(scrollWindowSize.value.y), rowHeadStarts),
+	);
 	const visibleHeadColumns = $derived(() =>
-		G.range(0, R.length(columnHeadWidths.value)),
+		G.range(0, R.inc(lastHeadColumn)),
 	);
-	const visibleHeadRows = $derived(() =>
-		G.range(0, R.length(rowHeadHeights.value)),
-	);
+	const visibleHeadRows = $derived(() => G.range(0, R.inc(lastHeadRow)));
 
 	const cellValues = atom({});
 
@@ -259,309 +229,294 @@
 <code>Focus: {!focus.value ? "none" : `${focus.value.x}/${focus.value.y}`}</code
 >
 
-<div
-	class="scroller"
-	use:readScroll={tableScroller}
-	style:--scroll-total-x={columnSizeSum}
-	style:--scroll-total-y={rowSizeSum}
-	style:--scroll-x={tableScrollerPositive.value.x - tableScrollerOverscrollX}
-	style:--scroll-y={tableScrollerPositive.value.y - tableScrollerOverscrollY}
->
-	<div class="scroller-body">
-		<div
-			class="scroller-corner"
-			style:--row-height={rowHeadHeightSum}
-			style:--column-width={columnHeadWidthSum}
-		>
-			<span>x: {tableScrollerPositive.value.x}</span>
-			<br />
-			<span>y: {tableScrollerPositive.value.y}</span>
-		</div>
-		<div key="head-rows">
-			{#each visibleHeadRows() as y, i (i)}
-				<div
-					name="virtual-{i}"
-					class="scroller-head-row"
-					style:--row-height={rowHeadHeights.value[y]}
-					style:--row-start={rowHeadStarts[y]}
-				>
-					<div key="pinned">
-						{#each visiblePinnedColumns() as x, j (j)}
-							<label
-								name="virtual-{j}"
-								class="scroller-head-cell scroller-pinned-column"
-								style:--column-width={columnPinnedSizes[x]}
-								style:--column-start={columnPinnedStarts[x]}
-							>
-								{#if i == 1}
-									{String.fromCharCode(
-										65 + (columnPinnedIndices[x] % 26),
-									)}{Math.floor(columnPinnedIndices[x] / 26)}
-								{:else}
-									{@const pinnedColumn = view(
-										[
-											columnPinnedIndices[x],
-											L.valueOr(false),
-										],
-										columnPins,
-									)}
-
-									<input
-										type="checkbox"
-										bind:checked={pinnedColumn.value}
-									/>
-								{/if}
-							</label>
-						{/each}
-					</div>
-
-					<div key="not-pinned">
-						{#each visibleColumns() as x, j (j)}
-							<label
-								name="virtual-{j}"
-								class="scroller-head-cell"
-								style:--column-width={columnNotPinnedSizes[x]}
-								style:--column-start={columnStarts[x]}
-							>
-								{#if i == 1}
-									{String.fromCharCode(
-										65 + (columnNotPinnedIndices[x] % 26),
-									)}{Math.floor(
-										columnNotPinnedIndices[x] / 26,
-									)}
-								{:else}
-									{@const pinnedColumn = view(
-										[
-											columnNotPinnedIndices[x],
-											L.valueOr(false),
-										],
-										columnPins,
-									)}
-
-									<input
-										type="checkbox"
-										bind:checked={pinnedColumn.value}
-									/>
-								{/if}
-							</label>
-						{/each}
-					</div>
-				</div>
-			{/each}
-		</div>
-
-		<div key="pinned-rows">
-			{#each visiblePinnedRows() as y, i (i)}
-				{@const pinnedRow = view(
-					[rowPinnedIndices[y], L.valueOr(false)],
-					rowPins,
-				)}
-				<div
-					name="virtual-{i}"
-					class="scroller-row scroller-pinned-row"
-					style:--row-height={rowPinnedSizes[y]}
-					style:--row-start={rowPinnedStarts[y]}
-				>
-					<div key="heads">
-						{#each visibleHeadColumns() as x, j (j)}
-							<label
-								name="virtual-{j}"
-								class="scroller-head-column"
-								style:--column-width={columnHeadWidths.value[x]}
-								style:--column-start={columnHeadStarts[x]}
-							>
-								{#if j == 1}
-									{String.fromCharCode(
-										65 + (rowPinnedIndices[y] % 26),
-									)}{Math.floor(rowPinnedIndices[y] / 26)}
-								{:else}
-									<input
-										type="checkbox"
-										bind:checked={pinnedRow.value}
-									/>
-								{/if}
-							</label>
-						{/each}
-					</div>
-
-					<div key="pinned">
-						{#each visiblePinnedColumns() as x, j (j)}
-							{@const val = view(
-								[
-									`val-${rowPinnedIndices[y]}-${columnPinnedIndices[x]}`,
-									L.defaults(""),
-								],
-								cellValues,
-							)}
-							<div
-								name="virtual-{j}"
-								class="scroller-cell scroller-pinned-column"
-								style:--column-width={columnPinnedSizes[x]}
-								style:--column-start={columnPinnedStarts[x]}
-							>
-								<input
-									class="cell-input"
-									type="text"
-									placeholder={"-"}
-									bind:value={val.value}
-									use:autofocusIf={isFocused(
-										focus,
-										columnPinnedIndices[x],
-										rowPinnedIndices[y],
-									)}
-									data-cell-x={columnPinnedIndices[x]}
-									data-cell-y={rowPinnedIndices[y]}
-									onfocus={onFocus}
-									onblur={onBlur}
-								/>
-							</div>
-						{/each}
-					</div>
-
-					<div key="not-pinned">
-						{#each visibleColumns() as x, j (j)}
-							{@const val = view(
-								[
-									`val-${rowPinnedIndices[y]}-${columnNotPinnedIndices[x]}`,
-									L.defaults(""),
-								],
-								cellValues,
-							)}
-							<div
-								name="virtual-{j}"
-								class="scroller-cell"
-								style:--column-width={columnNotPinnedSizes[x]}
-								style:--column-start={columnStarts[x]}
-							>
-								<input
-									class="cell-input"
-									type="text"
-									placeholder={"-"}
-									bind:value={val.value}
-									use:autofocusIf={isFocused(
-										focus,
-										columnNotPinnedIndices[x],
-										rowPinnedIndices[y],
-									)}
-									data-cell-x={columnNotPinnedIndices[x]}
-									data-cell-y={rowPinnedIndices[y]}
-									onfocus={onFocus}
-									onblur={onBlur}
-								/>
-							</div>
-						{/each}
-					</div>
-				</div>
-			{/each}
-		</div>
-
-		<div key="not-pinned">
-			{#each visibleRows() as y, i (i)}
-				{@const pinnedRow = view(
-					[rowNotPinnedIndices[y], L.valueOr(false)],
-					rowPins,
-				)}
-				<div
-					name="virtual-{i}"
-					class="scroller-row"
-					style:--row-height={rowNotPinnedSizes[y]}
-					style:--row-start={rowStarts[y]}
-				>
-					<div key="heads">
-						{#each visibleHeadColumns() as x, j (j)}
-							<label
-								name="virtual-{j}"
-								class="scroller-head-column"
-								style:--column-width={columnHeadWidths.value[x]}
-								style:--column-start={columnHeadStarts[x]}
-							>
-								{#if j == 1}
-									{String.fromCharCode(
-										65 + (rowNotPinnedIndices[y] % 26),
-									)}{Math.floor(rowNotPinnedIndices[y] / 26)}
-								{:else}
-									<input
-										type="checkbox"
-										bind:checked={pinnedRow.value}
-									/>
-								{/if}
-							</label>
-						{/each}
-					</div>
-
-					<div key="pinned">
-						{#each visiblePinnedColumns() as x, j (j)}
-							{@const val = view(
-								[
-									`val-${rowNotPinnedIndices[y]}-${columnPinnedIndices[x]}`,
-									L.defaults(""),
-								],
-								cellValues,
-							)}
-							<div
-								name="virtual-{j}"
-								class="scroller-cell scroller-pinned-column"
-								style:--column-width={columnPinnedSizes[x]}
-								style:--column-start={columnPinnedStarts[x]}
-							>
-								<input
-									class="cell-input"
-									type="text"
-									placeholder={"-"}
-									bind:value={val.value}
-									use:autofocusIf={isFocused(
-										focus,
-										columnPinnedIndices[x],
-										rowNotPinnedIndices[y],
-									)}
-									data-cell-x={columnPinnedIndices[x]}
-									data-cell-y={rowNotPinnedIndices[y]}
-									onfocus={onFocus}
-									onblur={onBlur}
-								/>
-							</div>
-						{/each}
-					</div>
-
-					<div key="not-pinned">
-						{#each visibleColumns() as x, j (j)}
-							{@const val = view(
-								[
-									`val-${rowNotPinnedIndices[y]}-${columnNotPinnedIndices[x]}`,
-									L.defaults(""),
-								],
-								cellValues,
-							)}
-							<div
-								name="virtual-{j}"
-								class="scroller-cell"
-								style:--column-width={columnNotPinnedSizes[x]}
-								style:--column-start={columnStarts[x]}
-							>
-								<input
-									class="cell-input"
-									type="text"
-									placeholder={"-"}
-									bind:value={val.value}
-									use:autofocusIf={isFocused(
-										focus,
-										columnNotPinnedIndices[x],
-										rowNotPinnedIndices[y],
-									)}
-									data-cell-x={columnNotPinnedIndices[x]}
-									data-cell-y={rowNotPinnedIndices[y]}
-									onfocus={onFocus}
-									onblur={onBlur}
-								/>
-							</div>
-						{/each}
-					</div>
-				</div>
-			{/each}
-		</div>
+<Scroller {scrollPosition} {scrollWindowSize} {contentSize}>
+	<div
+		class="grid-corner"
+		style:--row-height={rowHeadHeightSum}
+		style:--column-width={columnHeadWidthSum}
+	>
+		<span>x: {scrollPosition.value.x}</span>
+		<br />
+		<span>y: {scrollPosition.value.y}</span>
 	</div>
-	<div class="scroller-measure" use:bindSize={tableScrollerSize}></div>
-</div>
+	<div key="head-rows">
+		{#each visibleHeadRows() as y, i (i)}
+			<div
+				name="virtual-{i}"
+				class="grid-head-row"
+				style:--row-height={rowHeadHeights.value[y]}
+				style:--row-start={rowHeadStarts[y]}
+			>
+				<div key="pinned">
+					{#each visiblePinnedColumns() as x, j (j)}
+						<label
+							name="virtual-{j}"
+							class="grid-head-cell grid-pinned-column"
+							style:--column-width={columnPinnedSizes[x]}
+							style:--column-start={columnPinnedStarts[x]}
+						>
+							{#if i == 1}
+								{String.fromCharCode(
+									65 + (columnPinnedIndices[x] % 26),
+								)}{Math.floor(columnPinnedIndices[x] / 26)}
+							{:else}
+								{@const pinnedColumn = view(
+									[columnPinnedIndices[x], L.valueOr(false)],
+									columnPins,
+								)}
+
+								<input
+									type="checkbox"
+									bind:checked={pinnedColumn.value}
+								/>
+							{/if}
+						</label>
+					{/each}
+				</div>
+
+				<div key="not-pinned">
+					{#each visibleColumns() as x, j (j)}
+						<label
+							name="virtual-{j}"
+							class="grid-head-cell"
+							style:--column-width={columnNotPinnedSizes[x]}
+							style:--column-start={columnStarts[x]}
+						>
+							{#if i == 1}
+								{String.fromCharCode(
+									65 + (columnNotPinnedIndices[x] % 26),
+								)}{Math.floor(columnNotPinnedIndices[x] / 26)}
+							{:else}
+								{@const pinnedColumn = view(
+									[
+										columnNotPinnedIndices[x],
+										L.valueOr(false),
+									],
+									columnPins,
+								)}
+
+								<input
+									type="checkbox"
+									bind:checked={pinnedColumn.value}
+								/>
+							{/if}
+						</label>
+					{/each}
+				</div>
+			</div>
+		{/each}
+	</div>
+
+	<div key="pinned-rows">
+		{#each visiblePinnedRows() as y, i (i)}
+			{@const pinnedRow = view(
+				[rowPinnedIndices[y], L.valueOr(false)],
+				rowPins,
+			)}
+			<div
+				name="virtual-{i}"
+				class="grid-row grid-pinned-row"
+				style:--row-height={rowPinnedSizes[y]}
+				style:--row-start={rowPinnedStarts[y]}
+			>
+				<div key="heads">
+					{#each visibleHeadColumns() as x, j (j)}
+						<label
+							name="virtual-{j}"
+							class="grid-head-column"
+							style:--column-width={columnHeadWidths.value[x]}
+							style:--column-start={columnHeadStarts[x]}
+						>
+							{#if j == 1}
+								{String.fromCharCode(
+									65 + (rowPinnedIndices[y] % 26),
+								)}{Math.floor(rowPinnedIndices[y] / 26)}
+							{:else}
+								<input
+									type="checkbox"
+									bind:checked={pinnedRow.value}
+								/>
+							{/if}
+						</label>
+					{/each}
+				</div>
+
+				<div key="pinned">
+					{#each visiblePinnedColumns() as x, j (j)}
+						{@const val = view(
+							[
+								`val-${rowPinnedIndices[y]}-${columnPinnedIndices[x]}`,
+								L.defaults(""),
+							],
+							cellValues,
+						)}
+						<div
+							name="virtual-{j}"
+							class="grid-cell grid-pinned-column"
+							style:--column-width={columnPinnedSizes[x]}
+							style:--column-start={columnPinnedStarts[x]}
+						>
+							<input
+								class="cell-input"
+								type="text"
+								placeholder={"-"}
+								bind:value={val.value}
+								use:autofocusIf={isFocused(
+									focus,
+									columnPinnedIndices[x],
+									rowPinnedIndices[y],
+								)}
+								data-cell-x={columnPinnedIndices[x]}
+								data-cell-y={rowPinnedIndices[y]}
+								onfocus={onFocus}
+								onblur={onBlur}
+							/>
+						</div>
+					{/each}
+				</div>
+
+				<div key="not-pinned">
+					{#each visibleColumns() as x, j (j)}
+						{@const val = view(
+							[
+								`val-${rowPinnedIndices[y]}-${columnNotPinnedIndices[x]}`,
+								L.defaults(""),
+							],
+							cellValues,
+						)}
+						<div
+							name="virtual-{j}"
+							class="grid-cell"
+							style:--column-width={columnNotPinnedSizes[x]}
+							style:--column-start={columnStarts[x]}
+						>
+							<input
+								class="cell-input"
+								type="text"
+								placeholder={"-"}
+								bind:value={val.value}
+								use:autofocusIf={isFocused(
+									focus,
+									columnNotPinnedIndices[x],
+									rowPinnedIndices[y],
+								)}
+								data-cell-x={columnNotPinnedIndices[x]}
+								data-cell-y={rowPinnedIndices[y]}
+								onfocus={onFocus}
+								onblur={onBlur}
+							/>
+						</div>
+					{/each}
+				</div>
+			</div>
+		{/each}
+	</div>
+
+	<div key="not-pinned">
+		{#each visibleRows() as y, i (i)}
+			{@const pinnedRow = view(
+				[rowNotPinnedIndices[y], L.valueOr(false)],
+				rowPins,
+			)}
+			<div
+				name="virtual-{i}"
+				class="grid-row"
+				style:--row-height={rowNotPinnedSizes[y]}
+				style:--row-start={rowStarts[y]}
+			>
+				<div key="heads">
+					{#each visibleHeadColumns() as x, j (j)}
+						<label
+							name="virtual-{j}"
+							class="grid-head-column"
+							style:--column-width={columnHeadWidths.value[x]}
+							style:--column-start={columnHeadStarts[x]}
+						>
+							{#if j == 1}
+								{String.fromCharCode(
+									65 + (rowNotPinnedIndices[y] % 26),
+								)}{Math.floor(rowNotPinnedIndices[y] / 26)}
+							{:else}
+								<input
+									type="checkbox"
+									bind:checked={pinnedRow.value}
+								/>
+							{/if}
+						</label>
+					{/each}
+				</div>
+
+				<div key="pinned">
+					{#each visiblePinnedColumns() as x, j (j)}
+						{@const val = view(
+							[
+								`val-${rowNotPinnedIndices[y]}-${columnPinnedIndices[x]}`,
+								L.defaults(""),
+							],
+							cellValues,
+						)}
+						<div
+							name="virtual-{j}"
+							class="grid-cell grid-pinned-column"
+							style:--column-width={columnPinnedSizes[x]}
+							style:--column-start={columnPinnedStarts[x]}
+						>
+							<input
+								class="cell-input"
+								type="text"
+								placeholder={"-"}
+								bind:value={val.value}
+								use:autofocusIf={isFocused(
+									focus,
+									columnPinnedIndices[x],
+									rowNotPinnedIndices[y],
+								)}
+								data-cell-x={columnPinnedIndices[x]}
+								data-cell-y={rowNotPinnedIndices[y]}
+								onfocus={onFocus}
+								onblur={onBlur}
+							/>
+						</div>
+					{/each}
+				</div>
+
+				<div key="not-pinned">
+					{#each visibleColumns() as x, j (j)}
+						{@const val = view(
+							[
+								`val-${rowNotPinnedIndices[y]}-${columnNotPinnedIndices[x]}`,
+								L.defaults(""),
+							],
+							cellValues,
+						)}
+						<div
+							name="virtual-{j}"
+							class="grid-cell"
+							style:--column-width={columnNotPinnedSizes[x]}
+							style:--column-start={columnStarts[x]}
+						>
+							<input
+								class="cell-input"
+								type="text"
+								placeholder={"-"}
+								bind:value={val.value}
+								use:autofocusIf={isFocused(
+									focus,
+									columnNotPinnedIndices[x],
+									rowNotPinnedIndices[y],
+								)}
+								data-cell-x={columnNotPinnedIndices[x]}
+								data-cell-y={rowNotPinnedIndices[y]}
+								onfocus={onFocus}
+								onblur={onBlur}
+							/>
+						</div>
+					{/each}
+				</div>
+			</div>
+		{/each}
+	</div>
+</Scroller>
 
 <h4>Sparse Cell Values</h4>
 <p>
@@ -571,52 +526,7 @@
 <textarea use:bindValue={cellValuesJson.stableAtom}></textarea>
 
 <style>
-	.scroller {
-		border: 3px solid #333;
-		min-height: 10em;
-		resize: both;
-		overflow: scroll;
-		height: 30em;
-		position: relative;
-		display: grid;
-		grid-template-columns: 1fr;
-		grid-template-rows: 1fr;
-	}
-
-	.scroller > * {
-		grid-area: 1 / 1;
-	}
-
-	.scroller-measure {
-		position: sticky;
-		left: 0;
-		top: 0;
-		display: block;
-		pointer-events: none;
-		border: 1px solid lime;
-		z-index: 10000;
-		place-self: stretch;
-		pointer-events: none;
-	}
-
-	.scroller::after {
-		display: block;
-		content: " ";
-		height: calc(var(--scroll-total-y, 1) * 1px);
-		width: calc(var(--scroll-total-x, 1) * 1px);
-		position: absolute;
-		top: 0;
-		left: 0;
-		pointer-events: none;
-	}
-
-	.scroller-body {
-		position: sticky;
-		top: 0;
-		left: 0;
-	}
-
-	.scroller-corner {
+	.grid-corner {
 		height: calc(var(--row-height, 0) * 1px - 1px);
 		width: calc(var(--column-width, 0) * 1px - 1px);
 		background: #222;
@@ -634,14 +544,14 @@
 		font-family: monospace;
 	}
 
-	.scroller-row {
+	.grid-row {
 		position: absolute;
 		top: calc(var(--row-start, 0) * 1px - var(--scroll-y, 0) * 1px);
 		height: calc(var(--row-height, 128) * 1px);
 		left: 0;
 	}
 
-	.scroller-cell {
+	.grid-cell {
 		text-align: center;
 		color: #000;
 		box-sizing: border-box;
@@ -659,7 +569,7 @@
 		display: flex;
 	}
 
-	.scroller-head-column {
+	.grid-head-column {
 		accent-color: #660000;
 		position: absolute;
 		text-align: center;
@@ -683,19 +593,19 @@
 		z-index: 200;
 	}
 
-	.scroller-pinned-row .scroller-head-column {
+	.grid-pinned-row .grid-head-column {
 		background: #333;
 		accent-color: black;
 		z-index: 299;
 	}
 
-	.scroller-head-row {
+	.grid-head-row {
 		position: absolute;
 		top: calc(var(--row-start, 0) * 1px);
 		z-index: 100;
 	}
 
-	.scroller-head-cell {
+	.grid-head-cell {
 		accent-color: #660000;
 		position: absolute;
 		left: calc(var(--column-start, 0) * 1px - var(--scroll-x, 0) * 1px);
@@ -719,11 +629,11 @@
 		z-index: 90;
 	}
 
-	label.scroller-head-cell:has(input[type="checkbox"]) {
+	label.grid-head-cell:has(input[type="checkbox"]) {
 		cursor: pointer;
 	}
 
-	label.scroller-head-column:has(input[type="checkbox"]) {
+	label.grid-head-column:has(input[type="checkbox"]) {
 		cursor: pointer;
 	}
 
@@ -731,18 +641,18 @@
 		cursor: pointer;
 	}
 
-	.scroller-head-cell.scroller-pinned-column {
+	.grid-head-cell.grid-pinned-column {
 		background: #333;
 		accent-color: black;
 		z-index: 99;
 	}
 
-	.scroller-pinned-column {
+	.grid-pinned-column {
 		position: absolute;
 		left: calc(var(--column-start, 0) * 1px);
 	}
 
-	.scroller-pinned-row {
+	.grid-pinned-row {
 		position: absolute;
 		top: calc(var(--row-start, 0) * 1px);
 	}
@@ -758,22 +668,22 @@
 		box-sizing: border-box;
 		outline: 1px solid #eee;
 	}
-	.scroller-pinned-column .cell-input {
+	.grid-pinned-column .cell-input {
 		background: #fafafa;
 		z-index: 10;
 	}
 
-	.scroller-pinned-row .cell-input {
+	.grid-pinned-row .cell-input {
 		background: #fafafa;
 		z-index: 10;
 	}
 
-	.scroller-pinned-row .scroller-pinned-column .cell-input {
+	.grid-pinned-row .grid-pinned-column .cell-input {
 		background: #efefef;
 		z-index: 20;
 	}
 
-	.scroller-cell:has(.cell-input:focus-visible)::after {
+	.grid-cell:has(.cell-input:focus-visible)::after {
 		content: " ";
 		position: absolute;
 		inset: 0;
@@ -788,15 +698,15 @@
 		z-index: 5;
 	}
 
-	.scroller-pinned-column .cell-input:focus-visible {
+	.grid-pinned-column .cell-input:focus-visible {
 		z-index: 15;
 	}
 
-	.scroller-pinned-row .cell-input:focus-visible {
+	.grid-pinned-row .cell-input:focus-visible {
 		z-index: 15;
 	}
 
-	.scroller-pinned-row .scroller-pinned-column .cell-input:focus-visible {
+	.grid-pinned-row .grid-pinned-column .cell-input:focus-visible {
 		z-index: 40;
 	}
 </style>

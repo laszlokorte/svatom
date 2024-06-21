@@ -35,6 +35,7 @@
 		},
 	);
 
+	import Scroller from "../Scroller.svelte";
 	import Creator from "./tools/Creator.svelte";
 	import Lasso from "./tools/Lasso.svelte";
 	import Pen from "./tools/Pen.svelte";
@@ -531,6 +532,28 @@
 		x: view([scrollIso, integerLens], cameraXScreen),
 		y: view([scrollIso, integerLens], cameraYScreen),
 	});
+
+	const scrollWindowSize = view(
+		L.setter((newSize) => ({
+			frame: newSize,
+			plane: newSize,
+		})),
+		combine({
+			plane: view(
+				[
+					"plane",
+					L.ifElse(
+						R.prop("autosize"),
+						L.identity,
+						L.lens(R.identity, (_, o) => o),
+					),
+					L.props("x", "y"),
+				],
+				camera,
+			),
+			frame: view(["frame", "size"], camera),
+		}),
+	);
 </script>
 
 <fieldset>
@@ -667,94 +690,64 @@
 	</div>
 </fieldset>
 
-<div
-	class="scroller"
-	use:bindScroll={scrollPosition}
-	style:--scroll-total-x={5000}
-	style:--scroll-total-y={5000}
+<Scroller
+	{scrollPosition}
+	contentSize={atom({ x: 5000, y: 5000 })}
+	{scrollWindowSize}
 >
-	<div class="scroller-body">
-		<svg
-			bind:this={svgElement.value}
-			use:Cam.bindEvents={camera}
-			viewBox={viewBox.value}
-			preserveAspectRatio={preserveAspectRatio.value}
-		>
-			<g class:hidden={!debugFrames.value} pointer-events="none">
-				<path
-					d={viewBoxPath.value}
-					class="view-box"
-					stroke-opacity="0.5"
-					stroke="magenta"
-					vector-effect="non-scaling-stroke"
-					stroke-width="8px"
-					fill="#ddffee"
-				/>
-				<path
-					d={frameBoxPath.value}
-					stroke="#ffaaaa"
-					fill="none"
-					vector-effect="non-scaling-stroke"
-					stroke-width="4px"
-					shape-rendering="crispEdges"
-				/>
-				<path
-					d={frameBoxPathPadded.value}
-					stroke="#aaccff"
-					fill="none"
-					vector-effect="non-scaling-stroke"
-					stroke-width="2px"
-					shape-rendering="crispEdges"
-				/>
-			</g>
-
-			<g pointer-events="none">
-				<Bounds {nodes} {drawings} {rotationTransform} {cameraScale} />
-				<Nodes {nodes} {rotationTransform} {cameraScale} />
-
-				<Drawings {drawings} {rotationTransform} {cameraScale} />
-				<Guides
-					{guides}
-					{frameBoxObject}
-					{rotationTransform}
-					{cameraScale}
-				/>
-			</g>
-
-			<svelte:component
-				this={tools[tool.value].component}
-				{...tools[tool.value].parameters}
-			></svelte:component>
-		</svg>
-
-		<div
-			class="scroller-measure"
-			use:bindSize={view(
-				[
-					"plane",
-					L.ifElse(
-						R.prop("autosize"),
-						L.identity,
-						L.lens(R.identity, (_, o) => o),
-					),
-					L.props("x", "y"),
-				],
-				camera,
-			)}
-			use:bindSize={view(["frame", "size"], camera)}
-		></div>
-
-		<div class="scroller-hud">
-			<input
-				type="range"
-				bind:value={cameraZoom.value}
-				min="-3"
-				max="3"
-				step=".1"
+	<svg
+		bind:this={svgElement.value}
+		use:Cam.bindEvents={camera}
+		viewBox={viewBox.value}
+		preserveAspectRatio={preserveAspectRatio.value}
+	>
+		<g class:hidden={!debugFrames.value} pointer-events="none">
+			<path
+				d={viewBoxPath.value}
+				class="view-box"
+				stroke-opacity="0.5"
+				stroke="magenta"
+				vector-effect="non-scaling-stroke"
+				stroke-width="8px"
+				fill="#ddffee"
 			/>
-		</div>
-	</div>
-</div>
+			<path
+				d={frameBoxPath.value}
+				stroke="#ffaaaa"
+				fill="none"
+				vector-effect="non-scaling-stroke"
+				stroke-width="4px"
+				shape-rendering="crispEdges"
+			/>
+			<path
+				d={frameBoxPathPadded.value}
+				stroke="#aaccff"
+				fill="none"
+				vector-effect="non-scaling-stroke"
+				stroke-width="2px"
+				shape-rendering="crispEdges"
+			/>
+		</g>
+
+		<g pointer-events="none">
+			<Bounds {nodes} {drawings} {rotationTransform} {cameraScale} />
+			<Nodes {nodes} {rotationTransform} {cameraScale} />
+
+			<Drawings {drawings} {rotationTransform} {cameraScale} />
+			<Guides
+				{guides}
+				{frameBoxObject}
+				{rotationTransform}
+				{cameraScale}
+			/>
+		</g>
+
+		<svelte:component
+			this={tools[tool.value].component}
+			{...tools[tool.value].parameters}
+		></svelte:component>
+	</svg>
+</Scroller>
 
 <fieldset>
 	<legend>Focus</legend>
@@ -875,58 +868,6 @@
 <textarea use:bindValue={cameraJson.stableAtom}></textarea>
 
 <style>
-	.scroller {
-		position: relative;
-		display: grid;
-		min-height: 10em;
-		height: 40em;
-		width: 100%;
-		resize: both;
-		overflow: auto;
-		grid-template-columns: 100%;
-		grid-template-rows: 100%;
-		border: 3px solid #333;
-		overflow: scroll;
-		box-sizing: border-box;
-	}
-
-	.scroller-measure {
-		position: sticky;
-		left: 0;
-		top: 0;
-		display: block;
-		grid-area: 1/1/1/1;
-		pointer-events: none;
-		border: 1px solid lime;
-		z-index: 10000;
-		place-self: stretch;
-		pointer-events: none;
-	}
-
-	.scroller::after {
-		display: block;
-		content: " ";
-		height: calc(var(--scroll-total-y, 1) * 1px);
-		width: calc(var(--scroll-total-x, 1) * 1px);
-		position: absolute;
-		top: 0;
-		left: 0;
-		pointer-events: none;
-	}
-
-	.scroller-body {
-		position: sticky;
-		top: 0;
-		left: 0;
-		display: grid;
-		width: 100%;
-		height: 100%;
-		overflow: hidden;
-		grid-template-columns: 1fr;
-		grid-template-rows: 1fr;
-		box-sizing: border-box;
-	}
-
 	.scroller-hud {
 		grid-area: 1/1/1/1;
 		place-self: end;
@@ -942,6 +883,9 @@
 		display: block;
 		grid-area: 1/1/1/1;
 		place-self: stretch;
+		width: 100%;
+		height: 100%;
+		position: absolute;
 	}
 
 	textarea {

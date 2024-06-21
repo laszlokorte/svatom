@@ -16,6 +16,7 @@
 	} from "./svatom.svelte.js";
 	import Nested from "./Nested.svelte";
 	import Table from "./Table.svelte";
+	import Scroller from "./Scroller.svelte";
 	import Canvas from "./Canvas/Root.svelte";
 	import asciiLogo from "./asciiLogo.txt?raw";
 	import { clamp } from "./utils.js";
@@ -144,6 +145,10 @@
 	const yourName = view(["name", L.removable(), L.defaults("")], settings);
 
 	const ascii = atom(asciiLogo);
+
+	const scrollerSize = atom({ x: 0, y: 0 });
+	const scrollerSizeX = view("x", scrollerSize);
+	const scrollerSizeY = view("y", scrollerSize);
 </script>
 
 <section>
@@ -343,14 +348,24 @@
 
 		<div class="number-picker">
 			<input type="range" use:bindValue={theNumberClamped} max="100" />
-			<input type="text" use:bindValue={theNumberClamped} max="100" />
+			<input
+				class="number-picker-numberfield"
+				type="text"
+				use:bindValue={theNumberClamped}
+				max="100"
+			/>
 			<output>({theNumberClamped.value})</output>
 			The input is bound synchronously
 		</div>
 
 		<div class="number-picker">
 			<input type="range" bind:value={theNumberDoubled.value} max="200" />
-			<input type="text" bind:value={theNumberDoubled.value} max="200" />
+			<input
+				class="number-picker-numberfield"
+				type="text"
+				bind:value={theNumberDoubled.value}
+				max="200"
+			/>
 			<output>({theNumberDoubled.value})</output>
 			The input is bound deferred
 		</div>
@@ -464,6 +479,36 @@
 	<div>
 		Sum: {numberFormat.format(R.sum(summingValues.value))}
 	</div>
+
+	<h3>Scroller</h3>
+
+	<Scroller debug="true" contentSize={scrollerSize}>
+		<div style="padding: 3em; margin: auto; max-width: 20em;">
+			<label class="number-picker"
+				>Content Width:
+				<input
+					type="range"
+					min="0"
+					max="5000"
+					bind:value={scrollerSizeX.value}
+				/>
+
+				<output>({scrollerSizeX.value})</output>
+			</label>
+
+			<label class="number-picker"
+				>Content Height:
+				<input
+					type="range"
+					min="0"
+					max="5000"
+					bind:value={scrollerSizeY.value}
+				/>
+
+				<output>({scrollerSizeY.value})</output>
+			</label>
+		</div>
+	</Scroller>
 
 	<h3>Huge Table</h3>
 
