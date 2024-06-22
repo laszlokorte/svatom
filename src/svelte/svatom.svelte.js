@@ -426,3 +426,26 @@ export function autofocusIf(node, yes) {
 		},
 	};
 }
+
+export function activeEvent(node, {eventType, fn}) {
+    node.addEventListener(eventType, fn, { passive: false });
+
+    return {
+        destroy() {
+            node.removeEventListener(eventType, fn, { passive: false });
+        },
+    };
+};
+
+
+export function activeTouchMove(node, fn) {
+    return activeEvent(node, {eventType: 'touchmove', fn})
+};
+
+export function disableTouchEventsIf(node, atom) {
+	return activeTouchMove(node, (evt) => {
+		if (atom.value) {
+			evt.preventDefault();
+		}
+	})
+}

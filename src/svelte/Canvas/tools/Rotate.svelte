@@ -3,7 +3,13 @@
 	import * as R from "ramda";
 	import * as U from "../../utils";
 	import * as C from "../../combinators";
-	import { atom, view, read, combine } from "../../svatom.svelte.js";
+	import {
+		atom,
+		view,
+		read,
+		combine,
+		disableTouchEventsIf,
+	} from "../../svatom.svelte.js";
 
 	const {
 		frameBoxPath,
@@ -96,11 +102,7 @@
 	fill="none"
 	role="button"
 	tabindex="-1"
-	use:U.activeTouchMove={(evt) => {
-		if (rotating.value) {
-			evt.preventDefault();
-		}
-	}}
+	use:disableTouchEventsIf={rotating}
 	onpointerdown={(evt) => {
 		if (rotating.value) {
 			return;

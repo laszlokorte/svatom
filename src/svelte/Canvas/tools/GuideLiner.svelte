@@ -3,7 +3,13 @@
 	import * as R from "ramda";
 	import * as U from "../../utils";
 	import * as Geo from "../../geometry";
-	import { atom, view, read, combine } from "../../svatom.svelte.js";
+	import {
+		atom,
+		view,
+		read,
+		combine,
+		disableTouchEventsIf,
+	} from "../../svatom.svelte.js";
 
 	const minDragDistance = 25;
 	const numberSvgFormat = new Intl.NumberFormat("en-US", {
@@ -117,11 +123,7 @@
 </script>
 
 <path
-	use:U.activeTouchMove={(evt) => {
-		if (guideStart.value) {
-			evt.preventDefault();
-		}
-	}}
+	use:disableTouchEventsIf={guideStart}
 	d={frameBoxPath.value}
 	pointer-events="all"
 	fill="none"

@@ -3,7 +3,7 @@
 	import * as R from "ramda";
 	import * as U from "../../utils";
 	import * as C from "../../combinators";
-	import { atom, view } from "../../svatom.svelte.js";
+	import { atom, view, disableTouchEventsIf } from "../../svatom.svelte.js";
 
 	const { frameBoxPath, clientToCanvas, panMovement } = $props();
 
@@ -13,11 +13,7 @@
 </script>
 
 <path
-	use:U.activeTouchMove={(evt) => {
-		if (grabbing.value) {
-			evt.preventDefault();
-		}
-	}}
+	use:disableTouchEventsIf={grabbing}
 	d={frameBoxPath.value}
 	class="pan-surface"
 	class:grabbing={grabbing.value}

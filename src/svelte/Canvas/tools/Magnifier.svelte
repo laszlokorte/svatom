@@ -2,7 +2,13 @@
 	import * as L from "partial.lenses";
 	import * as R from "ramda";
 	import * as U from "../../utils";
-	import { atom, view, read, combine } from "../../svatom.svelte.js";
+	import {
+		atom,
+		view,
+		read,
+		combine,
+		disableTouchEventsIf,
+	} from "../../svatom.svelte.js";
 
 	const numberSvgFormat = new Intl.NumberFormat("en-US", {
 		minimumFractionDigits: 5,
@@ -107,11 +113,7 @@
 </script>
 
 <path
-	use:U.activeTouchMove={(evt) => {
-		if (magnifierFrameStart.value) {
-			evt.preventDefault();
-		}
-	}}
+	use:disableTouchEventsIf={magnifierFrameStart}
 	d={frameBoxPath.value}
 	pointer-events="all"
 	fill="none"

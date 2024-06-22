@@ -14,6 +14,7 @@
 		bindSize,
 		autofocusIf,
 		string,
+		disableTouchEventsIf,
 	} from "../../svatom.svelte.js";
 
 	const numberSvgFormat = new Intl.NumberFormat("en-US", {
@@ -70,11 +71,7 @@
 </script>
 
 <path
-	use:U.activeTouchMove={(evt) => {
-		if (rubberBandStart.value) {
-			evt.preventDefault();
-		}
-	}}
+	use:disableTouchEventsIf={rubberBandStart}
 	d={frameBoxPath.value}
 	pointer-events="all"
 	fill="none"

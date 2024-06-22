@@ -19,11 +19,7 @@
 </script>
 
 <path
-	use:U.activeTouchMove={(evt) => {
-		if (isDrafting.value) {
-			evt.preventDefault();
-		}
-	}}
+	use:disableTouchEventsIf={isDrafting}
 	d={frameBoxPath.value}
 	pointer-events="all"
 	fill="none"

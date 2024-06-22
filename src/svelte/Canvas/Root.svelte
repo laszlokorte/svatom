@@ -49,6 +49,7 @@
 	import Axis from "./tools/Axis.svelte";
 	import Pan from "./tools/Pan.svelte";
 	import Rotate from "./tools/Rotate.svelte";
+	import Zoom from "./tools/Zoom.svelte";
 
 	const svgElement = atom(null);
 	const svgPoint = read(
@@ -376,9 +377,23 @@
 		),
 	];
 
+	const zoomMovementLens = [
+		"focus",
+		L.props("z", "x", "y"),
+		L.lens(
+			R.compose(
+				R.assoc("dz", 0),
+				R.zipObj(["px", "py"]),
+				R.props(["x", "y"]),
+			),
+			Cam.zoomWithPivot,
+		),
+	];
+
 	const zoomFrame = view(cameraZoomFrameLens, camera);
 	const panMovement = view(panMovementLens, camera);
 	const rotateMovement = view(rotateMovementLens, camera);
+	const zoomMovement = view(zoomMovementLens, camera);
 
 	const tool = atom("pen");
 	const nodes = atom([{ x: 200, y: 100 }]);
@@ -486,11 +501,21 @@
 				cameraScale,
 			},
 		},
+		zoom: {
+			component: Zoom,
+			parameters: {
+				frameBoxPath,
+				clientToCanvas,
+				zoomMovement,
+				rotationTransform,
+				cameraScale,
+			},
+		},
 	};
 
 	const toolGroups = [
 		["select", "lasso"],
-		["magnifier", "pan", "rotate"],
+		["magnifier", "pan", "rotate", "zoom"],
 		["pen", "create"],
 		["axis", "guides"],
 	];
