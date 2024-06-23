@@ -56,34 +56,13 @@
 		zoom,
 	);
 
-	const zoomRefWorldRadius = view(
-		L.lens(
-			({ pivotWorld, refClient }) => {
-				const refWorld = clientToCanvas(refClient.x, refClient.y);
-				return Math.hypot(
-					refWorld.x - pivotWorld.x,
-					refWorld.y - pivotWorld.y,
-				);
-			},
-			(newRadius, { pivotWorld, refClient }) => {
-				const refWorld = clientToCanvas(refClient.x, refClient.y);
-
-				const dx = refWorld.x - pivot.x;
-				const dy = refWorld.y - pivot.y;
-				const sdx = refClient.x - pivot.x;
-				const sdy = refClient.y - pivot.y;
-
-				const oldRadius = Math.hypot(dx, dy);
-
-				return {
-					pivotWorld,
-					ref: {
-						x: pivot.x + (newRadius * sdx) / oldRadius,
-						y: pivot.y + (newRadius * sdy) / oldRadius,
-					},
-				};
-			},
-		),
+	const zoomPivotCurrentWorld = view(
+		[
+			"pivotClient",
+			L.reread((pivotClient) =>
+				clientToCanvas(pivotClient.x, pivotClient.y),
+			),
+		],
 		zoom,
 	);
 
@@ -111,6 +90,11 @@
 			},
 		),
 		zoom,
+	);
+
+	const zoomAngle = read(
+		({ r, p }) => Math.atan2(r.y - p.y, r.x - p.x),
+		combine({ r: zoomRefClient, p: zoomPivotClient }),
 	);
 </script>
 
@@ -186,16 +170,8 @@
 
 <g transform={rotationTransform.value}>
 	{#if zoomPivotWorld.value}
-		<circle
-			cx={zoomPivotWorld.value.x}
-			cy={zoomPivotWorld.value.y}
-			r={cameraScale.value * 3}
-			class="ref"
-			fill="gray"
-		/>
-
 		<!-- <line
-			stroke="gray"
+			stroke="#4477aa"
 			stroke-width="1px"
 			vector-effect="non-scaling-stroke"
 			x1={zoomPivotWorld.value.x}
@@ -204,25 +180,73 @@
 			y2={zoomRefWorld.value.y}
 		/>
  -->
+
+		<circle
+			cx={zoomPivotCurrentWorld.value.x}
+			cy={zoomPivotCurrentWorld.value.y}
+			r={cameraScale.value * 40}
+			class="ref"
+			stroke="#111"
+			fill="none"
+			stroke-opacity="0.8"
+			stroke-width="6px"
+			vector-effect="non-scaling-stroke"
+		/>
+
 		<circle
 			cx={zoomRefWorld.value.x}
 			cy={zoomRefWorld.value.y}
 			r={cameraScale.value * 5}
 			class="ref"
-			fill="black"
+			fill="#4477aa"
+		/>
+		<circle
+			cx={zoomPivotCurrentWorld.value.x}
+			cy={zoomPivotCurrentWorld.value.y}
+			r={cameraScale.value * 40}
+			class="ref"
+			stroke="white"
+			fill="#4477aa"
+			stroke-opacity="1"
+			fill-opacity="0.1"
+			stroke-width="4px"
+			stroke-dasharray="6 12"
+			vector-effect="non-scaling-stroke"
+			stroke-dashoffset={-zoomAngle.value * 40}
+		/>
+		<line
+			x1={zoomPivotCurrentWorld.value.x}
+			x2={zoomRefWorld.value.x}
+			y1={zoomPivotCurrentWorld.value.y}
+			y2={zoomRefWorld.value.y}
+			stroke="#4477aa"
+			stroke-width="1px"
+			vector-effect="non-scaling-stroke"
 		/>
 
 		<circle
 			cx={zoomPivotWorld.value.x}
 			cy={zoomPivotWorld.value.y}
-			r={"100px"}
+			r={cameraScale.value * 3}
 			class="ref"
-			fill="none"
-			stroke="black"
-			opacity="0.1"
-			stroke-width="3px"
+			fill="#4477aa"
+		/>
+		<circle
+			cx={zoomPivotCurrentWorld.value.x}
+			cy={zoomPivotCurrentWorld.value.y}
+			r={cameraScale.value * 3}
+			class="ref"
+			fill="#4477aa"
+		/>
+		<line
+			x1={zoomPivotCurrentWorld.value.x}
+			x2={zoomPivotWorld.value.x}
+			y1={zoomPivotCurrentWorld.value.y}
+			y2={zoomPivotWorld.value.y}
+			stroke="#4477aa"
+			stroke-width="1px"
+			opacity="0.5"
 			vector-effect="non-scaling-stroke"
-			stroke-dasharray="10 {zoomRefScreenRadius.value / 10}"
 		/>
 	{/if}
 </g>
