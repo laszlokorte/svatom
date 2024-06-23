@@ -47,6 +47,7 @@
 	import GuideLiner from "./tools/GuideLiner.svelte";
 	import Guides from "./tools/Guides.svelte";
 	import Axis from "./tools/Axis.svelte";
+	import ShowAxis from "./tools/ShowAxis.svelte";
 	import Pan from "./tools/Pan.svelte";
 	import Rotate from "./tools/Rotate.svelte";
 	import Zoom from "./tools/Zoom.svelte";
@@ -333,22 +334,32 @@
 	const zoomDelta = view(["focus", L.setter(Cam.zoomWithPivot)], camera);
 
 	const cameraZoomFrameLens = [
-		"focus",
-		L.setter((frame, oldFocus) => {
+		L.setter((frame, oldCamera) => {
 			const rad = Geo.degree2rad(-frame.angle);
 			const cos = Math.cos(rad);
 			const sin = Math.sin(rad);
 
+			const oldFrameX = oldCamera.plane.x * Math.exp(-oldCamera.focus.z);
+			const oldFrameY = oldCamera.plane.y * Math.exp(-oldCamera.focus.z);
+			const dz = Math.log(
+				Math.min(
+					oldFrameY / Math.abs(frame.size.y),
+					oldFrameX / Math.abs(frame.size.x),
+				),
+			);
+
 			return {
-				...oldFocus,
-				x:
-					frame.start.x +
-					(cos * frame.size.x + sin * frame.size.y) / 2,
-				y:
-					frame.start.y +
-					(-sin * frame.size.y + cos * frame.size.y) / 2,
-				z: R.clamp(-3, 3, oldFocus.z + 0.5),
-				w: -frame.angle,
+				...oldCamera,
+				focus: {
+					x:
+						frame.start.x +
+						(cos * frame.size.x + sin * frame.size.y) / 2,
+					y:
+						frame.start.y +
+						(-sin * frame.size.x + cos * frame.size.y) / 2,
+					z: R.clamp(-3, 3, oldCamera.focus.z + dz),
+					w: -frame.angle,
+				},
 			};
 		}),
 	];
@@ -398,6 +409,11 @@
 	const tool = atom("pen");
 	const nodes = atom([{ x: 200, y: 100 }]);
 	const guides = atom([]);
+	const axis = atom({
+		start: { x: 0, y: 0 },
+		size: { x: 200, y: -200 },
+		angle: 0,
+	});
 	const drawings = atom([]);
 	const drafts = atom([]);
 	const rubberBand = atom(undefined);
@@ -408,6 +424,7 @@
 		drawings,
 	);
 	const newGuide = view([L.appendTo], guides);
+	const newAxis = view(L.identity, axis);
 
 	const tools = {
 		select: {
@@ -478,7 +495,7 @@
 				frameBoxPath,
 				clientToCanvas,
 				rotationTransform,
-				newGuide,
+				newAxis,
 				cameraScale,
 				cameraOrientation,
 			},
@@ -793,6 +810,12 @@
 			<Drawings {drawings} {rotationTransform} {cameraScale} />
 			<Guides
 				{guides}
+				{frameBoxObject}
+				{rotationTransform}
+				{cameraScale}
+			/>
+			<ShowAxis
+				{axis}
 				{frameBoxObject}
 				{rotationTransform}
 				{cameraScale}

@@ -156,3 +156,26 @@ function RayToLineSegment(
 	}
 	return null;
 }
+
+export function angleRadBetweenXY(ax,ay,bx,by,cx,cy) {
+	const BAx = ax - bx;
+	const BAy = ay - by;
+	const BCx = cx - bx;
+	const BCy = cy - by;
+
+	const dot = BCx * BAx + BCy * BAy;
+	const det = BCx * BAy - BCy * BAx;
+
+	return Math.atan2(det, dot);
+}
+
+export function angleRadBetween(a,b,c) {
+	return angleRadBetweenXY(a.x,a.y, b.x,b.y, c.x,c.y)
+}
+
+export function angleDegreeBetween(a,b,c) {
+	return rad2degree(angleRadBetween(a,b,c))
+}
+export function angleDegreeBetweenXY(ax,ay,bx,by,cx,cy) {
+	return rad2degree(angleRadBetweenXY(ax,ay,bx,by,cx,cy))
+}

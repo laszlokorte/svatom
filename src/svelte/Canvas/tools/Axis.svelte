@@ -22,6 +22,7 @@
 		rotationTransform,
 		cameraOrientation,
 		cameraScale,
+		newAxis,
 	} = $props();
 
 	const axis = atom(undefined);
@@ -103,6 +104,7 @@
 		if (axisStart.value) {
 			const svgP = clientToCanvas(evt.clientX, evt.clientY);
 
+			newAxis.value = axis.value;
 			axisSize.value = undefined;
 		}
 	}}
@@ -134,5 +136,6 @@
 		fill-rule: evenodd;
 		stroke-width: 1px;
 		vector-effect: non-scaling-stroke;
+		shape-rendering: crispedges;
 	}
 </style>
