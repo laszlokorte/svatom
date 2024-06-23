@@ -56,7 +56,21 @@
 		zoom,
 	);
 
-	const zoomPivotCurrentWorld = view(
+	function delayedRead(lens, someAtom) {
+		const instant = read(L.identity, someAtom);
+		const later = atom(L.get(lens, instant.value));
+
+		$effect.pre(() => {
+			later.value = L.get(lens, instant.value);
+			tick().then(() => {
+				later.value = L.get(lens, instant.value);
+			});
+		});
+
+		return later;
+	}
+
+	const zoomPivotCurrentWorld = delayedRead(
 		[
 			"pivotClient",
 			L.reread((pivotClient) =>
