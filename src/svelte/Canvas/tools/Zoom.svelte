@@ -86,6 +86,32 @@
 		),
 		zoom,
 	);
+
+	const zoomRefScreenRadius = view(
+		L.lens(
+			({ pivotClient, refClient }) => {
+				return Math.hypot(
+					refClient.x - pivotClient.x,
+					refClient.y - pivotClient.y,
+				);
+			},
+			(newRadius, { pivotClient, refClient }) => {
+				const sdx = refClient.x - pivotClient.x;
+				const sdy = refClient.y - pivotClient.y;
+
+				const oldRadius = Math.hypot(dx, dy);
+
+				return {
+					pivotWorld,
+					refClient: {
+						x: pivotClient.x + (newRadius * sdx) / oldRadius,
+						y: pivotClient.y + (newRadius * sdy) / oldRadius,
+					},
+				};
+			},
+		),
+		zoom,
+	);
 </script>
 
 <path
@@ -189,14 +215,14 @@
 		<circle
 			cx={zoomPivotWorld.value.x}
 			cy={zoomPivotWorld.value.y}
-			r={zoomRefWorldRadius.value}
+			r={"100px"}
 			class="ref"
 			fill="none"
 			stroke="black"
 			opacity="0.1"
 			stroke-width="3px"
 			vector-effect="non-scaling-stroke"
-			stroke-dasharray="5px 5px"
+			stroke-dasharray="10 {zoomRefScreenRadius.value / 10}"
 		/>
 	{/if}
 </g>

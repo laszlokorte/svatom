@@ -745,6 +745,7 @@
 				nodes.value = [];
 				drawings.value = [];
 				guides.value = [];
+				axis.value = undefined;
 			}}>Clear</button
 		>
 		{#each toolGroups as g}
