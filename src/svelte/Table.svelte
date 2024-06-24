@@ -30,8 +30,8 @@
 	const startAccum = R.mapAccum((acc, size) => [acc + size, acc]);
 	const endAccum = R.mapAccum((acc, size) => [acc + size, acc + size]);
 
-	const numColumns = 50;
-	const numRows = 50;
+	const numColumns = 1500;
+	const numRows = 15000;
 	const defaultPinNumX = 1;
 	const defaultPinNumY = 2;
 

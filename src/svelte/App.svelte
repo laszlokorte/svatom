@@ -146,7 +146,7 @@
 
 	const ascii = atom(asciiLogo);
 
-	const scrollerSize = atom({ x: 0, y: 0 });
+	const scrollerSize = atom({ x: 1000, y: 2000 });
 	const scrollerSizeX = view("x", scrollerSize);
 	const scrollerSizeY = view("y", scrollerSize);
 </script>

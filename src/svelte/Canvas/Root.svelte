@@ -628,9 +628,9 @@
 
 	const cameraXScreenScaled = view(
 		L.lens(
-			({ x, s, w }) => (x + 2000) * s - w.plane.x / 2,
+			({ x, s, w }) => (x + 2000) / s - w.plane.x / 2,
 			(x, old) => ({
-				x: (x + old.w.plane.x / 2) / old.s - 2000,
+				x: (x + old.w.plane.x / 2) * old.s - 2000,
 				s: old.s,
 			}),
 		),
@@ -641,9 +641,9 @@
 	);
 	const cameraYScreenScaled = view(
 		L.lens(
-			({ y, s, w }) => (y + 2000) * s - w.plane.y / 2,
+			({ y, s, w }) => (y + 2000) / s - w.plane.y / 2,
 			(y, old) => ({
-				y: (y - 2000 * old.s + old.w.plane.y / 2) / old.s,
+				y: (y + old.w.plane.y / 2) * old.s - 2000,
 				s: old.s,
 			}),
 		),
@@ -804,8 +804,8 @@
 	{scrollPosition}
 	contentSize={view(
 		({ s, w }) => ({
-			x: 4000 * s,
-			y: 4000 * s,
+			x: 4000 / s,
+			y: 4000 / s,
 		}),
 		combine({ w: scrollWindowSize, s: cameraScale }),
 	)}
