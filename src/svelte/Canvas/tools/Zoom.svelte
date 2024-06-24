@@ -23,7 +23,7 @@
 		cameraScale,
 	} = $props();
 
-	const minRadius = read(R.multiply(3), cameraScale);
+	const minRadius = 3;
 
 	const zoom = atom({});
 	const zooming = view(R.has("pivotClient"), zoom);
@@ -60,7 +60,7 @@
 		const later = atom(L.get(lens, someAtom.value));
 
 		$effect.pre(() => {
-			const x = L.get(lens, someAtom.value);
+			later.value = L.get(lens, someAtom.value);
 			tick().then(() => {
 				later.value = L.get(lens, someAtom.value);
 			});
@@ -157,7 +157,7 @@
 			const distance = Math.hypot(newDx, newDy);
 
 			if (POLAR) {
-				if (distance > minRadius.value) {
+				if (distance > minRadius) {
 					const angle = Geo.angleRadBetween(
 						zoomRefClient.value,
 						zoomPivotClient.value,
@@ -220,8 +220,8 @@
 			r={cameraScale.value * 40}
 			class="ref"
 			stroke="#111"
-			fill="none"
 			stroke-opacity="0.8"
+			fill="none"
 			stroke-width="6px"
 			vector-effect="non-scaling-stroke"
 		/>

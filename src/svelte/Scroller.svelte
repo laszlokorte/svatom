@@ -41,8 +41,6 @@
 
 </script>
 
-{overscroll.value.x}
-
 <div
 	class="scroller"
 	use:bindScroll={scrollPositionClamped}

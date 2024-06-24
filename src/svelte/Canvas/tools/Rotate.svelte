@@ -19,7 +19,7 @@
 		cameraScale,
 	} = $props();
 
-	const minRadius = read(R.multiply(50), cameraScale);
+	const minRadius = read(R.multiply(40), cameraScale);
 
 	const cursorImgB = window.URL.createObjectURL(
 		new Blob(
@@ -160,12 +160,24 @@
 			cx={rotationPivot.value.x}
 			cy={rotationPivot.value.y}
 			r={minRadius.value}
-			fill="lightgray"
+			stroke="#444"
 			class="ring"
 			class:active={radiusIsLargeEnough.value}
-			opacity="0.3"
-			stroke="gray"
-			stroke-width="10px"
+			fill-opacity="0.1"
+			stroke-width="4px"
+			vector-effect="non-scaling-stroke"
+		/>
+		<circle
+			cx={rotationPivot.value.x}
+			cy={rotationPivot.value.y}
+			r={minRadius.value * 0.92}
+			stroke-dasharray="7 4"
+			fill="#aa8888"
+			class="ring"
+			class:active={radiusIsLargeEnough.value}
+			fill-opacity="0.3"
+			stroke="#444"
+			stroke-width="4px"
 			vector-effect="non-scaling-stroke"
 		/>
 
@@ -174,14 +186,14 @@
 			cy={rotationPivot.value.y}
 			r={cameraScale.value * 3}
 			class="ref"
-			opacity="0.3"
-			fill="black"
+			stroke="#444"
 		/>
 
 		<line
-			stroke="black"
-			opacity="0.3"
-			stroke-width="2px"
+			stroke-opacity="0.8"
+			stroke-width="1px"
+			class="ref"
+			stroke="#444"
 			vector-effect="non-scaling-stroke"
 			x1={rotationPivot.value.x}
 			y1={rotationPivot.value.y}
@@ -194,7 +206,7 @@
 			cy={clampedRef.value.y}
 			r={cameraScale.value * 5}
 			class="ref"
-			fill="lightgray"
+			fill="#444"
 			class:active={radiusIsLargeEnough.value}
 		/>
 	{/if}
@@ -205,18 +217,19 @@
 		outline: none;
 	}
 	.rotate-surface.rotating {
-		cursor: rotating;
-		cursor:
+		/*cursor:
 			var(--cursor-b) 16 16,
-			default;
+			default;*/
 	}
 
 	.ref.active {
-		fill: green;
+		fill: darkgreen;
+		stroke: darkgreen;
 	}
 
 	.ring.active {
 		fill: lightgreen;
 		stroke: darkgreen;
+		stroke-opacity: 1;
 	}
 </style>
