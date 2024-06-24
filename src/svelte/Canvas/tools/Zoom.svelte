@@ -177,6 +177,74 @@
 
 <g transform={rotationTransform.value}>
 	{#if zoomPivotCurrentWorld.value}
+		{#if Math.hypot(zoomPivotWorld.value.y - zoomPivotCurrentWorld.value.y, zoomPivotWorld.value.x - zoomPivotCurrentWorld.value.x) / cameraScale.value > 45}
+			<path
+				d="
+				 M {zoomPivotWorld.value.x} {zoomPivotWorld.value.y}
+				L{zoomPivotCurrentWorld.value.x +
+					cameraScale.value *
+						42 *
+						Math.cos(
+							-Math.PI / 2 +
+								Math.atan2(
+									zoomPivotWorld.value.y -
+										zoomPivotCurrentWorld.value.y,
+									zoomPivotWorld.value.x -
+										zoomPivotCurrentWorld.value.x,
+								),
+						)} {zoomPivotCurrentWorld.value.y -
+					cameraScale.value *
+						42 *
+						-Math.sin(
+							-Math.PI / 2 +
+								Math.atan2(
+									zoomPivotWorld.value.y -
+										zoomPivotCurrentWorld.value.y,
+									zoomPivotWorld.value.x -
+										zoomPivotCurrentWorld.value.x,
+								),
+						)}
+						A {cameraScale.value * 42} {cameraScale.value *
+					42} 0 0 1  {zoomPivotCurrentWorld.value.x +
+					cameraScale.value *
+						42 *
+						-Math.cos(
+							-Math.PI / 2 +
+								Math.atan2(
+									zoomPivotWorld.value.y -
+										zoomPivotCurrentWorld.value.y,
+									zoomPivotWorld.value.x -
+										zoomPivotCurrentWorld.value.x,
+								),
+						)} {zoomPivotCurrentWorld.value.y -
+					cameraScale.value *
+						42 *
+						Math.sin(
+							-Math.PI / 2 +
+								Math.atan2(
+									zoomPivotWorld.value.y -
+										zoomPivotCurrentWorld.value.y,
+									zoomPivotWorld.value.x -
+										zoomPivotCurrentWorld.value.x,
+								),
+						)} Z"
+				fill="gray"
+				opacity="0.6"
+				fill-rule="nonzero"
+				vector-effect="non-scaling-stroke"
+			/>
+		{:else}
+			<line
+				x1={zoomPivotCurrentWorld.value.x}
+				x2={zoomPivotWorld.value.x}
+				y1={zoomPivotCurrentWorld.value.y}
+				y2={zoomPivotWorld.value.y}
+				stroke="#4477aa"
+				stroke-width="1px"
+				opacity="0.5"
+				vector-effect="non-scaling-stroke"
+			/>
+		{/if}
 		<!-- <line
 			stroke="#4477aa"
 			stroke-width="1px"
@@ -221,15 +289,6 @@
 			vector-effect="non-scaling-stroke"
 			stroke-dashoffset={-zoomAngle.value * 40}
 		/>
-		<line
-			x1={zoomPivotCurrentWorld.value.x}
-			x2={zoomRefWorld.value.x}
-			y1={zoomPivotCurrentWorld.value.y}
-			y2={zoomRefWorld.value.y}
-			stroke="#4477aa"
-			stroke-width="1px"
-			vector-effect="non-scaling-stroke"
-		/>
 
 		<circle
 			cx={zoomPivotWorld.value.x}
@@ -247,12 +306,11 @@
 		/>
 		<line
 			x1={zoomPivotCurrentWorld.value.x}
-			x2={zoomPivotWorld.value.x}
+			x2={zoomRefWorld.value.x}
 			y1={zoomPivotCurrentWorld.value.y}
-			y2={zoomPivotWorld.value.y}
+			y2={zoomRefWorld.value.y}
 			stroke="#4477aa"
 			stroke-width="1px"
-			opacity="0.5"
 			vector-effect="non-scaling-stroke"
 		/>
 	{/if}
