@@ -28,6 +28,8 @@
 	} = $props();
 
 	const guide = atom(undefined);
+	const pointerId = view([L.removable("pointerId"), "pointerId"], guide);
+
 	const guideStart = view(
 		[L.removable("start"), "start", L.removable("x", "y")],
 		guide,
@@ -146,18 +148,19 @@
 
 		const svgP = clientToCanvas(evt.clientX, evt.clientY);
 
+		pointerId.value = evt.pointerId;
 		guideStart.value = { x: svgP.x, y: svgP.y };
 		guideEnd.value = { x: svgP.x, y: svgP.y };
 	}}
 	onpointermove={(evt) => {
-		if (guideStart.value) {
+		if (pointerId.value === evt.pointerId) {
 			const svgP = clientToCanvas(evt.clientX, evt.clientY);
 
 			guideEnd.value = { x: svgP.x, y: svgP.y };
 		}
 	}}
 	onpointerup={(evt) => {
-		if (guideStart.value) {
+		if (pointerId.value === evt.pointerId) {
 			const svgP = clientToCanvas(evt.clientX, evt.clientY);
 			if (newGuideValid.value) {
 				newGuide.value = {
@@ -165,12 +168,12 @@
 					distance: guideDistance.value,
 				};
 			}
-			guideEnd.value = undefined;
+			pointerId.value = undefined;
 		}
 	}}
 	onpointercancel={(evt) => {
-		if (guideStart.value) {
-			guideEnd.value = undefined;
+		if (pointerId.value === evt.pointerId) {
+			pointerId.value = undefined;
 		}
 	}}
 />

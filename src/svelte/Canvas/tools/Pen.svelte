@@ -13,8 +13,9 @@
 		newDrawing,
 	} = $props();
 
-	const path = atom([]);
-
+	const pen = atom([]);
+	const pointerId = view([L.removable("pointerId"), "pointerId"], pen);
+	const path = view("path", pen);
 	const startPath = view([L.index(0), L.defaults(false)], path);
 	const currentPath = view(
 		[
@@ -78,7 +79,7 @@
 	tabindex="-1"
 	onkeydown={(evt) => {
 		if (evt.key === "Escape" || evt.key === "Esc") {
-			currentPath.value = undefined;
+			pointerId.value = undefined;
 		}
 	}}
 	onpointerdown={(evt) => {
@@ -88,33 +89,32 @@
 		if (!U.isLeftButton(evt)) {
 			return;
 		}
+		pointerId.value = evt.pointerId;
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 
 		const svgP = clientToCanvas(evt.clientX, evt.clientY);
-		startPath.value = { x: svgP.x, y: svgP.y };
-		currentPath.value = { x: svgP.x, y: svgP.y };
+		startPath.value = svgP;
+		currentPath.value = svgP;
 	}}
 	onpointermove={(evt) => {
-		if (startPath.value) {
-			const svgP = clientToCanvas(evt.clientX, evt.clientY);
-
-			currentPath.value = { x: svgP.x, y: svgP.y };
+		if (pointerId.value === evt.pointerId) {
+			currentPath.value = clientToCanvas(evt.clientX, evt.clientY);
 		}
 	}}
 	onpointerup={(evt) => {
-		if (startPath.value) {
+		if (pointerId.value === evt.pointerId) {
 			const svgP = clientToCanvas(evt.clientX, evt.clientY);
 
 			if (newDrawing) {
 				newDrawing.value = path.value;
 			}
 
-			currentPath.value = undefined;
+			pointerId.value = undefined;
 		}
 	}}
 	onpointercancel={(evt) => {
-		if (startPath.value) {
-			currentPath.value = undefined;
+		if (pointerId.value === evt.pointerId) {
+			pointerId.value = undefined;
 		}
 	}}
 />

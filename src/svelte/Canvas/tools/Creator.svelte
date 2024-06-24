@@ -12,7 +12,10 @@
 		cameraScale,
 	} = $props();
 
-	const drafts = atom([]);
+	const creator = atom([]);
+
+	const pointerId = view([L.removable("pointerId"), "pointerId"], creator);
+	const drafts = view("drafts", creator);
 
 	const isDrafting = view([L.index(0), L.defaults(false)], drafts);
 	const lastDraft = view([L.index(0), L.removable("x", "y")], drafts);
@@ -28,7 +31,7 @@
 	tabindex="-1"
 	onkeydown={(evt) => {
 		if (evt.key === "Escape" || evt.key === "Esc") {
-			lastDraft.value = undefined;
+			pointerId.value = undefined;
 		}
 	}}
 	onpointerdown={(evt) => {
@@ -39,29 +42,27 @@
 			return;
 		}
 		evt.currentTarget.setPointerCapture(evt.pointerId);
+
 		const svgP = clientToCanvas(evt.clientX, evt.clientY);
 
-		isDrafting.value = { x: svgP.x, y: svgP.y };
-		lastDraft.value = { x: svgP.x, y: svgP.y };
+		pointerId.value = evt.pointerId;
+		isDrafting.value = svgP;
+		lastDraft.value = svgP;
 	}}
 	onpointermove={(evt) => {
-		if (isDrafting.value) {
-			const svgP = clientToCanvas(evt.clientX, evt.clientY);
-
-			lastDraft.value = { x: svgP.x, y: svgP.y };
+		if (pointerId.value === evt.pointerId) {
+			lastDraft.value = clientToCanvas(evt.clientX, evt.clientY);
 		}
 	}}
 	onpointerup={(evt) => {
-		if (isDrafting.value) {
-			const svgP = clientToCanvas(evt.clientX, evt.clientY);
-
-			lastDraft.value = undefined;
-			newNode.value = { x: svgP.x, y: svgP.y };
+		if (pointerId.value === evt.pointerId) {
+			pointerId.value = undefined;
+			newNode.value = clientToCanvas(evt.clientX, evt.clientY);
 		}
 	}}
 	onpointercancel={(evt) => {
-		if (isDrafting.value) {
-			lastDraft.value = undefined;
+		if (pointerId.value === evt.pointerId) {
+			pointerId.value = undefined;
 		}
 	}}
 />

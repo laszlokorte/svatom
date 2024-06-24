@@ -1,5 +1,4 @@
 <script>
-	import { tick } from "svelte";
 	import * as L from "partial.lenses";
 	import * as R from "ramda";
 	import * as U from "../../utils";
@@ -26,9 +25,14 @@
 	const minRadius = 3;
 
 	const zoom = atom({});
-	const zooming = view(R.has("pivotClient"), zoom);
+	const pointerId = view([L.removable("pointerId"), "pointerId"], zoom);
+	const zooming = view(
+		L.lens(R.compose(R.not, R.isNil), (b, o) => (b ? o : undefined)),
+		pointerId,
+	);
 	const zoomPivotClient = view(
 		[
+			L.props("pivotClient", "pivotWorld", "refClient"),
 			L.rewrite(({ pivotClient }) => ({
 				pivotClient,
 				pivotWorld: clientToCanvas(pivotClient.x, pivotClient.y),
@@ -86,11 +90,12 @@
 			return;
 		}
 
-		evt.currentTarget.setPointerCapture(evt.pointerId);
+		pointerId.value = evt.pointerId;
 		zoomPivotClient.value = { x: evt.clientX, y: evt.clientY };
+		evt.currentTarget.setPointerCapture(evt.pointerId);
 	}}
 	onpointermove={(evt) => {
-		if (zooming.value) {
+		if (pointerId.value === evt.pointerId) {
 			const newPos = { x: evt.clientX, y: evt.clientY };
 
 			const newDx = Math.abs(newPos.x - zoomPivotClient.value.x);
@@ -124,26 +129,23 @@
 				};
 			}
 
-			// TODO remove tick if clientToCanvas is updated to not rely on SVG dom
-			tick().then(() => {
-				zoomRefClient.value = newPos;
-			});
+			zoomRefClient.value = newPos;
 		}
 	}}
 	onpointerup={(evt) => {
-		if (zooming.value) {
-			zoomPivotClient.value = undefined;
+		if (pointerId.value === evt.pointerId) {
+			pointerId.value = undefined;
 		}
 	}}
 	onpointercancel={(evt) => {
-		if (zooming.value) {
-			zoomPivotClient.value = undefined;
+		if (pointerId.value === evt.pointerId) {
+			pointerId.value = undefined;
 		}
 	}}
 />
 
 <g transform={rotationTransform.value}>
-	{#if zoomPivotCurrentWorld.value}
+	{#if zooming.value}
 		{#if Math.hypot(zoomPivotWorld.value.y - zoomPivotCurrentWorld.value.y, zoomPivotWorld.value.x - zoomPivotCurrentWorld.value.x) / cameraScale.value > 45}
 			<path
 				d="

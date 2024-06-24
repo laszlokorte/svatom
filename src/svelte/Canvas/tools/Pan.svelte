@@ -8,8 +8,12 @@
 	const { frameBoxPath, clientToCanvas, panMovement } = $props();
 
 	const grab = atom({ active: false });
-	const grabPosition = view("position", grab);
-	const grabbing = view("active", grab);
+	const grabPosition = view([L.removable("position"), "position"], grab);
+	const pointerId = view([L.removable("pointerId"), "pointerId"], grab);
+	const grabbing = view(
+		L.lens(R.compose(R.not, R.isNil), (b, o) => (b ? o : undefined)),
+		pointerId,
+	);
 </script>
 
 <path
@@ -27,10 +31,11 @@
 		}
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 		grabbing.value = true;
+		pointerId.value = evt.pointerId;
 		grabPosition.value = clientToCanvas(evt.clientX, evt.clientY);
 	}}
 	onpointermove={(evt) => {
-		if (grabbing.value) {
+		if (pointerId.value === evt.pointerId) {
 			const newPos = clientToCanvas(evt.clientX, evt.clientY);
 			panMovement.value = {
 				x: grabPosition.value.x - newPos.x,
@@ -39,10 +44,10 @@
 		}
 	}}
 	onpointerup={(evt) => {
-		grabbing.value = false;
+		pointerId.value = undefined;
 	}}
 	onpointercancel={(evt) => {
-		grabbing.value = false;
+		pointerId.value = undefined;
 	}}
 />
 

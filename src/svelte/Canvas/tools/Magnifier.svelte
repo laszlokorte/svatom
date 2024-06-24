@@ -28,6 +28,10 @@
 	} = $props();
 
 	const magnifierFrame = atom(undefined);
+	const pointerId = view(
+		[L.removable("pointerId"), "pointerId"],
+		magnifierFrame,
+	);
 	const magnifierFrameStart = view(
 		[L.removable("start"), "start", L.removable("x", "y")],
 		magnifierFrame,
@@ -123,7 +127,7 @@
 	tabindex="-1"
 	onkeydown={(evt) => {
 		if (evt.key === "Escape" || evt.key === "Esc") {
-			magnifierFrameStart.value = undefined;
+			pointerId.value = undefined;
 		}
 	}}
 	onpointerdown={(evt) => {
@@ -134,16 +138,16 @@
 			return;
 		}
 
+		pointerId.value = evt.pointerId;
+
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 
-		const svgP = clientToCanvas(evt.clientX, evt.clientY);
-
-		magnifierFrameStart.value = { x: svgP.x, y: svgP.y };
+		magnifierFrameStart.value = clientToCanvas(evt.clientX, evt.clientY);
 		magnifierFrameSize.value = { x: 0, y: 0 };
 		magnifierFrameAngle.value = -cameraOrientation.value;
 	}}
 	onpointermove={(evt) => {
-		if (magnifierFrameStart.value) {
+		if (pointerId.value === evt.pointerId) {
 			const svgP = clientToCanvas(evt.clientX, evt.clientY);
 
 			const dx = svgP.x - magnifierFrameStart.value.x;
@@ -159,7 +163,7 @@
 		}
 	}}
 	onpointerup={(evt) => {
-		if (magnifierFrameStart.value) {
+		if (pointerId.value === evt.pointerId) {
 			if (zoomDelta && !magnifierFrameStretched.value) {
 				const svgP = clientToCanvas(evt.clientX, evt.clientY, true);
 
@@ -178,11 +182,11 @@
 				};
 			}
 
-			magnifierFrameSize.value = undefined;
+			pointerId.value = undefined;
 		}
 	}}
 	onpointercancel={(evt) => {
-		magnifierFrameSize.value = undefined;
+		pointerId.value = undefined;
 	}}
 />
 

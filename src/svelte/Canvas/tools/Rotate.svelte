@@ -34,9 +34,14 @@
 	);
 
 	const rotation = atom({});
-	const rotating = view(R.has("pivot"), rotation);
+	const pointerId = view([L.removable("pointerId"), "pointerId"], rotation);
+	const rotating = view(
+		L.lens(R.compose(R.not, R.isNil), (b, o) => (b ? o : undefined)),
+		pointerId,
+	);
 	const rotationPivot = view(
 		[
+			L.props("pivot", "ref"),
 			L.rewrite(({ pivot }) => ({ pivot, ref: pivot })),
 			L.removable("pivot"),
 			"pivot",
@@ -47,25 +52,28 @@
 	const rotationRef = view("ref", rotation);
 
 	const rotationRadius = view(
-		L.lens(
-			({ pivot, ref }) => {
-				return Math.hypot(ref.x - pivot.x, ref.y - pivot.y);
-			},
-			(newRadius, { pivot, ref }) => {
-				const dx = ref.x - pivot.x;
-				const dy = ref.y - pivot.y;
+		[
+			L.props("pivot", "ref"),
+			L.lens(
+				({ pivot, ref }) => {
+					return Math.hypot(ref.x - pivot.x, ref.y - pivot.y);
+				},
+				(newRadius, { pivot, ref }) => {
+					const dx = ref.x - pivot.x;
+					const dy = ref.y - pivot.y;
 
-				const oldRadius = Math.hypot(dx, dy);
+					const oldRadius = Math.hypot(dx, dy);
 
-				return {
-					pivot,
-					ref: {
-						x: pivot.x + (newRadius * dx) / oldRadius,
-						y: pivot.y + (newRadius * dy) / oldRadius,
-					},
-				};
-			},
-		),
+					return {
+						pivot,
+						ref: {
+							x: pivot.x + (newRadius * dx) / oldRadius,
+							y: pivot.y + (newRadius * dy) / oldRadius,
+						},
+					};
+				},
+			),
+		],
 		rotation,
 	);
 
@@ -109,11 +117,12 @@
 		}
 		const pos = clientToCanvas(evt.clientX, evt.clientY);
 
+		pointerId.value = evt.pointerId;
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 		rotationPivot.value = pos;
 	}}
 	onpointermove={(evt) => {
-		if (rotating.value) {
+		if (pointerId.value === evt.pointerId) {
 			const newPos = clientToCanvas(evt.clientX, evt.clientY);
 			const distance = Math.hypot(
 				newPos.x - rotationPivot.value.x,
@@ -143,13 +152,13 @@
 		}
 	}}
 	onpointerup={(evt) => {
-		if (rotating.value) {
-			rotationPivot.value = undefined;
+		if (pointerId.value === evt.pointerId) {
+			pointerId.value = undefined;
 		}
 	}}
 	onpointercancel={(evt) => {
-		if (rotating.value) {
-			rotationPivot.value = undefined;
+		if (pointerId.value === evt.pointerId) {
+			pointerId.value = undefined;
 		}
 	}}
 />

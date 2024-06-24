@@ -1,11 +1,12 @@
 # TODOS
 
 * canvas
-	* multitouch for all tools (extract helper functions into svatom lib)
-	* smooth pen tool
+	* extract multi touch handlings from tools into helper functions
+	* smooth pen tool (catmulrom)
 	* touch pich/pan/zoom
-	* apply bounds to scrollbars
+	* calculate world space camera bounds and apply consistently
 	* camera towing (move camera when press cursor outside frame)
+	* worldToScreen transform (as lens combined with screenToWorld)
 
 	* element selection
 	* cull elements outside camera frame

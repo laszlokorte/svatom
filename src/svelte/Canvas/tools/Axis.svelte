@@ -26,6 +26,9 @@
 	} = $props();
 
 	const axis = atom(undefined);
+
+	const pointerId = view([L.removable("pointerId"), "pointerId"], axis);
+
 	const axisStart = view(
 		[L.removable("start"), "start", L.removable("x", "y")],
 		axis,
@@ -72,7 +75,7 @@
 	tabindex="-1"
 	onkeydown={(evt) => {
 		if (evt.key === "Escape" || evt.key === "Esc") {
-			axisSize.value = undefined;
+			pointerId.value = undefined;
 		}
 	}}
 	onpointerdown={(evt) => {
@@ -82,6 +85,9 @@
 		if (!U.isLeftButton(evt)) {
 			return;
 		}
+
+		pointerId.value = evt.pointerId;
+
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 		const svgP = clientToCanvas(evt.clientX, evt.clientY);
 		axisStart.value = { x: svgP.x, y: svgP.y };
@@ -89,7 +95,7 @@
 		axisAngle.value = -cameraOrientation.value;
 	}}
 	onpointermove={(evt) => {
-		if (axisStart.value) {
+		if (pointerId.value === evt.pointerId) {
 			const svgP = clientToCanvas(evt.clientX, evt.clientY);
 
 			const dx = svgP.x - axisStart.value.x;
@@ -101,9 +107,7 @@
 		}
 	}}
 	onpointerup={(evt) => {
-		if (axisStart.value) {
-			const svgP = clientToCanvas(evt.clientX, evt.clientY);
-
+		if (pointerId.value === evt.pointerId) {
 			newAxis.value = axis.value;
 			axisSize.value = undefined;
 		}

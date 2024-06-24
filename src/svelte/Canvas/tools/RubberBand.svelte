@@ -32,6 +32,8 @@
 	} = $props();
 
 	const rubberBand = atom(undefined);
+	const pointerId = view([L.removable("pointerId"), "pointerId"], rubberBand);
+
 	const rubberBandStart = view(
 		[L.removable("start"), "start", L.removable("x", "y")],
 		rubberBand,
@@ -80,7 +82,7 @@
 	tabindex="-1"
 	onkeydown={(evt) => {
 		if (evt.key === "Escape" || evt.key === "Esc") {
-			rubberBandSize.value = undefined;
+			pointerId.value = undefined;
 		}
 	}}
 	onpointerdown={(evt) => {
@@ -91,14 +93,15 @@
 		if (!U.isLeftButton(evt)) {
 			return;
 		}
+		pointerId.value = evt.pointerId;
+
 		evt.currentTarget.setPointerCapture(evt.pointerId);
-		const svgP = clientToCanvas(evt.clientX, evt.clientY);
-		rubberBandStart.value = { x: svgP.x, y: svgP.y };
+		rubberBandStart.value = clientToCanvas(evt.clientX, evt.clientY);
 		rubberBandSize.value = { x: 0, y: 0 };
 		rubberBandAngle.value = -cameraOrientation.value;
 	}}
 	onpointermove={(evt) => {
-		if (rubberBandStart.value) {
+		if (pointerId.value === evt.pointerId) {
 			const svgP = clientToCanvas(evt.clientX, evt.clientY);
 
 			const dx = svgP.x - rubberBandStart.value.x;
@@ -114,13 +117,13 @@
 		}
 	}}
 	onpointerup={(evt) => {
-		if (rubberBandStart.value) {
-			rubberBandSize.value = undefined;
+		if (pointerId.value === evt.pointerId) {
+			pointerId.value = undefined;
 		}
 	}}
 	onpointercancel={(evt) => {
-		if (rubberBandStart.value) {
-			rubberBandSize.value = undefined;
+		if (pointerId.value === evt.pointerId) {
+			pointerId.value = undefined;
 		}
 	}}
 />
