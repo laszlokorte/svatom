@@ -317,10 +317,19 @@
 	const cameraY = view(["focus", "y", numberLens], camera);
 	const cameraAngle = view(["focus", "w", numberLens], camera);
 	const cameraXScreen = view(
-		["focus", affineLens("x", "x", "y", "w"), numberLens],
+		["focus", affineLens("x", "x", "y", "w")],
 		camera,
 	);
 	const cameraYScreen = view(
+		["focus", affineLens("y", "x", "y", "w")],
+		camera,
+	);
+
+	const cameraXScreenFormatted = view(
+		["focus", affineLens("x", "x", "y", "w"), numberLens],
+		camera,
+	);
+	const cameraYScreenFormatted = view(
 		["focus", affineLens("y", "x", "y", "w"), numberLens],
 		camera,
 	);
@@ -619,9 +628,9 @@
 
 	const cameraXScreenScaled = view(
 		L.lens(
-			({ x, s, w }) => x * s + 2000 / s - w.plane.x / 2,
+			({ x, s, w }) => (x + 2000) * s - w.plane.x / 2,
 			(x, old) => ({
-				x: (x - 2000 / old.s + old.w.plane.x / 2) / old.s,
+				x: (x + old.w.plane.x / 2) / old.s - 2000,
 				s: old.s,
 			}),
 		),
@@ -632,9 +641,9 @@
 	);
 	const cameraYScreenScaled = view(
 		L.lens(
-			({ y, s, w }) => y * s + 2000 / s - w.plane.y / 2,
+			({ y, s, w }) => (y + 2000) * s - w.plane.y / 2,
 			(y, old) => ({
-				y: (y - 2000 / old.s + old.w.plane.y / 2) / old.s,
+				y: (y - 2000 * old.s + old.w.plane.y / 2) / old.s,
 				s: old.s,
 			}),
 		),
@@ -795,8 +804,8 @@
 	{scrollPosition}
 	contentSize={view(
 		({ s, w }) => ({
-			x: 4000 / s,
-			y: 4000 / s,
+			x: 4000 * s,
+			y: 4000 * s,
 		}),
 		combine({ w: scrollWindowSize, s: cameraScale }),
 	)}
@@ -953,7 +962,7 @@
 			><span>Scroll X:</span>
 			<input
 				type="range"
-				bind:value={cameraXScreen.value}
+				bind:value={cameraXScreenFormatted.value}
 				min="-4000"
 				max="4000"
 				step="0.1"
@@ -961,16 +970,16 @@
 			<button
 				type="button"
 				onclick={(_) => {
-					cameraXScreen.value = 0;
+					cameraXScreenFormatted.value = 0;
 				}}>reset</button
 			>
-			<output>{cameraXScreen.value}</output>
+			<output>{cameraXScreenFormatted.value}</output>
 		</label>
 		<label class="number-picker"
 			><span>Scroll Y:</span>
 			<input
 				type="range"
-				bind:value={cameraYScreen.value}
+				bind:value={cameraYScreenFormatted.value}
 				min="-4000"
 				max="4000"
 				step="0.1"
@@ -978,10 +987,10 @@
 			<button
 				type="button"
 				onclick={(_) => {
-					cameraYScreen.value = 0;
+					cameraYScreenFormatted.value = 0;
 				}}>reset</button
 			>
-			<output>{cameraYScreen.value}</output>
+			<output>{cameraYScreenFormatted.value}</output>
 		</label>
 	</div>
 </fieldset>
