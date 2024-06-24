@@ -259,6 +259,40 @@ export function string(parts, ...args) {
 }
 
 
+
+export function delayedRead(lens, someAtom) {
+	const later = atom(L.get(lens, someAtom.value));
+
+	$effect.pre(() => {
+		later.value = L.get(lens, someAtom.value);
+		tick().then(() => {
+			later.value = L.get(lens, someAtom.value);
+		});
+	});
+
+	return read(L.identity, later);
+}
+
+export function delayed(lens, someAtom) {
+	const later = atom(L.get(lens, someAtom.value));
+
+	$effect.pre(() => {
+		later.value = L.get(lens, someAtom.value);
+		tick().then(() => {
+			later.value = L.get(lens, someAtom.value);
+		});
+	});
+
+	$effect.pre(() => {
+		someAtom.value = L.set(lens, instant.value, someAtom.value);
+		tick().then(() => {
+			someAtom.value = L.set(lens, instant.value, someAtom.value);
+		});
+	});
+
+	return later;
+}
+
 export function bindValue(node, someAtom) {
 	let c0 = null;
 	let c1 = null;

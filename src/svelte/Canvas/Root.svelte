@@ -53,33 +53,23 @@
 	import Zoom from "./tools/Zoom.svelte";
 
 	const svgElement = atom(null);
-	const svgPoint = read(
-		L.reread((svg) => svg.createSVGPoint()),
-		svgElement,
-	);
 
 	function clientToCanvas(x, y, screen = false) {
-		const pt = svgPoint.value;
-		pt.x = x;
-		pt.y = y;
-		const svgP = pt.matrixTransform(
-			svgElement.value.getScreenCTM().inverse(),
+		const screenPoint = U.screenToElementViewbox(
+			x,
+			y,
+			svgElement.value,
+			cameraToViewbox(camera.value),
 		);
 
 		if (screen) {
-			return {
-				x: svgP.x,
-				y: svgP.y,
-			};
+			return screenPoint;
 		} else {
 			return Geo.rotatePivotXYDegree(
 				camera.value.focus.x,
 				camera.value.focus.y,
 				camera.value.focus.w,
-				{
-					x: svgP.x,
-					y: svgP.y,
-				},
+				screenPoint,
 			);
 		}
 	}
@@ -157,22 +147,26 @@
 
 	const viewBoxPath = view(viewBoxPathLens, camera);
 
+	const cameraToViewbox = (camera) => {
+		return {
+			alignmentX: camera.frame.alignX,
+			alignmentY: camera.frame.alignY,
+			width: camera.plane.x * Math.exp(-camera.focus.z),
+			height: camera.plane.y * Math.exp(-camera.focus.z),
+			minX:
+				camera.focus.x -
+				(camera.plane.x / 2) * Math.exp(-camera.focus.z),
+			minY:
+				camera.focus.y -
+				(camera.plane.y / 2) * Math.exp(-camera.focus.z),
+			scaling: camera.frame.aspect,
+		};
+	};
+
 	const frameBoxLens = (padding) =>
 		L.reread((camera) => {
 			const { minX, minY, width, height } = U.scaleViewBox(
-				{
-					alignmentX: camera.frame.alignX,
-					alignmentY: camera.frame.alignY,
-					width: camera.plane.x * Math.exp(-camera.focus.z),
-					height: camera.plane.y * Math.exp(-camera.focus.z),
-					minX:
-						camera.focus.x -
-						(camera.plane.x / 2) * Math.exp(-camera.focus.z),
-					minY:
-						camera.focus.y -
-						(camera.plane.y / 2) * Math.exp(-camera.focus.z),
-					scaling: camera.frame.aspect,
-				},
+				cameraToViewbox(camera),
 				camera.frame.size.x,
 				camera.frame.size.y,
 				padding ? camera.frame.padding : 0,

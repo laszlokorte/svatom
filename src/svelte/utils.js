@@ -79,3 +79,24 @@ export function isLeftButton(event, allowModifiers = false) {
         return (event.button == 1 || event.type == 'click');
     }
 }
+
+function screenToElementViewboxHelper(clientX, clientY, elementX, elementY, elementWidth, elementHeight, localWidth, localHeight, viewBox) {
+    const scaledVB = scaleViewBox(viewBox, localWidth, localHeight)
+
+    return {
+        x: scaledVB.minX + scaledVB.width * ((clientX - elementX) / elementWidth),
+        y: scaledVB.minY + scaledVB.height * ((clientY - elementY) / elementHeight),
+    }
+}
+
+export function screenToElementViewbox(clientX, clientY, element, viewBox) {
+    const boundingRect = element.getBoundingClientRect();
+    
+    return screenToElementViewboxHelper(
+        clientX, clientY,
+        boundingRect.left, boundingRect.top, 
+        boundingRect.width, boundingRect.height, 
+        element.clientWidth, element.clientHeight, 
+        viewBox
+    )
+}

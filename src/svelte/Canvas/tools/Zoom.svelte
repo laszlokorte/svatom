@@ -56,40 +56,7 @@
 		zoom,
 	);
 
-	function delayedRead(lens, someAtom) {
-		const later = atom(L.get(lens, someAtom.value));
-
-		$effect.pre(() => {
-			later.value = L.get(lens, someAtom.value);
-			tick().then(() => {
-				later.value = L.get(lens, someAtom.value);
-			});
-		});
-
-		return read(L.identity, later);
-	}
-
-	function delayed(lens, someAtom) {
-		const later = atom(L.get(lens, someAtom.value));
-
-		$effect.pre(() => {
-			later.value = L.get(lens, someAtom.value);
-			tick().then(() => {
-				later.value = L.get(lens, someAtom.value);
-			});
-		});
-
-		$effect.pre(() => {
-			someAtom.value = L.set(lens, instant.value, someAtom.value);
-			tick().then(() => {
-				someAtom.value = L.set(lens, instant.value, someAtom.value);
-			});
-		});
-
-		return later;
-	}
-
-	const zoomPivotCurrentWorld = delayedRead(
+	const zoomPivotCurrentWorld = read(
 		[
 			"pivotClient",
 			L.reread((pivotClient) =>
