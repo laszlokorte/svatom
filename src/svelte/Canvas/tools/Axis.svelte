@@ -29,9 +29,11 @@
 
 	const pointerId = view([L.removable("pointerId"), "pointerId"], axis);
 
+	const axisBasis = view([L.removable("basis"), "basis"], axis);
+
 	const axisStart = view(
 		[L.removable("start"), "start", L.removable("x", "y")],
-		axis,
+		axisBasis,
 	);
 	const axisSize = view(
 		L.ifElse(
@@ -39,9 +41,9 @@
 			[L.removable("size"), "size", L.removable("x", "y")],
 			L.zero,
 		),
-		axis,
+		axisBasis,
 	);
-	const axisAngle = view([L.removable("angle"), "angle"], axis);
+	const axisAngle = view([L.removable("angle"), "angle"], axisBasis);
 	const axisAngleCos = view(
 		[L.reread((r) => Math.cos((r / 180) * Math.PI))],
 		axisAngle,
@@ -52,7 +54,7 @@
 	);
 
 	const axisPath = read(
-		L.getter(({ axis: b, cameraScale: scale }) =>
+		L.getter(({ axisBasis: b, cameraScale: scale }) =>
 			b && b.start && b.size
 				? `M${numberSvgFormat.format(b.start.x)},${numberSvgFormat.format(b.start.y)}h${numberSvgFormat.format(b.size.x)}
 				m${Math.sign(b.size.x) * (10 * scale)},0l${Math.sign(b.size.x) * (-10 * scale)},${-10 * scale}v${2 * 10 * scale}l${Math.sign(b.size.x) * (10 * scale)},${-10 * scale}
@@ -61,7 +63,7 @@
 				`
 				: "",
 		),
-		combine({ axis, cameraScale }),
+		combine({ axisBasis, cameraScale }),
 	);
 </script>
 
@@ -108,7 +110,7 @@
 	}}
 	onpointerup={(evt) => {
 		if (pointerId.value === evt.pointerId) {
-			newAxis.value = axis.value;
+			newAxis.value = axisBasis.value;
 			axisSize.value = undefined;
 		}
 	}}
