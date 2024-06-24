@@ -95,6 +95,9 @@
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 	}}
 	onpointermove={(evt) => {
+		if (!U.isLeftButton(evt)) {
+			return;
+		}
 		if (pointerId.value === evt.pointerId) {
 			const newPos = { x: evt.clientX, y: evt.clientY };
 

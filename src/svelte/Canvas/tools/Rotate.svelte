@@ -112,6 +112,9 @@
 	tabindex="-1"
 	use:disableTouchEventsIf={rotating}
 	onpointerdown={(evt) => {
+		if (!U.isLeftButton(evt)) {
+			return;
+		}
 		if (rotating.value) {
 			return;
 		}

@@ -14,6 +14,7 @@
 		bindValue,
 		bindScroll,
 		bindSize,
+		traverse,
 	} from "../svatom.svelte.js";
 
 	const numberFormat = new Intl.NumberFormat("en-US", {
@@ -429,6 +430,40 @@
 	const newGuide = view([L.appendTo], guides);
 	const newAxis = view(L.identity, axis);
 
+	function calculateBoundingBox(padding, entities, lens) {
+		const branch = L.branch(lens);
+		const allEntities = combine(entities);
+
+		const minX = traverse([branch, "x"], L.minimum, allEntities).map(
+			R.compose(R.subtract(R.__, padding), R.min(0), R.defaultTo(0)),
+		);
+		const maxX = traverse([branch, "x"], L.maximum, allEntities).map(
+			R.compose(R.add(padding), R.max(0), R.defaultTo(0)),
+		);
+		const minY = traverse([branch, "y"], L.minimum, allEntities).map(
+			R.compose(R.subtract(R.__, padding), R.min(0), R.defaultTo(0)),
+		);
+		const maxY = traverse([branch, "y"], L.maximum, allEntities).map(
+			R.compose(R.add(padding), R.max(0), R.defaultTo(0)),
+		);
+
+		return combine({
+			minX,
+			maxX,
+			minY,
+			maxY,
+		});
+	}
+
+	const extension = calculateBoundingBox(
+		1000,
+		{ nodes, drawings },
+		{
+			nodes: L.elems,
+			drawings: [L.elems, L.elems],
+		},
+	);
+
 	const tools = {
 		select: {
 			component: RubberBand,
@@ -628,27 +663,41 @@
 
 	const cameraXScreenScaled = view(
 		L.lens(
-			({ x, s, w }) => (x + 2000) / s - w.plane.x / 2,
+			({ x, s, w, b }) => (x + (b.maxX - b.minX) / 2) / s - w.plane.x / 2,
 			(x, old) => ({
-				x: (x + old.w.plane.x / 2) * old.s - 2000,
+				x:
+					(x + old.w.plane.x / 2) * old.s -
+					(old.b.maxX - old.b.minX) / 2,
 				s: old.s,
 			}),
 		),
 		combine(
-			{ x: cameraXScreen, s: cameraScale, w: scrollWindowSize },
+			{
+				x: cameraXScreen,
+				s: cameraScale,
+				w: scrollWindowSize,
+				b: extension,
+			},
 			{ x: true },
 		),
 	);
 	const cameraYScreenScaled = view(
 		L.lens(
-			({ y, s, w }) => (y + 2000) / s - w.plane.y / 2,
+			({ y, s, w, b }) => (y + (b.maxY - b.minY) / 2) / s - w.plane.y / 2,
 			(y, old) => ({
-				y: (y + old.w.plane.y / 2) * old.s - 2000,
+				y:
+					(y + old.w.plane.y / 2) * old.s -
+					(old.b.maxY - old.b.minY) / 2,
 				s: old.s,
 			}),
 		),
 		combine(
-			{ y: cameraYScreen, s: cameraScale, w: scrollWindowSize },
+			{
+				y: cameraYScreen,
+				s: cameraScale,
+				w: scrollWindowSize,
+				b: extension,
+			},
 			{ y: true },
 		),
 	);
@@ -803,11 +852,11 @@
 <Scroller
 	{scrollPosition}
 	contentSize={view(
-		({ s, w }) => ({
-			x: 4000 / s,
-			y: 4000 / s,
+		({ s, w, b }) => ({
+			x: (b.maxX - b.minX) / s,
+			y: (b.maxY - b.minY) / s,
 		}),
-		combine({ w: scrollWindowSize, s: cameraScale }),
+		combine({ w: scrollWindowSize, s: cameraScale, b: extension }),
 	)}
 	{scrollWindowSize}
 >
@@ -846,7 +895,7 @@
 		</g>
 
 		<g pointer-events="none">
-			<Bounds {nodes} {drawings} {rotationTransform} {cameraScale} />
+			<Bounds {extension} {rotationTransform} {cameraScale} />
 			<Nodes {nodes} {rotationTransform} {cameraScale} />
 
 			<Drawings {drawings} {rotationTransform} {cameraScale} />
