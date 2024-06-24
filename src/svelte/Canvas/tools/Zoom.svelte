@@ -99,32 +99,6 @@
 		zoom,
 	);
 
-	const zoomRefScreenRadius = view(
-		L.lens(
-			({ pivotClient, refClient }) => {
-				return Math.hypot(
-					refClient.x - pivotClient.x,
-					refClient.y - pivotClient.y,
-				);
-			},
-			(newRadius, { pivotClient, refClient }) => {
-				const sdx = refClient.x - pivotClient.x;
-				const sdy = refClient.y - pivotClient.y;
-
-				const oldRadius = Math.hypot(dx, dy);
-
-				return {
-					pivotWorld,
-					refClient: {
-						x: pivotClient.x + (newRadius * sdx) / oldRadius,
-						y: pivotClient.y + (newRadius * sdy) / oldRadius,
-					},
-				};
-			},
-		),
-		zoom,
-	);
-
 	const zoomAngle = read(
 		({ r, p }) => Math.atan2(r.y - p.y, r.x - p.x),
 		combine({ r: zoomRefClient, p: zoomPivotClient }),

@@ -36,7 +36,9 @@
 				}
 			}
 		}),
-		combine({ pos: scrollPosition, windowSize: scrollWindowSize, conSize: contentSize, o: overscroll }),
+		combine({ pos: scrollPosition, windowSize: scrollWindowSize, conSize: contentSize, o: overscroll }, {
+			pos: true
+		}),
 	);
 
 </script>

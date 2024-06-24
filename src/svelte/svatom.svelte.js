@@ -18,7 +18,14 @@ export function atom(init) {
 	}
 }
 
-export function combine(mapOfAtoms) {
+export function combine(mapOfAtoms, writables = null) {
+	if(writables === null) {
+	
+		writables = R.mapObjIndexed((v, k) => {
+			return (typeof Object.getOwnPropertyDescriptor(v, 'value').set === 'function')
+		}, mapOfAtoms)
+	}
+
 	return {
 		get value() {
 			return R.map((v) => {
@@ -33,7 +40,7 @@ export function combine(mapOfAtoms) {
 			}, mapOfAtoms)
 
 			R.forEachObjIndexed((v, k) => {
-				if(!$state.is(oldValues[k], newVal[k])) {
+				if(writables[k] && !$state.is(oldValues[k], newVal[k])) {
 					v.value = newVal[k]
 				}
 			}, mapOfAtoms)
