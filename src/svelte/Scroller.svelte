@@ -17,30 +17,39 @@
 		scrollWindowSize = atom({ x: 0, y: 0 })
 	} = $props();
 
-	const scrollPositionClamped = view(L.lens(({ pos, windowSize, contentSize }) => ({
-			x: R.clamp(0, Math.max(0, contentSize.x - windowSize.x), pos.x),
-			y: R.clamp(0, Math.max(0, contentSize.y - windowSize.y), pos.y),
-		}), (pos, { windowSize, contentSize }) => {
+	const overscroll = atom({x:0,y:0})
+
+	const scrollPositionClamped = view(L.lens(({ pos, windowSize, conSize, o }) => ({
+			x: R.clamp(0, Math.max(0, conSize.x - windowSize.x), pos.x) + o.x,
+			y: R.clamp(0, Math.max(0, conSize.y - windowSize.y), pos.y) + o.y,
+		}), (pos, { windowSize, conSize }) => {
 			return {
-				windowSize, contentSize,
+				windowSize, 
+				conSize,
 				pos: {
-					x: R.clamp(0, Math.max(0, contentSize.x - windowSize.x), pos.x),
-					y: R.clamp(0, Math.max(0, contentSize.y - windowSize.y), pos.y),
+					x: R.clamp(0, Math.max(0, conSize.x - windowSize.x), pos.x),
+					y: R.clamp(0, Math.max(0, conSize.y - windowSize.y), pos.y),
+				},
+				o: {
+					x:  pos.x - R.clamp(0, Math.max(0, conSize.x - windowSize.x), pos.x),
+					y:  pos.y - R.clamp(0, Math.max(0, conSize.y - windowSize.y), pos.y),
 				}
 			}
 		}),
-		combine({ pos: scrollPosition, windowSize: scrollWindowSize, contentSize: contentSize }),
+		combine({ pos: scrollPosition, windowSize: scrollWindowSize, conSize: contentSize, o: overscroll }),
 	);
 
 </script>
 
+{overscroll.value.x}
+
 <div
 	class="scroller"
-	use:bindScroll={scrollPosition}
+	use:bindScroll={scrollPositionClamped}
 	style:--scroll-total-x={contentSize.value.x}
 	style:--scroll-total-y={contentSize.value.y}
-	style:--scroll-x={scrollPositionClamped.value.x}
-	style:--scroll-y={scrollPositionClamped.value.y}
+	style:--scroll-x={scrollPosition.value.x}
+	style:--scroll-y={scrollPosition.value.y}
 >
 	<div class="scroller-body">
 		{@render children()}

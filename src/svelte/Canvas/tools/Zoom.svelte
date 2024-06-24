@@ -57,13 +57,32 @@
 	);
 
 	function delayedRead(lens, someAtom) {
-		const instant = read(L.identity, someAtom);
-		const later = atom(L.get(lens, instant.value));
+		const later = atom(L.get(lens, someAtom.value));
 
 		$effect.pre(() => {
-			later.value = L.get(lens, instant.value);
+			const x = L.get(lens, someAtom.value);
 			tick().then(() => {
-				later.value = L.get(lens, instant.value);
+				later.value = L.get(lens, someAtom.value);
+			});
+		});
+
+		return read(L.identity, later);
+	}
+
+	function delayed(lens, someAtom) {
+		const later = atom(L.get(lens, someAtom.value));
+
+		$effect.pre(() => {
+			later.value = L.get(lens, someAtom.value);
+			tick().then(() => {
+				later.value = L.get(lens, someAtom.value);
+			});
+		});
+
+		$effect.pre(() => {
+			someAtom.value = L.set(lens, instant.value, someAtom.value);
+			tick().then(() => {
+				someAtom.value = L.set(lens, instant.value, someAtom.value);
 			});
 		});
 
@@ -183,7 +202,7 @@
 />
 
 <g transform={rotationTransform.value}>
-	{#if zoomPivotWorld.value}
+	{#if zoomPivotCurrentWorld.value}
 		<!-- <line
 			stroke="#4477aa"
 			stroke-width="1px"

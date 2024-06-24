@@ -30,8 +30,8 @@
 	const startAccum = R.mapAccum((acc, size) => [acc + size, acc]);
 	const endAccum = R.mapAccum((acc, size) => [acc + size, acc + size]);
 
-	const numColumns = 4000;
-	const numRows = 15000;
+	const numColumns = 50;
+	const numRows = 50;
 	const defaultPinNumX = 1;
 	const defaultPinNumY = 2;
 
@@ -68,8 +68,18 @@
 	const scrollWindowSize = atom({ x: 0, y: 0 });
 
 	const contentSize = read(
-		L.getter(R.map(R.sum)),
-		combine({ x: columnSizes, y: rowSizes }),
+		L.reread(
+			R.compose(
+				({ x, hx, y, hy }) => ({ x: hx + x, y: hy + y }),
+				R.map(R.sum),
+			),
+		),
+		combine({
+			x: columnSizes,
+			y: rowSizes,
+			hx: columnHeadWidths,
+			hy: rowHeadHeights,
+		}),
 	);
 
 	const columnHeadStarts = $derived(

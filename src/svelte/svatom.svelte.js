@@ -307,10 +307,21 @@ export function bindScroll(node, someAtom) {
 	}
 
 	$effect.pre(() => {
-		const newY =  someAtom.value.y
-		const newX =  someAtom.value.x
-		node.scrollLeft = newX;
-		node.scrollTop = newY
+		const scrollMaxX = Math.max(0, node.scrollLeftMax  ? node.scrollLeftMax : node.scrollWidth - node.offsetWidth)
+		const scrollMaxY = Math.max(0, node.scrollTopMax  ? node.scrollTopMax : node.scrollHeight - node.offsetHeight)
+		const newX =  R.clamp(0, scrollMaxX, someAtom.value.x)
+		const newY =  R.clamp(0, scrollMaxY, someAtom.value.y)
+		const oldX = R.clamp(0, scrollMaxX, node.scrollLeft)
+		const oldY = R.clamp(0, scrollMaxY, node.scrollTop)
+
+
+		if(oldX != newX) {
+			node.scrollLeft = newX;
+		}
+		if(oldY != newY) {
+			node.scrollTop = newY
+		}
+
 	});
 
 	node.addEventListener("scroll", onscroll, { passive: false });
