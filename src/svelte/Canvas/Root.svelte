@@ -92,7 +92,7 @@
 			aspect: "meet",
 			alignX: "Mid",
 			alignY: "Mid",
-			padding: 10,
+			padding: 500,
 			size: {
 				x: 100,
 				y: 100,
@@ -663,9 +663,9 @@
 
 	const cameraXScreenScaled = view(
 		L.lens(
-			({ x, s, w, b }) => (x - b.minX) / s - w.plane.x / 2 + 500,
+			({ x, s, w, b, p }) => (x - b.minX) / s - w.frame.x / 2 + p,
 			(x, old) => ({
-				x: (x + old.w.plane.x / 2 - 500) * old.s + old.b.minX,
+				x: (x + old.w.frame.x / 2 - old.p) * old.s + old.b.minX,
 				s: old.s,
 			}),
 		),
@@ -675,15 +675,16 @@
 				s: cameraScale,
 				w: scrollWindowSize,
 				b: extension,
+				p: view(["frame", "padding"], camera),
 			},
 			{ x: true },
 		),
 	);
 	const cameraYScreenScaled = view(
 		L.lens(
-			({ y, s, w, b }) => (y - b.minY) / s - w.plane.y / 2 + 500,
+			({ y, s, w, b, p }) => (y - b.minY) / s - w.frame.y / 2 + p,
 			(y, old) => ({
-				y: (y + old.w.plane.y / 2 - 500) * old.s + old.b.minY,
+				y: (y + old.w.frame.y / 2 - old.p) * old.s + old.b.minY,
 				s: old.s,
 			}),
 		),
@@ -693,6 +694,7 @@
 				s: cameraScale,
 				w: scrollWindowSize,
 				b: extension,
+				p: view(["frame", "padding"], camera),
 			},
 			{ y: true },
 		),
@@ -848,11 +850,16 @@
 <Scroller
 	{scrollPosition}
 	contentSize={view(
-		({ s, w, b }) => ({
-			x: (b.maxX - b.minX) / s + 1000,
-			y: (b.maxY - b.minY) / s + 1000,
+		({ s, w, b, p }) => ({
+			x: (b.maxX - b.minX) / s + 2 * p,
+			y: (b.maxY - b.minY) / s + 2 * p,
 		}),
-		combine({ w: scrollWindowSize, s: cameraScale, b: extension }),
+		combine({
+			w: scrollWindowSize,
+			s: cameraScale,
+			b: extension,
+			p: read(["frame", "padding"], camera),
+		}),
 	)}
 	{scrollWindowSize}
 >
