@@ -27,6 +27,8 @@
 				windowSize, 
 				conSize,
 				pos: {
+					maxX: pos.maxX,
+					maxY: pos.maxY,
 					x: R.clamp(0, Math.max(0, conSize.x - windowSize.x), pos.x),
 					y: R.clamp(0, Math.max(0, conSize.y - windowSize.y), pos.y),
 				},

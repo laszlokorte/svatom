@@ -347,9 +347,15 @@ export function bindValue(node, someAtom) {
 export function bindScroll(node, someAtom) {
 	 function onscroll(e) {
 	 	if((!$state.is(someAtom.value.x, node.scrollLeft) || !$state.is(someAtom.value.y, node.scrollTop))) {
+
+			const scrollMaxX = Math.max(0, node.scrollLeftMax  ? node.scrollLeftMax : node.scrollWidth - node.offsetWidth)
+			const scrollMaxY = Math.max(0, node.scrollTopMax  ? node.scrollTopMax : node.scrollHeight - node.offsetHeight)
+
 			someAtom.value = {
 				x: node.scrollLeft,
 				y: node.scrollTop,
+				maxX: scrollMaxX,
+				maxY: scrollMaxY,
 			}
 	 	}
 	}

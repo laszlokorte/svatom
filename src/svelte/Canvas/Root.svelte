@@ -594,12 +594,6 @@
 		(x) => Math.round(x),
 		(newV, oldV) => Math.round(newV) + (oldV - Math.round(oldV)),
 	);
-	const scrollIso = L.iso(R.add(R.__, 2000), R.subtract(R.__, 2000));
-
-	const scrollPosition = combine({
-		x: view([scrollIso, integerLens], cameraXScreen),
-		y: view([scrollIso, integerLens], cameraYScreen),
-	});
 
 	const scrollWindowSize = view(
 		L.setter((newSize) => ({
@@ -620,6 +614,44 @@
 				camera,
 			),
 			frame: view(["frame", "size"], camera),
+		}),
+	);
+
+	const cameraXScreenScaled = view(
+		L.lens(
+			({ x, s, w }) => x * s + 2000 / s - w.plane.x / 2,
+			(x, old) => ({
+				x: (x - 2000 / old.s + old.w.plane.x / 2) / old.s,
+				s: old.s,
+			}),
+		),
+		combine(
+			{ x: cameraXScreen, s: cameraScale, w: scrollWindowSize },
+			{ x: true },
+		),
+	);
+	const cameraYScreenScaled = view(
+		L.lens(
+			({ y, s, w }) => y * s + 2000 / s - w.plane.y / 2,
+			(y, old) => ({
+				y: (y - 2000 / old.s + old.w.plane.y / 2) / old.s,
+				s: old.s,
+			}),
+		),
+		combine(
+			{ y: cameraYScreen, s: cameraScale, w: scrollWindowSize },
+			{ y: true },
+		),
+	);
+
+	const scrollPosition = view(
+		L.setter((newScroll, old) => ({
+			x: newScroll.maxX > 0 ? newScroll.x : old.x,
+			y: newScroll.maxY > 0 ? newScroll.y : old.y,
+		})),
+		combine({
+			x: view(integerLens, cameraXScreenScaled),
+			y: view(integerLens, cameraYScreenScaled),
 		}),
 	);
 </script>
@@ -761,7 +793,13 @@
 
 <Scroller
 	{scrollPosition}
-	contentSize={atom({ x: 5000, y: 5000 })}
+	contentSize={view(
+		({ s, w }) => ({
+			x: 4000 / s,
+			y: 4000 / s,
+		}),
+		combine({ w: scrollWindowSize, s: cameraScale }),
+	)}
 	{scrollWindowSize}
 >
 	<svg
