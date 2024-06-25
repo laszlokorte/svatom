@@ -92,7 +92,7 @@
 			aspect: "meet",
 			alignX: "Mid",
 			alignY: "Mid",
-			padding: 500,
+			padding: 1500,
 			size: {
 				x: 100,
 				y: 100,
@@ -459,33 +459,55 @@
 		},
 	);
 
-	function rotatedClamp(degree, rect, pos) {
+	function rotatedBounds(degree, rect) {
 		const rectCenterX = (rect.maxX + rect.minX) / 2;
 		const rectCenterY = (rect.maxY + rect.minY) / 2;
 		const halfWidth = (rect.maxX - rect.minX) / 2;
 		const halfHeight = (rect.maxY - rect.minY) / 2;
 
-		// var angle = camera.angle * Math.PI/180;
-		// var sin = Math.sin(-angle);
-		// var cos = Math.cos(-angle);
-		// var xA = (cos * boundsHalfWidth) - (sin * boundsHalfHeight)
-		// var yA = (sin * boundsHalfWidth) + (cos * boundsHalfHeight)
-		// var xB = (cos * -boundsHalfWidth) - (sin * boundsHalfHeight)
-		// var yB = (sin * -boundsHalfWidth) + (cos * boundsHalfHeight)
-		// var xC = (cos * boundsHalfWidth) - (sin * -boundsHalfHeight)
-		// var yC = (sin * boundsHalfWidth) + (cos * -boundsHalfHeight)
-		// var xD = (cos * -boundsHalfWidth) - (sin * -boundsHalfHeight)
-		// var yD = (sin * -boundsHalfWidth) + (cos * -boundsHalfHeight)
+		const c1 = Geo.rotateDegree(-degree, { x: halfWidth, y: halfHeight });
+		const c2 = Geo.rotateDegree(-degree, { x: -halfWidth, y: halfHeight });
+		const c3 = Geo.rotateDegree(-degree, { x: halfWidth, y: -halfHeight });
+		const c4 = Geo.rotateDegree(-degree, { x: -halfWidth, y: -halfHeight });
 
-		// var halfWidth = Math.max(Math.abs(xA), Math.abs(xB), Math.abs(xC), Math.abs(xD))
-		// var halfHeight = Math.max(Math.abs(yA), Math.abs(yB), Math.abs(yC), Math.abs(yD))
+		const halfWidthRot = Math.max(
+			Math.abs(c1.x),
+			Math.abs(c2.x),
+			Math.abs(c3.x),
+			Math.abs(c4.x),
+		);
+		const halfHeightRot = Math.max(
+			Math.abs(c1.y),
+			Math.abs(c2.y),
+			Math.abs(c3.y),
+			Math.abs(c4.y),
+		);
+
+		return {
+			minX: rectCenterX - halfWidthRot,
+			maxX: rectCenterX + halfWidthRot,
+			minY: rectCenterY - halfWidthRot,
+			maxY: rectCenterY + halfWidthRot,
+		};
+	}
+
+	function rotatedClamp(degree, rect, pos, padding) {
+		const b = rotatedBounds(degree, rect);
+		const rectCenterX = (b.maxX + b.minX) / 2;
+		const rectCenterY = (b.maxY + b.minY) / 2;
+		const halfWidthRot = (b.maxX - b.minX) / 2 + padding;
+		const halfHeightRot = (b.maxY - b.minY) / 2 + padding;
 
 		const posRelX = pos.x - rectCenterX;
 		const posRelY = pos.y - rectCenterY;
 
 		const posRot = Geo.rotateDegree(-degree, { x: posRelX, y: posRelY });
-		const posRotClampedX = R.clamp(-halfWidth, +halfWidth, posRot.x);
-		const posRotClampedY = R.clamp(-halfHeight, +halfHeight, posRot.y);
+		const posRotClampedX = R.clamp(-halfWidthRot, +halfWidthRot, posRot.x);
+		const posRotClampedY = R.clamp(
+			-halfHeightRot,
+			+halfHeightRot,
+			posRot.y,
+		);
 
 		const posClamped = Geo.rotateDegree(degree, {
 			x: posRotClampedX,
@@ -498,6 +520,13 @@
 		};
 	}
 
+	const cameraBounds = read(
+		({ c, e }) => {
+			return rotatedBounds(c.focus.w, e);
+		},
+		combine({ c: camera, e: extension }),
+	);
+
 	const clampedCamera = view(
 		L.lens(
 			({ c, e }) => c,
@@ -506,7 +535,12 @@
 					...c,
 					focus: {
 						...c.focus,
-						...rotatedClamp(c.focus.w, e, c.focus),
+						...rotatedClamp(
+							c.focus.w,
+							e,
+							c.focus,
+							500 * Math.exp(-c.focus.z),
+						),
 					},
 				},
 				e,
@@ -516,7 +550,7 @@
 	);
 	const zoomFrame = view(cameraZoomFrameLens, clampedCamera);
 	const panMovement = view(panMovementLens, clampedCamera);
-	const rotateMovement = view(rotateMovementLens, clampedCamera);
+	const rotateMovement = view(rotateMovementLens, camera);
 	const zoomMovement = view(zoomMovementLens, clampedCamera);
 
 	const tools = {
@@ -729,7 +763,7 @@
 				x: cameraXScreen,
 				s: cameraScale,
 				w: scrollWindowSize,
-				b: extension,
+				b: cameraBounds,
 				p: view(["frame", "padding"], camera),
 			},
 			{ x: true },
@@ -748,7 +782,7 @@
 				y: cameraYScreen,
 				s: cameraScale,
 				w: scrollWindowSize,
-				b: extension,
+				b: cameraBounds,
 				p: view(["frame", "padding"], camera),
 			},
 			{ y: true },
@@ -883,6 +917,7 @@
 				drawings.value = [];
 				guides.value = [];
 				axis.value = undefined;
+				update(L.set(["focus", L.props("x", "y")], 0), camera);
 			}}>Clear</button
 		>
 		{#each toolGroups as g}
@@ -912,7 +947,7 @@
 		combine({
 			w: scrollWindowSize,
 			s: cameraScale,
-			b: extension,
+			b: cameraBounds,
 			p: read(["frame", "padding"], camera),
 		}),
 	)}
@@ -1002,8 +1037,8 @@
 			<input
 				type="range"
 				bind:value={cameraX.value}
-				min={extension.value.minX}
-				max={extension.value.maxX}
+				min={cameraBounds.value.minX}
+				max={cameraBounds.value.maxX}
 				step="0.1"
 			/>
 			<button
@@ -1019,8 +1054,8 @@
 			<input
 				type="range"
 				bind:value={cameraY.value}
-				min={extension.value.minY}
-				max={extension.value.maxY}
+				min={cameraBounds.value.minY}
+				max={cameraBounds.value.maxY}
 				step="0.1"
 			/>
 			<button
@@ -1070,8 +1105,8 @@
 			<input
 				type="range"
 				bind:value={cameraXScreenFormatted.value}
-				min={extension.value.minX}
-				max={extension.value.maxX}
+				min={cameraBounds.value.minX}
+				max={cameraBounds.value.maxX}
 				step="0.1"
 			/>
 			<button
@@ -1087,8 +1122,8 @@
 			<input
 				type="range"
 				bind:value={cameraYScreenFormatted.value}
-				min={extension.value.minY}
-				max={extension.value.maxY}
+				min={cameraBounds.value.minY}
+				max={cameraBounds.value.maxY}
 				step="0.1"
 			/>
 			<button
