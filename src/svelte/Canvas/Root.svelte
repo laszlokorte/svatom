@@ -44,6 +44,7 @@
 	import Nodes from "./tools/Nodes.svelte";
 	import Drawings from "./tools/Drawings.svelte";
 	import Bounds from "./tools/Bounds.svelte";
+	import Origin from "./tools/Origin.svelte";
 	import Magnifier from "./tools/Magnifier.svelte";
 	import GuideLiner from "./tools/GuideLiner.svelte";
 	import Guides from "./tools/Guides.svelte";
@@ -1052,6 +1053,8 @@
 				{rotationTransform}
 				{cameraScale}
 			/>
+
+			<Origin {rotationTransform} {cameraScale} />
 		</g>
 
 		<svelte:component
@@ -1168,8 +1171,8 @@
 			<input
 				type="range"
 				bind:value={cameraXScreenFormatted.value}
-				min={cameraBounds.value.minX}
-				max={cameraBounds.value.maxX}
+				min={-400}
+				max={400}
 				step="0.1"
 			/>
 			<button
@@ -1185,8 +1188,8 @@
 			<input
 				type="range"
 				bind:value={cameraYScreenFormatted.value}
-				min={cameraBounds.value.minY}
-				max={cameraBounds.value.maxY}
+				min={-400}
+				max={400}
 				step="0.1"
 			/>
 			<button
