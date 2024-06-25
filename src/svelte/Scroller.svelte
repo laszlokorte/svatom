@@ -20,21 +20,25 @@
 	const overscroll = atom({x:0,y:0})
 
 	const scrollPositionClamped = view(L.lens(({ pos, windowSize, conSize, o }) => ({
-			x: R.clamp(0, Math.max(0, conSize.x - windowSize.x), pos.x) + o.x,
-			y: R.clamp(0, Math.max(0, conSize.y - windowSize.y), pos.y) + o.y,
+			x: R.clamp(0, Math.max(0, conSize.x - Math.floor(windowSize.x)), pos.x) + o.x,
+			y: R.clamp(0, Math.max(0, conSize.y - Math.floor(windowSize.y)), pos.y) + o.y,
 		}), (pos, { windowSize, conSize }) => {
+			const clampedX = R.clamp(0, Math.max(0, conSize.x - Math.floor(windowSize.x)), pos.x)
+			const clampedY = R.clamp(0, Math.max(0, conSize.y - Math.floor(windowSize.y)), pos.y)
+
+
 			return {
 				windowSize, 
 				conSize,
 				pos: {
 					maxX: pos.maxX,
 					maxY: pos.maxY,
-					x: R.clamp(0, Math.max(0, conSize.x - windowSize.x), pos.x),
-					y: R.clamp(0, Math.max(0, conSize.y - windowSize.y), pos.y),
+					x: clampedX,
+					y: clampedY,
 				},
 				o: {
-					x:  pos.x - R.clamp(0, Math.max(0, conSize.x - windowSize.x), pos.x),
-					y:  pos.y - R.clamp(0, Math.max(0, conSize.y - windowSize.y), pos.y),
+					x:  pos.x - clampedX,
+					y:  pos.y - clampedY,
 				}
 			}
 		}),
