@@ -90,7 +90,7 @@
 			evt.preventDefault();
 			return;
 		}
-		if (!U.isLeftButton(evt)) {
+		if (!evt.isPrimary) {
 			return;
 		}
 		pointerId.value = evt.pointerId;

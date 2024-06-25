@@ -80,7 +80,7 @@
 		if (startLasso.value) {
 			return;
 		}
-		if (!U.isLeftButton(evt)) {
+		if (!evt.isPrimary) {
 			return;
 		}
 

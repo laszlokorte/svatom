@@ -751,9 +751,9 @@
 	const cameraXScreenScaled = view(
 		L.lens(
 			({ x, s, w, b, p }) => (x - b.minX) / s - w.frame.x / 2 + p,
-			(x, old) => ({
-				x: (x + old.w.frame.x / 2 - old.p) * old.s + old.b.minX,
-				s: old.s,
+			(x, { s, w, b, p }) => ({
+				x: (x + w.frame.x / 2 - p) * s + b.minX,
+				s: s,
 			}),
 		),
 		combine(
@@ -770,9 +770,9 @@
 	const cameraYScreenScaled = view(
 		L.lens(
 			({ y, s, w, b, p }) => (y - b.minY) / s - w.frame.y / 2 + p,
-			(y, old) => ({
-				y: (y + old.w.frame.y / 2 - old.p) * old.s + old.b.minY,
-				s: old.s,
+			(y, { s, w, b, p }) => ({
+				y: (y + w.frame.y / 2 - p) * s + b.minY,
+				s: s,
 			}),
 		),
 		combine(
@@ -915,7 +915,10 @@
 				drawings.value = [];
 				guides.value = [];
 				axis.value = undefined;
-				update(L.set(["focus", L.props("x", "y")], 0), camera);
+				update(
+					L.set(["focus", L.props("x", "y"), L.values], 0),
+					camera,
+				);
 			}}>Clear</button
 		>
 		{#each toolGroups as g}
@@ -1153,6 +1156,7 @@
 		margin: 0.5em 1em;
 		--accent-color: #aa4466;
 		--accent-color-light: #cc4466;
+		user-select: none;
 	}
 
 	svg {

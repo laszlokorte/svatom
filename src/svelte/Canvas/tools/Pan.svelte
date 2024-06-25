@@ -26,7 +26,7 @@
 	role="button"
 	tabindex="-1"
 	onpointerdown={(evt) => {
-		if (!U.isLeftButton(evt)) {
+		if (!evt.isPrimary) {
 			return;
 		}
 		if (grabbing.value) {

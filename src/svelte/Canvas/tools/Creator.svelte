@@ -38,7 +38,7 @@
 		if (isDrafting.value) {
 			return;
 		}
-		if (!U.isLeftButton(evt)) {
+		if (!evt.isPrimary) {
 			return;
 		}
 		evt.currentTarget.setPointerCapture(evt.pointerId);
@@ -56,6 +56,7 @@
 	}}
 	onpointerup={(evt) => {
 		if (pointerId.value === evt.pointerId) {
+			evt.preventDefault();
 			pointerId.value = undefined;
 			newNode.value = clientToCanvas(evt.clientX, evt.clientY);
 		}

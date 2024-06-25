@@ -84,7 +84,7 @@
 		if (axisStart.value) {
 			return;
 		}
-		if (!U.isLeftButton(evt)) {
+		if (!evt.isPrimary) {
 			return;
 		}
 

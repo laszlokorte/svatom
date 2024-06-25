@@ -95,7 +95,7 @@
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 	}}
 	onpointermove={(evt) => {
-		if (!U.isLeftButton(evt)) {
+		if (!evt.isPrimary) {
 			return;
 		}
 		if (pointerId.value === evt.pointerId) {
