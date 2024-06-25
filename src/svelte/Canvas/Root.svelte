@@ -361,7 +361,7 @@
 					y:
 						frame.start.y +
 						(-sin * frame.size.x + cos * frame.size.y) / 2,
-					z: R.clamp(-3, 3, oldCamera.focus.z + dz),
+					z: R.clamp(-5, 5, oldCamera.focus.z + dz),
 					w: -frame.angle,
 				},
 			};
@@ -451,7 +451,7 @@
 	}
 
 	const extension = calculateBoundingBox(
-		1000,
+		100,
 		{ nodes, drawings },
 		{
 			nodes: L.elems,
@@ -484,24 +484,27 @@
 		);
 
 		return {
+			angle: degree,
 			minX: rectCenterX - halfWidthRot,
 			maxX: rectCenterX + halfWidthRot,
-			minY: rectCenterY - halfWidthRot,
-			maxY: rectCenterY + halfWidthRot,
+			minY: rectCenterY - halfHeightRot,
+			maxY: rectCenterY + halfHeightRot,
 		};
 	}
 
-	function rotatedClamp(degree, rect, pos, padding) {
-		const b = rotatedBounds(degree, rect);
-		const rectCenterX = (b.maxX + b.minX) / 2;
-		const rectCenterY = (b.maxY + b.minY) / 2;
-		const halfWidthRot = (b.maxX - b.minX) / 2 + padding;
-		const halfHeightRot = (b.maxY - b.minY) / 2 + padding;
+	function rotatedClamp(rect, pos, padding) {
+		const rectCenterX = (rect.maxX + rect.minX) / 2;
+		const rectCenterY = (rect.maxY + rect.minY) / 2;
+		const halfWidthRot = (rect.maxX - rect.minX) / 2 + padding;
+		const halfHeightRot = (rect.maxY - rect.minY) / 2 + padding;
 
 		const posRelX = pos.x - rectCenterX;
 		const posRelY = pos.y - rectCenterY;
 
-		const posRot = Geo.rotateDegree(-degree, { x: posRelX, y: posRelY });
+		const posRot = Geo.rotateDegree(-rect.angle, {
+			x: posRelX,
+			y: posRelY,
+		});
 		const posRotClampedX = R.clamp(-halfWidthRot, +halfWidthRot, posRot.x);
 		const posRotClampedY = R.clamp(
 			-halfHeightRot,
@@ -509,7 +512,7 @@
 			posRot.y,
 		);
 
-		const posClamped = Geo.rotateDegree(degree, {
+		const posClamped = Geo.rotateDegree(rect.angle, {
 			x: posRotClampedX,
 			y: posRotClampedY,
 		});
@@ -529,24 +532,19 @@
 
 	const clampedCamera = view(
 		L.lens(
-			({ c, e }) => c,
-			(c, { e }) => ({
+			({ c, b }) => c,
+			(c, { b }) => ({
 				c: {
 					...c,
 					focus: {
 						...c.focus,
-						...rotatedClamp(
-							c.focus.w,
-							e,
-							c.focus,
-							500 * Math.exp(-c.focus.z),
-						),
+						...rotatedClamp(b, c.focus, 500 * Math.exp(-c.focus.z)),
 					},
 				},
-				e,
+				b,
 			}),
 		),
-		combine({ c: camera, e: extension }, { c: true }),
+		combine({ c: camera, b: cameraBounds }, { c: true }),
 	);
 	const zoomFrame = view(cameraZoomFrameLens, clampedCamera);
 	const panMovement = view(panMovementLens, clampedCamera);
@@ -988,7 +986,12 @@
 		</g>
 
 		<g pointer-events="none">
-			<Bounds {extension} {rotationTransform} {cameraScale} />
+			<Bounds
+				{extension}
+				{cameraBounds}
+				{rotationTransform}
+				{cameraScale}
+			/>
 			<Nodes {nodes} {rotationTransform} {cameraScale} />
 
 			<Drawings {drawings} {rotationTransform} {cameraScale} />
@@ -1015,8 +1018,8 @@
 		<input
 			type="range"
 			bind:value={cameraZoom.value}
-			min="-3"
-			max="3"
+			min="-5"
+			max="5"
 			step="0.01"
 		/>
 	</div>
@@ -1071,8 +1074,8 @@
 			<input
 				type="range"
 				bind:value={cameraZoom.value}
-				min="-3"
-				max="3"
+				min="-5"
+				max="5"
 				step="0.01"
 			/>
 			<button
