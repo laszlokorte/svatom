@@ -23,8 +23,9 @@
 	const newText = view(L.appendTo, textes);
 
 	const position = view([L.removable("position"), "position"], typer);
-	const text = view("text", typer);
+	const text = view(["text", L.valueOr("")], typer);
 	const isEditing = view(R.compose(R.not, R.isNil), position);
+	const textEmpty = view(L.reread(R.isEmpty), text);
 </script>
 
 <g transform={rotationTransform.value} vector-effect="non-rotation">
@@ -38,12 +39,13 @@
 				6,
 				cameraScale.value,
 			)}) translate({-t.x}, {-t.y})"
-			x={t.x - 11}
+			x={t.x - 15}
 			y={t.y + 2}
 			stroke="white"
 			paint-order="stroke"
 			stroke-width="3"
 			vector-effect="non-scaling-stroke"
+			text-anchor="middle"
 			dominant-baseline="middle">{t.content}</text
 		>
 	{/each}
@@ -51,6 +53,7 @@
 <path
 	d={frameBoxPath.value}
 	class:dim={isEditing.value}
+	class:dim-empty={textEmpty.value}
 	pointer-events="all"
 	fill="none"
 	class="typer-surface"
@@ -103,9 +106,9 @@
 			<rect
 				shape-rendering="geometricPrecision"
 				text-rendering="optimizeLegibility"
-				width="20em"
+				width="200"
 				height="2em"
-				x={position.value.x - 15}
+				x={position.value.x - 15 - 100}
 				y={position.value.y - 15}
 				style:overflow="visible"
 				stroke="#00aaff"
@@ -116,9 +119,9 @@
 			<foreignObject
 				shape-rendering="geometricPrecision"
 				text-rendering="optimizeLegibility"
-				width="20em"
+				width="200"
 				height="2em"
-				x={position.value.x - 15}
+				x={position.value.x - 15 - 100}
 				y={position.value.y - 15}
 				style:overflow="visible"
 			>
@@ -168,6 +171,7 @@
 <style>
 	.typer-surface {
 		outline: none;
+		cursor: text;
 	}
 
 	input {
@@ -178,6 +182,7 @@
 		height: 100%;
 		box-sizing: border-box;
 		background: #fff;
+		text-align: center;
 	}
 
 	input:focus-visible {
@@ -186,5 +191,10 @@
 
 	.dim {
 		fill: #ffffff33;
+		cursor: default;
+	}
+
+	.dim-empty {
+		cursor: text;
 	}
 </style>
