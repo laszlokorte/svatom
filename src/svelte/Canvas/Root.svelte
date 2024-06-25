@@ -40,12 +40,17 @@
 	import Creator from "./tools/Creator.svelte";
 	import Lasso from "./tools/Lasso.svelte";
 	import Pen from "./tools/Pen.svelte";
+	import Polygon from "./tools/Polygon.svelte";
+	import Spline from "./tools/Spline.svelte";
+	import Shape from "./tools/Shape.svelte";
+
 	import RubberBand from "./tools/RubberBand.svelte";
 	import Nodes from "./tools/Nodes.svelte";
 	import Drawings from "./tools/Drawings.svelte";
 	import Bounds from "./tools/Bounds.svelte";
 	import Origin from "./tools/Origin.svelte";
-	import TextEdit from "./tools/TextEdit.svelte";
+	import TextLine from "./tools/TextLine.svelte";
+	import TextBox from "./tools/TextBox.svelte";
 	import Magnifier from "./tools/Magnifier.svelte";
 	import GuideLiner from "./tools/GuideLiner.svelte";
 	import Guides from "./tools/Guides.svelte";
@@ -460,7 +465,7 @@
 
 	const extension = calculateBoundingBox(
 		100,
-		{ nodes, drawings, axis },
+		{ nodes, drawings, axis, textes },
 		{
 			nodes: L.elems,
 			drawings: [L.elems, L.elems],
@@ -489,6 +494,7 @@
 				),
 				L.values,
 			],
+			textes: [L.elems, L.props("x", "y")],
 		},
 	);
 
@@ -586,6 +592,7 @@
 
 	const tools = {
 		select: {
+			name: "Select",
 			component: RubberBand,
 			parameters: {
 				clientToCanvas,
@@ -595,6 +602,7 @@
 			},
 		},
 		create: {
+			name: "Create",
 			component: Creator,
 			parameters: {
 				clientToCanvas,
@@ -605,7 +613,20 @@
 			},
 		},
 		text: {
-			component: TextEdit,
+			name: "Text Line",
+			component: TextLine,
+			parameters: {
+				textes,
+				clientToCanvas,
+				frameBoxPath,
+				rotationTransform,
+				cameraScale,
+				cameraOrientation,
+			},
+		},
+		text_box: {
+			name: "Text Box",
+			component: TextBox,
 			parameters: {
 				textes,
 				clientToCanvas,
@@ -616,6 +637,7 @@
 			},
 		},
 		lasso: {
+			name: "Lasso",
 			component: Lasso,
 			parameters: {
 				clientToCanvas,
@@ -625,6 +647,7 @@
 			},
 		},
 		pen: {
+			name: "Pen",
 			component: Pen,
 			parameters: {
 				clientToCanvas,
@@ -634,7 +657,38 @@
 				newDrawing,
 			},
 		},
+		polygon: {
+			name: "Polygon",
+			component: Polygon,
+			parameters: {
+				clientToCanvas,
+				frameBoxPath,
+				cameraScale,
+				rotationTransform,
+			},
+		},
+		spline: {
+			name: "Spline",
+			component: Spline,
+			parameters: {
+				clientToCanvas,
+				frameBoxPath,
+				cameraScale,
+				rotationTransform,
+			},
+		},
+		shape: {
+			name: "Shape",
+			component: Shape,
+			parameters: {
+				clientToCanvas,
+				frameBoxPath,
+				cameraScale,
+				rotationTransform,
+			},
+		},
 		magnifier: {
+			name: "Magnifier",
 			component: Magnifier,
 			parameters: {
 				frameBoxPath,
@@ -648,6 +702,7 @@
 			},
 		},
 		guides: {
+			name: "Guides",
 			component: GuideLiner,
 			parameters: {
 				frameBoxPath,
@@ -659,6 +714,7 @@
 			},
 		},
 		axis: {
+			name: "Axis",
 			component: Axis,
 			parameters: {
 				frameBoxPath,
@@ -670,6 +726,7 @@
 			},
 		},
 		pan: {
+			name: "Pan",
 			component: Pan,
 			parameters: {
 				frameBoxPath,
@@ -678,6 +735,7 @@
 			},
 		},
 		rotate: {
+			name: "Rotate",
 			component: Rotate,
 			parameters: {
 				frameBoxPath,
@@ -688,6 +746,7 @@
 			},
 		},
 		zoom: {
+			name: "Zoom",
 			component: Zoom,
 			parameters: {
 				frameBoxPath,
@@ -702,7 +761,7 @@
 	const toolGroups = [
 		["select", "lasso"],
 		["magnifier", "pan", "rotate", "zoom"],
-		["pen", "create", "text"],
+		["pen", "create", "text", "text_box", "polygon", "spline", "shape"],
 		["axis", "guides"],
 	];
 
@@ -988,7 +1047,7 @@
 						bind:group={tool.value}
 						value={t}
 					/>
-					{U.capitalize(t)}</label
+					{tools[t].name}</label
 				>
 			{/each}
 		{/each}
