@@ -146,9 +146,12 @@
 
 	const ascii = atom(asciiLogo);
 
+	const scrollerPosition = atom({ x: 0, y: 0 });
 	const scrollerSize = atom({ x: 1000, y: 2000 });
 	const scrollerSizeX = view("x", scrollerSize);
 	const scrollerSizeY = view("y", scrollerSize);
+	const scrollerPositionX = view("x", scrollerPosition);
+	const scrollerPositionY = view("y", scrollerPosition);
 </script>
 
 <section>
@@ -482,31 +485,45 @@
 
 	<h3>Scroller</h3>
 
-	<Scroller debug="true" contentSize={scrollerSize}>
-		<div style="padding: 3em; margin: auto; max-width: 20em;">
-			<label class="number-picker"
-				>Content Width:
-				<input
-					type="range"
-					min="0"
-					max="5000"
-					bind:value={scrollerSizeX.value}
-				/>
+	<Scroller
+		debug="true"
+		scrollPosition={scrollerPosition}
+		contentSize={scrollerSize}
+	>
+		<div
+			class="checker-pattern"
+			style={string`--bg-offset-x: ${read(R.negate, scrollerPositionX)}px; --bg-offset-y: ${read(R.negate, scrollerPositionY)}px`
+				.value}
+		>
+			<div
+				style="padding: 3em; margin: auto; max-width: 20em; background: white; box-shadow: 0 0.5em 1.5em -.5em #0007;"
+			>
+				<label
+					class="number-picker"
+					style="gap: 1em 0.5em; margin: 1em 0"
+					>Content Width:
+					<output>({scrollerSizeX.value})</output>
+					<input
+						type="range"
+						min="0"
+						max="5000"
+						bind:value={scrollerSizeX.value}
+					/>
+				</label>
 
-				<output>({scrollerSizeX.value})</output>
-			</label>
-
-			<label class="number-picker"
-				>Content Height:
-				<input
-					type="range"
-					min="0"
-					max="5000"
-					bind:value={scrollerSizeY.value}
-				/>
-
-				<output>({scrollerSizeY.value})</output>
-			</label>
+				<label
+					class="number-picker"
+					style="gap: 1em 0.5em; margin: 1em 0"
+					>Content Height:
+					<output>({scrollerSizeY.value})</output>
+					<input
+						type="range"
+						min="0"
+						max="5000"
+						bind:value={scrollerSizeY.value}
+					/>
+				</label>
+			</div>
 		</div>
 	</Scroller>
 
@@ -541,4 +558,33 @@
 
 <style>
 	@import url("app.css");
+
+	.checker-pattern {
+		user-select: none;
+		display: grid;
+		place-content: center;
+		--s: 100px; /* control the size*/
+		--c1: #ffffff;
+		--c2: #e9dad8;
+		--_g: #0000 8%, var(--c1) 0 17%, #0000 0 58%;
+
+		background:
+			linear-gradient(135deg, #0000 20.5%, var(--c1) 0 29.5%, #0000 0)
+				var(--bg-offset-x, 0) calc(var(--bg-offset-y, 0) + var(--s) / 4),
+			linear-gradient(45deg, var(--_g))
+				calc(var(--bg-offset-x, 0) + var(--s) / 2) var(--bg-offset-y, 0),
+			linear-gradient(135deg, var(--_g), var(--c1) 0 67%, #0000 0)
+				var(--bg-offset-x, 0) var(--bg-offset-y, 0),
+			linear-gradient(
+					45deg,
+					var(--_g),
+					var(--c1) 0 67%,
+					#0000 0 83%,
+					var(--c1) 0 92%,
+					#0000 0
+				)
+				var(--bg-offset-x, 0) var(--bg-offset-y, 0),
+			var(--c2);
+		background-size: var(--s) var(--s);
+	}
 </style>
