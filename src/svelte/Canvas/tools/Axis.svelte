@@ -114,6 +114,11 @@
 			axisSize.value = undefined;
 		}
 	}}
+	onpointercancel={(evt) => {
+		if (pointerId.value === evt.pointerId) {
+			axisSize.value = undefined;
+		}
+	}}
 />
 
 <g pointer-events="none" transform={rotationTransform.value}>

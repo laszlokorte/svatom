@@ -677,6 +677,9 @@
 		padding: 0.5em;
 		box-sizing: border-box;
 		outline: 1px solid #eee;
+		border-radius: none;
+		-webkit-appearance: none;
+		-webkit-border-radius: 0px;
 	}
 	.grid-pinned-column .cell-input {
 		background: #fafafa;
