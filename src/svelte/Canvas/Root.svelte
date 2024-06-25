@@ -45,7 +45,7 @@
 	import Drawings from "./tools/Drawings.svelte";
 	import Bounds from "./tools/Bounds.svelte";
 	import Origin from "./tools/Origin.svelte";
-	import InputFields from "./tools/InputFields.svelte";
+	import TextEdit from "./tools/TextEdit.svelte";
 	import Magnifier from "./tools/Magnifier.svelte";
 	import GuideLiner from "./tools/GuideLiner.svelte";
 	import Guides from "./tools/Guides.svelte";
@@ -603,6 +603,16 @@
 				cameraScale,
 			},
 		},
+		text: {
+			component: TextEdit,
+			parameters: {
+				clientToCanvas,
+				frameBoxPath,
+				rotationTransform,
+				cameraScale,
+				cameraOrientation,
+			},
+		},
 		lasso: {
 			component: Lasso,
 			parameters: {
@@ -690,7 +700,7 @@
 	const toolGroups = [
 		["select", "lasso"],
 		["magnifier", "pan", "rotate", "zoom"],
-		["pen", "create"],
+		["pen", "create", "text"],
 		["axis", "guides"],
 	];
 
@@ -1062,8 +1072,6 @@
 			this={tools[tool.value].component}
 			{...tools[tool.value].parameters}
 		></svelte:component>
-
-		<InputFields {rotationTransform} {cameraScale} {cameraOrientation} />
 	</svg>
 	<div class="scroller-hud">
 		<input

@@ -1,5 +1,6 @@
 import { get, set, collect, foldl, propsExcept } from 'partial.lenses'
 import * as R from "ramda";
+import {tick} from "svelte";
 
 export function atom(init) {
 	let root = $state.frozen({
