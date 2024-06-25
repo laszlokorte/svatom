@@ -414,6 +414,7 @@
 
 	const tool = atom("pen");
 	const nodes = atom([{ x: 200, y: 100 }]);
+	const textes = atom([]);
 	const guides = atom([]);
 	const axis = atom({
 		start: { x: 0, y: 0 },
@@ -606,6 +607,7 @@
 		text: {
 			component: TextEdit,
 			parameters: {
+				textes,
 				clientToCanvas,
 				frameBoxPath,
 				rotationTransform,
@@ -968,6 +970,7 @@
 				nodes.value = [];
 				drawings.value = [];
 				guides.value = [];
+				textes.value = [];
 				axis.value = undefined;
 				update(
 					L.set(["focus", L.props("x", "y"), L.values], 0),
