@@ -314,8 +314,10 @@
 	};
 
 	const cameraZoom = view(["focus", "z", numberLens], camera);
-	const cameraX = view(["focus", "x", numberLens], camera);
-	const cameraY = view(["focus", "y", numberLens], camera);
+	const cameraX = view(["focus", "x"], camera);
+	const cameraY = view(["focus", "y"], camera);
+	const cameraXFormatted = view([numberLens], cameraX);
+	const cameraYFormatted = view([numberLens], cameraY);
 	const cameraAngle = view(["focus", "w", numberLens], camera);
 	const cameraXScreen = view(
 		["focus", affineLens("x", "x", "y", "w")],
@@ -748,54 +750,80 @@
 		}),
 	);
 
-	const cameraXScreenScaled = view(
+	const cameraInBounds = view(
 		L.lens(
-			({ x, s, w, b, p }) => (x - b.minX) / s - w.frame.x / 2 + p,
-			(x, { s, w, b, p }) => ({
-				x: (x + w.frame.x / 2 - p) * s + b.minX,
-				s: s,
-			}),
+			({ x, y, s, w, b, p }) => {
+				const rot = Geo.rotatePivotXYDegree(
+					(b.minX + b.maxX) / 2,
+					(b.minY + b.maxY) / 2,
+					-b.angle,
+					{ x, y },
+				);
+
+				const rotF = Geo.rotatePivotXYDegree(
+					(b.minX + b.maxX) / 2,
+					(b.minY + b.maxY) / 2,
+					-b.angle,
+					w.frame,
+				);
+
+				return {
+					x: (rot.x - b.minX) / s + p - w.frame.x / 2,
+					y: (rot.y - b.minY) / s + p - w.frame.y / 2,
+				};
+			},
+			({ x, y }, { s, w, b, p }) => {
+				const rotF = Geo.rotatePivotXYDegree(
+					(b.minX + b.maxX) / 2,
+					(b.minY + b.maxY) / 2,
+					-b.angle,
+					w.frame,
+				);
+
+				const rot = Geo.rotatePivotXYDegree(
+					(b.minX + b.maxX) / 2,
+					(b.minY + b.maxY) / 2,
+					b.angle,
+					{
+						x: (x - p + w.frame.x / 2) * s + b.minX,
+						y: (y - p + w.frame.y / 2) * s + b.minY,
+					},
+				);
+
+				return {
+					x: rot.x,
+					y: rot.y,
+				};
+			},
 		),
 		combine(
 			{
-				x: cameraXScreen,
+				x: cameraX,
+				y: cameraY,
 				s: cameraScale,
 				w: scrollWindowSize,
 				b: cameraBounds,
 				p: view(["frame", "padding"], camera),
 			},
-			{ x: true },
-		),
-	);
-	const cameraYScreenScaled = view(
-		L.lens(
-			({ y, s, w, b, p }) => (y - b.minY) / s - w.frame.y / 2 + p,
-			(y, { s, w, b, p }) => ({
-				y: (y + w.frame.y / 2 - p) * s + b.minY,
-				s: s,
-			}),
-		),
-		combine(
-			{
-				y: cameraYScreen,
-				s: cameraScale,
-				w: scrollWindowSize,
-				b: cameraBounds,
-				p: view(["frame", "padding"], camera),
-			},
-			{ y: true },
+			{ x: true, y: true },
 		),
 	);
 
+	const centerLens = L.reread(({ minX, maxX, minY, maxY }) => ({
+		x: (minX + maxX) / 2,
+		y: (minY + maxY) / 2,
+	}));
+	const boundsCenter = view(centerLens, cameraBounds);
+
 	const scrollPosition = view(
-		L.setter((newScroll, old) => ({
-			x: newScroll.maxX > 0 ? newScroll.x : old.x,
-			y: newScroll.maxY > 0 ? newScroll.y : old.y,
-		})),
-		combine({
-			x: view(integerLens, cameraXScreenScaled),
-			y: view(integerLens, cameraYScreenScaled),
-		}),
+		[
+			L.pick({ x: ["x", integerLens], y: ["y", integerLens] }),
+			L.setter((newScroll, old) => ({
+				x: newScroll.maxX > 0 ? newScroll.x : old.x,
+				y: newScroll.maxY > 0 ? newScroll.y : old.y,
+			})),
+		],
+		cameraInBounds,
 	);
 </script>
 
@@ -1030,19 +1058,34 @@
 
 <fieldset>
 	<legend>Focus</legend>
-	<button
-		type="button"
-		onclick={(_) => {
-			update(L.set(["focus", L.values], 0), camera);
-		}}>Reset all</button
-	>
+	<div class="button-bar">
+		<button
+			type="button"
+			onclick={(_) => {
+				update(L.set(["focus", L.values], 0), camera);
+			}}>Reset all</button
+		><button
+			type="button"
+			onclick={(_) => {
+				update(
+					L.set(["focus", L.props("x", "y")], boundsCenter.value),
+					camera,
+				);
+			}}>re-Center</button
+		><button
+			type="button"
+			onclick={(_) => {
+				update(L.set(["focus", "w"], 0), camera);
+			}}>re-Orient</button
+		>
+	</div>
 
 	<div class="form-grid">
 		<label class="number-picker"
 			><span>X:</span>
 			<input
 				type="range"
-				bind:value={cameraX.value}
+				bind:value={cameraXFormatted.value}
 				min={cameraBounds.value.minX}
 				max={cameraBounds.value.maxX}
 				step="0.1"
@@ -1050,16 +1093,16 @@
 			<button
 				type="button"
 				onclick={(_) => {
-					cameraX.value = 0;
+					cameraXFormatted.value = 0;
 				}}>reset</button
 			>
-			<output>{cameraX.value}</output>
+			<output>{cameraXFormatted.value}</output>
 		</label>
 		<label class="number-picker"
 			><span>Y:</span>
 			<input
 				type="range"
-				bind:value={cameraY.value}
+				bind:value={cameraYFormatted.value}
 				min={cameraBounds.value.minY}
 				max={cameraBounds.value.maxY}
 				step="0.1"
@@ -1067,10 +1110,10 @@
 			<button
 				type="button"
 				onclick={(_) => {
-					cameraY.value = 0;
+					cameraYFormatted.value = 0;
 				}}>reset</button
 			>
-			<output>{cameraY.value}</output>
+			<output>{cameraYFormatted.value}</output>
 		</label>
 		<label class="number-picker"
 			><span>Zoom:</span>
@@ -1267,6 +1310,12 @@
 		gap: 2px;
 		align-items: stretch;
 		font-family: monospace;
+	}
+
+	.button-bar {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 2px;
 	}
 
 	.tool-bar-sep {
