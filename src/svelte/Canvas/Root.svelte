@@ -69,7 +69,7 @@
 			return Geo.rotatePivotXYDegree(
 				camera.value.focus.x,
 				camera.value.focus.y,
-				camera.value.focus.w,
+				-camera.value.focus.w,
 				screenPoint,
 			);
 		}
@@ -179,25 +179,25 @@
 					a: Geo.rotatePivotXYDegree(
 						camera.focus.x,
 						camera.focus.y,
-						camera.focus.w,
+						-camera.focus.w,
 						{ x: minX, y: minY },
 					),
 					b: Geo.rotatePivotXYDegree(
 						camera.focus.x,
 						camera.focus.y,
-						camera.focus.w,
+						-camera.focus.w,
 						{ x: minX + width, y: minY },
 					),
 					c: Geo.rotatePivotXYDegree(
 						camera.focus.x,
 						camera.focus.y,
-						camera.focus.w,
+						-camera.focus.w,
 						{ x: minX + width, y: minY + height },
 					),
 					d: Geo.rotatePivotXYDegree(
 						camera.focus.x,
 						camera.focus.y,
-						camera.focus.w,
+						-camera.focus.w,
 						{ x: minX, y: minY + height },
 					),
 				},
@@ -314,11 +314,14 @@
 	};
 
 	const cameraZoom = view(["focus", "z", numberLens], camera);
+	const cameraZoomFormatted = view([numberLens], cameraZoom);
+
 	const cameraX = view(["focus", "x"], camera);
 	const cameraY = view(["focus", "y"], camera);
 	const cameraXFormatted = view([numberLens], cameraX);
 	const cameraYFormatted = view([numberLens], cameraY);
 	const cameraAngle = view(["focus", "w", numberLens], camera);
+	const cameraAngleFormatted = view([numberLens], cameraAngle);
 	const cameraXScreen = view(
 		["focus", affineLens("x", "x", "y", "w")],
 		camera,
@@ -454,10 +457,35 @@
 
 	const extension = calculateBoundingBox(
 		100,
-		{ nodes, drawings },
+		{ nodes, drawings, axis },
 		{
 			nodes: L.elems,
 			drawings: [L.elems, L.elems],
+			axis: [
+				L.ifElse(
+					R.is(Object),
+					L.pick({
+						start: "start",
+						a: ({ start, size, angle }) =>
+							Geo.rotatePivotDegree(start, angle, {
+								x: start.x + size.x,
+								y: start.y + size.y,
+							}),
+						b: ({ start, size, angle }) =>
+							Geo.rotatePivotDegree(start, angle, {
+								x: start.x,
+								y: start.y + size.y,
+							}),
+						c: ({ start, size, angle }) =>
+							Geo.rotatePivotDegree(start, angle, {
+								x: start.x + size.x,
+								y: start.y,
+							}),
+					}),
+					R.always({}),
+				),
+				L.values,
+			],
 		},
 	);
 
@@ -467,10 +495,10 @@
 		const halfWidth = (rect.maxX - rect.minX) / 2;
 		const halfHeight = (rect.maxY - rect.minY) / 2;
 
-		const c1 = Geo.rotateDegree(-degree, { x: halfWidth, y: halfHeight });
-		const c2 = Geo.rotateDegree(-degree, { x: -halfWidth, y: halfHeight });
-		const c3 = Geo.rotateDegree(-degree, { x: halfWidth, y: -halfHeight });
-		const c4 = Geo.rotateDegree(-degree, { x: -halfWidth, y: -halfHeight });
+		const c1 = Geo.rotateDegree(degree, { x: halfWidth, y: halfHeight });
+		const c2 = Geo.rotateDegree(degree, { x: -halfWidth, y: halfHeight });
+		const c3 = Geo.rotateDegree(degree, { x: halfWidth, y: -halfHeight });
+		const c4 = Geo.rotateDegree(degree, { x: -halfWidth, y: -halfHeight });
 
 		const halfWidthRot = Math.max(
 			Math.abs(c1.x),
@@ -756,15 +784,8 @@
 				const rot = Geo.rotatePivotXYDegree(
 					(b.minX + b.maxX) / 2,
 					(b.minY + b.maxY) / 2,
-					-b.angle,
+					b.angle,
 					{ x, y },
-				);
-
-				const rotF = Geo.rotatePivotXYDegree(
-					(b.minX + b.maxX) / 2,
-					(b.minY + b.maxY) / 2,
-					-b.angle,
-					w.frame,
 				);
 
 				return {
@@ -773,17 +794,10 @@
 				};
 			},
 			({ x, y }, { s, w, b, p }) => {
-				const rotF = Geo.rotatePivotXYDegree(
-					(b.minX + b.maxX) / 2,
-					(b.minY + b.maxY) / 2,
-					-b.angle,
-					w.frame,
-				);
-
 				const rot = Geo.rotatePivotXYDegree(
 					(b.minX + b.maxX) / 2,
 					(b.minY + b.maxY) / 2,
-					b.angle,
+					-b.angle,
 					{
 						x: (x - p + w.frame.x / 2) * s + b.minX,
 						y: (y - p + w.frame.y / 2) * s + b.minY,
@@ -1119,7 +1133,7 @@
 			><span>Zoom:</span>
 			<input
 				type="range"
-				bind:value={cameraZoom.value}
+				bind:value={cameraZoomFormatted.value}
 				min="-5"
 				max="5"
 				step="0.01"
@@ -1127,16 +1141,16 @@
 			<button
 				type="button"
 				onclick={(_) => {
-					cameraZoom.value = 0;
+					cameraZoomFormatted.value = 0;
 				}}>reset</button
 			>
-			<output>{cameraZoom.value}</output>
+			<output>{cameraZoomFormatted.value}</output>
 		</label>
 		<label class="number-picker"
 			><span>Rotation:</span>
 			<input
 				type="range"
-				bind:value={cameraAngle.value}
+				bind:value={cameraAngleFormatted.value}
 				min="-180"
 				max="180"
 				step="0.01"
@@ -1144,10 +1158,10 @@
 			<button
 				type="button"
 				onclick={(_) => {
-					cameraAngle.value = 0;
+					cameraAngleFormatted.value = 0;
 				}}>reset</button
 			>
-			<output>{cameraAngle.value}</output>
+			<output>{cameraAngleFormatted.value}</output>
 		</label>
 		<label class="number-picker"
 			><span>Scroll X:</span>

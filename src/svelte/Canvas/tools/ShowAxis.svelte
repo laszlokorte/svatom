@@ -36,8 +36,9 @@
 			b && b.start && b.size
 				? `M${numberSvgFormat.format(b.start.x)},${numberSvgFormat.format(b.start.y)}
 				m${numberSvgFormat.format(b.size.x)},0
-				h${numberSvgFormat.format(-b.size.x)}
-				v${numberSvgFormat.format(b.size.y)}
+				h${numberSvgFormat.format(-b.size.x - 10 * scale * Math.sign(b.size.x))}
+				m${numberSvgFormat.format(10 * scale * Math.sign(b.size.x))},${numberSvgFormat.format(-10 * scale * Math.sign(b.size.y))}
+				v${numberSvgFormat.format(b.size.y + 10 * scale * Math.sign(b.size.y))}
 				`
 				: "",
 		),

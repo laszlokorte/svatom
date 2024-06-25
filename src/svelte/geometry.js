@@ -68,8 +68,8 @@ export function rotateRad(rad, vec) {
 	const sin = Math.sin(rad)
 
 	return {
-		x: cos * vec.x + sin * vec.y,
-		y: -sin * vec.x + cos * vec.y,
+		x: cos * vec.x - sin * vec.y,
+		y: sin * vec.x + cos * vec.y,
 	}
 }
 

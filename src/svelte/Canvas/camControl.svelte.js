@@ -15,11 +15,11 @@ export function rotateWithPivot(delta, orig) {
 
 	const dxCam = orig.x - delta.px;
 	const dyCam = orig.y - delta.py;
-	const deltaSin = Math.sin(Math.PI * delta.dw / 180)
-	const deltaCos = Math.cos(Math.PI * delta.dw / 180)
+	const deltaSin = Math.sin(-Math.PI * delta.dw / 180)
+	const deltaCos = Math.cos(-Math.PI * delta.dw / 180)
 
-	const newX = delta.px + (deltaCos * dxCam + deltaSin * dyCam)
-	const newY = delta.py + (-deltaSin * dxCam + deltaCos * dyCam)
+	const newX = delta.px + (deltaCos * dxCam - deltaSin * dyCam)
+	const newY = delta.py + (deltaSin * dxCam + deltaCos * dyCam)
 
 	return {
 		...orig,
@@ -32,10 +32,10 @@ export function rotateWithPivot(delta, orig) {
 export function rotateWithPivotScreen(delta, orig) {
   	const dxPivot = (delta.px - orig.x);
 	const dyPivot = (delta.py - orig.y);
-  	const currentSin = Math.sin(Math.PI / 180 * orig.w)
-  	const currentCos = Math.cos(Math.PI / 180 * orig.w)
-  	const pivotWorldX = orig.x + (currentCos*dxPivot + currentSin*dyPivot)
-    const pivotWorldY = orig.y + (-currentSin*dxPivot + currentCos*dyPivot)
+  	const currentSin = Math.sin(-Math.PI / 180 * orig.w)
+  	const currentCos = Math.cos(-Math.PI / 180 * orig.w)
+  	const pivotWorldX = orig.x + (currentCos*dxPivot - currentSin*dyPivot)
+    const pivotWorldY = orig.y + (currentSin*dxPivot + currentCos*dyPivot)
 
 	return rotateWithPivot({px: pivotWorldX, py: pivotWorldY, dw: delta.dw}, orig)
 }
@@ -108,6 +108,7 @@ export function bindEvents(node, cam) {
 		}
 
 		evt.preventDefault()
+		evt.stopPropagation()
 		
 		svgPoint.x = evt.clientX
 		svgPoint.y = evt.clientY
@@ -131,9 +132,9 @@ export function bindEvents(node, cam) {
 		}
 	}
 
-	node.addEventListener('wheel', onWheel)
+	node.addEventListener('wheel', onWheel, { passive:false })
 
 	return () => {
-		node.removeEventListener('wheel', onWheel)
+		node.removeEventListener('wheel', onWheel, { passive:false })
 	}
 }

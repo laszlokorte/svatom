@@ -141,7 +141,7 @@
 		if (guideStart.value) {
 			return;
 		}
-		if (!evt.isPrimary) {
+		if (!(evt.isPrimary && U.isLeftButton(evt))) {
 			return;
 		}
 		evt.currentTarget.setPointerCapture(evt.pointerId);

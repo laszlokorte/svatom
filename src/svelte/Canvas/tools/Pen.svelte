@@ -86,7 +86,7 @@
 		if (startPath.value) {
 			return;
 		}
-		if (!evt.isPrimary) {
+		if (!(evt.isPrimary && U.isLeftButton(evt))) {
 			return;
 		}
 		pointerId.value = evt.pointerId;

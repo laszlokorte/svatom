@@ -56,9 +56,9 @@
 	const axisPath = read(
 		L.getter(({ axisBasis: b, cameraScale: scale }) =>
 			b && b.start && b.size
-				? `M${numberSvgFormat.format(b.start.x)},${numberSvgFormat.format(b.start.y)}h${numberSvgFormat.format(b.size.x)}
+				? `M${numberSvgFormat.format(b.start.x - 10 * scale * Math.sign(b.size.x))},${numberSvgFormat.format(b.start.y)}h${numberSvgFormat.format(b.size.x)}
 				m${Math.sign(b.size.x) * (10 * scale)},0l${Math.sign(b.size.x) * (-10 * scale)},${-10 * scale}v${2 * 10 * scale}l${Math.sign(b.size.x) * (10 * scale)},${-10 * scale}
-				M${numberSvgFormat.format(b.start.x)},${numberSvgFormat.format(b.start.y)}v${numberSvgFormat.format(b.size.y)}
+				M${numberSvgFormat.format(b.start.x)},${numberSvgFormat.format(b.start.y - 10 * scale * Math.sign(b.size.y))}v${numberSvgFormat.format(b.size.y)}
 				m0,${Math.sign(b.size.y) * (10 * scale)}l${-10 * scale},${Math.sign(b.size.y) * (-10 * scale)}h${2 * 10 * scale}l${-10 * scale},${Math.sign(b.size.y) * (10 * scale)}
 				`
 				: "",
@@ -84,7 +84,7 @@
 		if (axisStart.value) {
 			return;
 		}
-		if (!evt.isPrimary) {
+		if (!(evt.isPrimary && U.isLeftButton(evt))) {
 			return;
 		}
 
