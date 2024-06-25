@@ -405,11 +405,6 @@
 		),
 	];
 
-	const zoomFrame = view(cameraZoomFrameLens, camera);
-	const panMovement = view(panMovementLens, camera);
-	const rotateMovement = view(rotateMovementLens, camera);
-	const zoomMovement = view(zoomMovementLens, camera);
-
 	const tool = atom("pen");
 	const nodes = atom([{ x: 200, y: 100 }]);
 	const guides = atom([]);
@@ -463,6 +458,28 @@
 			drawings: [L.elems, L.elems],
 		},
 	);
+
+	const clampedCamera = view(
+		L.lens(
+			({ c, e }) => c,
+			(c, { e }) => ({
+				c: {
+					...c,
+					focus: {
+						...c.focus,
+						x: R.clamp(e.minX, e.maxX, c.focus.x),
+						y: R.clamp(e.minY, e.maxY, c.focus.y),
+					},
+				},
+				e,
+			}),
+		),
+		combine({ c: camera, e: extension }, { c: true }),
+	);
+	const zoomFrame = view(cameraZoomFrameLens, clampedCamera);
+	const panMovement = view(panMovementLens, clampedCamera);
+	const rotateMovement = view(rotateMovementLens, clampedCamera);
+	const zoomMovement = view(zoomMovementLens, clampedCamera);
 
 	const tools = {
 		select: {
@@ -865,7 +882,7 @@
 >
 	<svg
 		bind:this={svgElement.value}
-		use:Cam.bindEvents={camera}
+		use:Cam.bindEvents={clampedCamera}
 		viewBox={viewBox.value}
 		preserveAspectRatio={preserveAspectRatio.value}
 	>
@@ -947,8 +964,8 @@
 			<input
 				type="range"
 				bind:value={cameraX.value}
-				min="-4000"
-				max="4000"
+				min={extension.value.minX}
+				max={extension.value.maxX}
 				step="0.1"
 			/>
 			<button
@@ -964,8 +981,8 @@
 			<input
 				type="range"
 				bind:value={cameraY.value}
-				min="-4000"
-				max="4000"
+				min={extension.value.minY}
+				max={extension.value.maxY}
 				step="0.1"
 			/>
 			<button
@@ -1015,8 +1032,8 @@
 			<input
 				type="range"
 				bind:value={cameraXScreenFormatted.value}
-				min="-4000"
-				max="4000"
+				min={extension.value.minX}
+				max={extension.value.maxX}
 				step="0.1"
 			/>
 			<button
@@ -1032,8 +1049,8 @@
 			<input
 				type="range"
 				bind:value={cameraYScreenFormatted.value}
-				min="-4000"
-				max="4000"
+				min={extension.value.minY}
+				max={extension.value.maxY}
 				step="0.1"
 			/>
 			<button
