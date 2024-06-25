@@ -45,6 +45,7 @@
 	import Drawings from "./tools/Drawings.svelte";
 	import Bounds from "./tools/Bounds.svelte";
 	import Origin from "./tools/Origin.svelte";
+	import InputFields from "./tools/InputFields.svelte";
 	import Magnifier from "./tools/Magnifier.svelte";
 	import GuideLiner from "./tools/GuideLiner.svelte";
 	import Guides from "./tools/Guides.svelte";
@@ -1061,6 +1062,8 @@
 			this={tools[tool.value].component}
 			{...tools[tool.value].parameters}
 		></svelte:component>
+
+		<InputFields {rotationTransform} {cameraScale} {cameraOrientation} />
 	</svg>
 	<div class="scroller-hud">
 		<input
