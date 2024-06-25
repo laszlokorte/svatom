@@ -459,6 +459,45 @@
 		},
 	);
 
+	function rotatedClamp(degree, rect, pos) {
+		const rectCenterX = (rect.maxX + rect.minX) / 2;
+		const rectCenterY = (rect.maxY + rect.minY) / 2;
+		const halfWidth = (rect.maxX - rect.minX) / 2;
+		const halfHeight = (rect.maxY - rect.minY) / 2;
+
+		// var angle = camera.angle * Math.PI/180;
+		// var sin = Math.sin(-angle);
+		// var cos = Math.cos(-angle);
+		// var xA = (cos * boundsHalfWidth) - (sin * boundsHalfHeight)
+		// var yA = (sin * boundsHalfWidth) + (cos * boundsHalfHeight)
+		// var xB = (cos * -boundsHalfWidth) - (sin * boundsHalfHeight)
+		// var yB = (sin * -boundsHalfWidth) + (cos * boundsHalfHeight)
+		// var xC = (cos * boundsHalfWidth) - (sin * -boundsHalfHeight)
+		// var yC = (sin * boundsHalfWidth) + (cos * -boundsHalfHeight)
+		// var xD = (cos * -boundsHalfWidth) - (sin * -boundsHalfHeight)
+		// var yD = (sin * -boundsHalfWidth) + (cos * -boundsHalfHeight)
+
+		// var halfWidth = Math.max(Math.abs(xA), Math.abs(xB), Math.abs(xC), Math.abs(xD))
+		// var halfHeight = Math.max(Math.abs(yA), Math.abs(yB), Math.abs(yC), Math.abs(yD))
+
+		const posRelX = pos.x - rectCenterX;
+		const posRelY = pos.y - rectCenterY;
+
+		const posRot = Geo.rotateDegree(-degree, { x: posRelX, y: posRelY });
+		const posRotClampedX = R.clamp(-halfWidth, +halfWidth, posRot.x);
+		const posRotClampedY = R.clamp(-halfHeight, +halfHeight, posRot.y);
+
+		const posClamped = Geo.rotateDegree(degree, {
+			x: posRotClampedX,
+			y: posRotClampedY,
+		});
+
+		return {
+			x: rectCenterX + posClamped.x,
+			y: rectCenterY + posClamped.y,
+		};
+	}
+
 	const clampedCamera = view(
 		L.lens(
 			({ c, e }) => c,
@@ -467,8 +506,7 @@
 					...c,
 					focus: {
 						...c.focus,
-						x: R.clamp(e.minX, e.maxX, c.focus.x),
-						y: R.clamp(e.minY, e.maxY, c.focus.y),
+						...rotatedClamp(c.focus.w, e, c.focus),
 					},
 				},
 				e,
