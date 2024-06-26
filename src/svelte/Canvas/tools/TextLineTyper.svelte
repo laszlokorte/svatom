@@ -120,7 +120,6 @@
 							}
 						}}
 						onblur={(evt) => {
-							return
 							evt.preventDefault();
 							if (text.value) {
 								newText.value = {
@@ -162,22 +161,20 @@
 		display: contents;
 	}
 
-
 	input {
 		font: inherit;
 		border: none;
+		border-top: 4px solid transparent; /*needed for same offset as svg text*/
 		width: 100%;
 		height: 100%;
 		box-sizing: border-box;
 		background: #fff;
 		text-align: center;
 		outline: none;
+		color: inherit;
 		margin: 0;
-		position: relative;
-		top: 1px;
 		line-height: 1;
 		padding: 0;
-
 	    padding-inline: 0;
 	    padding-block: 0;
 	}
