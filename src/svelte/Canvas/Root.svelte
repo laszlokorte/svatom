@@ -420,6 +420,7 @@
 	const tool = atom("pen");
 	const nodes = atom([{ x: 200, y: 100 }]);
 	const textes = atom([]);
+	const textBoxes = atom([]);
 	const guides = atom([]);
 	const axis = atom({
 		start: { x: 0, y: 0 },
@@ -465,7 +466,7 @@
 
 	const extension = calculateBoundingBox(
 		100,
-		{ nodes, drawings, axis, textes },
+		{ nodes, drawings, axis, textes, textBoxes },
 		{
 			nodes: L.elems,
 			drawings: [L.elems, L.elems],
@@ -495,6 +496,32 @@
 				L.values,
 			],
 			textes: [L.elems, L.props("x", "y")],
+			textBoxes: [
+				L.elems,
+				L.ifElse(
+					R.is(Object),
+					L.pick({
+						start: "start",
+						a: ({ start, size, angle }) =>
+							Geo.rotatePivotDegree(start, angle, {
+								x: start.x + size.x,
+								y: start.y + size.y,
+							}),
+						b: ({ start, size, angle }) =>
+							Geo.rotatePivotDegree(start, angle, {
+								x: start.x,
+								y: start.y + size.y,
+							}),
+						c: ({ start, size, angle }) =>
+							Geo.rotatePivotDegree(start, angle, {
+								x: start.x + size.x,
+								y: start.y,
+							}),
+					}),
+					R.always({}),
+				),
+				L.values,
+			],
 		},
 	);
 
@@ -634,6 +661,7 @@
 				rotationTransform,
 				cameraScale,
 				cameraOrientation,
+				textBoxes,
 			},
 		},
 		lasso: {
@@ -1030,6 +1058,7 @@
 				drawings.value = [];
 				guides.value = [];
 				textes.value = [];
+				textBoxes.value = [];
 				axis.value = undefined;
 				update(
 					L.set(["focus", L.props("x", "y"), L.values], 0),
@@ -1054,6 +1083,7 @@
 	</div>
 </fieldset>
 
+<div class="prevent-selection">
 <Scroller
 	{scrollPosition}
 	contentSize={view(
@@ -1145,6 +1175,7 @@
 		/>
 	</div>
 </Scroller>
+</div>
 
 <fieldset>
 	<legend>Focus</legend>
@@ -1290,6 +1321,21 @@
 		--accent-color: #aa4466;
 		--accent-color-light: #cc4466;
 		user-select: none;
+		-webkit-user-select: none;
+		touch-action: none;
+	}
+
+	.prevent-selection {
+		user-select: none;
+		-webkit-user-select: none;
+		touch-action: none;
+	}
+
+	legend {
+		
+		user-select: none;
+		-webkit-user-select: none;
+		touch-action: none;
 	}
 
 	svg {
@@ -1300,6 +1346,8 @@
 		height: 100%;
 		position: absolute;
 		user-select: none;
+		-webkit-user-select: none;
+		touch-action: none;
 	}
 
 	textarea {

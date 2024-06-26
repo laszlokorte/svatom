@@ -30,24 +30,28 @@
 
 <g transform={rotationTransform.value} vector-effect="non-rotation">
 	{#each textes.value as t}
+	<g 
+		transform="translate({t.x}, {t.y}) rotate({-cameraOrientation.value}) scale({R.clamp(
+				0.01,
+				6,
+				cameraScale.value,
+			)}) translate({-t.x}, {-t.y})">
+		<circle 
+			cx={t.x}
+			cy={t.y+2} r="2" fill="#55aaee" />
 		<text
 			style:font-size="1.2em"
 			shape-rendering="geometricPrecision"
 			text-rendering="optimizeLegibility"
-			transform="translate({t.x}, {t.y}) rotate({-cameraOrientation.value}) scale({R.clamp(
-				0.01,
-				6,
-				cameraScale.value,
-			)}) translate({-t.x}, {-t.y})"
-			x={t.x - 15}
-			y={t.y + 2}
+			x={t.x}
+			y={t.y}
 			stroke="white"
 			paint-order="stroke"
 			stroke-width="3"
 			vector-effect="non-scaling-stroke"
-			text-anchor="middle"
-			dominant-baseline="middle">{t.content}</text
+			text-anchor="middle">{t.content}</text
 		>
+	</g>
 	{/each}
 </g>
 <path
@@ -108,9 +112,10 @@
 				text-rendering="optimizeLegibility"
 				width="200"
 				height="2em"
-				x={position.value.x - 15 - 100}
-				y={position.value.y - 15}
+				x={position.value.x - 100}
+				y={position.value.y}
 				style:overflow="visible"
+				style:transform="translate(0,-1.4em)"
 				stroke="#00aaff"
 				stroke-width="2px"
 				fill="white"
@@ -121,8 +126,9 @@
 				text-rendering="optimizeLegibility"
 				width="200"
 				height="2em"
-				x={position.value.x - 15 - 100}
-				y={position.value.y - 15}
+				x={position.value.x - 100}
+				y={position.value.y}
+				style:transform="translate(0,-1.4em)"
 				style:overflow="visible"
 			>
 				<form
@@ -173,6 +179,10 @@
 		outline: none;
 		cursor: text;
 	}
+	form {
+		display: contents;
+	}
+
 
 	input {
 		font: inherit;

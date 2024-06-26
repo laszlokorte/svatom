@@ -553,6 +553,7 @@
 		box-shadow: 0px 0px 15px 1px #000a;
 		font-family: monospace;
 		user-select: none;
+		-webkit-user-select: none;
 	}
 
 	.grid-row {
@@ -603,6 +604,7 @@
 		color: #fff;
 		z-index: 200;
 		user-select: none;
+		-webkit-user-select: none;
 	}
 
 	.grid-pinned-row .grid-head-column {
@@ -640,6 +642,7 @@
 		color: #fff;
 		z-index: 90;
 		user-select: none;
+		-webkit-user-select: none;
 	}
 
 	label.grid-head-cell:has(input[type="checkbox"]) {

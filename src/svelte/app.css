@@ -1,3 +1,8 @@
+body {
+  touch-action: pan-y, pan-x;
+}
+
+
 section {
 	margin: 3em auto;
 	max-width: 60em;
@@ -240,6 +245,7 @@ button:focus-visible, .button:focus-visible {
 	appearance: revert;
 	padding: 2px;
     overscroll-behavior: none;
+    touch-action: pan-y, pan-x;
 }
 
 .asciiart::after {
