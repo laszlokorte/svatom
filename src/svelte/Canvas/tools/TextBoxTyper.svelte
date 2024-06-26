@@ -53,6 +53,10 @@
 		textBox,
 	);
 
+	
+	const isEditing = view(R.compose(R.not, R.isNil), pointerId);
+	const textEmpty = view(L.reread(R.isEmpty), text);
+
 	const textBoxAngle = view([L.removable("angle"), "angle"], textBox);
 	const textBoxAngleCos = view(
 		[L.reread((r) => Math.cos((r / 180) * Math.PI))],
@@ -78,31 +82,15 @@
 	);
 </script>
 
-<g transform={rotationTransform.value} vector-effect="non-rotation">
-	{#each textBoxes.value as t}
-	<g 
-		transform="translate({t.start.x}, {t.start.y}) rotate({t.angle}) translate({-t.start.x}, {-t.start.y})">
-			<foreignObject
-				shape-rendering="geometricPrecision"
-				text-rendering="optimizeLegibility"
-				width={Math.abs(t.size.x)}
-				height={Math.abs(t.size.y)}
-				x={ t.start.x + Math.min(0, t.size.x)}
-				y={ t.start.y + Math.min(0, t.size.y)}
-				style:overflow="visible"
-			>
-		<div class="text-output">{t.content}</div>
-	</foreignObject>
-	</g>
-	{/each}
-</g>
-
 <path
 	use:disableTouchEventsIf={textBoxStart}
 	d={frameBoxPath.value}
 	pointer-events="all"
 	fill="none"
 	class="text-box-surface"
+
+	class:dim={isEditing.value}
+	class:dim-empty={textEmpty.value}
 	role="button"
 	tabindex="-1"
 	onkeydown={(evt) => {
@@ -211,7 +199,7 @@
 							}
 							textBoxStart.value = undefined;
 						}}
-					/>
+					></textarea>
 				</form>
 			</foreignObject>
 		</g>
@@ -253,25 +241,6 @@
 	form {
 		display: contents;
 	}
-	
-	.text-output {
-		font-size: 1.2em;
-		font: inherit;
-		border: none;
-		padding: 4px;
-		display: block;
-		width: 100%;
-		height: 100%;
-		box-sizing: border-box;
-		resize: none;
-		min-height: 0;
-		white-space: pre-wrap;
-		line-height: 1;
-		word-break: break-all;
-		overflow: visible;
-		outline: 1px solid #eee8;
-		margin: 0;
-	}
 
 	textarea {
 		font-size: 1.2em;
@@ -289,11 +258,12 @@
 		overflow: visible;
 		margin: 0;
 		outline: none;
+		overflow-y: scroll;
+		overflow-x: auto;
+		scrollbar-gutter: stable;
+		scrollbar-width: thin;
 	}
 
-	textarea:focus-visible {
-		outline: 2px solid #00aaff;
-	}
 
 	.dim {
 		fill: #ffffff33;

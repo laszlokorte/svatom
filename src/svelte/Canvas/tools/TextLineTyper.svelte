@@ -28,32 +28,6 @@
 	const textEmpty = view(L.reread(R.isEmpty), text);
 </script>
 
-<g transform={rotationTransform.value} vector-effect="non-rotation">
-	{#each textes.value as t}
-	<g 
-		transform="translate({t.x}, {t.y}) rotate({-cameraOrientation.value}) scale({R.clamp(
-				0.01,
-				6,
-				cameraScale.value,
-			)}) translate({-t.x}, {-t.y})">
-		<circle 
-			cx={t.x}
-			cy={t.y+2} r="2" fill="#55aaee" />
-		<text
-			style:font-size="1.2em"
-			shape-rendering="geometricPrecision"
-			text-rendering="optimizeLegibility"
-			x={t.x}
-			y={t.y}
-			stroke="white"
-			paint-order="stroke"
-			stroke-width="3"
-			vector-effect="non-scaling-stroke"
-			text-anchor="middle">{t.content}</text
-		>
-	</g>
-	{/each}
-</g>
 <path
 	d={frameBoxPath.value}
 	class:dim={isEditing.value}
@@ -90,16 +64,21 @@
 					y: position.value.y,
 					content: text.value,
 				};
+			} else {
+			
+				evt.preventDefault();
+
+				const svgP = clientToCanvas(evt.clientX, evt.clientY);
+
+				position.value = svgP;
 			}
-		}
+		} 
 	}}
 />
 
 {#if position.value}
 	<g transform={rotationTransform.value} vector-effect="non-rotation">
 		<g
-			shape-rendering="geometricPrecision"
-			text-rendering="optimizeLegibility"
 			transform="translate({position.value.x}, {position.value
 				.y}) rotate({-cameraOrientation.value}) scale({R.clamp(
 				0.01,
@@ -107,28 +86,12 @@
 				cameraScale.value,
 			)}) translate({-position.value.x}, {-position.value.y})"
 		>
-			<rect
-				shape-rendering="geometricPrecision"
-				text-rendering="optimizeLegibility"
-				width="200"
-				height="2em"
-				x={position.value.x - 100}
-				y={position.value.y}
-				style:overflow="visible"
-				style:transform="translate(0,-1.4em)"
-				stroke="#00aaff"
-				stroke-width="2px"
-				fill="white"
-				vector-effect="non-scaling-stroke"
-			></rect>
 			<foreignObject
-				shape-rendering="geometricPrecision"
-				text-rendering="optimizeLegibility"
 				width="200"
-				height="2em"
+				height="50"
 				x={position.value.x - 100}
 				y={position.value.y}
-				style:transform="translate(0,-1.4em)"
+				style:transform="translate(0,-25px) translate(0,-.5em)"
 				style:overflow="visible"
 			>
 				<form
@@ -157,6 +120,7 @@
 							}
 						}}
 						onblur={(evt) => {
+							return
 							evt.preventDefault();
 							if (text.value) {
 								newText.value = {
@@ -170,6 +134,21 @@
 					/>
 				</form>
 			</foreignObject>
+			<rect
+				shape-rendering="crispEdges"
+				text-rendering="crispEdges"
+				width="200"
+				height="50"
+				x={position.value.x - 100}
+				y={position.value.y}
+				style:overflow="visible"
+				style:transform="translate(0,-25px) translate(0,-.5em)"
+				stroke="#00aaff"
+				stroke-width="2px"
+				pointer-events="none"
+				fill="none"
+				vector-effect="non-scaling-stroke"
+			></rect>
 		</g>
 	</g>
 {/if}
@@ -187,20 +166,24 @@
 	input {
 		font: inherit;
 		border: none;
-		padding: 4px;
 		width: 100%;
 		height: 100%;
 		box-sizing: border-box;
 		background: #fff;
 		text-align: center;
+		outline: none;
+		margin: 0;
+		position: relative;
+		top: 1px;
+		line-height: 1;
+		padding: 0;
+
+	    padding-inline: 0;
+	    padding-block: 0;
 	}
 
-	input:focus-visible {
-		outline: 2px solid #00aaff;
-	}
 
 	.dim {
-		fill: #ffffff33;
 		cursor: default;
 	}
 

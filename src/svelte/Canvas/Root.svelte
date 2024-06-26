@@ -49,8 +49,10 @@
 	import Drawings from "./tools/Drawings.svelte";
 	import Bounds from "./tools/Bounds.svelte";
 	import Origin from "./tools/Origin.svelte";
-	import TextLine from "./tools/TextLine.svelte";
-	import TextBox from "./tools/TextBox.svelte";
+	import TextLines from "./tools/TextLines.svelte";
+	import TextBoxes from "./tools/TextBoxes.svelte";
+	import TextLineTyper from "./tools/TextLineTyper.svelte";
+	import TextBoxTyper from "./tools/TextBoxTyper.svelte";
 	import Magnifier from "./tools/Magnifier.svelte";
 	import GuideLiner from "./tools/GuideLiner.svelte";
 	import Guides from "./tools/Guides.svelte";
@@ -641,7 +643,7 @@
 		},
 		text: {
 			name: "Text Line",
-			component: TextLine,
+			component: TextLineTyper,
 			parameters: {
 				textes,
 				clientToCanvas,
@@ -653,7 +655,7 @@
 		},
 		text_box: {
 			name: "Text Box",
-			component: TextBox,
+			component: TextBoxTyper,
 			parameters: {
 				textes,
 				clientToCanvas,
@@ -1144,6 +1146,25 @@
 			<Nodes {nodes} {rotationTransform} {cameraScale} />
 
 			<Drawings {drawings} {rotationTransform} {cameraScale} />
+
+			<TextBoxes
+				{textBoxes}
+				{clientToCanvas}
+				{frameBoxPath}
+				{rotationTransform}
+				{cameraScale}
+				{cameraOrientation}
+			 />
+
+			<TextLines
+				{textes}
+				{clientToCanvas}
+				{frameBoxPath}
+				{rotationTransform}
+				{cameraScale}
+				{cameraOrientation}
+			 />
+
 			<Guides
 				{guides}
 				{frameBoxObject}
@@ -1332,7 +1353,7 @@
 	}
 
 	legend {
-		
+
 		user-select: none;
 		-webkit-user-select: none;
 		touch-action: none;

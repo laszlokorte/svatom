@@ -1,0 +1,77 @@
+<script>
+	import * as L from "partial.lenses";
+	import * as R from "ramda";
+	import * as U from "../../utils";
+	import {
+		atom,
+		view,
+		string,
+		read,
+		autofocusIf,
+	} from "../../svatom.svelte.js";
+
+	const {
+		rotationTransform,
+		cameraScale,
+		cameraOrientation,
+		frameBoxPath,
+		clientToCanvas,
+		textes = atom([]),
+	} = $props();
+
+</script>
+
+<g transform={rotationTransform.value} vector-effect="non-rotation">
+	{#each textes.value as t}
+	<g 
+		transform="translate({t.x}, {t.y}) rotate({-cameraOrientation.value}) scale({R.clamp(
+				0.01,
+				6,
+				cameraScale.value,
+			)}) translate({-t.x}, {-t.y})">
+		<circle 
+			cx={t.x}
+			cy={t.y+2} r="2" fill="#55aaee" />
+		<text
+			style:font-size="1.2em"
+			x={t.x}
+			y={t.y}
+			stroke="white"
+			paint-order="stroke"
+			stroke-width="1px"
+			text-anchor="middle">{t.content}</text
+		>
+	</g>
+	{/each}
+</g>
+
+<style>
+	.typer-surface {
+		outline: none;
+		cursor: text;
+	}
+	form {
+		display: contents;
+	}
+
+
+	input {
+		font: inherit;
+		border: none;
+		width: 100%;
+		height: 100%;
+		box-sizing: border-box;
+		background: #fff;
+		text-align: center;
+		outline: none;
+	}
+
+
+	.dim {
+		cursor: default;
+	}
+
+	.dim-empty {
+		cursor: text;
+	}
+</style>

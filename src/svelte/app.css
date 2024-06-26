@@ -39,6 +39,7 @@ textarea {
 	resize: vertical;
 	padding: 1em;
 	box-sizing: border-box;
+	scrollbar-gutter: stable;
 }
 
 .number-picker {
