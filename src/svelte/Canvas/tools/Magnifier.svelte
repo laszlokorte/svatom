@@ -165,7 +165,7 @@
 	onpointerup={(evt) => {
 		if (pointerId.value === evt.pointerId) {
 			if (zoomDelta && !magnifierFrameStretched.value) {
-				const svgP = clientToCanvas(evt.clientX, evt.clientY, true);
+				const svgP = clientToCanvas(evt.clientX, evt.clientY);
 
 				zoomDelta.value = {
 					dz: evt.altKey ? -0.5 : 0.5,
