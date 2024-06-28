@@ -223,6 +223,7 @@ button:focus-visible, .button:focus-visible {
 .beside > * {
 	flex-grow: 1;
 	height: 100%;
+	box-sizing: border-box;
 }
 
 .beside * {

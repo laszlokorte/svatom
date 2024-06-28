@@ -120,7 +120,7 @@
 		};
 	}
 
-	const debugFrames = atom(true);
+	const debugFrames = atom(false);
 	const camera = atom({
 		focus: {
 			x: 0,
@@ -452,25 +452,21 @@
 		),
 	];
 
-	const drawing = atom({});
+	const drawing = atom({
+		axis: {
+			start: { x: 0, y: 0 },
+			size: { x: 200, y: -200 },
+			angle: 0,
+		},
+	});
 
 	const tool = atom("pen");
 	const nodes = view(["nodes", L.valueOr([{ x: 200, y: 100 }])], drawing);
-	const textes = view(["textes", L.valueOr([])], drawing);
-	const textBoxes = view(["textBoxes", L.valueOr([])], drawing);
-	const guides = view(["guides", L.valueOr([])], drawing);
-	const axis = view(
-		[
-			"axis",
-			L.valueOr({
-				start: { x: 0, y: 0 },
-				size: { x: 200, y: -200 },
-				angle: 0,
-			}),
-		],
-		drawing,
-	);
-	const drawings = view(["drawings", L.valueOr([])], drawing);
+	const textes = view(["textes", L.defaults([])], drawing);
+	const textBoxes = view(["textBoxes", L.defaults([])], drawing);
+	const guides = view(["guides", L.defaults([])], drawing);
+	const axis = view(["axis"], drawing);
+	const drawings = view(["drawings", L.defaults([])], drawing);
 	const drafts = atom([]);
 	const rubberBand = atom(undefined);
 	const newNode = view([L.appendTo, L.required("x", "y")], nodes);
@@ -898,8 +894,8 @@
 
 	// This is needed to prevent a ceil/floor feedback loop between integer scroll positions of scrollbars and camera position
 	const integerLens = L.lens(
-		(x) => Math.round(x),
-		(newV, oldV) => Math.round(newV) + (oldV - Math.round(oldV)),
+		(x) => Math.floor(x),
+		(newV, oldV) => Math.ceil(newV) + (oldV - Math.floor(oldV)),
 	);
 
 	const scrollWindowSize = view(
@@ -995,6 +991,17 @@
 		cameraInBounds,
 	);
 
+	const scrollContentSize = view(
+		({ s, w, b }) => ({
+			x: (b.maxX - b.minX) / s,
+			y: (b.maxY - b.minY) / s,
+		}),
+		combine({
+			s: cameraScale,
+			b: cameraBounds,
+		}),
+	);
+
 	const camClient = view(
 		[
 			"focus",
@@ -1010,75 +1017,76 @@
 	const camClientY = view("y", camClient);
 </script>
 
-<fieldset>
-	<legend>Frame</legend>
+<div class="beside">
+	<fieldset>
+		<legend>Frame</legend>
 
-	<div>
-		<label
-			><input
-				type="checkbox"
-				bind:checked={autosize.value}
-			/>Autofit</label
-		>
+		<div>
+			<label
+				><input
+					type="checkbox"
+					bind:checked={autosize.value}
+				/>Autofit</label
+			>
 
-		<label
-			><input
-				type="checkbox"
-				value={true}
-				bind:checked={debugFrames.value}
-			/> Show Debug Frames</label
-		>
-	</div>
+			<label
+				><input
+					type="checkbox"
+					value={true}
+					bind:checked={debugFrames.value}
+				/> Show Debug Frames</label
+			>
+		</div>
 
-	<div>
-		<label class="number-picker"
-			>Camera Width:<input
-				type="range"
-				min="100"
-				max="1500"
-				bind:value={planeWidth.value}
-				disabled={autosize.value}
-			/></label
-		><br />
-		<label class="number-picker"
-			>Camera Height:<input
-				type="range"
-				min="100"
-				max="1500"
-				bind:value={planeHeight.value}
-				disabled={autosize.value}
-			/></label
-		>
-	</div>
+		<div>
+			<label class="number-picker"
+				>Camera Width:<input
+					type="range"
+					min="100"
+					max="1500"
+					bind:value={planeWidth.value}
+					disabled={autosize.value}
+				/></label
+			><br />
+			<label class="number-picker"
+				>Camera Height:<input
+					type="range"
+					min="100"
+					max="1500"
+					bind:value={planeHeight.value}
+					disabled={autosize.value}
+				/></label
+			>
+		</div>
 
-	<div>
-		Aspect:
-		<label
-			><input
-				type="radio"
-				value="meet"
-				bind:group={aspect.value}
-				disabled={autosize.value}
-			/> meet</label
-		>
-		<label
-			><input
-				type="radio"
-				value="slice"
-				bind:group={aspect.value}
-				disabled={autosize.value}
-			/> slice</label
-		>
-		<label
-			><input
-				type="radio"
-				value="none"
-				bind:group={aspect.value}
-				disabled={autosize.value}
-			/> none</label
-		>
-	</div>
-	<!-- <div>
+		<div>
+			Aspect:
+			<label
+				><input
+					type="radio"
+					value="meet"
+					bind:group={aspect.value}
+					disabled={autosize.value}
+				/> meet</label
+			>
+			<label
+				><input
+					type="radio"
+					value="slice"
+					bind:group={aspect.value}
+					disabled={autosize.value}
+				/> slice</label
+			>
+			<label
+				><input
+					type="radio"
+					value="none"
+					bind:group={aspect.value}
+					disabled={autosize.value}
+				/> none</label
+			>
+		</div>
+		<!-- <div>
 		Align-X:
 		{#each alignments as a (a)}
 			<label
@@ -1097,31 +1105,204 @@
 		{/each}
 	</div> -->
 
-	Alignment:
-	<div class="alignment-grid">
-		{#each alignments as ay (ay)}
-			{#each alignments as ax (ax)}
-				<label tabindex="-1" class="alignment-grid-label"
-					><input
-						disabled={autosize.value}
-						type="radio"
-						value={`x${ax}Y${ay}`}
-						bind:group={alignCombi.value}
-					/>
-					x{ax}Y{ay}</label
-				>
+		Alignment:
+		<div class="alignment-grid">
+			{#each alignments as ay (ay)}
+				{#each alignments as ax (ax)}
+					<label tabindex="-1" class="alignment-grid-label"
+						><input
+							disabled={autosize.value}
+							type="radio"
+							value={`x${ax}Y${ay}`}
+							bind:group={alignCombi.value}
+						/>
+						x{ax}Y{ay}</label
+					>
+				{/each}
 			{/each}
-		{/each}
-	</div>
+		</div>
 
-	Auto-Padding:
-	<div>
-		<label
-			><input type="checkbox" bind:checked={cameraAutoPadding.value} /> Extend
-			Scrollbars</label
-		>
-	</div>
-</fieldset>
+		Auto-Padding:
+		<div>
+			<label
+				><input
+					type="checkbox"
+					bind:checked={cameraAutoPadding.value}
+				/> Extend Scrollbars</label
+			>
+		</div>
+	</fieldset>
+
+	<fieldset>
+		<legend>Focus</legend>
+
+		<div class="form-grid">
+			<label class="number-picker"
+				><span>X:</span>
+				<input
+					type="range"
+					bind:value={cameraXFormatted.value}
+					min={cameraBounds.value.minX}
+					max={cameraBounds.value.maxX}
+					step="0.1"
+				/>
+				<button
+					type="button"
+					onclick={(_) => {
+						cameraXFormatted.value = 0;
+					}}>reset</button
+				>
+				<output>{cameraXFormatted.value}</output>
+			</label>
+			<label class="number-picker"
+				><span>Y:</span>
+				<input
+					type="range"
+					bind:value={cameraYFormatted.value}
+					min={cameraBounds.value.minY}
+					max={cameraBounds.value.maxY}
+					step="0.1"
+				/>
+				<button
+					type="button"
+					onclick={(_) => {
+						cameraYFormatted.value = 0;
+					}}>reset</button
+				>
+				<output>{cameraYFormatted.value}</output>
+			</label>
+			<label class="number-picker"
+				><span>Zoom:</span>
+				<input
+					type="range"
+					bind:value={cameraZoomFormatted.value}
+					min="-5"
+					max="5"
+					step="0.01"
+				/>
+				<button
+					type="button"
+					onclick={(_) => {
+						cameraZoomFormatted.value = 0;
+					}}>reset</button
+				>
+				<output>{cameraZoomFormatted.value}</output>
+			</label>
+			<label class="number-picker"
+				><span>Rotation:</span>
+				<input
+					type="range"
+					bind:value={cameraAngleFormatted.value}
+					min="-180"
+					max="180"
+					step="0.01"
+				/>
+				<button
+					type="button"
+					onclick={(_) => {
+						cameraAngleFormatted.value = 0;
+					}}>reset</button
+				>
+				<output>{cameraAngleFormatted.value}</output>
+			</label>
+
+			<hr />
+			<label class="number-picker"
+				><span>Scroll X:</span>
+				<input
+					type="range"
+					bind:value={cameraXScreenFormatted.value}
+					min={cameraBounds.value.minX - cameraBounds.value.maxX}
+					max={cameraBounds.value.maxX - cameraBounds.value.minX}
+					step="0.1"
+				/>
+				<button
+					type="button"
+					onclick={(_) => {
+						cameraXScreenFormatted.value = 0;
+					}}>reset</button
+				>
+				<output>{cameraXScreenFormatted.value}</output>
+			</label>
+			<label class="number-picker"
+				><span>Scroll Y:</span>
+				<input
+					type="range"
+					bind:value={cameraYScreenFormatted.value}
+					min={cameraBounds.value.minY - cameraBounds.value.maxY}
+					max={cameraBounds.value.maxY - cameraBounds.value.minY}
+					step="0.1"
+				/>
+				<button
+					type="button"
+					onclick={(_) => {
+						cameraYScreenFormatted.value = 0;
+					}}>reset</button
+				>
+				<output>{cameraYScreenFormatted.value}</output>
+			</label>
+		</div>
+
+		<hr />
+		<div class="button-bar">
+			<button
+				type="button"
+				onclick={(_) => {
+					update(L.set(["focus", L.values], 0), camera);
+				}}>Reset all to zero</button
+			><button
+				type="button"
+				onclick={(_) => {
+					update(
+						L.set(["focus", L.props("x", "y")], { x: 0, y: 0 }),
+						camera,
+					);
+				}}>re-Center to Origin</button
+			><button
+				type="button"
+				onclick={(_) => {
+					update(
+						L.set(["focus", L.props("x", "y")], boundsCenter.value),
+						camera,
+					);
+				}}>re-Center Content</button
+			><button
+				type="button"
+				onclick={(_) => {
+					update(L.set(["focus", "w"], 0), camera);
+				}}>re-Orient Upwards</button
+			><button
+				type="button"
+				onclick={(_) => {
+					update(
+						L.set(["focus", L.props("z", "x", "y", "w")], {
+							x:
+								(cameraBounds.value.maxX +
+									cameraBounds.value.minX) /
+								2,
+							y:
+								(cameraBounds.value.maxY +
+									cameraBounds.value.minY) /
+								2,
+							z: -Math.max(
+								Math.log(
+									cameraBounds.value.maxX -
+										cameraBounds.value.minX,
+								) - Math.log(camera.value.plane.x),
+								Math.log(
+									cameraBounds.value.maxY -
+										cameraBounds.value.minY,
+								) - Math.log(camera.value.plane.y),
+							),
+							w: cameraBounds.value.angle,
+						}),
+						camera,
+					);
+				}}>re-Fit to Content</button
+			>
+		</div>
+	</fieldset>
+</div>
 
 <fieldset>
 	<legend>Tools</legend>
@@ -1163,16 +1344,7 @@
 	<Scroller
 		extraScrollPadding={cameraAutoPadding}
 		{scrollPosition}
-		contentSize={view(
-			({ s, w, b }) => ({
-				x: (b.maxX - b.minX) / s,
-				y: (b.maxY - b.minY) / s,
-			}),
-			combine({
-				s: cameraScale,
-				b: cameraBounds,
-			}),
-		)}
+		contentSize={scrollContentSize}
 		{scrollWindowSize}
 	>
 		<svg
@@ -1270,181 +1442,18 @@
 		style:top="{Math.round(camClientY.value)}px"
 	></div>
 {/if}
-<fieldset>
-	<legend>Focus</legend>
-	<div class="button-bar">
-		<button
-			type="button"
-			onclick={(_) => {
-				update(L.set(["focus", L.values], 0), camera);
-			}}>Reset all to zero</button
-		><button
-			type="button"
-			onclick={(_) => {
-				update(
-					L.set(["focus", L.props("x", "y")], { x: 0, y: 0 }),
-					camera,
-				);
-			}}>re-Center to Origin</button
-		><button
-			type="button"
-			onclick={(_) => {
-				update(
-					L.set(["focus", L.props("x", "y")], boundsCenter.value),
-					camera,
-				);
-			}}>re-Center Content</button
-		><button
-			type="button"
-			onclick={(_) => {
-				update(L.set(["focus", "w"], 0), camera);
-			}}>re-Orient Upwards</button
-		><button
-			type="button"
-			onclick={(_) => {
-				update(
-					L.set(["focus", L.props("z", "x", "y", "w")], {
-						x:
-							(cameraBounds.value.maxX +
-								cameraBounds.value.minX) /
-							2,
-						y:
-							(cameraBounds.value.maxY +
-								cameraBounds.value.minY) /
-							2,
-						z: -Math.max(
-							Math.log(
-								cameraBounds.value.maxX -
-									cameraBounds.value.minX,
-							) - Math.log(camera.value.plane.x),
-							Math.log(
-								cameraBounds.value.maxY -
-									cameraBounds.value.minY,
-							) - Math.log(camera.value.plane.y),
-						),
-						w: cameraBounds.value.angle,
-					}),
-					camera,
-				);
-			}}>re-Fit to Content</button
-		>
+
+<div class="beside">
+	<div>
+		<h3>Camera Parameter</h3>
+		<textarea use:bindValue={cameraJson.stableAtom}></textarea>
 	</div>
 
-	<hr />
-
-	<div class="form-grid">
-		<label class="number-picker"
-			><span>X:</span>
-			<input
-				type="range"
-				bind:value={cameraXFormatted.value}
-				min={cameraBounds.value.minX}
-				max={cameraBounds.value.maxX}
-				step="0.1"
-			/>
-			<button
-				type="button"
-				onclick={(_) => {
-					cameraXFormatted.value = 0;
-				}}>reset</button
-			>
-			<output>{cameraXFormatted.value}</output>
-		</label>
-		<label class="number-picker"
-			><span>Y:</span>
-			<input
-				type="range"
-				bind:value={cameraYFormatted.value}
-				min={cameraBounds.value.minY}
-				max={cameraBounds.value.maxY}
-				step="0.1"
-			/>
-			<button
-				type="button"
-				onclick={(_) => {
-					cameraYFormatted.value = 0;
-				}}>reset</button
-			>
-			<output>{cameraYFormatted.value}</output>
-		</label>
-		<label class="number-picker"
-			><span>Zoom:</span>
-			<input
-				type="range"
-				bind:value={cameraZoomFormatted.value}
-				min="-5"
-				max="5"
-				step="0.01"
-			/>
-			<button
-				type="button"
-				onclick={(_) => {
-					cameraZoomFormatted.value = 0;
-				}}>reset</button
-			>
-			<output>{cameraZoomFormatted.value}</output>
-		</label>
-		<label class="number-picker"
-			><span>Rotation:</span>
-			<input
-				type="range"
-				bind:value={cameraAngleFormatted.value}
-				min="-180"
-				max="180"
-				step="0.01"
-			/>
-			<button
-				type="button"
-				onclick={(_) => {
-					cameraAngleFormatted.value = 0;
-				}}>reset</button
-			>
-			<output>{cameraAngleFormatted.value}</output>
-		</label>
-
-		<hr />
-		<label class="number-picker"
-			><span>Scroll X:</span>
-			<input
-				type="range"
-				bind:value={cameraXScreenFormatted.value}
-				min={-400}
-				max={400}
-				step="0.1"
-			/>
-			<button
-				type="button"
-				onclick={(_) => {
-					cameraXScreenFormatted.value = 0;
-				}}>reset</button
-			>
-			<output>{cameraXScreenFormatted.value}</output>
-		</label>
-		<label class="number-picker"
-			><span>Scroll Y:</span>
-			<input
-				type="range"
-				bind:value={cameraYScreenFormatted.value}
-				min={-400}
-				max={400}
-				step="0.1"
-			/>
-			<button
-				type="button"
-				onclick={(_) => {
-					cameraYScreenFormatted.value = 0;
-				}}>reset</button
-			>
-			<output>{cameraYScreenFormatted.value}</output>
-		</label>
+	<div>
+		<h3>Drawing</h3>
+		<textarea use:bindValue={drawingJson.stableAtom}></textarea>
 	</div>
-</fieldset>
-
-<h3>Camera Parameter</h3>
-<textarea use:bindValue={cameraJson.stableAtom}></textarea>
-
-<h3>Drawing</h3>
-<textarea use:bindValue={drawingJson.stableAtom}></textarea>
+</div>
 
 <style>
 	.scroller-hud {
