@@ -195,6 +195,7 @@
 		padding: 0;
 		padding-inline: 0;
 		padding-block: 0;
+		caret-color: #00aaff;
 	}
 
 	.dim {

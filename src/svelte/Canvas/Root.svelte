@@ -416,17 +416,25 @@
 		),
 	];
 
+	const drawing = atom({});
+
 	const tool = atom("pen");
-	const nodes = atom([{ x: 200, y: 100 }]);
-	const textes = atom([]);
-	const textBoxes = atom([]);
-	const guides = atom([]);
-	const axis = atom({
-		start: { x: 0, y: 0 },
-		size: { x: 200, y: -200 },
-		angle: 0,
-	});
-	const drawings = atom([]);
+	const nodes = view(["nodes", L.valueOr([{ x: 200, y: 100 }])], drawing);
+	const textes = view(["textes", L.valueOr([])], drawing);
+	const textBoxes = view(["textBoxes", L.valueOr([])], drawing);
+	const guides = view(["guides", L.valueOr([])], drawing);
+	const axis = view(
+		[
+			"axis",
+			L.valueOr({
+				start: { x: 0, y: 0 },
+				size: { x: 200, y: -200 },
+				angle: 0,
+			}),
+		],
+		drawing,
+	);
+	const drawings = view(["drawings", L.valueOr([])], drawing);
 	const drafts = atom([]);
 	const rubberBand = atom(undefined);
 	const newNode = view([L.appendTo, L.required("x", "y")], nodes);
@@ -832,6 +840,24 @@
 			),
 		]),
 		camera,
+	);
+
+	const drawingJson = failableView(
+		L.inverse([
+			L.alternatives(
+				L.dropPrefix(
+					"// Or try to edit this Json (only edits that keep the structure valid are possible)\n",
+				),
+				L.identity,
+			),
+			L.json({ space: "  " }),
+			L.ifElse(
+				U.isPlainObject,
+				L.identity,
+				L.getter(R.always(new Error("fooo"))),
+			),
+		]),
+		drawing,
 	);
 
 	// This is needed to prevent a ceil/floor feedback loop between integer scroll positions of scrollbars and camera position
@@ -1351,6 +1377,9 @@
 
 <h3>Camera Parameter</h3>
 <textarea use:bindValue={cameraJson.stableAtom}></textarea>
+
+<h3>Drawing</h3>
+<textarea use:bindValue={drawingJson.stableAtom}></textarea>
 
 <style>
 	.scroller-hud {

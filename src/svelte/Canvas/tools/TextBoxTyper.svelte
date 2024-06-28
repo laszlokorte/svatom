@@ -297,7 +297,7 @@
 		outline: none;
 		overflow: hidden;
 		text-indent: 0;
-		caret-color: red;
+		caret-color: #00aaff;
 
 		word-break: break-all;
 		overflow-wrap: break-word;
