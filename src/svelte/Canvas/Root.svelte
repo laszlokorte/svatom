@@ -1360,7 +1360,7 @@
 						view(d, documentIds).value = undefined;
 					}}
 					class:active={d === currentDocumentId.value}
-					title="Close">🗙</button
+					title="Close">×</button
 				>
 			</span>
 		{/each}
@@ -1763,11 +1763,10 @@
 
 	.doc-tab-del {
 		display: block;
-		width: 2.2em;
-		height: 2.2em;
+		width: 1.5em;
+		height: 1.5em;
 		vertical-align: center;
 		text-align: center;
-		font-size: 0.6em;
 		box-sizing: border-box;
 		display: none;
 		color: #333;

@@ -339,7 +339,7 @@
 					type="button"
 					onclick={() => (thisName.value = "")}
 				>
-					🗙</button
+					×</button
 				>
 				<label
 					>Name: <input
