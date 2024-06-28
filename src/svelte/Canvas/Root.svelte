@@ -69,7 +69,7 @@
 			x,
 			y,
 			svgElement.value,
-			cameraToViewbox(camera.value),
+			cameraAsViewbox(camera.value),
 		);
 
 		if (screen) {
@@ -84,7 +84,43 @@
 		}
 	}
 
-	const debugFrames = atom(false);
+	function clientToCanvasV(v) {
+		return clientToCanvas(v.x, v.y);
+	}
+
+	function canvasToClient(x, y, screen = false) {
+		const screenPos = screen
+			? { x, y }
+			: Geo.rotatePivotXYDegree(
+					camera.value.focus.x,
+					camera.value.focus.y,
+					camera.value.focus.w,
+					{ x, y },
+				);
+
+		return U.elementViewboxToScreen(
+			screenPos.x,
+			screenPos.y,
+			svgElement.value,
+			cameraAsViewbox(camera.value),
+		);
+	}
+
+	function clientToPage({ x, y }) {
+		return {
+			x: x + window.scrollX,
+			y: y + window.scrollY,
+		};
+	}
+
+	function pageToClient({ x, y }) {
+		return {
+			x: x - window.scrollX,
+			y: y - window.scrollY,
+		};
+	}
+
+	const debugFrames = atom(true);
 	const camera = atom({
 		focus: {
 			x: 0,
@@ -157,7 +193,7 @@
 
 	const viewBoxPath = view(viewBoxPathLens, camera);
 
-	const cameraToViewbox = (camera) => {
+	const cameraAsViewbox = (camera) => {
 		return {
 			alignmentX: camera.frame.alignX,
 			alignmentY: camera.frame.alignY,
@@ -175,7 +211,7 @@
 
 	const frameBoxLens = L.reread((camera) => {
 		const { minX, minY, width, height } = U.scaleViewBox(
-			cameraToViewbox(camera),
+			cameraAsViewbox(camera),
 			camera.frame.size.x,
 			camera.frame.size.y,
 			0,
@@ -958,6 +994,20 @@
 		],
 		cameraInBounds,
 	);
+
+	const camClient = view(
+		[
+			"focus",
+			L.props("x", "y"),
+			L.lens(
+				({ x, y }) => clientToPage(canvasToClient(x, y)),
+				({ x, y }) => clientToCanvasV(pageToClient(x, y)),
+			),
+		],
+		camera,
+	);
+	const camClientX = view("x", camClient);
+	const camClientY = view("y", camClient);
 </script>
 
 <fieldset>
@@ -1143,10 +1193,10 @@
 				/>
 				<path
 					d={frameBoxPath.value}
-					stroke="#ffaaaa"
+					stroke="#ff88cc"
 					fill="none"
 					vector-effect="non-scaling-stroke"
-					stroke-width="4px"
+					stroke-width="14px"
 					shape-rendering="crispEdges"
 				/>
 			</g>
@@ -1213,6 +1263,13 @@
 	</Scroller>
 </div>
 
+{#if debugFrames.value}
+	<div
+		class="debug-dot"
+		style:left="{Math.round(camClientX.value)}px"
+		style:top="{Math.round(camClientY.value)}px"
+	></div>
+{/if}
 <fieldset>
 	<legend>Focus</legend>
 	<div class="button-bar">
@@ -1574,5 +1631,17 @@
 		padding: 0;
 		display: block;
 		position: absolute;
+	}
+
+	.debug-dot {
+		z-index: 1000;
+		pointer-events: none;
+		opacity: 0.5;
+		position: absolute;
+		width: 6px;
+		height: 6px;
+		margin: -4px 0 0 -4px;
+		background: magenta;
+		border: 1px solid white;
 	}
 </style>

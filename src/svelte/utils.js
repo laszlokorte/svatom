@@ -90,10 +90,39 @@ function screenToElementViewboxHelper(clientX, clientY, elementX, elementY, elem
 }
 
 export function screenToElementViewbox(clientX, clientY, element, viewBox) {
+    if(!element) {
+        return {x:0,y:0}
+    }
+
     const boundingRect = element.getBoundingClientRect();
     
     return screenToElementViewboxHelper(
         clientX, clientY,
+        boundingRect.left, boundingRect.top, 
+        boundingRect.width, boundingRect.height, 
+        element.clientWidth, element.clientHeight, 
+        viewBox
+    )
+}
+
+function elementViewboxToScreenHelper(viewboxX, viewboxY, elementX, elementY, elementWidth, elementHeight, localWidth, localHeight, viewBox) {
+    const scaledVB = scaleViewBox(viewBox, localWidth, localHeight)
+
+    return {
+        x: elementX + elementWidth * ((viewboxX - scaledVB.minX) / scaledVB.width),
+        y: elementY + elementHeight * ((viewboxY - scaledVB.minY) / scaledVB.height),
+    }
+}
+
+export function elementViewboxToScreen(viewportX, viewportY, element, viewBox) {
+    if(!element) {
+        return {x:0,y:0}
+    }
+    const boundingRect = element.getBoundingClientRect();
+
+
+    return elementViewboxToScreenHelper(
+        viewportX, viewportY,
         boundingRect.left, boundingRect.top, 
         boundingRect.width, boundingRect.height, 
         element.clientWidth, element.clientHeight, 
