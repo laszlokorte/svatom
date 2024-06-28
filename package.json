@@ -17,6 +17,6 @@
   "dependencies": {
     "partial.lenses": "^14.17.0",
     "ramda": "^0.30.1",
-    "svelte": "^5.0.0-next.165"
+    "svelte": "^5.0.0-next.166"
   }
 }

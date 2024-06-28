@@ -1,5 +1,5 @@
 body {
-  touch-action: pan-y, pan-x;
+  touch-action: pan-y pan-x;
 }
 
 
@@ -246,7 +246,7 @@ button:focus-visible, .button:focus-visible {
 	appearance: revert;
 	padding: 2px;
     overscroll-behavior: none;
-    touch-action: pan-y, pan-x;
+    touch-action: pan-y pan-x;
 }
 
 .asciiart::after {

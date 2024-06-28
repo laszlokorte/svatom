@@ -4,6 +4,7 @@
 	import {
 		atom,
 		view,
+		read,
 		combine,
 		bindScroll,
 		bindSize,
@@ -14,25 +15,34 @@
 		debug = false,
 		scrollPosition = atom({ x: 0, y: 0 }),
 		contentSize = atom({ x: 0, y: 0 }),
-		scrollWindowSize = atom({ x: 0, y: 0 })
+		scrollWindowSize = atom({ x: 0, y: 0 }),
+		autoPadding = atom(true)
 	} = $props();
 
-	const overscroll = atom({x:0,y:0})
+	const browserChromeOverscroll = atom({x:0,y:0})
 
-	const scrollPositionClamped = view(L.lens(({ pos, windowSize, conSize, o }) => ({
-			x: R.clamp(0, Math.max(0, conSize.x - Math.floor(windowSize.x)), pos.x) + o.x,
-			y: R.clamp(0, Math.max(0, conSize.y - Math.floor(windowSize.y)), pos.y) + o.y,
-		}), (pos, { windowSize, conSize }) => {
-			const clampedX = R.clamp(0, Math.max(0, conSize.x - Math.floor(windowSize.x)), pos.x)
-			const clampedY = R.clamp(0, Math.max(0, conSize.y - Math.floor(windowSize.y)), pos.y)
+	const scrollPadding = read(L.reread(({auto, winSize}) => auto ? winSize : ({x:0,y:0})), combine({auto: autoPadding, winSize: scrollWindowSize}, {}))
+	const paddedContentSize = read(L.reread(({auto, pad, conSize}) => ({
+		x:2*pad.x + conSize.x,
+		y:2*pad.y + conSize.y
+	})), combine({auto: autoPadding, pad: scrollPadding, conSize: contentSize}, {}))
+
+	const scrollPositionClamped = view(L.lens(({ pos, windowSize, conSize, o, pad }) => ({
+			x: R.clamp(-pad.x, Math.max(0, conSize.x - Math.floor(windowSize.x)), pos.x) + o.x + pad.x,
+			y: R.clamp(-pad.y, Math.max(0, conSize.y - Math.floor(windowSize.y)), pos.y) + o.y + pad.y,
+		}), (pos, { windowSize, conSize, pad }) => {
+			const clampedX = R.clamp(-pad.x, Math.max(pad.x, conSize.x - Math.floor(windowSize.x)), pos.x - pad.x)
+			const clampedY = R.clamp(-pad.y, Math.max(pad.y, conSize.y - Math.floor(windowSize.y)), pos.y - pad.y)
 
 
 			return {
 				windowSize, 
 				conSize,
 				pos: {
-					maxX: pos.maxX,
-					maxY: pos.maxY,
+					atMinX: pos.atMinX,
+					atMaxX: pos.atMaxX,
+					atMinY: pos.atMinY,
+					atMaxY: pos.atMaxY,
 					x: clampedX,
 					y: clampedY,
 				},
@@ -42,18 +52,17 @@
 				}
 			}
 		}),
-		combine({ pos: scrollPosition, windowSize: scrollWindowSize, conSize: contentSize, o: overscroll }, {
+		combine({ pos: scrollPosition, windowSize: scrollWindowSize, conSize: paddedContentSize, o: browserChromeOverscroll, pad: scrollPadding }, {
 			pos: true
 		}),
 	);
-
 </script>
 
 <div
 	class="scroller"
 	use:bindScroll={scrollPositionClamped}
-	style:--scroll-total-x={contentSize.value.x}
-	style:--scroll-total-y={contentSize.value.y}
+	style:--scroll-total-x={paddedContentSize.value.x}
+	style:--scroll-total-y={paddedContentSize.value.y}
 	style:--scroll-x={scrollPosition.value.x}
 	style:--scroll-y={scrollPosition.value.y}
 >

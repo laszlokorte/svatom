@@ -352,11 +352,16 @@ export function bindScroll(node, someAtom) {
 			const scrollMaxX = Math.max(0, node.scrollLeftMax  ? node.scrollLeftMax : node.scrollWidth - node.offsetWidth)
 			const scrollMaxY = Math.max(0, node.scrollTopMax  ? node.scrollTopMax : node.scrollHeight - node.offsetHeight)
 
+			const newX = node.scrollLeft
+			const newY = node.scrollTop
+
 			someAtom.value = {
-				x: node.scrollLeft,
-				y: node.scrollTop,
-				maxX: scrollMaxX,
-				maxY: scrollMaxY,
+				x: newX,
+				y: newY,
+				atMaxX: newX >= scrollMaxX,
+				atMinX: newX <= 0,
+				atMaxY: newY >= scrollMaxY,
+				atMinY: newY <= 0,
 			}
 	 	}
 	}

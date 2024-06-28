@@ -101,7 +101,6 @@
 			aspect: "meet",
 			alignX: "Mid",
 			alignY: "Mid",
-			padding: 1500,
 			size: {
 				x: 100,
 				y: 100,
@@ -173,61 +172,56 @@
 		};
 	};
 
-	const frameBoxLens = (padding) =>
-		L.reread((camera) => {
-			const { minX, minY, width, height } = U.scaleViewBox(
-				cameraToViewbox(camera),
-				camera.frame.size.x,
-				camera.frame.size.y,
-				padding ? camera.frame.padding : 0,
-			);
+	const frameBoxLens = L.reread((camera) => {
+		const { minX, minY, width, height } = U.scaleViewBox(
+			cameraToViewbox(camera),
+			camera.frame.size.x,
+			camera.frame.size.y,
+			0,
+		);
 
-			return {
-				screenSpaceAligned: { minX, minY, width, height },
-				worldSpace: {
-					a: Geo.rotatePivotXYDegree(
-						camera.focus.x,
-						camera.focus.y,
-						-camera.focus.w,
-						{ x: minX, y: minY },
-					),
-					b: Geo.rotatePivotXYDegree(
-						camera.focus.x,
-						camera.focus.y,
-						-camera.focus.w,
-						{ x: minX + width, y: minY },
-					),
-					c: Geo.rotatePivotXYDegree(
-						camera.focus.x,
-						camera.focus.y,
-						-camera.focus.w,
-						{ x: minX + width, y: minY + height },
-					),
-					d: Geo.rotatePivotXYDegree(
-						camera.focus.x,
-						camera.focus.y,
-						-camera.focus.w,
-						{ x: minX, y: minY + height },
-					),
-				},
-			};
-		});
+		return {
+			screenSpaceAligned: { minX, minY, width, height },
+			worldSpace: {
+				a: Geo.rotatePivotXYDegree(
+					camera.focus.x,
+					camera.focus.y,
+					-camera.focus.w,
+					{ x: minX, y: minY },
+				),
+				b: Geo.rotatePivotXYDegree(
+					camera.focus.x,
+					camera.focus.y,
+					-camera.focus.w,
+					{ x: minX + width, y: minY },
+				),
+				c: Geo.rotatePivotXYDegree(
+					camera.focus.x,
+					camera.focus.y,
+					-camera.focus.w,
+					{ x: minX + width, y: minY + height },
+				),
+				d: Geo.rotatePivotXYDegree(
+					camera.focus.x,
+					camera.focus.y,
+					-camera.focus.w,
+					{ x: minX, y: minY + height },
+				),
+			},
+		};
+	});
 
 	const boxPathLens = L.reread(
 		({ minX, minY, width, height }) =>
 			`M${numberSvgFormat.format(minX)},${numberSvgFormat.format(minY)}h${numberSvgFormat.format(width)}v${numberSvgFormat.format(height)}h${numberSvgFormat.format(-width)}z`,
 	);
 
-	const frameBoxObject = read(frameBoxLens(false), camera);
+	const frameBoxObject = read(frameBoxLens, camera);
 	const frameBoxPath = read(
-		[frameBoxLens(false), "screenSpaceAligned", boxPathLens],
+		[frameBoxLens, "screenSpaceAligned", boxPathLens],
 		camera,
 	);
 
-	const frameBoxPathPadded = read(
-		[frameBoxLens(true), "screenSpaceAligned", boxPathLens],
-		camera,
-	);
 	const cameraRotationTransformLens = L.reread(
 		(c) => `rotate(${c.focus.w}, ${c.focus.x}, ${c.focus.y})`,
 	);
@@ -598,26 +592,10 @@
 		combine({ c: camera, e: extension }),
 	);
 
-	const clampedCamera = view(
-		L.lens(
-			({ c, b }) => c,
-			(c, { b }) => ({
-				c: {
-					...c,
-					focus: {
-						...c.focus,
-						...rotatedClamp(b, c.focus, 500 * Math.exp(-c.focus.z)),
-					},
-				},
-				b,
-			}),
-		),
-		combine({ c: camera, b: cameraBounds }, { c: true }),
-	);
-	const zoomFrame = view(cameraZoomFrameLens, clampedCamera);
-	const panMovement = view(panMovementLens, clampedCamera);
+	const zoomFrame = view(cameraZoomFrameLens, camera);
+	const panMovement = view(panMovementLens, camera);
 	const rotateMovement = view(rotateMovementLens, camera);
-	const zoomMovement = view(zoomMovementLens, clampedCamera);
+	const zoomMovement = view(zoomMovementLens, camera);
 
 	const tools = {
 		select: {
@@ -860,10 +838,12 @@
 	);
 
 	const scrollWindowSize = view(
-		L.setter((newSize) => ({
-			frame: newSize,
-			plane: newSize,
-		})),
+		[
+			L.lens(R.prop("frame"), (newSize) => ({
+				frame: newSize,
+				plane: newSize,
+			})),
+		],
 		combine({
 			plane: view(
 				[
@@ -883,7 +863,7 @@
 
 	const cameraInBounds = view(
 		L.lens(
-			({ x, y, s, w, b, p }) => {
+			({ x, y, s, w, b }) => {
 				const rot = Geo.rotatePivotXYDegree(
 					(b.minX + b.maxX) / 2,
 					(b.minY + b.maxY) / 2,
@@ -892,18 +872,18 @@
 				);
 
 				return {
-					x: (rot.x - b.minX) / s + p - w.frame.x / 2,
-					y: (rot.y - b.minY) / s + p - w.frame.y / 2,
+					x: (rot.x - b.minX) / s - w.x / 2,
+					y: (rot.y - b.minY) / s - w.y / 2,
 				};
 			},
-			({ x, y }, { s, w, b, p }) => {
+			({ x, y }, { s, w, b }) => {
 				const rot = Geo.rotatePivotXYDegree(
 					(b.minX + b.maxX) / 2,
 					(b.minY + b.maxY) / 2,
 					-b.angle,
 					{
-						x: (x - p + w.frame.x / 2) * s + b.minX,
-						y: (y - p + w.frame.y / 2) * s + b.minY,
+						x: (x + w.x / 2) * s + b.minX,
+						y: (y + w.y / 2) * s + b.minY,
 					},
 				);
 
@@ -920,7 +900,6 @@
 				s: cameraScale,
 				w: scrollWindowSize,
 				b: cameraBounds,
-				p: view(["frame", "padding"], camera),
 			},
 			{ x: true, y: true },
 		),
@@ -935,10 +914,23 @@
 	const scrollPosition = view(
 		[
 			L.pick({ x: ["x", integerLens], y: ["y", integerLens] }),
-			L.setter((newScroll, old) => ({
-				x: newScroll.maxX > 0 ? newScroll.x : old.x,
-				y: newScroll.maxY > 0 ? newScroll.y : old.y,
-			})),
+			L.setter(
+				(newScroll, old) => (
+					console.log(newScroll.maxX, newScroll.x, old.x),
+					{
+						x:
+							(newScroll.atMinX && old.x < newScroll.x) ||
+							(newScroll.atMaxX && old.x > newScroll.x)
+								? old.x
+								: newScroll.x,
+						y:
+							(newScroll.atMinY && old.y < newScroll.y) ||
+							(newScroll.atMaxY && old.y > newScroll.y)
+								? old.y
+								: newScroll.y,
+					}
+				),
+			),
 		],
 		cameraInBounds,
 	);
@@ -1086,116 +1078,106 @@
 </fieldset>
 
 <div class="prevent-selection">
-<Scroller
-	{scrollPosition}
-	contentSize={view(
-		({ s, w, b, p }) => ({
-			x: (b.maxX - b.minX) / s + 2 * p,
-			y: (b.maxY - b.minY) / s + 2 * p,
-		}),
-		combine({
-			w: scrollWindowSize,
-			s: cameraScale,
-			b: cameraBounds,
-			p: read(["frame", "padding"], camera),
-		}),
-	)}
-	{scrollWindowSize}
->
-	<svg
-		bind:this={svgElement.value}
-		use:Cam.bindEvents={clampedCamera}
-		viewBox={viewBox.value}
-		preserveAspectRatio={preserveAspectRatio.value}
+	<Scroller
+		{scrollPosition}
+		contentSize={view(
+			({ s, w, b }) => ({
+				x: (b.maxX - b.minX) / s,
+				y: (b.maxY - b.minY) / s,
+			}),
+			combine({
+				s: cameraScale,
+				b: cameraBounds,
+			}),
+		)}
+		{scrollWindowSize}
 	>
-		<g class:hidden={!debugFrames.value} pointer-events="none">
-			<path
-				d={viewBoxPath.value}
-				class="view-box"
-				stroke-opacity="0.5"
-				stroke="magenta"
-				vector-effect="non-scaling-stroke"
-				stroke-width="8px"
-				fill="#ddffee"
+		<svg
+			bind:this={svgElement.value}
+			use:Cam.bindEvents={camera}
+			viewBox={viewBox.value}
+			preserveAspectRatio={preserveAspectRatio.value}
+		>
+			<g class:hidden={!debugFrames.value} pointer-events="none">
+				<path
+					d={viewBoxPath.value}
+					class="view-box"
+					stroke-opacity="0.5"
+					stroke="magenta"
+					vector-effect="non-scaling-stroke"
+					stroke-width="8px"
+					fill="#ddffee"
+				/>
+				<path
+					d={frameBoxPath.value}
+					stroke="#ffaaaa"
+					fill="none"
+					vector-effect="non-scaling-stroke"
+					stroke-width="4px"
+					shape-rendering="crispEdges"
+				/>
+			</g>
+
+			<g pointer-events="none">
+				<Bounds
+					{extension}
+					{cameraBounds}
+					{rotationTransform}
+					{cameraScale}
+				/>
+				<Nodes {nodes} {rotationTransform} {cameraScale} />
+
+				<Drawings {drawings} {rotationTransform} {cameraScale} />
+
+				<TextBoxes
+					{textBoxes}
+					{clientToCanvas}
+					{frameBoxPath}
+					{rotationTransform}
+					{cameraScale}
+					{cameraOrientation}
+				/>
+
+				<TextLines
+					{textes}
+					{clientToCanvas}
+					{frameBoxPath}
+					{rotationTransform}
+					{cameraScale}
+					{cameraOrientation}
+				/>
+
+				<Guides
+					{guides}
+					{frameBoxObject}
+					{rotationTransform}
+					{cameraScale}
+				/>
+				<ShowAxis
+					{axis}
+					{frameBoxObject}
+					{rotationTransform}
+					{cameraScale}
+				/>
+
+				<Origin {rotationTransform} {cameraScale} />
+			</g>
+
+			<svelte:component
+				this={tools[tool.value].component}
+				{...tools[tool.value].parameters}
+			></svelte:component>
+		</svg>
+		<div class="scroller-hud">
+			<input
+				type="range"
+				bind:value={cameraZoom.value}
+				min="-5"
+				max="5"
+				step="0.01"
 			/>
-			<path
-				d={frameBoxPath.value}
-				stroke="#ffaaaa"
-				fill="none"
-				vector-effect="non-scaling-stroke"
-				stroke-width="4px"
-				shape-rendering="crispEdges"
-			/>
-			<path
-				d={frameBoxPathPadded.value}
-				stroke="#aaccff"
-				fill="none"
-				vector-effect="non-scaling-stroke"
-				stroke-width="2px"
-				shape-rendering="crispEdges"
-			/>
-		</g>
-
-		<g pointer-events="none">
-			<Bounds
-				{extension}
-				{cameraBounds}
-				{rotationTransform}
-				{cameraScale}
-			/>
-			<Nodes {nodes} {rotationTransform} {cameraScale} />
-
-			<Drawings {drawings} {rotationTransform} {cameraScale} />
-
-			<TextBoxes
-				{textBoxes}
-				{clientToCanvas}
-				{frameBoxPath}
-				{rotationTransform}
-				{cameraScale}
-				{cameraOrientation}
-			 />
-
-			<TextLines
-				{textes}
-				{clientToCanvas}
-				{frameBoxPath}
-				{rotationTransform}
-				{cameraScale}
-				{cameraOrientation}
-			 />
-
-			<Guides
-				{guides}
-				{frameBoxObject}
-				{rotationTransform}
-				{cameraScale}
-			/>
-			<ShowAxis
-				{axis}
-				{frameBoxObject}
-				{rotationTransform}
-				{cameraScale}
-			/>
-
-			<Origin {rotationTransform} {cameraScale} />
-		</g>
-
-		<svelte:component
-			this={tools[tool.value].component}
-			{...tools[tool.value].parameters}
-		></svelte:component>
-	</svg>
-	<div class="scroller-hud">
-		<input
-			type="range"
-			bind:value={cameraZoom.value}
-			min="-5"
-			max="5"
-			step="0.01"
-		/>
-	</div>
-</Scroller>
+		</div>
+	</Scroller>
 </div>
 
 <fieldset>
@@ -1353,7 +1335,6 @@
 	}
 
 	legend {
-
 		user-select: none;
 		-webkit-user-select: none;
 		touch-action: none;
