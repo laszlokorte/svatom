@@ -101,6 +101,7 @@
 			aspect: "meet",
 			alignX: "Mid",
 			alignY: "Mid",
+			autoPadding: true,
 			size: {
 				x: 100,
 				y: 100,
@@ -318,6 +319,7 @@
 
 	const cameraZoom = view(["focus", "z", numberLens], camera);
 	const cameraZoomFormatted = view([numberLens], cameraZoom);
+	const cameraAutoPadding = view(["frame", "autoPadding"], camera);
 
 	const cameraX = view(["focus", "x"], camera);
 	const cameraY = view(["focus", "y"], camera);
@@ -914,23 +916,18 @@
 	const scrollPosition = view(
 		[
 			L.pick({ x: ["x", integerLens], y: ["y", integerLens] }),
-			L.setter(
-				(newScroll, old) => (
-					console.log(newScroll.maxX, newScroll.x, old.x),
-					{
-						x:
-							(newScroll.atMinX && old.x < newScroll.x) ||
-							(newScroll.atMaxX && old.x > newScroll.x)
-								? old.x
-								: newScroll.x,
-						y:
-							(newScroll.atMinY && old.y < newScroll.y) ||
-							(newScroll.atMaxY && old.y > newScroll.y)
-								? old.y
-								: newScroll.y,
-					}
-				),
-			),
+			L.setter((newScroll, old) => ({
+				x:
+					(newScroll.atMinX && old.x < newScroll.x) ||
+					(newScroll.atMaxX && old.x > newScroll.x)
+						? old.x
+						: newScroll.x,
+				y:
+					(newScroll.atMinY && old.y < newScroll.y) ||
+					(newScroll.atMaxY && old.y > newScroll.y)
+						? old.y
+						: newScroll.y,
+			})),
 		],
 		cameraInBounds,
 	);
@@ -1039,6 +1036,14 @@
 			{/each}
 		{/each}
 	</div>
+
+	Auto-Padding:
+	<div>
+		<label
+			><input type="checkbox" bind:checked={cameraAutoPadding.value} /> Extend
+			Scrollbars</label
+		>
+	</div>
 </fieldset>
 
 <fieldset>
@@ -1079,6 +1084,7 @@
 
 <div class="prevent-selection">
 	<Scroller
+		extraScrollPadding={cameraAutoPadding}
 		{scrollPosition}
 		contentSize={view(
 			({ s, w, b }) => ({

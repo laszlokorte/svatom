@@ -469,6 +469,22 @@ export function bindScrollMax(node, someAtom) {
 	};
 }
 
+
+export function readTextreaScrollSize(node, someAtom) {
+	function oninput(e) {
+		someAtom.value = {
+			x: node.scrollWidth,
+			y: node.scrollHeight,
+		}
+	}
+
+	node.addEventListener("input", oninput);
+
+	return () => {
+		node.removeEventListener("input", oninput);
+	};
+}
+
 export function autofocusIf(node, yes) {
 	if(yes) {
 		if(yes && document.activeElement !== node) {

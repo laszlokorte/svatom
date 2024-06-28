@@ -146,12 +146,53 @@
 
 	const ascii = atom(asciiLogo);
 
-	const scrollerPosition = atom({ x: 0, y: 0 });
-	const scrollerSize = atom({ x: 1000, y: 2000 });
+	const scrollerState = atom({
+		pos: { x: 0, y: 0 },
+		window: { x: 0, y: 0 },
+		content: { x: 2000, y: 4000 },
+		extraPadding: true,
+	});
+	const scrollerPosition = view("pos", scrollerState);
+	const scrollerWindow = view("window", scrollerState);
+	const extraScrollPadding = view("extraPadding", scrollerState);
+	const scrollerSize = view("content", scrollerState);
 	const scrollerSizeX = view("x", scrollerSize);
 	const scrollerSizeY = view("y", scrollerSize);
 	const scrollerPositionX = view("x", scrollerPosition);
 	const scrollerPositionY = view("y", scrollerPosition);
+
+	const scrollerPositionXClamped = read(
+		({ v, max, w }) => R.clamp(0, max - w.x, v),
+		combine({
+			v: scrollerPositionX,
+			max: scrollerSizeX,
+			w: scrollerWindow,
+		}),
+	);
+	const scrollerPositionYClamped = read(
+		({ v, max, w }) => R.clamp(0, max - w.y, v),
+		combine({
+			v: scrollerPositionY,
+			max: scrollerSizeY,
+			w: scrollerWindow,
+		}),
+	);
+
+	const scrollerOutside = read(
+		({ x, y, xc, yc, win }) =>
+			Math.pow(
+				Math.hypot(Math.abs(x - xc) / win.x, Math.abs(y - yc) / win.y) /
+					1.4,
+				1,
+			),
+		combine({
+			x: scrollerPositionX,
+			y: scrollerPositionY,
+			xc: scrollerPositionXClamped,
+			yc: scrollerPositionYClamped,
+			win: scrollerWindow,
+		}),
+	);
 </script>
 
 <section>
@@ -488,13 +529,16 @@
 	<Scroller
 		debug="true"
 		scrollPosition={scrollerPosition}
+		scrollWindowSize={scrollerWindow}
 		contentSize={scrollerSize}
+		{extraScrollPadding}
 	>
-		<div
-			class="checker-pattern"
-			style={string`--bg-offset-x: ${read(R.negate, scrollerPositionX)}px; --bg-offset-y: ${read(R.negate, scrollerPositionY)}px`
-				.value}
-		>
+		<div class="stack">
+			<div
+				class="checker-pattern"
+				style={string`--bg-offset-x: ${read(R.negate, scrollerPositionXClamped)}px; --bg-offset-y: ${read(R.negate, scrollerPositionYClamped)}px;--fade:${scrollerOutside}`
+					.value}
+			></div>
 			<div
 				style="padding: 3em; margin: auto; max-width: 20em; background: white; box-shadow: 0 0.5em 1.5em -.5em #0007;"
 			>
@@ -522,6 +566,20 @@
 						max="5000"
 						bind:value={scrollerSizeY.value}
 					/>
+				</label>
+
+				<label
+					class="number-picker"
+					style="gap: 1em 0.5em; margin: 1em 0"
+					>Extra Scroll Padding: <span
+						>{extraScrollPadding.value ? "Yes" : "No"}</span
+					>
+					<span>
+						<input
+							type="checkbox"
+							bind:checked={extraScrollPadding.value}
+						/> Allow to scroll outsize the content
+					</span>
 				</label>
 			</div>
 		</div>
@@ -559,32 +617,49 @@
 <style>
 	@import url("app.css");
 
+	.stack {
+		display: grid;
+		place-content: stretch;
+		place-items: stretch;
+	}
+
+	.stack > * {
+		grid-column: 1/1;
+		grid-row: 1/1;
+	}
+
 	.checker-pattern {
+		z-index: -1;
 		user-select: none;
 		display: grid;
 		place-content: center;
-		--s: 100px; /* control the size*/
-		--c1: #ffffff;
-		--c2: #e9dad8;
-		--_g: #0000 8%, var(--c1) 0 17%, #0000 0 58%;
+		--band-width: 15px; /* control the size*/
+		--gap-width: 30px; /* control the size*/
+		--c1: rgba(255, 160, 140);
+		--c2: rgba(160, 120, 120);
+		opacity: calc(0.4 - 0.3 * var(--fade, 1));
 
 		background:
-			linear-gradient(135deg, #0000 20.5%, var(--c1) 0 29.5%, #0000 0)
-				var(--bg-offset-x, 0) calc(var(--bg-offset-y, 0) + var(--s) / 4),
-			linear-gradient(45deg, var(--_g))
-				calc(var(--bg-offset-x, 0) + var(--s) / 2) var(--bg-offset-y, 0),
-			linear-gradient(135deg, var(--_g), var(--c1) 0 67%, #0000 0)
-				var(--bg-offset-x, 0) var(--bg-offset-y, 0),
-			linear-gradient(
-					45deg,
-					var(--_g),
-					var(--c1) 0 67%,
-					#0000 0 83%,
-					var(--c1) 0 92%,
-					#0000 0
+			conic-gradient(
+				at var(--band-width) calc(100% - var(--band-width)),
+				#0000 270deg,
+				var(--c1) 0
+			),
+			linear-gradient(var(--c2) var(--band-width), #0000 0),
+			conic-gradient(
+					at var(--band-width) calc(100% - var(--band-width)),
+					#0000 90deg,
+					var(--c2) 0 180deg,
+					var(--c1) 0
 				)
-				var(--bg-offset-x, 0) var(--bg-offset-y, 0),
-			var(--c2);
-		background-size: var(--s) var(--s);
+				#e4e4ed;
+		background-position:
+			calc(var(--band-width) + var(--gap-width) + var(--bg-offset-x, 0))
+				var(--bg-offset-y, 0),
+			var(--bg-offset-x, 0) calc(var(--gap-width) + var(--bg-offset-y, 0)),
+			var(--bg-offset-x, 0) var(--bg-offset-y, 0);
+		background-size: calc(2 * (var(--band-width) + var(--gap-width)))
+			calc(2 * (var(--band-width) + var(--gap-width)));
+		background-color: #f0f0f0;
 	}
 </style>

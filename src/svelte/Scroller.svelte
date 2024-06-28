@@ -16,18 +16,18 @@
 		scrollPosition = atom({ x: 0, y: 0 }),
 		contentSize = atom({ x: 0, y: 0 }),
 		scrollWindowSize = atom({ x: 0, y: 0 }),
-		autoPadding = atom(true)
+		extraScrollPadding = atom(false)
 	} = $props();
 
 	const browserChromeOverscroll = atom({x:0,y:0})
 
-	const scrollPadding = read(L.reread(({auto, winSize}) => auto ? winSize : ({x:0,y:0})), combine({auto: autoPadding, winSize: scrollWindowSize}, {}))
+	const scrollPadding = read(L.reread(({auto, winSize}) => auto ? winSize : ({x:0,y:0})), combine({auto: extraScrollPadding, winSize: scrollWindowSize}, {}))
 	const paddedContentSize = read(L.reread(({auto, pad, conSize}) => ({
 		x:2*pad.x + conSize.x,
 		y:2*pad.y + conSize.y
-	})), combine({auto: autoPadding, pad: scrollPadding, conSize: contentSize}, {}))
+	})), combine({auto: extraScrollPadding, pad: scrollPadding, conSize: contentSize}, {}))
 
-	const scrollPositionClamped = view(L.lens(({ pos, windowSize, conSize, o, pad }) => ({
+	const adjustedScrollPosition = view(L.lens(({ pos, windowSize, conSize, o, pad }) => ({
 			x: R.clamp(-pad.x, Math.max(0, conSize.x - Math.floor(windowSize.x)), pos.x) + o.x + pad.x,
 			y: R.clamp(-pad.y, Math.max(0, conSize.y - Math.floor(windowSize.y)), pos.y) + o.y + pad.y,
 		}), (pos, { windowSize, conSize, pad }) => {
@@ -47,8 +47,8 @@
 					y: clampedY,
 				},
 				o: {
-					x:  pos.x - clampedX,
-					y:  pos.y - clampedY,
+					x:  pos.x - pad.x - clampedX,
+					y:  pos.y - pad.y - clampedY,
 				}
 			}
 		}),
@@ -60,7 +60,7 @@
 
 <div
 	class="scroller"
-	use:bindScroll={scrollPositionClamped}
+	use:bindScroll={adjustedScrollPosition}
 	style:--scroll-total-x={paddedContentSize.value.x}
 	style:--scroll-total-y={paddedContentSize.value.y}
 	style:--scroll-x={scrollPosition.value.x}
@@ -71,14 +71,17 @@
 		{#if !children || debug}
 		<div class="debug">
 			<div>
-				Scroll Position: {scrollPosition.value.x} / {scrollPosition.value.y} 
-				<br>(Clamped: {scrollPositionClamped.value.x} / {scrollPositionClamped.value.y})
+				Logical Position: {scrollPosition.value.x} / {scrollPosition.value.y}<br>
+				Physical Scroll Position: {adjustedScrollPosition.value.x} / {adjustedScrollPosition.value.y}
 			</div>
 			<div>
 				Content Size: {contentSize.value.x} / {contentSize.value.y}
 			</div>
 			<div>
 				Window Size: {scrollWindowSize.value.x} / {scrollWindowSize.value.y}
+			</div>
+			<div>
+				Overscroll: {browserChromeOverscroll.value.x} / {browserChromeOverscroll.value.y}
 			</div>
 		</div>
 		{/if}

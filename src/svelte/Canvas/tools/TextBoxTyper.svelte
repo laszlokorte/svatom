@@ -15,6 +15,8 @@
 		autofocusIf,
 		string,
 		disableTouchEventsIf,
+		/*auto update text size according to text content*/
+		readTextreaScrollSize,
 	} from "../../svatom.svelte.js";
 
 	const numberSvgFormat = new Intl.NumberFormat("en-US", {
@@ -189,6 +191,7 @@
 							textBoxStart.value.y * textBoxStart.value.y}
 						type="text"
 						bind:value={text.value}
+						use:readTextreaScrollSize={textBoxSize}
 						onkeydown={(evt) => {
 							if (evt.key === "Escape" || evt.key === "Esc") {
 								textBoxStart.value = undefined;
@@ -268,10 +271,11 @@
 		overflow: visible;
 		margin: 0;
 		outline: none;
-		overflow-y: scroll;
+		overflow: hidden;
+		/*overflow-y: scroll;
 		overflow-x: auto;
 		scrollbar-gutter: stable;
-		scrollbar-width: thin;
+		scrollbar-width: thin;*/
 	}
 
 	.dim {
