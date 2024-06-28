@@ -53,7 +53,8 @@
 			}
 		}),
 		combine({ pos: scrollPosition, windowSize: scrollWindowSize, conSize: paddedContentSize, o: browserChromeOverscroll, pad: scrollPadding }, {
-			pos: true
+			pos: true,
+			o: true,
 		}),
 	);
 </script>
@@ -71,8 +72,8 @@
 		{#if !children || debug}
 		<div class="debug">
 			<div>
-				Logical Position: {scrollPosition.value.x} / {scrollPosition.value.y}<br>
-				Physical Scroll Position: {adjustedScrollPosition.value.x} / {adjustedScrollPosition.value.y}
+				Logical Scroll Pos.: {scrollPosition.value.x} / {scrollPosition.value.y}<br>
+				Physical Scroll Pos.: {adjustedScrollPosition.value.x} / {adjustedScrollPosition.value.y}
 			</div>
 			<div>
 				Content Size: {contentSize.value.x} / {contentSize.value.y}
