@@ -19,7 +19,7 @@
 	import Scroller from "./Scroller.svelte";
 	import Canvas from "./Canvas/Root.svelte";
 	import asciiLogo from "./asciiLogo.txt?raw";
-	import { clamp } from "./utils.js";
+	import { clamp, lerp } from "./utils.js";
 	import favicon from "../../favicon.svg";
 
 	const numberFormat = new Intl.NumberFormat("en-US", {
@@ -97,7 +97,7 @@
 	);
 
 	// Views into the Atom
-	const clampedSize = view(L.normalize(clamp(10, 30)), size);
+	const clampedSize = view(L.normalize(R.clamp(10, 30)), size);
 	const fontSize = string`font-size: ${clampedSize}px`;
 	const count = view("length", allNames);
 	const indices = view(lindex(1), count);
@@ -112,7 +112,7 @@
 	);
 
 	const theNumberClamped = view(
-		[L.normalize(clamp(0, 200)), numeric],
+		[L.normalize(R.clamp(0, 200)), numeric],
 		theNumber,
 	);
 	const theNumberDoubled = view(doubleNumber, theNumberClamped);
@@ -171,6 +171,23 @@
 	);
 	const scrollerPositionYClamped = read(
 		({ v, max, w }) => R.clamp(0, max - w.y, v),
+		combine({
+			v: scrollerPositionY,
+			max: scrollerSizeY,
+			w: scrollerWindow,
+		}),
+	);
+
+	const scrollerPositionXClampedSoft = read(
+		({ v, max, w }) => lerp(R.clamp(0, max - w.x, v), v, 0.3),
+		combine({
+			v: scrollerPositionX,
+			max: scrollerSizeX,
+			w: scrollerWindow,
+		}),
+	);
+	const scrollerPositionYClampedSoft = read(
+		({ v, max, w }) => lerp(R.clamp(0, max - w.y, v), v, 0.3),
 		combine({
 			v: scrollerPositionY,
 			max: scrollerSizeY,
@@ -536,7 +553,7 @@
 		<div class="stack">
 			<div
 				class="checker-pattern"
-				style={string`--bg-offset-x: ${read(R.negate, scrollerPositionXClamped)}px; --bg-offset-y: ${read(R.negate, scrollerPositionYClamped)}px;--fade:${scrollerOutside}`
+				style={string`--bg-offset-x: ${read(R.negate, scrollerPositionXClampedSoft)}px; --bg-offset-y: ${read(R.negate, scrollerPositionYClampedSoft)}px;--fade:${scrollerOutside}`
 					.value}
 			></div>
 			<div
@@ -633,11 +650,10 @@
 		user-select: none;
 		display: grid;
 		place-content: center;
-		--band-width: 15px; /* control the size*/
-		--gap-width: 30px; /* control the size*/
-		--c1: rgba(255, 160, 140);
-		--c2: rgba(160, 120, 120);
-		opacity: calc(0.4 - 0.3 * var(--fade, 1));
+		--band-width: 50px; /* control the size*/
+		--gap-width: 10px; /* control the size*/
+		--c1: hsla(10, calc(100% - 100% * var(--fade, 1)), 77%);
+		--c2: hsla(0, calc(30% - 30% * var(--fade, 1)), 55%);
 
 		background:
 			conic-gradient(
@@ -660,6 +676,6 @@
 			var(--bg-offset-x, 0) var(--bg-offset-y, 0);
 		background-size: calc(2 * (var(--band-width) + var(--gap-width)))
 			calc(2 * (var(--band-width) + var(--gap-width)));
-		background-color: #f0f0f0;
+		background-color: hsl(120, 0%, calc(100% - 20% * var(--fade, 1)));
 	}
 </style>

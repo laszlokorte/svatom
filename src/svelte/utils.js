@@ -100,3 +100,8 @@ export function screenToElementViewbox(clientX, clientY, element, viewBox) {
         viewBox
     )
 }
+
+
+export function lerp(a,b,t) {
+    return a + (b-a)*t
+}

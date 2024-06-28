@@ -56,7 +56,7 @@
 	const textBoxFontSize = view(
 		L.ifElse(
 			R.prop("start"),
-			[L.removable("fontSize"), "fontSize"],
+			[L.removable("fontSize"), "fontSize", L.rewrite(R.max(0.1))],
 			L.zero,
 		),
 		textBox,
@@ -64,6 +64,15 @@
 
 	const isEditing = view(R.compose(R.not, R.isNil), pointerId);
 	const textEmpty = view(L.reread(R.isEmpty), text);
+	const textBoxValid = view(
+		L.reread(({ fontSize, size }) => {
+			return (
+				Math.abs(size.x) > 20 * fontSize &&
+				Math.abs(size.y) > 20 * fontSize
+			);
+		}),
+		textBox,
+	);
 
 	const textBoxAngle = view([L.removable("angle"), "angle"], textBox);
 	const textBoxAngleCos = view(
@@ -107,7 +116,7 @@
 	tabindex="-1"
 	onkeydown={(evt) => {
 		if (evt.key === "Escape" || evt.key === "Esc") {
-			pointerId.value = undefined;
+			textBoxStart.value = undefined;
 		}
 	}}
 	onpointerdown={(evt) => {
@@ -121,6 +130,7 @@
 
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 		textBoxStart.value = clientToCanvas(evt.clientX, evt.clientY);
+		textBoxFontSize.value = cameraScale.value;
 		textBoxSize.value = { x: 0, y: 0 };
 		textBoxAngle.value = -cameraOrientation.value;
 	}}
@@ -138,8 +148,10 @@
 	}}
 	onpointerup={(evt) => {
 		if (pointerId.value === evt.pointerId) {
-			textBoxFontSize.value = cameraScale.value;
 			pointerId.value = undefined;
+		}
+		if (!textBoxValid.value) {
+			textBoxStart.value = undefined;
 		}
 	}}
 	onpointercancel={(evt) => {
@@ -234,6 +246,7 @@
 		class="text-box"
 		pointer-events="none"
 		class:ready={pointerId.value === undefined}
+		class:valid={textBoxValid.value}
 	/>
 </g>
 
@@ -246,14 +259,18 @@
 
 	.text-box {
 		fill: #fff;
-		stroke: #aaa;
+		stroke: #aa0000;
 		fill-opacity: 0.9;
 		fill-rule: evenodd;
 		stroke-width: 1px;
 		vector-effect: non-scaling-stroke;
 	}
 
-	.ready {
+	.text-box.valid {
+		stroke: #00ddff;
+	}
+
+	.text-box.ready {
 		stroke: #00aaff;
 		stroke-width: 2px;
 		fill: none;
@@ -265,10 +282,9 @@
 	}
 
 	textarea {
-		font-size: 1.2em;
 		font: inherit;
 		border: none;
-		padding: 0;
+		padding: 2px;
 		display: block;
 		width: 100%;
 		height: 100%;
@@ -276,13 +292,12 @@
 		background: #fff;
 		resize: none;
 		min-height: 0;
-		line-height: auto;
-		overflow: visible;
 		margin: 0;
+		line-height: 1.1;
 		outline: none;
 		overflow: hidden;
-		scrollbar-width: 0;
 		text-indent: 0;
+		caret-color: red;
 
 		word-break: break-all;
 		overflow-wrap: break-word;

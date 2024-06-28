@@ -87,12 +87,13 @@
 		font-size: 1.2em;
 		font: inherit;
 		border: none;
-		padding: 0;
+		padding: 2px;
 		display: block;
 		width: 100%;
 		height: 100%;
 		box-sizing: border-box;
 		resize: none;
+		line-height: 1.1;
 		min-height: 0;
 		white-space: pre-wrap;
 		line-height: auto;

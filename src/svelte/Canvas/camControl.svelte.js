@@ -1,5 +1,6 @@
 import * as R from "ramda";
 import * as L from "partial.lenses";
+import * as U from "../utils.js";
 import {
 	atom,
 	view,
@@ -48,18 +49,13 @@ function rotateWithPivotZeroDelta(cam) {
 	}
 }
 
-function lerp(a,b,t) {
-	return a + (b-a)*t
-}
-
-
 export function zoomWithPivot(delta, orig) {
 	const newZoom = R.clamp(-5, 5, orig.z + delta.dz)
 
 	const realFactor = newZoom - orig.z;
   	const panFactor = 1 - Math.exp(-realFactor);
-  	const newX = lerp(orig.x, delta.px, panFactor)
-    const newY = lerp(orig.y, delta.py, panFactor)
+  	const newX = U.lerp(orig.x, delta.px, panFactor)
+    const newY = U.lerp(orig.y, delta.py, panFactor)
 
 	return {
 		...orig,
