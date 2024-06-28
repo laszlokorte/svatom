@@ -452,21 +452,54 @@
 		),
 	];
 
-	const drawing = atom({
-		axis: {
-			start: { x: 0, y: 0 },
-			size: { x: 200, y: -200 },
-			angle: 0,
-		},
+	const allCanvasDocuments = atom({
+		current: 0,
+		docs: [
+			{
+				axis: {
+					start: { x: 0, y: 0 },
+					size: { x: 200, y: -200 },
+					angle: 0,
+				},
+				nodes: [{ x: 200, y: 100 }],
+			},
+		],
 	});
+	const canvasDocument = view(
+		[
+			L.choose(({ current, docs }) => ["docs", L.defaults([]), current]),
+			L.defaults({}),
+		],
+		allCanvasDocuments,
+	);
+
+	const newDocument = view(
+		L.setter((n, prev) => ({
+			docs: [...prev.docs, n],
+			current: prev.docs.length,
+		})),
+		allCanvasDocuments,
+	);
+
+	const documentIds = view(
+		[
+			"docs",
+			L.valueOr([]),
+			L.lens(R.compose(R.range(0), R.length), (newIds, olds) =>
+				R.map((i) => olds[i], newIds),
+			),
+		],
+		allCanvasDocuments,
+	);
+	const currentDocumentId = view("current", allCanvasDocuments);
 
 	const tool = atom("pen");
-	const nodes = view(["nodes", L.valueOr([{ x: 200, y: 100 }])], drawing);
-	const textes = view(["textes", L.defaults([])], drawing);
-	const textBoxes = view(["textBoxes", L.defaults([])], drawing);
-	const guides = view(["guides", L.defaults([])], drawing);
-	const axis = view(["axis"], drawing);
-	const drawings = view(["drawings", L.defaults([])], drawing);
+	const nodes = view("nodes", canvasDocument);
+	const textes = view(["textes", L.defaults([])], canvasDocument);
+	const textBoxes = view(["textBoxes", L.defaults([])], canvasDocument);
+	const guides = view(["guides", L.defaults([])], canvasDocument);
+	const axis = view(["axis"], canvasDocument);
+	const drawings = view(["drawings", L.defaults([])], canvasDocument);
 	const drafts = atom([]);
 	const rubberBand = atom(undefined);
 	const newNode = view([L.appendTo, L.required("x", "y")], nodes);
@@ -478,9 +511,8 @@
 	const newGuide = view([L.appendTo], guides);
 	const newAxis = view(L.identity, axis);
 
-	function calculateBoundingBox(padding, entities, lens) {
+	function calculateBoundingBox(padding, allEntities, lens) {
 		const branch = L.branch(lens);
-		const allEntities = combine(entities);
 
 		const minX = traverse([branch, "x"], L.minimum, allEntities).map(
 			R.compose(R.subtract(R.__, padding), R.min(0), R.defaultTo(0)),
@@ -503,66 +535,62 @@
 		});
 	}
 
-	const extension = calculateBoundingBox(
-		100,
-		{ nodes, drawings, axis, textes, textBoxes },
-		{
-			nodes: L.elems,
-			drawings: [L.elems, L.elems],
-			axis: [
-				L.ifElse(
-					R.is(Object),
-					L.pick({
-						start: "start",
-						a: ({ start, size, angle }) =>
-							Geo.rotatePivotDegree(start, angle, {
-								x: start.x + size.x,
-								y: start.y + size.y,
-							}),
-						b: ({ start, size, angle }) =>
-							Geo.rotatePivotDegree(start, angle, {
-								x: start.x,
-								y: start.y + size.y,
-							}),
-						c: ({ start, size, angle }) =>
-							Geo.rotatePivotDegree(start, angle, {
-								x: start.x + size.x,
-								y: start.y,
-							}),
-					}),
-					R.always({}),
-				),
-				L.values,
-			],
-			textes: [L.elems, L.props("x", "y")],
-			textBoxes: [
-				L.elems,
-				L.ifElse(
-					R.is(Object),
-					L.pick({
-						start: "start",
-						a: ({ start, size, angle }) =>
-							Geo.rotatePivotDegree(start, angle, {
-								x: start.x + size.x,
-								y: start.y + size.y,
-							}),
-						b: ({ start, size, angle }) =>
-							Geo.rotatePivotDegree(start, angle, {
-								x: start.x,
-								y: start.y + size.y,
-							}),
-						c: ({ start, size, angle }) =>
-							Geo.rotatePivotDegree(start, angle, {
-								x: start.x + size.x,
-								y: start.y,
-							}),
-					}),
-					R.always({}),
-				),
-				L.values,
-			],
-		},
-	);
+	const extension = calculateBoundingBox(100, canvasDocument, {
+		nodes: L.elems,
+		drawings: [L.elems, L.elems],
+		axis: [
+			L.ifElse(
+				R.is(Object),
+				L.pick({
+					start: "start",
+					a: ({ start, size, angle }) =>
+						Geo.rotatePivotDegree(start, angle, {
+							x: start.x + size.x,
+							y: start.y + size.y,
+						}),
+					b: ({ start, size, angle }) =>
+						Geo.rotatePivotDegree(start, angle, {
+							x: start.x,
+							y: start.y + size.y,
+						}),
+					c: ({ start, size, angle }) =>
+						Geo.rotatePivotDegree(start, angle, {
+							x: start.x + size.x,
+							y: start.y,
+						}),
+				}),
+				R.always({}),
+			),
+			L.values,
+		],
+		textes: [L.elems, L.props("x", "y")],
+		textBoxes: [
+			L.elems,
+			L.ifElse(
+				R.is(Object),
+				L.pick({
+					start: "start",
+					a: ({ start, size, angle }) =>
+						Geo.rotatePivotDegree(start, angle, {
+							x: start.x + size.x,
+							y: start.y + size.y,
+						}),
+					b: ({ start, size, angle }) =>
+						Geo.rotatePivotDegree(start, angle, {
+							x: start.x,
+							y: start.y + size.y,
+						}),
+					c: ({ start, size, angle }) =>
+						Geo.rotatePivotDegree(start, angle, {
+							x: start.x + size.x,
+							y: start.y,
+						}),
+				}),
+				R.always({}),
+			),
+			L.values,
+		],
+	});
 
 	function rotatedBounds(degree, rect) {
 		const rectCenterX = (rect.maxX + rect.minX) / 2;
@@ -874,7 +902,7 @@
 		camera,
 	);
 
-	const drawingJson = failableView(
+	const canvasJson = failableView(
 		L.inverse([
 			L.alternatives(
 				L.dropPrefix(
@@ -889,7 +917,7 @@
 				L.getter(R.always(new Error("fooo"))),
 			),
 		]),
-		drawing,
+		canvasDocument,
 	);
 
 	// This is needed to prevent a ceil/floor feedback loop between integer scroll positions of scrollbars and camera position
@@ -1305,6 +1333,37 @@
 </div>
 
 <fieldset>
+	<legend>Documents</legend>
+
+	<div class="tool-bar">
+		<button
+			class="doc-tab-action"
+			type="button"
+			onclick={() => (newDocument.value = {})}>New</button
+		>
+		<hr class="tool-bar-sep" />
+		{#each documentIds.value as d}
+			<span class="doc-tab-group">
+				<button
+					class="doc-tab-titel"
+					class:active={d === currentDocumentId.value}
+					onclick={() => (currentDocumentId.value = d)}
+					>Doc {d + 1}</button
+				>
+				<button
+					type="button"
+					class="doc-tab-del"
+					onclick={() => {
+						view(d, documentIds).value = undefined;
+					}}
+					class:active={d === currentDocumentId.value}>X</button
+				>
+			</span>
+		{/each}
+	</div>
+</fieldset>
+
+<fieldset>
 	<legend>Tools</legend>
 
 	<div class="tool-bar">
@@ -1451,7 +1510,7 @@
 
 	<div>
 		<h3>Drawing</h3>
-		<textarea use:bindValue={drawingJson.stableAtom}></textarea>
+		<textarea use:bindValue={canvasJson.stableAtom}></textarea>
 	</div>
 </div>
 
@@ -1652,5 +1711,82 @@
 		margin: -4px 0 0 -4px;
 		background: magenta;
 		border: 1px solid white;
+	}
+
+	.doc-tab-action {
+		text-align: left;
+		border: 2px solid black;
+		padding: 0.5em;
+	}
+
+	.doc-tab-group {
+		display: flex;
+		flex-basis: 8em;
+		justify-items: stretch;
+		background: #eee;
+		border-bottom: 2px solid #0099bb;
+		gap: 2px;
+		flex-shrink: 0;
+	}
+
+	.doc-tab-titel {
+		text-align: left;
+		border: 2px solid white;
+		background: none;
+		border: none;
+		color: #666;
+		flex-grow: 1;
+		padding: 0.5em;
+	}
+	.doc-tab-titel:hover,
+	.doc-tab-titel:focus-visible {
+		background: #0099bb11;
+		color: #666;
+	}
+	.doc-tab-titel.active {
+		background: #0099bb;
+		color: white;
+	}
+
+	.doc-tab-del {
+		width: 1.7em;
+		height: 1.7em;
+		vertical-align: center;
+		text-align: center;
+		font-size: 0.8em;
+		box-sizing: border-box;
+		display: none;
+		color: black;
+		background: none;
+		margin: 0 2px 0 0;
+		padding: 0;
+		overflow: hidden;
+		border-radius: 2px;
+		align-self: center;
+		font-weight: bold;
+	}
+
+	.doc-tab-del.active {
+		color: #0099bb;
+	}
+
+	.doc-tab-del:hover {
+		color: white;
+		background: #aa3333aa;
+	}
+
+	.doc-tab-del.active:hover,
+	.doc-tab-del.active:focus-visible {
+		display: none;
+		background: #aa3333;
+		color: white;
+	}
+	.doc-tab-del:active {
+		background: #773333;
+	}
+
+	.doc-tab-del.active,
+	.doc-tab-group:hover > .doc-tab-del {
+		display: block;
 	}
 </style>

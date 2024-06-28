@@ -79,7 +79,6 @@
 	}}
 	onpointermove={(evt) => {
 		if (pointerId.value === evt.pointerId) {
-			console.log(evt.pointerId);
 			const svgP = clientToCanvas(evt.clientX, evt.clientY);
 
 			position.value = svgP;
