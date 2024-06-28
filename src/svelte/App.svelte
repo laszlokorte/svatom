@@ -337,7 +337,9 @@
 				<button
 					class:phantom={!thisEntry.value}
 					type="button"
-					onclick={() => (thisName.value = "")}>✖</button
+					onclick={() => (thisName.value = "")}
+				>
+					🗙</button
 				>
 				<label
 					>Name: <input

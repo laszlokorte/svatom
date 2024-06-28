@@ -1343,7 +1343,10 @@
 		>
 		<hr class="tool-bar-sep" />
 		{#each documentIds.value as d}
-			<span class="doc-tab-group">
+			<span
+				class="doc-tab-group"
+				class:active={d === currentDocumentId.value}
+			>
 				<button
 					class="doc-tab-titel"
 					class:active={d === currentDocumentId.value}
@@ -1356,7 +1359,8 @@
 					onclick={() => {
 						view(d, documentIds).value = undefined;
 					}}
-					class:active={d === currentDocumentId.value}>X</button
+					class:active={d === currentDocumentId.value}
+					title="Close">🗙</button
 				>
 			</span>
 		{/each}
@@ -1724,9 +1728,13 @@
 		flex-basis: 8em;
 		justify-items: stretch;
 		background: #eee;
-		border-bottom: 2px solid #0099bb;
+		border-bottom: 2px solid #333;
 		gap: 2px;
 		flex-shrink: 0;
+	}
+
+	.doc-tab-group.active {
+		border-bottom-color: #cd3e30;
 	}
 
 	.doc-tab-titel {
@@ -1734,50 +1742,55 @@
 		border: 2px solid white;
 		background: none;
 		border: none;
-		color: #666;
+		color: #333;
 		flex-grow: 1;
 		padding: 0.5em;
 	}
-	.doc-tab-titel:hover,
+
+	@media (hover) {
+		.doc-tab-titel:hover {
+			color: #cd3e30;
+		}
+	}
+
 	.doc-tab-titel:focus-visible {
-		background: #0099bb11;
-		color: #666;
+		color: #cd3e30;
 	}
 	.doc-tab-titel.active {
-		background: #0099bb;
+		background: #cd3e30;
 		color: white;
 	}
 
 	.doc-tab-del {
-		width: 1.7em;
-		height: 1.7em;
+		display: block;
+		width: 2.2em;
+		height: 2.2em;
 		vertical-align: center;
 		text-align: center;
-		font-size: 0.8em;
+		font-size: 0.6em;
 		box-sizing: border-box;
 		display: none;
-		color: black;
+		color: #333;
 		background: none;
 		margin: 0 2px 0 0;
 		padding: 0;
+		line-height: 1;
 		overflow: hidden;
-		border-radius: 2px;
 		align-self: center;
 		font-weight: bold;
 	}
 
 	.doc-tab-del.active {
-		color: #0099bb;
+		color: #444;
 	}
 
 	.doc-tab-del:hover {
 		color: white;
-		background: #aa3333aa;
+		background: #aa3333;
 	}
 
 	.doc-tab-del.active:hover,
 	.doc-tab-del.active:focus-visible {
-		display: none;
 		background: #aa3333;
 		color: white;
 	}
@@ -1785,8 +1798,13 @@
 		background: #773333;
 	}
 
-	.doc-tab-del.active,
-	.doc-tab-group:hover > .doc-tab-del {
+	.doc-tab-del.active {
 		display: block;
+	}
+
+	@media (hover) {
+		.doc-tab-group:hover > .doc-tab-del {
+			display: block;
+		}
 	}
 </style>
