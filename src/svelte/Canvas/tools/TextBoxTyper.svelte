@@ -88,6 +88,11 @@
 		L.reread((r) => `rotate(${r.angle}, ${r.start.x}, ${r.start.y})`),
 		textBox,
 	);
+
+	const keepOrientationlens = L.rewrite((newV, { x, y }) => ({
+		x: Math.sign(x) * Math.abs(newV.x),
+		y: Math.sign(y) * Math.abs(newV.y),
+	}));
 </script>
 
 <path
@@ -191,7 +196,10 @@
 							textBoxStart.value.y * textBoxStart.value.y}
 						type="text"
 						bind:value={text.value}
-						use:readTextreaScrollSize={textBoxSize}
+						use:readTextreaScrollSize={view(
+							keepOrientationlens,
+							textBoxSize,
+						)}
 						onkeydown={(evt) => {
 							if (evt.key === "Escape" || evt.key === "Esc") {
 								textBoxStart.value = undefined;
