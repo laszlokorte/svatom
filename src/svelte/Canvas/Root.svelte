@@ -1225,10 +1225,18 @@
 			type="button"
 			onclick={(_) => {
 				update(
+					L.set(["focus", L.props("x", "y")], { x: 0, y: 0 }),
+					camera,
+				);
+			}}>re-Center to Origin</button
+		><button
+			type="button"
+			onclick={(_) => {
+				update(
 					L.set(["focus", L.props("x", "y")], boundsCenter.value),
 					camera,
 				);
-			}}>re-Center at Origin</button
+			}}>re-Center Content</button
 		><button
 			type="button"
 			onclick={(_) => {
