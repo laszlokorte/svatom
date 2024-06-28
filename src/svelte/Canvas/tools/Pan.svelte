@@ -56,6 +56,7 @@
 
 <style>
 	.pan-surface {
+		stroke-width: 0;
 		cursor: grab;
 		outline: none;
 	}

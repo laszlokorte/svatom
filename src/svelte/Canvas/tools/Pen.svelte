@@ -130,6 +130,7 @@
 
 <style>
 	.pen-surface {
+		stroke-width: 0;
 		cursor: default;
 		outline: none;
 	}

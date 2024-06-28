@@ -140,6 +140,7 @@
 
 <style>
 	.rubber-band-surface {
+		stroke-width: 0;
 		cursor: default;
 		outline: none;
 	}

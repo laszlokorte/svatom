@@ -89,7 +89,7 @@
 		textBox,
 	);
 
-	const keepOrientationlens = L.rewrite((newV, { x, y }) => ({
+	const keepOrientationlens = L.lens(R.identity, (newV, { x, y }) => ({
 		x: Math.sign(x) * Math.abs(newV.x),
 		y: Math.sign(y) * Math.abs(newV.y),
 	}));
@@ -161,8 +161,8 @@
 			<foreignObject
 				shape-rendering="geometricPrecision"
 				text-rendering="optimizeLegibility"
-				width={Math.abs(textBoxSize.value.x)}
-				height={Math.abs(textBoxSize.value.y)}
+				width={Math.max(1, Math.abs(textBoxSize.value.x))}
+				height={Math.max(1, Math.abs(textBoxSize.value.y))}
 				x={textBoxStart.value.x + Math.min(0, textBoxSize.value.x)}
 				y={textBoxStart.value.y + Math.min(0, textBoxSize.value.y)}
 				style:overflow="visible"
@@ -239,6 +239,7 @@
 
 <style>
 	.text-box-surface {
+		stroke-width: 0;
 		cursor: default;
 		outline: none;
 	}
@@ -267,7 +268,7 @@
 		font-size: 1.2em;
 		font: inherit;
 		border: none;
-		padding: 4px;
+		padding: 0;
 		display: block;
 		width: 100%;
 		height: 100%;
@@ -275,11 +276,16 @@
 		background: #fff;
 		resize: none;
 		min-height: 0;
-		line-height: 1;
+		line-height: auto;
 		overflow: visible;
 		margin: 0;
 		outline: none;
 		overflow: hidden;
+		scrollbar-width: 0;
+		text-indent: 0;
+
+		word-break: break-all;
+		overflow-wrap: break-word;
 		/*overflow-y: scroll;
 		overflow-x: auto;
 		scrollbar-gutter: stable;

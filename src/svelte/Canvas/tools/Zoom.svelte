@@ -290,6 +290,7 @@
 
 <style>
 	.rotate-surface {
+		stroke-width: 0;
 		outline: none;
 	}
 </style>

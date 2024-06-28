@@ -60,8 +60,8 @@
 				shape-rendering="crispEdges"
 				text-rendering="crispEdges"
 				vector-effect="non-scaling-stroke"
-				width={Math.abs(t.size.x) + 1}
-				height={Math.abs(t.size.y) + 1}
+				width={Math.abs(t.size.x)}
+				height={Math.abs(t.size.y)}
 				x={t.start.x + Math.min(0, t.size.x)}
 				y={t.start.y + Math.min(0, t.size.y)}
 				style:overflow="visible"
@@ -87,7 +87,7 @@
 		font-size: 1.2em;
 		font: inherit;
 		border: none;
-		padding: 4px;
+		padding: 0;
 		display: block;
 		width: 100%;
 		height: 100%;
@@ -95,15 +95,17 @@
 		resize: none;
 		min-height: 0;
 		white-space: pre-wrap;
-		line-height: 1;
+		line-height: auto;
 		word-break: break-all;
 		overflow: visible;
 		margin: 0;
-		overflow: auto;
-		scrollbar-width: thin;
-		scrollbar-gutter: stable;
-		scrollbar-color: white #ffaaaa33;
-		text-overflow: ellipsis;
 		overflow-wrap: break-word;
+		text-indent: 0;
+
+		overflow: visible;
+		/*overflow: auto;
+		scrollbar-width: thin;
+		scrollbar-color: white #ffaaaa33;
+		text-overflow: ellipsis;*/
 	}
 </style>

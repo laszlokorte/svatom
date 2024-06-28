@@ -136,6 +136,7 @@
 
 <style>
 	.axis-surface {
+		stroke-width: 0;
 		cursor: default;
 		outline: none;
 	}

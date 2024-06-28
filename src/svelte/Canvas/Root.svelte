@@ -94,8 +94,8 @@
 		},
 		plane: {
 			autosize: true,
-			x: 100,
-			y: 100,
+			x: 1000,
+			y: 1000,
 		},
 		frame: {
 			aspect: "meet",
@@ -1194,7 +1194,7 @@
 			type="button"
 			onclick={(_) => {
 				update(L.set(["focus", L.values], 0), camera);
-			}}>Reset all</button
+			}}>Reset all to zero</button
 		><button
 			type="button"
 			onclick={(_) => {
@@ -1202,17 +1202,17 @@
 					L.set(["focus", L.props("x", "y")], boundsCenter.value),
 					camera,
 				);
-			}}>re-Center</button
+			}}>re-Center at Origin</button
 		><button
 			type="button"
 			onclick={(_) => {
 				update(L.set(["focus", "w"], 0), camera);
-			}}>re-Orient</button
+			}}>re-Orient Upwards</button
 		><button
 			type="button"
 			onclick={(_) => {
 				update(
-					L.set(["focus", L.props("z", "x", "y")], {
+					L.set(["focus", L.props("z", "x", "y", "w")], {
 						x:
 							(cameraBounds.value.maxX +
 								cameraBounds.value.minX) /
@@ -1231,12 +1231,15 @@
 									cameraBounds.value.minY,
 							) - Math.log(camera.value.plane.y),
 						),
+						w: cameraBounds.value.angle,
 					}),
 					camera,
 				);
-			}}>re-Fit</button
+			}}>re-Fit to Content</button
 		>
 	</div>
+
+	<hr />
 
 	<div class="form-grid">
 		<label class="number-picker"
@@ -1307,6 +1310,8 @@
 			>
 			<output>{cameraAngleFormatted.value}</output>
 		</label>
+
+		<hr />
 		<label class="number-picker"
 			><span>Scroll X:</span>
 			<input
@@ -1469,6 +1474,16 @@
 		grid-template-columns: max-content max-content max-content max-content;
 		grid-auto-rows: 1fr;
 		gap: 0.25em;
+	}
+
+	.form-grid > hr {
+		grid-column: 1 / -1;
+		width: 100%;
+		height: 0;
+		height: 0;
+		align-self: center;
+		border: none;
+		border-top: 1px solid #aaa;
 	}
 
 	.form-grid > .number-picker {

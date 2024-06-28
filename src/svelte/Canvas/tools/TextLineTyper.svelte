@@ -171,6 +171,7 @@
 
 <style>
 	.typer-surface {
+		stroke-width: 0;
 		outline: none;
 		cursor: text;
 	}

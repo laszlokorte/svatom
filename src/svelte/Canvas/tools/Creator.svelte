@@ -82,6 +82,7 @@
 
 <style>
 	.creator-surface {
+		stroke-width: 0;
 		cursor: copy;
 		outline: none;
 	}

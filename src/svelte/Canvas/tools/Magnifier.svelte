@@ -204,6 +204,7 @@
 
 <style>
 	.magnifier-surface {
+		stroke-width: 0;
 		cursor: zoom-in;
 		outline: none;
 	}
