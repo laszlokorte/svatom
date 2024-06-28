@@ -218,6 +218,7 @@
 	);
 
 	const frameBoxObject = read(frameBoxLens, camera);
+	const frameBoxScreen = read([frameBoxLens, "screenSpaceAligned"], camera);
 	const frameBoxPath = read(
 		[frameBoxLens, "screenSpaceAligned", boxPathLens],
 		camera,
@@ -1207,6 +1208,33 @@
 			onclick={(_) => {
 				update(L.set(["focus", "w"], 0), camera);
 			}}>re-Orient</button
+		><button
+			type="button"
+			onclick={(_) => {
+				update(
+					L.set(["focus", L.props("z", "x", "y")], {
+						x:
+							(cameraBounds.value.maxX +
+								cameraBounds.value.minX) /
+							2,
+						y:
+							(cameraBounds.value.maxY +
+								cameraBounds.value.minY) /
+							2,
+						z: -Math.max(
+							Math.log(
+								cameraBounds.value.maxX -
+									cameraBounds.value.minX,
+							) - Math.log(camera.value.plane.x),
+							Math.log(
+								cameraBounds.value.maxY -
+									cameraBounds.value.minY,
+							) - Math.log(camera.value.plane.y),
+						),
+					}),
+					camera,
+				);
+			}}>re-Fit</button
 		>
 	</div>
 
