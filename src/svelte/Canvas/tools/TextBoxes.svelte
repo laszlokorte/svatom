@@ -71,11 +71,6 @@
 </g>
 
 <style>
-	.text-box-surface {
-		cursor: default;
-		outline: none;
-	}
-
 	.text-box {
 		fill: none;
 		stroke: #aaa;
@@ -85,17 +80,6 @@
 		stroke-width: 1px;
 		pointer-events: none;
 		vector-effect: non-scaling-stroke;
-	}
-
-	.ready {
-		stroke: #00aaff;
-		stroke-width: 2px;
-		fill: none;
-		pointer-events: none;
-	}
-
-	form {
-		display: contents;
 	}
 
 	.text-output {

@@ -21,6 +21,7 @@
 
 	const typer = atom({});
 	const newText = view(L.appendTo, textes);
+	const pointerId = view(["pointerId"], typer);
 
 	const position = view([L.removable("position"), "position"], typer);
 	const text = view(["text", L.valueOr("")], typer);
@@ -38,26 +39,22 @@
 	class="typer-surface"
 	role="button"
 	tabindex="-1"
-	onclick={(evt) => {
-		if (isEditing.value) {
-			position.value = undefined;
-			return;
-		}
-
-		evt.preventDefault();
-
-		const svgP = clientToCanvas(evt.clientX, evt.clientY);
-
-		position.value = svgP;
-		fontSize.value = cameraScale.value;
-		text.value = undefined;
-	}}
 	onkeydown={(evt) => {
 		if (evt.key === "Escape" || evt.key === "Esc") {
 			position.value = undefined;
 		}
 	}}
 	onpointerdown={(evt) => {
+		if (!(evt.isPrimary && U.isLeftButton(evt))) {
+			return;
+		}
+
+		pointerId.value = evt.pointerId;
+
+		evt.currentTarget.setPointerCapture(evt.pointerId);
+
+		evt.preventDefault();
+
 		if (isEditing.value) {
 			if (text.value) {
 				evt.preventDefault();
@@ -67,13 +64,35 @@
 					fontSize: fontSize.value,
 					content: text.value,
 				};
-			} else {
-				evt.preventDefault();
+				position.value = undefined;
+				pointerId.value = undefined;
+				evt.currentTarget.releasePointerCapture(evt.pointerId);
 
-				const svgP = clientToCanvas(evt.clientX, evt.clientY);
-
-				position.value = svgP;
+				return;
 			}
+		} else {
+			fontSize.value = cameraScale.value;
+		}
+
+		const svgP = clientToCanvas(evt.clientX, evt.clientY);
+		position.value = svgP;
+	}}
+	onpointermove={(evt) => {
+		if (pointerId.value === evt.pointerId) {
+			console.log(evt.pointerId);
+			const svgP = clientToCanvas(evt.clientX, evt.clientY);
+
+			position.value = svgP;
+		}
+	}}
+	onpointerup={(evt) => {
+		if (pointerId.value === evt.pointerId) {
+			pointerId.value = undefined;
+		}
+	}}
+	onpointercancel={(evt) => {
+		if (pointerId.value === evt.pointerId) {
+			pointerId.value = undefined;
 		}
 	}}
 />

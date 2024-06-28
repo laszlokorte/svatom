@@ -25,13 +25,19 @@
 		<g
 			transform="translate({t.x}, {t.y}) rotate({-cameraOrientation.value}) translate({-t.x}, {-t.y})"
 		>
-			<circle cx={t.x} cy={t.y + 2} r="2" fill="#55aaee" />
+			<circle
+				cx={t.x}
+				cy={t.y + t.fontSize}
+				r={t.fontSize}
+				fill="#55aaee"
+			/>
 			<text
 				x={t.x}
 				y={t.y}
 				stroke="white"
 				paint-order="stroke"
 				stroke-width="1px"
+				vector-effect="non-scaling-stroke"
 				font-size="{t.fontSize}em"
 				text-anchor="middle">{t.content}</text
 			>
