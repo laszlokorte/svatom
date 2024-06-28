@@ -24,6 +24,7 @@
 
 	const position = view([L.removable("position"), "position"], typer);
 	const text = view(["text", L.valueOr("")], typer);
+	const fontSize = view(["fontSize", L.valueOr(1)], typer);
 	const isEditing = view(R.compose(R.not, R.isNil), position);
 	const textEmpty = view(L.reread(R.isEmpty), text);
 </script>
@@ -48,6 +49,7 @@
 		const svgP = clientToCanvas(evt.clientX, evt.clientY);
 
 		position.value = svgP;
+		fontSize.value = cameraScale.value;
 		text.value = undefined;
 	}}
 	onkeydown={(evt) => {
@@ -62,17 +64,17 @@
 				newText.value = {
 					x: position.value.x,
 					y: position.value.y,
+					fontSize: fontSize.value,
 					content: text.value,
 				};
 			} else {
-			
 				evt.preventDefault();
 
 				const svgP = clientToCanvas(evt.clientX, evt.clientY);
 
 				position.value = svgP;
 			}
-		} 
+		}
 	}}
 />
 
@@ -80,11 +82,8 @@
 	<g transform={rotationTransform.value} vector-effect="non-rotation">
 		<g
 			transform="translate({position.value.x}, {position.value
-				.y}) rotate({-cameraOrientation.value}) scale({R.clamp(
-				0.01,
-				6,
-				cameraScale.value,
-			)}) translate({-position.value.x}, {-position.value.y})"
+				.y}) rotate({-cameraOrientation.value}) scale({fontSize.value}) translate({-position
+				.value.x}, {-position.value.y})"
 		>
 			<foreignObject
 				width="200"
@@ -96,7 +95,6 @@
 			>
 				<form
 					xmlns="http://www.w3.org/1999/xhtml"
-					style:font-size="1.2em"
 					onsubmit={(evt) => {
 						evt.preventDefault();
 						if (text.value) {
@@ -175,10 +173,9 @@
 		margin: 0;
 		line-height: 1;
 		padding: 0;
-	    padding-inline: 0;
-	    padding-block: 0;
+		padding-inline: 0;
+		padding-block: 0;
 	}
-
 
 	.dim {
 		cursor: default;

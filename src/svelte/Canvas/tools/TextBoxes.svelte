@@ -32,39 +32,41 @@
 		cameraScale,
 		textBoxes = atom([]),
 	} = $props();
-
 </script>
 
 <g transform={rotationTransform.value} vector-effect="non-rotation">
 	{#each textBoxes.value as t}
-	<g 
-		transform="translate({t.start.x}, {t.start.y}) rotate({t.angle}) translate({-t.start.x}, {-t.start.y})">
-			
+		<g
+			transform="translate({t.start.x}, {t.start
+				.y}) rotate({t.angle}) translate({-t.start.x}, {-t.start.y})"
+		>
 			<foreignObject
 				shape-rendering="crispEdges"
 				text-rendering="crispEdges"
 				vector-effect="non-scaling-stroke"
 				width={Math.abs(t.size.x)}
 				height={Math.abs(t.size.y)}
-				x={ t.start.x + Math.min(0, t.size.x)}
-				y={ t.start.y + Math.min(0, t.size.y)}
+				x={t.start.x + Math.min(0, t.size.x)}
+				y={t.start.y + Math.min(0, t.size.y)}
 				style:overflow="visible"
 			>
-		<div class="text-output">{t.content}</div>
-	</foreignObject>
+				<div class="text-output" style:font-size="{t.fontSize}em">
+					{t.content}
+				</div>
+			</foreignObject>
 
 			<rect
 				class="text-box"
 				shape-rendering="crispEdges"
 				text-rendering="crispEdges"
 				vector-effect="non-scaling-stroke"
-				width={Math.abs(t.size.x)+1}
-				height={Math.abs(t.size.y)+1}
-				x={ t.start.x + Math.min(0, t.size.x)}
-				y={ t.start.y + Math.min(0, t.size.y)}
+				width={Math.abs(t.size.x) + 1}
+				height={Math.abs(t.size.y) + 1}
+				x={t.start.x + Math.min(0, t.size.x)}
+				y={t.start.y + Math.min(0, t.size.y)}
 				style:overflow="visible"
 			></rect>
-	</g>
+		</g>
 	{/each}
 </g>
 
@@ -95,7 +97,7 @@
 	form {
 		display: contents;
 	}
-	
+
 	.text-output {
 		pointer-events: none;
 		font-size: 1.2em;
@@ -120,5 +122,4 @@
 		text-overflow: ellipsis;
 		overflow-wrap: break-word;
 	}
-
 </style>

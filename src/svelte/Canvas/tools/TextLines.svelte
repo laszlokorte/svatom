@@ -18,30 +18,24 @@
 		clientToCanvas,
 		textes = atom([]),
 	} = $props();
-
 </script>
 
 <g transform={rotationTransform.value} vector-effect="non-rotation">
 	{#each textes.value as t}
-	<g 
-		transform="translate({t.x}, {t.y}) rotate({-cameraOrientation.value}) scale({R.clamp(
-				0.01,
-				6,
-				cameraScale.value,
-			)}) translate({-t.x}, {-t.y})">
-		<circle 
-			cx={t.x}
-			cy={t.y+2} r="2" fill="#55aaee" />
-		<text
-			style:font-size="1.2em"
-			x={t.x}
-			y={t.y}
-			stroke="white"
-			paint-order="stroke"
-			stroke-width="1px"
-			text-anchor="middle">{t.content}</text
+		<g
+			transform="translate({t.x}, {t.y}) rotate({-cameraOrientation.value}) translate({-t.x}, {-t.y})"
 		>
-	</g>
+			<circle cx={t.x} cy={t.y + 2} r="2" fill="#55aaee" />
+			<text
+				x={t.x}
+				y={t.y}
+				stroke="white"
+				paint-order="stroke"
+				stroke-width="1px"
+				font-size="{t.fontSize}em"
+				text-anchor="middle">{t.content}</text
+			>
+		</g>
 	{/each}
 </g>
 
@@ -54,7 +48,6 @@
 		display: contents;
 	}
 
-
 	input {
 		font: inherit;
 		border: none;
@@ -65,7 +58,6 @@
 		text-align: center;
 		outline: none;
 	}
-
 
 	.dim {
 		cursor: default;

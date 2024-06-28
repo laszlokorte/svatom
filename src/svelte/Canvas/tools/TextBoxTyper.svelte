@@ -33,7 +33,6 @@
 		textBoxes = atom([]),
 	} = $props();
 
-
 	const newText = view(L.appendTo, textBoxes);
 
 	const textBox = atom(undefined);
@@ -52,8 +51,15 @@
 		),
 		textBox,
 	);
+	const textBoxFontSize = view(
+		L.ifElse(
+			R.prop("start"),
+			[L.removable("fontSize"), "fontSize"],
+			L.zero,
+		),
+		textBox,
+	);
 
-	
 	const isEditing = view(R.compose(R.not, R.isNil), pointerId);
 	const textEmpty = view(L.reread(R.isEmpty), text);
 
@@ -88,7 +94,6 @@
 	pointer-events="all"
 	fill="none"
 	class="text-box-surface"
-
 	class:dim={isEditing.value}
 	class:dim-empty={textEmpty.value}
 	role="button"
@@ -119,17 +124,14 @@
 			const dx = svgP.x - textBoxStart.value.x;
 			const dy = svgP.y - textBoxStart.value.y;
 			textBoxSize.value = {
-				x:
-					textBoxAngleCos.value * dx +
-					textBoxAngleSin.value * dy,
-				y:
-					-textBoxAngleSin.value * dx +
-					textBoxAngleCos.value * dy,
+				x: textBoxAngleCos.value * dx + textBoxAngleSin.value * dy,
+				y: -textBoxAngleSin.value * dx + textBoxAngleCos.value * dy,
 			};
 		}
 	}}
 	onpointerup={(evt) => {
 		if (pointerId.value === evt.pointerId) {
+			textBoxFontSize.value = cameraScale.value;
 			pointerId.value = undefined;
 		}
 	}}
@@ -141,16 +143,15 @@
 />
 
 <g transform={rotationTransform.value}>
-
-
 	{#if pointerId.value === undefined && textBoxStart.value !== undefined}
-	<g
+		<g
 			shape-rendering="geometricPrecision"
 			text-rendering="optimizeLegibility"
 			transform="translate({textBoxStart.value.x}, {textBoxStart.value
-				.y}) rotate({textBoxAngle.value}) translate({-textBoxStart.value.x}, {-textBoxStart.value.y})"
+				.y}) rotate({textBoxAngle.value}) translate({-textBoxStart.value
+				.x}, {-textBoxStart.value.y})"
 		>
-		<foreignObject
+			<foreignObject
 				shape-rendering="geometricPrecision"
 				text-rendering="optimizeLegibility"
 				width={Math.abs(textBoxSize.value.x)}
@@ -175,27 +176,38 @@
 								},
 								content: text.value,
 								angle: textBoxAngle.value,
+								fontSize: textBoxFontSize.value,
 							};
 						}
 						textBoxStart.value = undefined;
 					}}
 				>
 					<textarea
-						use:autofocusIf={textBoxStart.value.x * textBoxStart.value.x +
+						style:font-size="{textBoxFontSize.value}em"
+						use:autofocusIf={textBoxStart.value.x *
+							textBoxStart.value.x +
 							textBoxStart.value.y * textBoxStart.value.y}
 						type="text"
 						bind:value={text.value}
 						onkeydown={(evt) => {
 							if (evt.key === "Escape" || evt.key === "Esc") {
 								textBoxStart.value = undefined;
-							} else if (evt.key === "Enter" && evt.shiftKey && text.value) {
-								evt.currentTarget.blur()
+							} else if (
+								evt.key === "Enter" &&
+								evt.shiftKey &&
+								text.value
+							) {
+								evt.currentTarget.blur();
 							}
 						}}
 						onblur={(evt) => {
 							evt.preventDefault();
 							if (text.value) {
-								evt.currentTarget.form.dispatchEvent(new CustomEvent('submit', {cancelable: true}));
+								evt.currentTarget.form.dispatchEvent(
+									new CustomEvent("submit", {
+										cancelable: true,
+									}),
+								);
 							}
 							textBoxStart.value = undefined;
 						}}
@@ -203,8 +215,6 @@
 				</form>
 			</foreignObject>
 		</g>
-
-
 	{/if}
 	<path
 		d={textBoxPath.value}
@@ -264,7 +274,6 @@
 		scrollbar-width: thin;
 	}
 
-
 	.dim {
 		fill: #ffffff33;
 		cursor: default;
@@ -273,5 +282,4 @@
 	.dim-empty {
 		cursor: text;
 	}
-
 </style>
