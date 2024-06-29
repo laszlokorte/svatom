@@ -1339,7 +1339,18 @@
 		<button
 			class="doc-tab-action"
 			type="button"
-			onclick={() => (newDocument.value = {})}>New</button
+			onclick={() => (newDocument.value = {})}
+			><svg width="32" height="32" viewBox="-16 -16 32 32">
+				<title>New</title>
+				<path
+					d="M-12,0L12,0M0,12L0,-12"
+					stroke="currentColor"
+					stroke-width="2px"
+					vector-effect="non-scaling-stroke"
+					stroke-linecap="round"
+					shape-rendering="crispEdges"
+				/>
+			</svg></button
 		>
 		<hr class="tool-bar-sep" />
 		{#each documentIds.value as d}
@@ -1355,7 +1366,12 @@
 						["textes", L.first, "content"],
 						["textBoxes", L.first, "content"],
 					),
-					L.valueOr("untitled"),
+					L.valueOr(""),
+					L.ifElse(
+						R.isEmpty,
+						L.inverse(L.dropPrefix("untitled")),
+						L.inverse(L.dropPrefix("untitled - ")),
+					),
 				],
 				allCanvasDocuments,
 			)}
@@ -1756,9 +1772,20 @@
 	}
 
 	.doc-tab-action {
+		display: grid;
+		place-content: stretch;
+		place-items: stretch;
 		text-align: left;
-		border: 2px solid black;
+		height: 2.4em;
+		width: 2.4em;
 		padding: 0.5em;
+		box-sizing: border-box;
+	}
+
+	.doc-tab-action > svg {
+		width: 100%;
+		height: 100%;
+		display: block;
 	}
 
 	.doc-tab-group {
@@ -1790,6 +1817,14 @@
 		padding: 0.5em;
 		width: 12em;
 		outline: none;
+		white-space: pre;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		cursor: default;
+	}
+
+	input.doc-tab-titel:focus {
+		cursor: text;
 	}
 
 	@media (hover) {
@@ -1808,6 +1843,7 @@
 
 	.untitled {
 		font-style: italic;
+		color: #aaa;
 	}
 
 	.doc-tab-del {
