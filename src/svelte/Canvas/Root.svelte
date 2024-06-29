@@ -122,12 +122,7 @@
 
 	const debugFrames = atom(false);
 	const camera = atom({
-		focus: {
-			x: 0,
-			y: 0,
-			z: 0,
-			w: 20,
-		},
+		focus: { x: 100, y: -50, z: 0, w: 20 },
 		plane: {
 			autosize: true,
 			x: 1000,
@@ -462,6 +457,14 @@
 					angle: 0,
 				},
 				nodes: [{ x: 200, y: 100 }],
+				textes: [
+					{
+						x: 119.35297908638951,
+						y: -70.289311950847,
+						fontSize: 0.8922579558824082,
+						content: "Hello World",
+					},
+				],
 			},
 		],
 	});
@@ -1840,10 +1843,14 @@
 		background: #cd3e30;
 		color: white;
 	}
-
 	.untitled {
 		font-style: italic;
-		color: #aaa;
+		color: #333a;
+	}
+
+	.untitled.active::placeholder {
+		font-style: italic;
+		color: #fffa;
 	}
 
 	.doc-tab-del {
