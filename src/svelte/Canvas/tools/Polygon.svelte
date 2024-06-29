@@ -19,6 +19,8 @@
 		newDrawing,
 	} = $props();
 
+	const snapRadius = 8;
+
 	const polygon = atom({ path: [], draft: null });
 	const pointerId = view(["pointerId"], polygon);
 	const path = view([L.removable("path"), "path"], polygon);
@@ -87,19 +89,12 @@
 	const pathHead = read(L.last, path);
 </script>
 
-<path
-	use:disableTouchEventsIf={startPath}
-	class="polygon-surface"
-	d={frameBoxPath.value}
-	class:dragging={pointerId.value !== undefined}
-	pointer-events="all"
-	stroke="none"
-	fill="none"
+<g
 	role="button"
 	tabindex="-1"
 	onkeydown={(evt) => {
 		if (evt.key === "Escape" || evt.key === "Esc") {
-			if (pointerId.value !== undefined) {
+			if (pointerId.value !== undefined && pathLength.value > 1) {
 				pointerId.value = undefined;
 			} else {
 				path.value = undefined;
@@ -125,25 +120,81 @@
 			}
 			return;
 		}
-		if (!startPath.value) {
-			currentPath.value = clientToCanvas(evt.clientX, evt.clientY);
-			draft.value = clientToCanvas(evt.clientX, evt.clientY);
-		}
 
-		pointerId.value = evt.pointerId;
+		const p = clientToCanvas(evt.clientX, evt.clientY);
+
+		if (!startPath.value) {
+			currentPath.value = p;
+			draft.value = p;
+
+			pointerId.value = evt.pointerId;
+		} else if (
+			pathRoot.value &&
+			pathLength.value < 2 &&
+			Math.hypot(pathRoot.value.x - p.x, pathRoot.value.y - p.y) <
+				cameraScale.value * snapRadius
+		) {
+			path.value = undefined;
+			pointerId.value = undefined;
+		} else {
+			pointerId.value = evt.pointerId;
+		}
 	}}
 	onpointermove={(evt) => {
 		if (
 			pointerId.value === evt.pointerId ||
 			(pointerId.value === undefined && startPath.value)
 		) {
-			draft.value = clientToCanvas(evt.clientX, evt.clientY);
+			const p = clientToCanvas(evt.clientX, evt.clientY);
+			if (
+				pathHead.value &&
+				Math.hypot(pathHead.value.x - p.x, pathHead.value.y - p.y) <
+					cameraScale.value * snapRadius
+			) {
+				draft.value = pathHead.value;
+			} else if (
+				pathLength.value >= 3 &&
+				pathRoot.value &&
+				Math.hypot(pathRoot.value.x - p.x, pathRoot.value.y - p.y) <
+					cameraScale.value * snapRadius
+			) {
+				draft.value = pathRoot.value;
+			} else {
+				draft.value = p;
+			}
 		}
 	}}
 	onpointerup={(evt) => {
 		if (pointerId.value === evt.pointerId) {
-			currentPath.value = draft.value;
-			pointerId.value = undefined;
+			const p = clientToCanvas(evt.clientX, evt.clientY);
+
+			if (
+				pathHead.value &&
+				Math.hypot(pathHead.value.x - p.x, pathHead.value.y - p.y) <
+					cameraScale.value * snapRadius
+			) {
+				if (pathLength.value > 1) {
+					draft.value = pathHead.value;
+					currentPath.value = draft.value;
+					evt.preventDefault();
+					newDrawing.value = path.value;
+					path.value = undefined;
+				}
+			} else if (
+				pathRoot.value &&
+				pathLength.value >= 3 &&
+				Math.hypot(pathRoot.value.x - p.x, pathRoot.value.y - p.y) <
+					cameraScale.value * snapRadius
+			) {
+				draft.value = pathRoot.value;
+				currentPath.value = draft.value;
+				evt.preventDefault();
+				newDrawing.value = path.value;
+				path.value = undefined;
+			} else {
+				currentPath.value = draft.value;
+				pointerId.value = undefined;
+			}
 		}
 	}}
 	onpointercancel={(evt) => {
@@ -151,90 +202,63 @@
 			pointerId.value = undefined;
 		}
 	}}
-/>
-
-<g transform={rotationTransform.value}>
-	<polyline
-		points={pathPath.value}
+>
+	<path
+		use:disableTouchEventsIf={startPath}
+		class="polygon-surface"
+		d={frameBoxPath.value}
+		class:dragging={pointerId.value !== undefined}
+		pointer-events="all"
+		stroke="none"
 		fill="none"
-		class="draft-line"
-		pointer-events="none"
 	/>
 
-	<polyline
-		points={draftPath.value}
-		fill="none"
-		class="draft-line-head"
-		pointer-events="none"
-	/>
-	{#if pathLength.value > 2}
-		<circle
-			cx={pathRoot.value.x}
-			cy={pathRoot.value.y}
-			r={10 * cameraScale.value}
-			stroke="#ff6e60"
-			fill="#ffcec0"
-			role="button"
-			tabindex="-1"
-			onpointerup={(evt) => {
-				if (!evt.isPrimary) {
-					return;
-				}
-				evt.preventDefault();
-				currentPath.value = pathRoot.value;
-				newDrawing.value = path.value;
-				path.value = undefined;
-				pointerId.value = undefined;
-			}}
-			oncontextmenu={(evt) => {
-				evt.preventDefault();
-			}}
-			onpointermove={(evt) => {
-				evt.preventDefault();
-				draft.value = pathRoot.value;
-			}}
-			class="capture-spot"
-		></circle>
-	{/if}
-	{#if pathLength.value > 0}
-		<circle
-			cx={pathHead.value.x}
-			cy={pathHead.value.y}
-			r={10 * cameraScale.value}
-			stroke="#ff6e60"
-			fill="#ffcec0"
-			stroke-opacity={pointerId.value === undefined ? 1 : 0}
-			onpointerup={(evt) => {
-				evt.preventDefault();
-				newDrawing.value = path.value;
-				path.value = undefined;
-				pointerId.value = undefined;
-			}}
-			onpointerdown={(evt) => {
-				pointerId.value = evt.pointerId;
-			}}
-			class="capture-spot"
-			role="button"
-			tabindex="-1"
-			onkeydown={(evt) => {
-				if (evt.key === "Escape" || evt.key === "Esc") {
-					if (pointerId.value !== undefined) {
-						pointerId.value = undefined;
-					} else {
-						path.value = undefined;
-					}
-				}
-			}}
-		></circle>
-
-		<circle
-			cx={pathHead.value.x}
-			cy={pathHead.value.y}
-			r={5 * cameraScale.value}
+	<g transform={rotationTransform.value}>
+		<polyline
+			points={pathPath.value}
+			fill="none"
+			class="draft-line"
 			pointer-events="none"
-			fill="#ff6e60"
-		></circle>
-	{/if}
+		/>
+
+		<polyline
+			points={draftPath.value}
+			fill="none"
+			class="draft-line-head"
+			pointer-events="none"
+		/>
+		{#if pathLength.value >= 3}
+			<circle
+				cx={pathRoot.value.x}
+				cy={pathRoot.value.y}
+				r={snapRadius * cameraScale.value}
+				stroke="#ff6e60"
+				fill="#ffcec0"
+				role="button"
+				tabindex="-1"
+				class="capture-spot"
+			></circle>
+		{/if}
+		{#if pathLength.value > 0}
+			<circle
+				cx={pathHead.value.x}
+				cy={pathHead.value.y}
+				r={snapRadius * cameraScale.value}
+				stroke="#ff6e60"
+				fill="#ffcec0"
+				stroke-opacity={pointerId.value === undefined ? 1 : 0}
+				class="capture-spot"
+			></circle>
+
+			<circle
+				cx={pathHead.value.x}
+				cy={pathHead.value.y}
+				r={(snapRadius / 2) * cameraScale.value}
+				pointer-events="none"
+				fill="#ff6e60"
+			></circle>
+		{/if}
+	</g>
 </g>
 
 <style>
@@ -280,5 +304,9 @@
 
 	.dragging {
 		cursor: move;
+	}
+
+	circle {
+		pointer-events: fill;
 	}
 </style>
