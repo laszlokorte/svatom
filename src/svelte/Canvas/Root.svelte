@@ -1343,16 +1343,43 @@
 		>
 		<hr class="tool-bar-sep" />
 		{#each documentIds.value as d}
+			{@const docName = view(
+				["docs", d, "title", L.defaults("")],
+				allCanvasDocuments,
+			)}
+			{@const fallbackName = view(
+				[
+					"docs",
+					d,
+					L.choices(
+						["textes", L.first, "content"],
+						["textBoxes", L.first, "content"],
+					),
+					L.valueOr("untitled"),
+				],
+				allCanvasDocuments,
+			)}
 			<span
 				class="doc-tab-group"
 				class:active={d === currentDocumentId.value}
 			>
-				<button
-					class="doc-tab-titel"
-					class:active={d === currentDocumentId.value}
-					onclick={() => (currentDocumentId.value = d)}
-					>Doc {d + 1}</button
-				>
+				{#if d === currentDocumentId.value}
+					<input
+						placeholder={fallbackName.value}
+						class="doc-tab-titel"
+						class:untitled={!docName.value}
+						bind:value={docName.value}
+						class:active={true}
+					/>
+				{:else}
+					<button
+						class="doc-tab-titel"
+						class:active={false}
+						class:untitled={!docName.value}
+						onclick={() => (currentDocumentId.value = d)}
+						>{docName.value || fallbackName.value}</button
+					>
+				{/if}
 				<button
 					type="button"
 					class="doc-tab-del"
@@ -1360,8 +1387,18 @@
 						view(d, documentIds).value = undefined;
 					}}
 					class:active={d === currentDocumentId.value}
-					title="Close">×</button
+					title="Close"
 				>
+					<svg width="10" height="10" viewBox="-16 -16 32 32">
+						<title>Delete</title>
+						<path
+							d="M-8,-8L8,8M-8,8L8,-8"
+							stroke="currentColor"
+							stroke-width="4px"
+							stroke-linecap="round"
+						/>
+					</svg>
+				</button>
 			</span>
 		{/each}
 	</div>
@@ -1411,6 +1448,7 @@
 		{scrollWindowSize}
 	>
 		<svg
+			class="canvas"
 			bind:this={svgElement.value}
 			use:Cam.bindEvents={camera}
 			viewBox={viewBox.value}
@@ -1545,7 +1583,7 @@
 		touch-action: none;
 	}
 
-	svg {
+	.canvas {
 		display: block;
 		grid-area: 1/1/1/1;
 		place-self: stretch;
@@ -1725,12 +1763,12 @@
 
 	.doc-tab-group {
 		display: flex;
-		flex-basis: 8em;
+		flex-basis: 15em;
 		justify-items: stretch;
 		background: #eee;
 		border-bottom: 2px solid #333;
-		gap: 2px;
 		flex-shrink: 0;
+		flex-grow: 0;
 	}
 
 	.doc-tab-group.active {
@@ -1738,13 +1776,20 @@
 	}
 
 	.doc-tab-titel {
+		display: block;
+		font: inherit;
+		border: none;
+		font-family: monospace;
 		text-align: left;
 		border: 2px solid white;
 		background: none;
 		border: none;
 		color: #333;
 		flex-grow: 1;
+		flex-shrink: 0;
 		padding: 0.5em;
+		width: 12em;
+		outline: none;
 	}
 
 	@media (hover) {
@@ -1761,26 +1806,36 @@
 		color: white;
 	}
 
+	.untitled {
+		font-style: italic;
+	}
+
 	.doc-tab-del {
-		display: block;
-		width: 1.5em;
-		height: 1.5em;
-		vertical-align: center;
+		flex-grow: 0;
+		flex-shrink: 0;
+		display: grid;
+		width: 2em;
+		place-items: center;
+		place-content: center;
 		text-align: center;
 		box-sizing: border-box;
-		display: none;
 		color: #333;
 		background: none;
-		margin: 0 2px 0 0;
-		padding: 0;
-		line-height: 1;
+		padding: 0.5em;
 		overflow: hidden;
-		align-self: center;
+		align-self: stretch;
 		font-weight: bold;
+		visibility: hidden;
+	}
+
+	.doc-tab-del > svg {
+		width: 100%;
+		height: 100%;
 	}
 
 	.doc-tab-del.active {
 		color: #444;
+		visibility: visible;
 	}
 
 	.doc-tab-del:hover {
@@ -1797,13 +1852,10 @@
 		background: #773333;
 	}
 
-	.doc-tab-del.active {
-		display: block;
-	}
-
 	@media (hover) {
 		.doc-tab-group:hover > .doc-tab-del {
-			display: block;
+			display: grid;
+			visibility: visible;
 		}
 	}
 </style>

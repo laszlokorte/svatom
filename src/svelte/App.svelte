@@ -339,7 +339,15 @@
 					type="button"
 					onclick={() => (thisName.value = "")}
 				>
-					×</button
+					<svg width="10" height="10" viewBox="-16 -16 32 32">
+						<title>Delete</title>
+						<path
+							d="M-8,-8L8,8M-8,8L8,-8"
+							stroke="currentColor"
+							stroke-width="4px"
+							stroke-linecap="round"
+						/>
+					</svg></button
 				>
 				<label
 					>Name: <input
