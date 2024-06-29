@@ -25,6 +25,62 @@
 	const pointerId = view(["pointerId"], polygon);
 	const path = view([L.removable("path"), "path"], polygon);
 	const draft = view(["draft"], polygon);
+	const freeDraft = view(
+		[
+			L.pick({
+				pos: "pos",
+				type: ["type", L.define("free"), L.normalize(R.always("free"))],
+			}),
+			"pos",
+		],
+		draft,
+	);
+	const closeDraft = view(
+		[
+			L.pick({
+				pos: "pos",
+				type: [
+					"type",
+					L.define("close"),
+					L.normalize(R.always("close")),
+				],
+			}),
+			"pos",
+		],
+		draft,
+	);
+	const finishDraft = view(
+		[
+			L.pick({
+				pos: "pos",
+				type: [
+					"type",
+					L.define("finish"),
+					L.normalize(R.always("finish")),
+				],
+			}),
+			"pos",
+		],
+		draft,
+	);
+	const draftPos = view("pos", draft);
+	const draftSnappedFinish = view(
+		[
+			"type",
+			L.lens(R.equals("close"), (force, old) => (force ? "close" : old)),
+		],
+		draft,
+	);
+	const draftSnappedClose = view(
+		[
+			"type",
+			L.lens(R.equals("finish"), (force, old) =>
+				force ? "finish" : old,
+			),
+		],
+		draft,
+	);
+
 	const startPath = view([L.index(0), L.defaults(false)], path);
 	const currentPath = view(
 		[
@@ -81,7 +137,7 @@
 				: R.join(" ", R.props(["x", "y"], d))) +
 			" " +
 			R.join(" ", R.props(["x", "y"], d)),
-		combine({ p: path, d: draft }),
+		combine({ p: path, d: draftPos }),
 	);
 
 	const pathLength = read([L.valueOr([]), "length"], path);
@@ -125,7 +181,7 @@
 
 		if (!startPath.value) {
 			currentPath.value = p;
-			draft.value = p;
+			freeDraft.value = p;
 
 			pointerId.value = evt.pointerId;
 		} else if (
@@ -151,16 +207,16 @@
 				Math.hypot(pathHead.value.x - p.x, pathHead.value.y - p.y) <
 					cameraScale.value * snapRadius
 			) {
-				draft.value = pathHead.value;
+				closeDraft.value = pathHead.value;
 			} else if (
 				pathLength.value >= 3 &&
 				pathRoot.value &&
 				Math.hypot(pathRoot.value.x - p.x, pathRoot.value.y - p.y) <
 					cameraScale.value * snapRadius
 			) {
-				draft.value = pathRoot.value;
+				finishDraft.value = pathRoot.value;
 			} else {
-				draft.value = p;
+				freeDraft.value = p;
 			}
 		}
 	}}
@@ -174,8 +230,8 @@
 					cameraScale.value * snapRadius
 			) {
 				if (pathLength.value > 1) {
-					draft.value = pathHead.value;
-					currentPath.value = draft.value;
+					finishDraft.value = pathHead.value;
+					currentPath.value = pathHead.value;
 					evt.preventDefault();
 					newDrawing.value = path.value;
 					path.value = undefined;
@@ -186,13 +242,13 @@
 				Math.hypot(pathRoot.value.x - p.x, pathRoot.value.y - p.y) <
 					cameraScale.value * snapRadius
 			) {
-				draft.value = pathRoot.value;
-				currentPath.value = draft.value;
+				closeDraft.value = pathRoot.value;
+				currentPath.value = pathRoot.value;
 				evt.preventDefault();
 				newDrawing.value = path.value;
 				path.value = undefined;
 			} else {
-				currentPath.value = draft.value;
+				currentPath.value = draftPos.value;
 				pointerId.value = undefined;
 			}
 		}
@@ -213,19 +269,13 @@
 		fill="none"
 	/>
 
-	<g transform={rotationTransform.value}>
-		<polyline
-			points={pathPath.value}
-			fill="none"
-			class="draft-line"
-			pointer-events="none"
-		/>
+	<g transform={rotationTransform.value} pointer-events="none">
+		<polyline points={pathPath.value} fill="none" class="draft-line" />
 
 		<polyline
 			points={draftPath.value}
 			fill="none"
 			class="draft-line-head"
-			pointer-events="none"
 		/>
 		{#if pathLength.value >= 3}
 			<circle
@@ -237,6 +287,7 @@
 				role="button"
 				tabindex="-1"
 				class="capture-spot"
+				class:snapped={draftSnappedClose.value}
 			></circle>
 		{/if}
 		{#if pathLength.value > 0}
@@ -248,13 +299,13 @@
 				fill="#ffcec0"
 				stroke-opacity={pointerId.value === undefined ? 1 : 0}
 				class="capture-spot"
+				class:snapped={draftSnappedFinish.value}
 			></circle>
 
 			<circle
 				cx={pathHead.value.x}
 				cy={pathHead.value.y}
 				r={(snapRadius / 2) * cameraScale.value}
-				pointer-events="none"
 				fill="#ff6e60"
 			></circle>
 		{/if}
@@ -297,16 +348,12 @@
 		vector-effect: non-scaling-stroke;
 	}
 
-	.capture-spot:hover {
+	.capture-spot.snapped {
 		fill: #ff6e60;
 		opacity: 1;
 	}
 
 	.dragging {
 		cursor: move;
-	}
-
-	circle {
-		pointer-events: fill;
 	}
 </style>
