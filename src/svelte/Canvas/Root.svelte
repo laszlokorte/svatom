@@ -747,6 +747,7 @@
 				frameBoxPath,
 				cameraScale,
 				rotationTransform,
+				newDrawing,
 			},
 		},
 		spline: {
