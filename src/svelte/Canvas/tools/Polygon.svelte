@@ -67,48 +67,23 @@
 	const draftSnappedFinish = view(
 		[
 			"type",
-			L.lens(R.equals("close"), (force, old) => (force ? "close" : old)),
-		],
-		draft,
-	);
-	const draftSnappedClose = view(
-		[
-			"type",
 			L.lens(R.equals("finish"), (force, old) =>
 				force ? "finish" : old,
 			),
 		],
 		draft,
 	);
+	const draftSnappedClose = view(
+		[
+			"type",
+			L.lens(R.equals("close"), (force, old) => (force ? "close" : old)),
+		],
+		draft,
+	);
 
 	const startPath = view([L.index(0), L.defaults(false)], path);
 	const currentPath = view(
-		[
-			L.setter(
-				// discard very close samples
-				R.dropRepeatsWith(
-					R.compose(
-						(x) => x < cameraScale.value * 10,
-						Math.sqrt,
-						R.uncurryN(
-							2,
-							C.Phi1(R.add)(
-								C.Psi(R.compose((x) => x * x, R.subtract))(
-									R.prop("x"),
-								),
-							)(
-								C.Psi(R.compose((x) => x * x, R.subtract))(
-									R.prop("y"),
-								),
-							),
-						),
-					),
-				),
-			),
-			L.appendTo,
-			L.removable("x", "y"),
-			L.defaults(false),
-		],
+		[L.appendTo, L.removable("x", "y"), L.defaults(false)],
 		path,
 	);
 
@@ -143,6 +118,9 @@
 	const pathLength = read([L.valueOr([]), "length"], path);
 	const pathRoot = read([0], path);
 	const pathHead = read(L.last, path);
+
+	const pathCanFinish = read(R.lt(1), pathLength);
+	const pathCanClose = read(R.lt(2), pathLength);
 </script>
 
 <g
@@ -170,7 +148,6 @@
 			if (pointerId.value !== undefined) {
 				pointerId.value = undefined;
 			} else {
-				evt.preventDefault();
 				newDrawing.value = path.value;
 				path.value = undefined;
 			}
@@ -181,12 +158,11 @@
 
 		if (!startPath.value) {
 			currentPath.value = p;
-			freeDraft.value = p;
+			finishDraft.value = pathRoot.value;
 
 			pointerId.value = evt.pointerId;
 		} else if (
-			pathRoot.value &&
-			pathLength.value < 2 &&
+			!pathCanClose.value &&
 			Math.hypot(pathRoot.value.x - p.x, pathRoot.value.y - p.y) <
 				cameraScale.value * snapRadius
 		) {
@@ -194,6 +170,22 @@
 			pointerId.value = undefined;
 		} else {
 			pointerId.value = evt.pointerId;
+
+			if (
+				pathCanFinish.value &&
+				Math.hypot(pathHead.value.x - p.x, pathHead.value.y - p.y) <
+					cameraScale.value * snapRadius
+			) {
+				finishDraft.value = pathHead.value;
+			} else if (
+				pathCanClose.value &&
+				Math.hypot(pathRoot.value.x - p.x, pathRoot.value.y - p.y) <
+					cameraScale.value * snapRadius
+			) {
+				closeDraft.value = pathRoot.value;
+			} else {
+				freeDraft.value = p;
+			}
 		}
 	}}
 	onpointermove={(evt) => {
@@ -203,18 +195,17 @@
 		) {
 			const p = clientToCanvas(evt.clientX, evt.clientY);
 			if (
-				pathHead.value &&
+				pathCanFinish.value &&
 				Math.hypot(pathHead.value.x - p.x, pathHead.value.y - p.y) <
 					cameraScale.value * snapRadius
 			) {
-				closeDraft.value = pathHead.value;
+				finishDraft.value = pathHead.value;
 			} else if (
-				pathLength.value >= 3 &&
-				pathRoot.value &&
+				pathCanClose.value &&
 				Math.hypot(pathRoot.value.x - p.x, pathRoot.value.y - p.y) <
 					cameraScale.value * snapRadius
 			) {
-				finishDraft.value = pathRoot.value;
+				closeDraft.value = pathRoot.value;
 			} else {
 				freeDraft.value = p;
 			}
@@ -225,30 +216,26 @@
 			const p = clientToCanvas(evt.clientX, evt.clientY);
 
 			if (
-				pathHead.value &&
+				pathCanFinish.value &&
 				Math.hypot(pathHead.value.x - p.x, pathHead.value.y - p.y) <
 					cameraScale.value * snapRadius
 			) {
-				if (pathLength.value > 1) {
-					finishDraft.value = pathHead.value;
-					currentPath.value = pathHead.value;
-					evt.preventDefault();
-					newDrawing.value = path.value;
-					path.value = undefined;
-				}
+				finishDraft.value = pathHead.value;
+				currentPath.value = pathHead.value;
+				newDrawing.value = path.value;
+				path.value = undefined;
 			} else if (
-				pathRoot.value &&
-				pathLength.value >= 3 &&
+				pathCanClose.value &&
 				Math.hypot(pathRoot.value.x - p.x, pathRoot.value.y - p.y) <
 					cameraScale.value * snapRadius
 			) {
 				closeDraft.value = pathRoot.value;
 				currentPath.value = pathRoot.value;
-				evt.preventDefault();
 				newDrawing.value = path.value;
 				path.value = undefined;
 			} else {
 				currentPath.value = draftPos.value;
+				finishDraft.value = pathHead.value;
 				pointerId.value = undefined;
 			}
 		}
@@ -277,7 +264,7 @@
 			fill="none"
 			class="draft-line-head"
 		/>
-		{#if pathLength.value >= 3}
+		{#if pathCanClose.value}
 			<circle
 				cx={pathRoot.value.x}
 				cy={pathRoot.value.y}
