@@ -161,8 +161,17 @@ export function bindEvents(node, cam) {
 	let baseRot
 	let baseScale
 	let basePivot
+	let prevTouchCount
 	function onGestureChange(evt) {
-		evt.preventDefault()
+		// if(fingerCount !== prevTouchCount) {
+		// 	baseRot = evt.rotation
+		// 	baseScale = evt.scale
+		// 	basePivot = {
+		// 		x: evt.clientX,
+		// 		y: evt.clientY,
+		// 	}
+		// 	prevTouchCount = fingerCount
+		// } 
 		svgPoint.x = evt.clientX
 		svgPoint.y = evt.clientY
 
@@ -173,40 +182,34 @@ export function bindEvents(node, cam) {
 		rotationDelta.value = {
 			px: px,
 			py: py,
-			dw: evt.rotation - baseRot,
+			dw: (evt.rotation - baseRot) % 360,
 		}
-
 
 		baseRot = evt.rotation
 	
-
 		zoomDelta.value = {
 			px: px,
 			py: py,
 			dz: Math.log(evt.scale / baseScale),
 		}
 
-
 		baseScale = evt.scale
 
+
+		if(fingerCount < 3) {
 		panDelta.value = {
 			dx: basePivot.x - evt.clientX,
 			dy: basePivot.y - evt.clientY,
+		}
 		}
 
 		basePivot = {
 			x: evt.clientX,
 			y: evt.clientY,
 		}
-
 	};
 
 	function onGestureStart(evt) {
-		evt.preventDefault()
-
-		svgPoint.x = evt.clientX
-		svgPoint.y = evt.clientY
-
 		baseRot = evt.rotation
 		baseScale = evt.scale
 
@@ -222,22 +225,22 @@ export function bindEvents(node, cam) {
 	function onPointerStart(evt) {
 		pointerIds.push(evt.pointerId)
 
-		if(pointerIds.length > 1) {
-			for(let i of pointerIds) {
-				node.setPointerCapture(i)
-			}
-		}
+		// if(pointerIds.length > 1) {
+		// 	for(let i of pointerIds) {
+		// 		node.setPointerCapture(i)
+		// 	}
+		// }
 	}
 
 	function onPointerEnd(evt) {
 		removeItemOnce(pointerIds, evt.pointerId)
-		node.releasePointerCapture(evt.pointerId)
+		// node.releasePointerCapture(evt.pointerId)
 
-		if(pointerIds.length < 2) {
-			for(let i of pointerIds) {
-				node.releasePointerCapture(i)
-			}
-		}
+		// if(pointerIds.length < 2) {
+		// 	for(let i of pointerIds) {
+		// 		node.releasePointerCapture(i)
+		// 	}
+		// }
 	}
 
 	function onPointerMove(evt) {
@@ -245,6 +248,21 @@ export function bindEvents(node, cam) {
 			evt.stopImmediatePropagation()
 			evt.stopPropagation()
 		}
+	}
+
+	let fingerCount = 0
+	function onTouchStart(evt) {
+		fingerCount += evt.changedTouches.length
+	}
+
+	function onTouchEnd(evt) {
+		fingerCount -= evt.changedTouches.length
+	}
+	function onTouchCancel(evt) {
+		fingerCount -= evt.changedTouches.length
+	}
+
+	function onTouchMove(evt) {
 	}
 
 	function removeItemOnce(arr, value) {
@@ -262,8 +280,16 @@ export function bindEvents(node, cam) {
 	node.addEventListener('pointermove', onPointerMove, true)
 	node.addEventListener('pointercancel', onPointerEnd, true)
 	node.addEventListener('pointerup', onPointerEnd, true)
+	node.addEventListener('touchstart', onTouchStart, true)
+	node.addEventListener('touchmove', onTouchMove, true)
+	node.addEventListener('touchcancel', onTouchCancel, true)
+	node.addEventListener('touchend', onTouchEnd, true)
 
 	return () => {
+		node.removeEventListener('touchstart', onTouchStart, true)
+		node.removeEventListener('touchmove', onTouchMove, true)
+		node.removeEventListener('touchcancel', onTouchCancel, true)
+		node.removeEventListener('touchend', onTouchEnd, true)
 		node.removeEventListener('pointerup', onPointerEnd, true)
 		node.removeEventListener('pointermove', onPointerMove, true)
 		node.removeEventListener('pointercancel', onPointerEnd, true)

@@ -1890,6 +1890,9 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		cursor: default;
+		border-radius: none;
+		-webkit-appearance: none;
+		-webkit-border-radius: 0px;
 	}
 
 	input.doc-tab-titel:focus {
@@ -1935,6 +1938,7 @@
 		align-self: stretch;
 		font-weight: bold;
 		visibility: hidden;
+		border-radius: none;
 	}
 
 	.doc-tab-del > svg {
