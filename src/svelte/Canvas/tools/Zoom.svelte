@@ -145,6 +145,11 @@
 			pointerId.value = undefined;
 		}
 	}}
+	onlostpointercapture={(evt) => {
+		if (pointerId.value === evt.pointerId) {
+			pointerId.value = undefined;
+		}
+	}}
 />
 
 <g transform={rotationTransform.value}>

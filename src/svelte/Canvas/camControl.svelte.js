@@ -87,13 +87,43 @@ function zoomWithPivotZeroDelta(cam) {
 	}
 }
 
+export function panWithPivot(delta, orig) {
+  	const newX = orig.x + delta.dx
+    const newY = orig.y + delta.dy
+
+	return {
+		...orig,
+		x: newX,
+		y: newY,
+	}
+}
+
+export function panWithPivotScreen(delta, orig) {
+  	const sin = Math.sin(Math.PI / 180 * orig.w)
+  	const cos = Math.cos(Math.PI / 180 * orig.w)
+
+	return panWithPivot({
+		dx: (cos*delta.dx + sin*delta.dy) * Math.exp(-orig.z), 
+		dy: (-sin*delta.dx + cos*delta.dy) * Math.exp(-orig.z), 
+	}, orig)
+}
+
+function panWithPivotZeroDelta(cam) {
+	return {
+		dx: 0,
+		dy: 0,
+	}
+}
+
 const pivotZoomLens = L.lens(zoomWithPivotZeroDelta, zoomWithPivotScreen)
 const pivotRotationLens =  L.lens(rotateWithPivotZeroDelta, rotateWithPivotScreen)
+const panLens =  L.lens(panWithPivotZeroDelta, panWithPivotScreen)
 
 
 export function bindEvents(node, cam) {
 	const zoomDelta = view(['focus', pivotZoomLens], cam)
 	const rotationDelta = view(['focus', pivotRotationLens], cam)
+	const panDelta = view(['focus', panLens], cam)
 
 	const svgPoint = node.createSVGPoint()
 
@@ -128,9 +158,118 @@ export function bindEvents(node, cam) {
 		}
 	}
 
+	let baseRot
+	let baseScale
+	let basePivot
+	function onGestureChange(evt) {
+		evt.preventDefault()
+		svgPoint.x = evt.clientX
+		svgPoint.y = evt.clientY
+
+		const {x:px,y:py} = svgPoint.matrixTransform(
+			node.getScreenCTM().inverse(),
+		)
+
+		rotationDelta.value = {
+			px: px,
+			py: py,
+			dw: evt.rotation - baseRot,
+		}
+
+
+		baseRot = evt.rotation
+	
+
+		zoomDelta.value = {
+			px: px,
+			py: py,
+			dz: Math.log(evt.scale / baseScale),
+		}
+
+
+		baseScale = evt.scale
+
+		panDelta.value = {
+			dx: basePivot.x - evt.clientX,
+			dy: basePivot.y - evt.clientY,
+		}
+
+		basePivot = {
+			x: evt.clientX,
+			y: evt.clientY,
+		}
+
+	};
+
+	function onGestureStart(evt) {
+		evt.preventDefault()
+
+		svgPoint.x = evt.clientX
+		svgPoint.y = evt.clientY
+
+		baseRot = evt.rotation
+		baseScale = evt.scale
+
+		basePivot = {
+			x: evt.clientX,
+			y: evt.clientY,
+		}
+
+	};
+
+	const pointerIds = []
+
+	function onPointerStart(evt) {
+		pointerIds.push(evt.pointerId)
+
+		if(pointerIds.length > 1) {
+			for(let i of pointerIds) {
+				node.setPointerCapture(i)
+			}
+		}
+	}
+
+	function onPointerEnd(evt) {
+		removeItemOnce(pointerIds, evt.pointerId)
+		node.releasePointerCapture(evt.pointerId)
+
+		if(pointerIds.length < 2) {
+			for(let i of pointerIds) {
+				node.releasePointerCapture(i)
+			}
+		}
+	}
+
+	function onPointerMove(evt) {
+		if(pointerIds.length > 1) {
+			evt.stopImmediatePropagation()
+			evt.stopPropagation()
+		}
+	}
+
+	function removeItemOnce(arr, value) {
+	  let index = arr.indexOf(value);
+	  if (index > -1) {
+	    arr.splice(index, 1);
+	  }
+	  return arr;
+	}
+
 	node.addEventListener('wheel', onWheel, { passive:false })
+	node.addEventListener('gesturestart', onGestureStart, false)
+	node.addEventListener('gesturechange', onGestureChange, false)
+	node.addEventListener('pointerdown', onPointerStart, true)
+	node.addEventListener('pointermove', onPointerMove, true)
+	node.addEventListener('pointercancel', onPointerEnd, true)
+	node.addEventListener('pointerup', onPointerEnd, true)
 
 	return () => {
+		node.removeEventListener('pointerup', onPointerEnd, true)
+		node.removeEventListener('pointermove', onPointerMove, true)
+		node.removeEventListener('pointercancel', onPointerEnd, true)
+		node.removeEventListener('pointerdown', onPointerStart, true)
+		node.removeEventListener('gesturechange', onGestureStart, false)
+		node.removeEventListener('gesturestart', onGestureChange, false)
 		node.removeEventListener('wheel', onWheel, { passive:false })
 	}
 }
