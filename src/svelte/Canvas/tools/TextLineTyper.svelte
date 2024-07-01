@@ -120,6 +120,7 @@
 								x: position.value.x,
 								y: position.value.y,
 								content: text.value,
+								fontSize: fontSize.value,
 							};
 						}
 						position.value = undefined;
@@ -142,6 +143,7 @@
 									x: position.value.x,
 									y: position.value.y,
 									content: text.value,
+									fontSize: fontSize.value,
 								};
 							}
 							position.value = undefined;

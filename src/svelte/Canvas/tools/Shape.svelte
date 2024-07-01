@@ -154,26 +154,29 @@
 			class="shape"
 			pointer-events="none"
 		/>
-		<svg
-			x={shapeStart.value.x + Math.min(0, shapeSize.value.x)}
-			y={shapeStart.value.y + Math.min(0, shapeSize.value.y)}
-			width={Math.abs(shapeSize.value.x)}
-			height={Math.abs(shapeSize.value.y)}
+		<g
 			transform="rotate({shapeAngle.value}, {shapeStart.value
 				.x}, {shapeStart.value.y})"
-			viewBox={template.value.box}
-			preserveAspectRatio="xMidYMid meet"
 		>
-			<g
-				transform=" scale({Math.sign(shapeSize.value.x)}, {Math.sign(
-					shapeSize.value.y,
-				)})"
+			<svg
+				x={shapeStart.value.x + Math.min(0, shapeSize.value.x)}
+				y={shapeStart.value.y + Math.min(0, shapeSize.value.y)}
+				width={Math.abs(shapeSize.value.x)}
+				height={Math.abs(shapeSize.value.y)}
+				viewBox={template.value.box}
+				preserveAspectRatio="xMidYMid meet"
 			>
-				{#each template.value.paths as p, i (i)}
-					<path d={p.path} fill={p.fill} />
-				{/each}
-			</g>
-		</svg>
+				<g
+					transform=" scale({Math.sign(
+						shapeSize.value.x,
+					)}, {Math.sign(shapeSize.value.y)})"
+				>
+					{#each template.value.paths as p, i (i)}
+						<path d={p.path} fill={p.fill} />
+					{/each}
+				</g>
+			</svg></g
+		>
 	{/if}
 </g>
 

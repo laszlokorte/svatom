@@ -27,25 +27,30 @@
 
 <g pointer-events="none" transform={rotationTransform.value}>
 	{#each shapes.value as shape}
-		<svg
-			x={shape.placement.start.x + Math.min(0, shape.placement.size.x)}
-			y={shape.placement.start.y + Math.min(0, shape.placement.size.y)}
-			width={Math.abs(shape.placement.size.x)}
-			height={Math.abs(shape.placement.size.y)}
+		<g
 			transform="rotate({shape.placement.angle}, {shape.placement.start
 				.x}, {shape.placement.start.y})"
-			viewBox={shape.content.box}
-			preserveAspectRatio="xMidYMid meet"
 		>
-			<g
-				transform=" scale({Math.sign(
-					shape.placement.size.x,
-				)}, {Math.sign(shape.placement.size.y)})"
+			<svg
+				x={shape.placement.start.x +
+					Math.min(0, shape.placement.size.x)}
+				y={shape.placement.start.y +
+					Math.min(0, shape.placement.size.y)}
+				width={Math.abs(shape.placement.size.x)}
+				height={Math.abs(shape.placement.size.y)}
+				viewBox={shape.content.box}
+				preserveAspectRatio="xMidYMid meet"
 			>
-				{#each shape.content.paths as p, i (i)}
-					<path d={p.path} fill={p.fill} />
-				{/each}
-			</g>
-		</svg>
+				<g
+					transform=" scale({Math.sign(
+						shape.placement.size.x,
+					)}, {Math.sign(shape.placement.size.y)})"
+				>
+					{#each shape.content.paths as p, i (i)}
+						<path d={p.path} fill={p.fill} />
+					{/each}
+				</g>
+			</svg>
+		</g>
 	{/each}
 </g>
