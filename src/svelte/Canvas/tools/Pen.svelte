@@ -78,7 +78,6 @@
 	role="button"
 	tabindex="-1"
 	onkeydown={(evt) => {
-		alert("x");
 		if (evt.key === "Escape" || evt.key === "Esc") {
 			pointerId.value = undefined;
 		}

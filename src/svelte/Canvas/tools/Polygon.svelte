@@ -161,6 +161,9 @@
 				path.value = [];
 			}
 		}
+		if (evt.key === "b") {
+			path.value = path.value.slice(0, path.value.length - 1);
+		}
 		evt.currentTarget.releasePointerCapture(evt.pointerId);
 	}}
 	oncontextmenu={(evt) => {
@@ -331,7 +334,7 @@
 				r={snapRadiusVisual * cameraScale.value}
 				role="button"
 				tabindex="-1"
-				class="capture-spot"
+				class="capture-spot close"
 				class:snapped={draftSnappedClose.value}
 			></circle>
 		{/if}
@@ -340,7 +343,7 @@
 				cx={pathHead.value.x}
 				cy={pathHead.value.y}
 				r={snapRadiusVisual * cameraScale.value}
-				class="capture-spot"
+				class="capture-spot finish"
 				class:snapped={draftSnappedFinish.value}
 			></circle>
 
@@ -348,7 +351,7 @@
 				cx={pathHead.value.x}
 				cy={pathHead.value.y}
 				r={(snapRadiusVisual / 2) * cameraScale.value}
-				fill="#ff6e60"
+				class="capture-spot-center"
 			></circle>
 		{/if}
 		{#if pathNeck.value}
@@ -373,9 +376,9 @@
 
 	.draft-line {
 		fill: none;
-		stroke: #ff6e60;
+		stroke: darkgray;
 		stroke-width: 3px;
-		stroke-opacity: 0.6;
+		stroke-opacity: 0.8;
 		vector-effect: non-scaling-stroke;
 		stroke-linecap: round;
 		stroke-linejoin: round;
@@ -383,10 +386,9 @@
 
 	.draft-line-head {
 		fill: none;
-		stroke: #ff6e60;
-		fill-opacity: 0.2;
+		stroke: darkgray;
 		stroke-width: 3px;
-		stroke-opacity: 0.1;
+		stroke-opacity: 0.3;
 		vector-effect: non-scaling-stroke;
 		stroke-linecap: round;
 		stroke-linejoin: round;
@@ -401,15 +403,34 @@
 		fill: #ffcec0;
 		vector-effect: non-scaling-stroke;
 	}
+	.capture-spot.close {
+		stroke: #0e70dd;
+		fill: #3ea0ff;
+		vector-effect: non-scaling-stroke;
+	}
+	.capture-spot.finish {
+		stroke: #1e9910;
+		fill: #5edd50;
+		vector-effect: non-scaling-stroke;
+	}
+	.capture-spot-center {
+		fill: #1e9910;
+	}
+
+	.capture-spot.snapped {
+		fill: #ff6e60;
+	}
+	.capture-spot.close.snapped {
+		fill: #0e70dd;
+	}
+	.capture-spot.finish.snapped {
+		fill: #1e9910;
+	}
 
 	.cancel-spot {
 		stroke: #aa0000;
 		fill: #ff8888;
 		vector-effect: non-scaling-stroke;
-	}
-
-	.capture-spot.snapped {
-		fill: #ff6e60;
 	}
 
 	.cancel-spot.snapped {

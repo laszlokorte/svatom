@@ -43,6 +43,7 @@
 	import Polygon from "./tools/Polygon.svelte";
 	import Spline from "./tools/Spline.svelte";
 	import Shape from "./tools/Shape.svelte";
+	import Shapes from "./tools/Shapes.svelte";
 
 	import RubberBand from "./tools/RubberBand.svelte";
 	import Nodes from "./tools/Nodes.svelte";
@@ -122,8 +123,35 @@
 	}
 
 	const debugFrames = atom(false);
-	const camera = atom({
-		focus: { x: 100, y: -50, z: 0, w: 20 },
+
+	const allTabs = atom({
+		current: 0,
+		tabs: [
+			{
+				document: {
+					content: {
+						axis: {
+							start: { x: 0, y: 0 },
+							size: { x: 200, y: -200 },
+							angle: 0,
+						},
+						nodes: [{ x: 200, y: 100 }],
+						textes: [
+							{
+								x: 119.35297908638951,
+								y: -70.289311950847,
+								fontSize: 0.8922579558824082,
+								content: "Hello World",
+							},
+						],
+					},
+				},
+				camera: { x: 100, y: -50, z: 0, w: 20 },
+			},
+		],
+	});
+
+	const cameraSettings = atom({
 		plane: {
 			autosize: true,
 			x: 1000,
@@ -140,6 +168,48 @@
 			},
 		},
 	});
+
+	const cameraFocus = view(
+		[
+			L.choose(({ current, docs }) => [
+				"tabs",
+				L.defaults([]),
+				L.choices(current, L.appendTo),
+				"camera",
+				L.valueOr({ x: 0, y: 0, z: 0, w: 0 }),
+			]),
+		],
+		allTabs,
+	);
+
+	const camera = view(
+		[
+			L.pick({
+				focus: "focus",
+				frame: ["settings", "frame"],
+				plane: ["settings", "plane"],
+			}),
+			L.valueOr({
+				focus: { x: 0, y: 0, z: 0, w: 0 },
+				plane: {
+					autosize: true,
+					x: 1000,
+					y: 1000,
+				},
+				frame: {
+					aspect: "meet",
+					alignX: "Mid",
+					alignY: "Mid",
+					autoPadding: true,
+					size: {
+						x: 100,
+						y: 100,
+					},
+				},
+			}),
+		],
+		combine({ focus: cameraFocus, settings: cameraSettings }),
+	);
 
 	const aspectRatioAlignLens = L.iso(
 		({ alignX, alignY }) => `x${alignX}Y${alignY}`,
@@ -448,63 +518,47 @@
 		),
 	];
 
-	const allCanvasDocuments = atom({
-		current: 0,
-		docs: [
-			{
-				axis: {
-					start: { x: 0, y: 0 },
-					size: { x: 200, y: -200 },
-					angle: 0,
-				},
-				nodes: [{ x: 200, y: 100 }],
-				textes: [
-					{
-						x: 119.35297908638951,
-						y: -70.289311950847,
-						fontSize: 0.8922579558824082,
-						content: "Hello World",
-					},
-				],
-			},
-		],
-	});
 	const canvasDocument = view(
 		[
-			L.choose(({ current, docs }) => ["docs", L.defaults([]), current]),
-			L.defaults({}),
+			L.choose(({ current, docs }) => ["tabs", current, "document"]),
+			L.valueOr({}),
 		],
-		allCanvasDocuments,
+		allTabs,
 	);
 
-	const newDocument = view(
+	const newTab = view(
 		L.setter((n, prev) => ({
-			docs: [...prev.docs, n],
-			current: prev.docs.length,
+			tabs: [...prev.tabs, n],
+			current: prev.tabs.length,
 		})),
-		allCanvasDocuments,
+		allTabs,
 	);
 
-	const documentIds = view(
+	const tabIds = view(
 		[
-			"docs",
+			"tabs",
 			L.valueOr([]),
 			L.lens(R.compose(R.range(0), R.length), (newIds, olds) =>
 				R.map((i) => olds[i], newIds),
 			),
 		],
-		allCanvasDocuments,
+		allTabs,
 	);
-	const currentDocumentId = view("current", allCanvasDocuments);
+	const currentTabId = view("current", allTabs);
 
 	const tool = atom("pen");
-	const nodes = view("nodes", canvasDocument);
-	const textes = view(["textes", L.defaults([])], canvasDocument);
-	const textBoxes = view(["textBoxes", L.defaults([])], canvasDocument);
-	const guides = view(["guides", L.defaults([])], canvasDocument);
-	const axis = view(["axis"], canvasDocument);
-	const drawings = view(["drawings", L.defaults([])], canvasDocument);
-	const drafts = atom([]);
+	const currentDocumentContent = view(["content"], canvasDocument);
+
+	const nodes = view("nodes", currentDocumentContent);
+	const textes = view(["textes", L.defaults([])], currentDocumentContent);
+	const textBoxes = view(
+		["textBoxes", L.defaults([])],
+		currentDocumentContent,
+	);
+	const guides = view(["guides", L.defaults([])], currentDocumentContent);
+	const axis = view(["axis"], currentDocumentContent);
+	const drawings = view(["drawings", L.defaults([])], currentDocumentContent);
+	const shapes = view(["shapes", L.defaults([])], currentDocumentContent);
 	const rubberBand = atom(undefined);
 	const newNode = view([L.appendTo, L.required("x", "y")], nodes);
 
@@ -512,6 +566,7 @@
 		[L.appendTo, L.setter((n, o) => (n.length > 1 ? n : o))],
 		drawings,
 	);
+	const newShape = view([L.appendTo], shapes);
 	const newGuide = view([L.appendTo], guides);
 	const newAxis = view(L.identity, axis);
 
@@ -539,7 +594,7 @@
 		});
 	}
 
-	const extension = calculateBoundingBox(100, canvasDocument, {
+	const extension = calculateBoundingBox(100, currentDocumentContent, {
 		nodes: L.elems,
 		drawings: [L.elems, L.elems],
 		axis: [
@@ -769,6 +824,8 @@
 				frameBoxPath,
 				cameraScale,
 				rotationTransform,
+				cameraOrientation,
+				newShape,
 			},
 		},
 		magnifier: {
@@ -1344,7 +1401,7 @@
 		<button
 			class="doc-tab-action"
 			type="button"
-			onclick={() => (newDocument.value = {})}
+			onclick={() => (newTab.value = {})}
 			><svg width="32" height="32" viewBox="-16 -16 32 32">
 				<title>New</title>
 				<path
@@ -1358,15 +1415,17 @@
 			</svg></button
 		>
 		<hr class="tool-bar-sep" />
-		{#each documentIds.value as d}
+		{#each tabIds.value as d}
 			{@const docName = view(
-				["docs", d, "title", L.defaults("")],
-				allCanvasDocuments,
+				["tabs", d, "document", "title", L.defaults("")],
+				allTabs,
 			)}
 			{@const fallbackName = view(
 				[
-					"docs",
+					"tabs",
 					d,
+					"document",
+					"content",
 					L.choices(
 						["textes", L.first, "content"],
 						["textBoxes", L.first, "content"],
@@ -1378,13 +1437,10 @@
 						L.inverse(L.dropPrefix("untitled - ")),
 					),
 				],
-				allCanvasDocuments,
+				allTabs,
 			)}
-			<span
-				class="doc-tab-group"
-				class:active={d === currentDocumentId.value}
-			>
-				{#if d === currentDocumentId.value}
+			<span class="doc-tab-group" class:active={d === currentTabId.value}>
+				{#if d === currentTabId.value}
 					<input
 						placeholder={fallbackName.value}
 						class="doc-tab-titel"
@@ -1397,7 +1453,7 @@
 						class="doc-tab-titel"
 						class:active={false}
 						class:untitled={!docName.value}
-						onclick={() => (currentDocumentId.value = d)}
+						onclick={() => (currentTabId.value = d)}
 						>{docName.value || fallbackName.value}</button
 					>
 				{/if}
@@ -1405,9 +1461,9 @@
 					type="button"
 					class="doc-tab-del"
 					onclick={() => {
-						view(d, documentIds).value = undefined;
+						view(d, tabIds).value = undefined;
 					}}
-					class:active={d === currentDocumentId.value}
+					class:active={d === currentTabId.value}
 					title="Close"
 				>
 					<svg width="10" height="10" viewBox="-16 -16 32 32">
@@ -1432,12 +1488,7 @@
 		<button
 			type="button"
 			onclick={() => {
-				nodes.value = [];
-				drawings.value = [];
-				guides.value = [];
-				textes.value = [];
-				textBoxes.value = [];
-				axis.value = undefined;
+				currentDocumentContent.value = {};
 				if (currentToolElement.value.cancel) {
 					currentToolElement.value.cancel();
 				}
@@ -1529,6 +1580,12 @@
 
 				<Guides
 					{guides}
+					{frameBoxObject}
+					{rotationTransform}
+					{cameraScale}
+				/>
+				<Shapes
+					{shapes}
 					{frameBoxObject}
 					{rotationTransform}
 					{cameraScale}
@@ -1750,6 +1807,8 @@
 
 	.tool-button {
 		background: #555;
+		user-select: none;
+		touch-action: none;
 	}
 
 	.tool-button:has(:checked) {
