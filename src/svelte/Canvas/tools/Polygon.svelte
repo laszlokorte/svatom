@@ -20,10 +20,11 @@
 	} = $props();
 
 	const snapRadius = 8;
+	const snapRadiusVisual = 8;
 
 	const polygon = atom({ path: [], draft: null });
 	const pointerId = view(["pointerId"], polygon);
-	const path = view([L.removable("path"), "path"], polygon);
+	const path = view([L.removable("path"), "path", L.defaults([])], polygon);
 	const draft = view(["draft"], polygon);
 	const freeDraft = view(
 		[
@@ -63,6 +64,16 @@
 		],
 		draft,
 	);
+	const popDraft = view(
+		[
+			L.pick({
+				pos: "pos",
+				type: ["type", L.define("pop"), L.normalize(R.always("pop"))],
+			}),
+			"pos",
+		],
+		draft,
+	);
 	const draftPos = view("pos", draft);
 	const draftSnappedFinish = view(
 		[
@@ -77,6 +88,13 @@
 		[
 			"type",
 			L.lens(R.equals("close"), (force, old) => (force ? "close" : old)),
+		],
+		draft,
+	);
+	const draftSnappedPop = view(
+		[
+			"type",
+			L.lens(R.equals("pop"), (force, old) => (force ? "pop" : old)),
 		],
 		draft,
 	);
@@ -118,74 +136,95 @@
 	const pathLength = read([L.valueOr([]), "length"], path);
 	const pathRoot = read([0], path);
 	const pathHead = read(L.last, path);
+	const pathNeck = read(
+		L.choose((l) => (l && l.length >= 2 ? l.length - 2 : L.zero)),
+		path,
+	);
 
 	const pathCanFinish = read(R.lt(1), pathLength);
 	const pathCanClose = read(R.lt(2), pathLength);
+	const pathCanPop = read(R.lt(1), pathLength);
+
+	export function cancel() {
+		pointerId.value = undefined;
+		path.value = [];
+	}
 </script>
 
 <g
 	role="button"
 	tabindex="-1"
+	class:dragging={pointerId.value !== undefined}
 	onkeydown={(evt) => {
 		if (evt.key === "Escape" || evt.key === "Esc") {
-			if (pointerId.value !== undefined && pathLength.value > 1) {
-				pointerId.value = undefined;
-			} else {
-				path.value = undefined;
+			if (pointerId.value === undefined) {
+				path.value = [];
 			}
 		}
+		evt.currentTarget.releasePointerCapture(evt.pointerId);
 	}}
 	oncontextmenu={(evt) => {
 		evt.preventDefault();
-		if (pointerId.value !== undefined) {
-			pointerId.value = undefined;
-		}
+		evt.currentTarget.releasePointerCapture(evt.pointerId);
+	}}
+	ongotpointercapture={(evt) => {
+		pointerId.value = evt.pointerId;
+	}}
+	onlostpointercapture={(evt) => {
+		pointerId.value = undefined;
 	}}
 	onpointerdown={(evt) => {
 		if (!evt.isPrimary) {
 			return;
 		} else if (!U.isLeftButton(evt)) {
 			if (pointerId.value !== undefined) {
-				pointerId.value = undefined;
-			} else {
+				evt.currentTarget.releasePointerCapture(evt.pointerId);
+			} else if (pathCanFinish.value) {
 				newDrawing.value = path.value;
-				path.value = undefined;
+				path.value = [];
 			}
 			return;
 		}
 
 		const p = clientToCanvas(evt.clientX, evt.clientY);
+		evt.currentTarget.setPointerCapture(evt.pointerId);
 
 		if (!startPath.value) {
 			currentPath.value = p;
 			finishDraft.value = pathRoot.value;
-
-			pointerId.value = evt.pointerId;
 		} else if (
-			!pathCanClose.value &&
+			!pathCanFinish.value &&
 			Math.hypot(pathRoot.value.x - p.x, pathRoot.value.y - p.y) <
-				cameraScale.value * snapRadius
+				cameraScale.value * snapRadius +
+					Math.hypot(evt.width, evt.height) / 2
 		) {
-			path.value = undefined;
-			pointerId.value = undefined;
-		} else {
-			pointerId.value = evt.pointerId;
+			path.value = [];
+			return;
+		}
 
-			if (
-				pathCanFinish.value &&
-				Math.hypot(pathHead.value.x - p.x, pathHead.value.y - p.y) <
-					cameraScale.value * snapRadius
-			) {
-				finishDraft.value = pathHead.value;
-			} else if (
-				pathCanClose.value &&
-				Math.hypot(pathRoot.value.x - p.x, pathRoot.value.y - p.y) <
-					cameraScale.value * snapRadius
-			) {
-				closeDraft.value = pathRoot.value;
-			} else {
-				freeDraft.value = p;
-			}
+		if (
+			pathCanFinish.value &&
+			Math.hypot(pathHead.value.x - p.x, pathHead.value.y - p.y) <
+				cameraScale.value * snapRadius +
+					Math.hypot(evt.width, evt.height) / 2
+		) {
+			finishDraft.value = pathHead.value;
+		} else if (
+			pathCanClose.value &&
+			Math.hypot(pathRoot.value.x - p.x, pathRoot.value.y - p.y) <
+				cameraScale.value * snapRadius +
+					Math.hypot(evt.width, evt.height) / 2
+		) {
+			closeDraft.value = pathRoot.value;
+		} else if (
+			pathNeck.value &&
+			Math.hypot(pathNeck.value.x - p.x, pathNeck.value.y - p.y) <
+				cameraScale.value * snapRadius +
+					Math.hypot(evt.width, evt.height) / 2
+		) {
+			popDraft.value = pathNeck.value;
+		} else {
+			freeDraft.value = p;
 		}
 	}}
 	onpointermove={(evt) => {
@@ -195,17 +234,30 @@
 		) {
 			const p = clientToCanvas(evt.clientX, evt.clientY);
 			if (
-				pathCanFinish.value &&
+				pathHead.value &&
 				Math.hypot(pathHead.value.x - p.x, pathHead.value.y - p.y) <
-					cameraScale.value * snapRadius
+					cameraScale.value * snapRadius +
+						Math.hypot(evt.width, evt.height) / 2
 			) {
-				finishDraft.value = pathHead.value;
+				if (pathCanFinish.value) {
+					finishDraft.value = pathHead.value;
+				} else {
+					draftSnappedPop.value = pathNeck.value;
+				}
 			} else if (
 				pathCanClose.value &&
 				Math.hypot(pathRoot.value.x - p.x, pathRoot.value.y - p.y) <
-					cameraScale.value * snapRadius
+					cameraScale.value * snapRadius +
+						Math.hypot(evt.width, evt.height) / 2
 			) {
 				closeDraft.value = pathRoot.value;
+			} else if (
+				pathNeck.value &&
+				Math.hypot(pathNeck.value.x - p.x, pathNeck.value.y - p.y) <
+					cameraScale.value * snapRadius +
+						Math.hypot(evt.width, evt.height) / 2
+			) {
+				popDraft.value = pathNeck.value;
 			} else {
 				freeDraft.value = p;
 			}
@@ -215,28 +267,31 @@
 		if (pointerId.value === evt.pointerId) {
 			const p = clientToCanvas(evt.clientX, evt.clientY);
 
-			if (
-				pathCanFinish.value &&
-				Math.hypot(pathHead.value.x - p.x, pathHead.value.y - p.y) <
-					cameraScale.value * snapRadius
-			) {
+			if (draftSnappedFinish.value) {
 				finishDraft.value = pathHead.value;
 				currentPath.value = pathHead.value;
 				newDrawing.value = path.value;
-				path.value = undefined;
-			} else if (
-				pathCanClose.value &&
-				Math.hypot(pathRoot.value.x - p.x, pathRoot.value.y - p.y) <
-					cameraScale.value * snapRadius
-			) {
-				closeDraft.value = pathRoot.value;
-				currentPath.value = pathRoot.value;
-				newDrawing.value = path.value;
-				path.value = undefined;
+				path.value = [];
+			} else if (draftSnappedClose.value) {
+				if (pathCanClose.value) {
+					closeDraft.value = pathRoot.value;
+					currentPath.value = pathRoot.value;
+					newDrawing.value = path.value;
+					path.value = [];
+				}
+			} else if (draftSnappedPop.value) {
+				path.value = path.value.slice(0, path.value.length - 1);
+				freeDraft.value = p;
 			} else {
-				currentPath.value = draftPos.value;
-				finishDraft.value = pathHead.value;
-				pointerId.value = undefined;
+				if (
+					pathRoot.value &&
+					Math.hypot(pathRoot.value.x - p.x, pathRoot.value.y - p.y) >
+						cameraScale.value * snapRadius +
+							Math.hypot(evt.width, evt.height) / 2
+				) {
+					currentPath.value = draftPos.value;
+					finishDraft.value = pathHead.value;
+				}
 			}
 		}
 	}}
@@ -250,27 +305,30 @@
 		use:disableTouchEventsIf={startPath}
 		class="polygon-surface"
 		d={frameBoxPath.value}
-		class:dragging={pointerId.value !== undefined}
 		pointer-events="all"
 		stroke="none"
 		fill="none"
 	/>
 
 	<g transform={rotationTransform.value} pointer-events="none">
-		<polyline points={pathPath.value} fill="none" class="draft-line" />
+		<polyline
+			points={pathPath.value}
+			pointer-events="none"
+			fill="none"
+			class="draft-line"
+		/>
 
 		<polyline
 			points={draftPath.value}
 			fill="none"
 			class="draft-line-head"
+			pointer-events="none"
 		/>
 		{#if pathCanClose.value}
 			<circle
 				cx={pathRoot.value.x}
 				cy={pathRoot.value.y}
-				r={snapRadius * cameraScale.value}
-				stroke="#ff6e60"
-				fill="#ffcec0"
+				r={snapRadiusVisual * cameraScale.value}
 				role="button"
 				tabindex="-1"
 				class="capture-spot"
@@ -281,10 +339,7 @@
 			<circle
 				cx={pathHead.value.x}
 				cy={pathHead.value.y}
-				r={snapRadius * cameraScale.value}
-				stroke="#ff6e60"
-				fill="#ffcec0"
-				stroke-opacity={pointerId.value === undefined ? 1 : 0}
+				r={snapRadiusVisual * cameraScale.value}
 				class="capture-spot"
 				class:snapped={draftSnappedFinish.value}
 			></circle>
@@ -292,8 +347,18 @@
 			<circle
 				cx={pathHead.value.x}
 				cy={pathHead.value.y}
-				r={(snapRadius / 2) * cameraScale.value}
+				r={(snapRadiusVisual / 2) * cameraScale.value}
 				fill="#ff6e60"
+			></circle>
+		{/if}
+		{#if pathNeck.value}
+			<circle
+				pointer-events="all"
+				cx={pathNeck.value.x}
+				cy={pathNeck.value.y}
+				r={snapRadiusVisual * cameraScale.value}
+				class="cancel-spot"
+				class:snapped={draftSnappedPop.value}
 			></circle>
 		{/if}
 	</g>
@@ -332,12 +397,23 @@
 	}
 
 	.capture-spot {
+		stroke: #ff6e60;
+		fill: #ffcec0;
+		vector-effect: non-scaling-stroke;
+	}
+
+	.cancel-spot {
+		stroke: #aa0000;
+		fill: #ff8888;
 		vector-effect: non-scaling-stroke;
 	}
 
 	.capture-spot.snapped {
 		fill: #ff6e60;
-		opacity: 1;
+	}
+
+	.cancel-spot.snapped {
+		fill: #aa0000;
 	}
 
 	.dragging {

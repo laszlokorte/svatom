@@ -63,6 +63,7 @@
 	import Zoom from "./tools/Zoom.svelte";
 
 	const svgElement = atom(null);
+	const currentToolElement = atom(null);
 
 	function clientToCanvas(x, y, screen = false) {
 		const screenPoint = U.screenToElementViewbox(
@@ -1437,6 +1438,9 @@
 				textes.value = [];
 				textBoxes.value = [];
 				axis.value = undefined;
+				if (currentToolElement.value.cancel) {
+					currentToolElement.value.cancel();
+				}
 				update(
 					L.set(["focus", L.props("x", "y"), L.values], 0),
 					camera,
@@ -1541,6 +1545,8 @@
 
 			<svelte:component
 				this={tools[tool.value].component}
+				key={tool.value}
+				bind:this={currentToolElement.value}
 				{...tools[tool.value].parameters}
 			></svelte:component>
 		</svg>
