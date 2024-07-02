@@ -9,6 +9,7 @@
 	* smooth pen tool (catmulrom)
 	* calculate world space camera bounds and apply consistently
 	* camera towing (move camera when press cursor outside frame)
+	* Implement Undo/Redo
 
 	* element selection
 	* cull elements outside camera frame
