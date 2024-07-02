@@ -1892,13 +1892,21 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		cursor: default;
-		border-radius: none;
 		-webkit-appearance: none;
+		appearance: none;
 		-webkit-border-radius: 0px;
+		border-radius: none;
+		box-sizing: border-box;
+		border: 2px solid transparent;
+		border-bottom-width: 0;
 	}
 
 	input.doc-tab-titel:focus {
 		cursor: text;
+		background: white;
+		color: #cd3e30;
+		border-color: #cd3e30;
+		text-overflow: initial;
 	}
 
 	@media (hover) {
