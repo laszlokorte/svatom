@@ -162,7 +162,7 @@
 	const scrollerPositionY = view("y", scrollerPosition);
 
 	const scrollerPositionXClamped = read(
-		({ v, max, w }) => R.clamp(0, max - w.x, v),
+		({ v, max, w }) => R.clamp(0, Math.max(0, max - w.x), v),
 		combine({
 			v: scrollerPositionX,
 			max: scrollerSizeX,
@@ -170,7 +170,7 @@
 		}),
 	);
 	const scrollerPositionYClamped = read(
-		({ v, max, w }) => R.clamp(0, max - w.y, v),
+		({ v, max, w }) => R.clamp(0, Math.max(0, max - w.y), v),
 		combine({
 			v: scrollerPositionY,
 			max: scrollerSizeY,
@@ -179,7 +179,7 @@
 	);
 
 	const scrollerPositionXClampedSoft = read(
-		({ v, max, w }) => lerp(R.clamp(0, max - w.x, v), v, 0.8),
+		({ v, max, w }) => lerp(R.clamp(0, Math.max(0, max - w.x), v), v, 0.8),
 		combine({
 			v: scrollerPositionX,
 			max: scrollerSizeX,
@@ -187,7 +187,7 @@
 		}),
 	);
 	const scrollerPositionYClampedSoft = read(
-		({ v, max, w }) => lerp(R.clamp(0, max - w.y, v), v, 0.8),
+		({ v, max, w }) => lerp(R.clamp(0, Math.max(0, max - w.y), v), v, 0.8),
 		combine({
 			v: scrollerPositionY,
 			max: scrollerSizeY,

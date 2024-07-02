@@ -1558,6 +1558,7 @@
 
 <div class="prevent-selection">
 	<Scroller
+		alignment="center"
 		extraScrollPadding={cameraAutoPadding}
 		{scrollPosition}
 		contentSize={scrollContentSize}
