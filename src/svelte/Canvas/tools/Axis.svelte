@@ -99,10 +99,10 @@
 			return;
 		}
 
-		const svgP = clientToCanvas(evt.clientX, evt.clientY);
+		const worldPos = clientToCanvas(evt.clientX, evt.clientY);
 
-		const dx = svgP.x - axisStart.value.x;
-		const dy = svgP.y - axisStart.value.y;
+		const dx = worldPos.x - axisStart.value.x;
+		const dy = worldPos.y - axisStart.value.y;
 		axisSize.value = {
 			x: axisAngleCos.value * dx + axisAngleSin.value * dy,
 			y: -axisAngleSin.value * dx + axisAngleCos.value * dy,

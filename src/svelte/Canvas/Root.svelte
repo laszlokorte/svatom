@@ -37,7 +37,7 @@
 	);
 
 	import Scroller from "../Scroller.svelte";
-	import Creator from "./tools/Creator.svelte";
+	import NodeCreator from "./tools/NodeCreator.svelte";
 	import Lasso from "./tools/Lasso.svelte";
 	import Pen from "./tools/Pen.svelte";
 	import Polygon from "./tools/Polygon.svelte";
@@ -121,6 +121,16 @@
 			y: y - window.scrollY,
 		};
 	}
+
+	const worldPageIso = L.iso(
+		(v) => (v ? clientToPage(canvasToClient(v.x, v.y)) : v),
+		(v) => (v ? clientToCanvasV(pageToClient(v.x, v.y)) : v),
+	);
+
+	const worldClientIso = L.iso(
+		(v) => (v ? canvasToClient(v.x, v.y) : v),
+		(v) => (v ? clientToCanvas(v.x, v.y) : v),
+	);
 
 	const debugFrames = atom(false);
 
@@ -741,8 +751,8 @@
 			},
 		},
 		create: {
-			name: "Create",
-			component: Creator,
+			name: "Node",
+			component: NodeCreator,
 			parameters: {
 				clientToCanvas,
 				frameBoxPath,
@@ -1094,17 +1104,7 @@
 		}),
 	);
 
-	const camClient = view(
-		[
-			"focus",
-			L.props("x", "y"),
-			L.lens(
-				({ x, y }) => clientToPage(canvasToClient(x, y)),
-				({ x, y }) => clientToCanvasV(pageToClient(x, y)),
-			),
-		],
-		camera,
-	);
+	const camClient = view(["focus", L.props("x", "y"), worldPageIso], camera);
 	const camClientX = view("x", camClient);
 	const camClientY = view("y", camClient);
 </script>
@@ -1527,7 +1527,7 @@
 		<svg
 			class="canvas"
 			bind:this={svgElement.value}
-			use:Cam.bindEvents={camera}
+			use:Cam.bindEvents={{ camera, worldClientIso }}
 			viewBox={viewBox.value}
 			preserveAspectRatio={preserveAspectRatio.value}
 		>

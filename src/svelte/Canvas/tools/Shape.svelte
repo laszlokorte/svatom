@@ -25,6 +25,8 @@
 		newShape,
 	} = $props();
 
+	const minSize = 15;
+
 	const template = atom({
 		box: "-35 -50 60 100",
 		paths: [
@@ -49,8 +51,8 @@
 				"size",
 				L.removable("x", "y"),
 				L.pick({
-					x: ["x", L.normalize(R.max(15))],
-					y: ["y", L.normalize(R.max(15))],
+					x: ["x", L.normalize(R.max(minSize))],
+					y: ["y", L.normalize(R.max(minSize))],
 				}),
 			],
 			L.zero,
@@ -103,7 +105,10 @@
 		}
 
 		evt.currentTarget.setPointerCapture(evt.pointerId);
-		shapeStart.value = clientToCanvas(evt.clientX, evt.clientY);
+		shapeStart.value = clientToCanvas(
+			evt.clientX - minSize / 2 / cameraScale.value,
+			evt.clientY - minSize / 2 / cameraScale.value,
+		);
 		shapeSize.value = { x: 0, y: 0 };
 		shapeAngle.value = -cameraOrientation.value;
 	}}

@@ -115,18 +115,17 @@ function panWithPivotZeroDelta(cam) {
 	}
 }
 
-const pivotZoomLens = L.lens(zoomWithPivotZeroDelta, zoomWithPivotScreen)
-const pivotRotationLens =  L.lens(rotateWithPivotZeroDelta, rotateWithPivotScreen)
+const pivotZoomLens = L.lens(zoomWithPivotZeroDelta, zoomWithPivot)
+const pivotRotationLens =  L.lens(rotateWithPivotZeroDelta, rotateWithPivot)
 const panLens =  L.lens(panWithPivotZeroDelta, panWithPivotScreen)
 
 
-export function bindEvents(node, cam) {
-	const zoomDelta = view(['focus', pivotZoomLens], cam)
-	const rotationDelta = view(['focus', pivotRotationLens], cam)
-	const panDelta = view(['focus', panLens], cam)
+export function bindEvents(node, {camera, worldClientIso}) {
+	const eventWorld = [L.props('clientX', 'clientY'), L.pick({x: 'clientX', y: 'clientY'}), L.inverse(worldClientIso), L.props('x','y')]
 
-	const svgPoint = node.createSVGPoint()
-
+	const zoomDelta = view(['focus', pivotZoomLens], camera)
+	const rotationDelta = view(['focus', pivotRotationLens], camera)
+	const panDelta = view(['focus', panLens], camera)
 
 	function onWheel(evt) {
 		if(evt.shiftKey || evt.altKey) {
@@ -135,24 +134,19 @@ export function bindEvents(node, cam) {
 
 		evt.preventDefault()
 		evt.stopPropagation()
-		
-		svgPoint.x = evt.clientX
-		svgPoint.y = evt.clientY
 
-		const svgP = svgPoint.matrixTransform(
-			node.getScreenCTM().inverse(),
-		)
+		const worldPos = L.get(eventWorld, evt)
 
 		if(evt.ctrlKey) {
 			rotationDelta.value = {
-				px: svgP.x,
-				py: svgP.y,
+				px: worldPos.x,
+				py: worldPos.y,
 				dw: -evt.deltaY/1000 * 90,
 			}
 		} else {
 			zoomDelta.value = {
-				px: svgP.x,
-				py: svgP.y,
+				px: worldPos.x,
+				py: worldPos.y,
 				dz: -evt.deltaY/1000,
 			}
 		}
@@ -163,46 +157,40 @@ export function bindEvents(node, cam) {
 	let basePivot
 	let prevTouchCount
 	function onGestureChange(evt) {
-		// if(fingerCount !== prevTouchCount) {
-		// 	baseRot = evt.rotation
-		// 	baseScale = evt.scale
-		// 	basePivot = {
-		// 		x: evt.clientX,
-		// 		y: evt.clientY,
-		// 	}
-		// 	prevTouchCount = fingerCount
-		// } 
-		svgPoint.x = evt.clientX
-		svgPoint.y = evt.clientY
+		const worldPos = L.get(eventWorld, evt)
 
-		const {x:px,y:py} = svgPoint.matrixTransform(
-			node.getScreenCTM().inverse(),
-		)
 
-		rotationDelta.value = {
-			px: px,
-			py: py,
-			dw: (evt.rotation - baseRot) % 360,
+		const dw = Math.atan2(Math.sin((evt.rotation - baseRot)/180*Math.PI), Math.cos((evt.rotation - baseRot)/180*Math.PI))*180/Math.PI
+		const dz = Math.log(evt.scale / baseScale)
+		const dx = basePivot.x - evt.clientX
+		const dy = basePivot.y - evt.clientY
+
+		if(Math.abs(dw) < 30) {
+			rotationDelta.value = {
+				px: worldPos.x,
+				py: worldPos.y,
+				dw: dw,
+			}
 		}
 
-		baseRot = evt.rotation
-	
-		zoomDelta.value = {
-			px: px,
-			py: py,
-			dz: Math.log(evt.scale / baseScale),
+		if(Math.abs(dz) < 0.2) {
+			zoomDelta.value = {
+				px: worldPos.x,
+				py: worldPos.y,
+				dz: dz,
+			}
 		}
+
+		if(Math.hypot(dx, dy) < 10) {
+			panDelta.value = {
+				dx,
+				dy,
+			}
+		}
+
 
 		baseScale = evt.scale
-
-
-		if(fingerCount < 3) {
-		panDelta.value = {
-			dx: basePivot.x - evt.clientX,
-			dy: basePivot.y - evt.clientY,
-		}
-		}
-
+		baseRot = evt.rotation
 		basePivot = {
 			x: evt.clientX,
 			y: evt.clientY,
@@ -223,46 +211,27 @@ export function bindEvents(node, cam) {
 	const pointerIds = []
 
 	function onPointerStart(evt) {
+		if(evt.pointerType !== 'touch') {
+			return
+		}
 		pointerIds.push(evt.pointerId)
-
-		// if(pointerIds.length > 1) {
-		// 	for(let i of pointerIds) {
-		// 		node.setPointerCapture(i)
-		// 	}
-		// }
 	}
 
 	function onPointerEnd(evt) {
+		if(evt.pointerType !== 'touch') {
+			return
+		}
 		removeItemOnce(pointerIds, evt.pointerId)
-		// node.releasePointerCapture(evt.pointerId)
-
-		// if(pointerIds.length < 2) {
-		// 	for(let i of pointerIds) {
-		// 		node.releasePointerCapture(i)
-		// 	}
-		// }
 	}
 
 	function onPointerMove(evt) {
+		if(evt.pointerType !== 'touch') {
+			return
+		}
 		if(pointerIds.length > 1) {
 			evt.stopImmediatePropagation()
 			evt.stopPropagation()
 		}
-	}
-
-	let fingerCount = 0
-	function onTouchStart(evt) {
-		fingerCount += evt.changedTouches.length
-	}
-
-	function onTouchEnd(evt) {
-		fingerCount -= evt.changedTouches.length
-	}
-	function onTouchCancel(evt) {
-		fingerCount -= evt.changedTouches.length
-	}
-
-	function onTouchMove(evt) {
 	}
 
 	function removeItemOnce(arr, value) {
@@ -280,16 +249,8 @@ export function bindEvents(node, cam) {
 	node.addEventListener('pointermove', onPointerMove, true)
 	node.addEventListener('pointercancel', onPointerEnd, true)
 	node.addEventListener('pointerup', onPointerEnd, true)
-	node.addEventListener('touchstart', onTouchStart, true)
-	node.addEventListener('touchmove', onTouchMove, true)
-	node.addEventListener('touchcancel', onTouchCancel, true)
-	node.addEventListener('touchend', onTouchEnd, true)
 
 	return () => {
-		node.removeEventListener('touchstart', onTouchStart, true)
-		node.removeEventListener('touchmove', onTouchMove, true)
-		node.removeEventListener('touchcancel', onTouchCancel, true)
-		node.removeEventListener('touchend', onTouchEnd, true)
 		node.removeEventListener('pointerup', onPointerEnd, true)
 		node.removeEventListener('pointermove', onPointerMove, true)
 		node.removeEventListener('pointercancel', onPointerEnd, true)

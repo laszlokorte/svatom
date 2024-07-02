@@ -138,9 +138,6 @@
 		if (!evt.isPrimary) {
 			return;
 		}
-		if (!isActive.value) {
-			return;
-		}
 
 		isActive.value = false;
 	}}

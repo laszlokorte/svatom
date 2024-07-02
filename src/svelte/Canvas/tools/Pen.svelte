@@ -91,8 +91,7 @@
 
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 
-		const svgP = clientToCanvas(evt.clientX, evt.clientY);
-		currentPath.value = svgP;
+		currentPath.value = clientToCanvas(evt.clientX, evt.clientY);
 	}}
 	onpointermove={(evt) => {
 		if (!evt.isPrimary) {

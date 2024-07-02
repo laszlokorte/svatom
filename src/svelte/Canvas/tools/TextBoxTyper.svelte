@@ -161,10 +161,10 @@
 			return;
 		}
 
-		const svgP = clientToCanvas(evt.clientX, evt.clientY);
+		const worldPos = clientToCanvas(evt.clientX, evt.clientY);
 
-		const dx = svgP.x - textBoxStart.value.x;
-		const dy = svgP.y - textBoxStart.value.y;
+		const dx = worldPos.x - textBoxStart.value.x;
+		const dy = worldPos.y - textBoxStart.value.y;
 		textBoxSize.value = {
 			x: textBoxAngleCos.value * dx + textBoxAngleSin.value * dy,
 			y: -textBoxAngleSin.value * dx + textBoxAngleCos.value * dy,

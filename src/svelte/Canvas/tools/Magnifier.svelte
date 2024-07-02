@@ -150,10 +150,10 @@
 			return;
 		}
 
-		const svgP = clientToCanvas(evt.clientX, evt.clientY);
+		const worldPos = clientToCanvas(evt.clientX, evt.clientY);
 
-		const dx = svgP.x - magnifierFrameStart.value.x;
-		const dy = svgP.y - magnifierFrameStart.value.y;
+		const dx = worldPos.x - magnifierFrameStart.value.x;
+		const dy = worldPos.y - magnifierFrameStart.value.y;
 
 		magnifierFrameSize.value = {
 			x:
@@ -173,16 +173,14 @@
 		}
 
 		if (zoomDelta && !magnifierFrameStretched.value) {
-			const svgP = clientToCanvas(evt.clientX, evt.clientY);
+			const worldPos = clientToCanvas(evt.clientX, evt.clientY);
 
 			zoomDelta.value = {
 				dz: evt.altKey ? -0.5 : 0.5,
-				px: svgP.x,
-				py: svgP.y,
+				px: worldPos.x,
+				py: worldPos.y,
 			};
 		} else if (zoomFrame) {
-			const svgP = clientToCanvas(evt.clientX, evt.clientY);
-
 			zoomFrame.value = {
 				start: magnifierFrameStart.value,
 				size: magnifierFrameSize.value,
