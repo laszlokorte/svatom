@@ -12,17 +12,17 @@
 		cameraScale,
 	} = $props();
 
-	const creator = atom([]);
+	const creator = atom(undefined);
 
-	const pointerId = view([L.removable("pointerId"), "pointerId"], creator);
-	const drafts = view("drafts", creator);
-
-	const isDrafting = view([L.index(0), L.defaults(false)], drafts);
-	const lastDraft = view([L.index(0), L.removable("x", "y")], drafts);
+	const draft = view([L.removable("x", "y")], creator);
+	const isActive = view(
+		L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
+		draft,
+	);
 </script>
 
 <path
-	use:disableTouchEventsIf={isDrafting}
+	use:disableTouchEventsIf={isActive}
 	d={frameBoxPath.value}
 	pointer-events="all"
 	fill="none"
@@ -31,53 +31,59 @@
 	tabindex="-1"
 	onkeydown={(evt) => {
 		if (evt.key === "Escape" || evt.key === "Esc") {
-			pointerId.value = undefined;
+			isActive.value = false;
 		}
 	}}
 	onpointerdown={(evt) => {
-		if (isDrafting.value) {
-			return;
-		}
-		if (!(evt.isPrimary && U.isLeftButton(evt))) {
+		if (!evt.isPrimary || !U.isLeftButton(evt)) {
 			return;
 		}
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 
-		const svgP = clientToCanvas(evt.clientX, evt.clientY);
-
-		pointerId.value = evt.pointerId;
-		isDrafting.value = svgP;
-		lastDraft.value = svgP;
+		draft.value = clientToCanvas(evt.clientX, evt.clientY);
 	}}
 	onpointermove={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			lastDraft.value = clientToCanvas(evt.clientX, evt.clientY);
+		if (!evt.isPrimary) {
+			return;
 		}
+		if (!isActive.value) {
+			return;
+		}
+
+		draft.value = clientToCanvas(evt.clientX, evt.clientY);
 	}}
 	onpointerup={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			evt.preventDefault();
-			pointerId.value = undefined;
-			newNode.value = clientToCanvas(evt.clientX, evt.clientY);
+		if (!evt.isPrimary) {
+			return;
 		}
+		if (!isActive.value) {
+			return;
+		}
+		newNode.value = clientToCanvas(evt.clientX, evt.clientY);
+
+		isActive.value = false;
+	}}
+	onclick={(evt) => {
+		//newNode.value = clientToCanvas(evt.clientX, evt.clientY);
 	}}
 	onpointercancel={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			pointerId.value = undefined;
+		if (!evt.isPrimary) {
+			return;
 		}
+		isActive.value = false;
 	}}
 />
 
 <g pointer-events="none" transform={rotationTransform.value}>
-	{#each drafts.value as v, i (i)}
+	{#if isActive.value}
 		<circle
 			class="node"
 			opacity="0.2"
-			cx={v.x}
-			cy={v.y}
+			cx={draft.value.x}
+			cy={draft.value.y}
 			r={Math.min(20, cameraScale.value * 20)}
 		></circle>
-	{/each}
+	{/if}
 </g>
 
 <style>

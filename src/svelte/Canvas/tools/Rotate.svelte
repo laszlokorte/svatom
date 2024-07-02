@@ -21,24 +21,7 @@
 
 	const minRadius = read(R.multiply(40), cameraScale);
 
-	const cursorImgB = window.URL.createObjectURL(
-		new Blob(
-			[
-				`<?xml version="1.0" encoding="utf-8"?>
-<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-<circle cx="16" cy="16" r="8" fill="#4edd40" />
-</svg>`,
-			],
-			{ type: "image/svg+xml" },
-		),
-	);
-
 	const rotation = atom({});
-	const pointerId = view([L.removable("pointerId"), "pointerId"], rotation);
-	const rotating = view(
-		L.lens(R.compose(R.not, R.isNil), (b, o) => (b ? o : undefined)),
-		pointerId,
-	);
 	const rotationPivot = view(
 		[
 			L.props("pivot", "ref"),
@@ -48,6 +31,10 @@
 			L.removable("x", "y"),
 		],
 		rotation,
+	);
+	const isActive = view(
+		L.lens(R.compose(R.not, R.isNil), (b, o) => (b ? o : undefined)),
+		rotationPivot,
 	);
 	const rotationRef = view("ref", rotation);
 
@@ -104,65 +91,66 @@
 <path
 	d={frameBoxPath.value}
 	class="rotate-surface"
-	class:rotating={rotating.value}
-	style:--cursor-b="url({cursorImgB})"
+	class:rotating={isActive.value}
 	pointer-events="all"
 	fill="none"
 	role="button"
 	tabindex="-1"
-	use:disableTouchEventsIf={rotating}
+	use:disableTouchEventsIf={isActive}
 	onpointerdown={(evt) => {
 		if (!(evt.isPrimary && U.isLeftButton(evt))) {
 			return;
 		}
-		if (rotating.value) {
-			return;
-		}
-		const pos = clientToCanvas(evt.clientX, evt.clientY);
 
-		pointerId.value = evt.pointerId;
 		evt.currentTarget.setPointerCapture(evt.pointerId);
-		rotationPivot.value = pos;
+		rotationPivot.value = clientToCanvas(evt.clientX, evt.clientY);
 	}}
 	onpointermove={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			const newPos = clientToCanvas(evt.clientX, evt.clientY);
-			const distance = Math.hypot(
-				newPos.x - rotationPivot.value.x,
-				newPos.y - rotationPivot.value.y,
-			);
+		if (!evt.isPrimary) {
+			return;
+		}
+		if (!isActive.value) {
+			return;
+		}
 
-			if (distance > minRadius.value) {
-				const dw =
-					Math.atan2(
-						newPos.y - rotationPivot.value.y,
-						newPos.x - rotationPivot.value.x,
-					) -
-					Math.atan2(
-						rotationRef.value.y - rotationPivot.value.y,
-						rotationRef.value.x - rotationPivot.value.x,
-					);
+		const newPos = clientToCanvas(evt.clientX, evt.clientY);
+		const distance = Math.hypot(
+			newPos.x - rotationPivot.value.x,
+			newPos.y - rotationPivot.value.y,
+		);
 
-				rotateMovement.value = {
-					dw: (dw * 180) / Math.PI,
-					px: rotationPivot.value.x,
-					py: rotationPivot.value.y,
-				};
-				rotationRadius.value = distance;
-			} else {
-				rotationRef.value = newPos;
-			}
+		if (distance > minRadius.value) {
+			const dw =
+				Math.atan2(
+					newPos.y - rotationPivot.value.y,
+					newPos.x - rotationPivot.value.x,
+				) -
+				Math.atan2(
+					rotationRef.value.y - rotationPivot.value.y,
+					rotationRef.value.x - rotationPivot.value.x,
+				);
+
+			rotateMovement.value = {
+				dw: (dw * 180) / Math.PI,
+				px: rotationPivot.value.x,
+				py: rotationPivot.value.y,
+			};
+			rotationRadius.value = distance;
+		} else {
+			rotationRef.value = newPos;
 		}
 	}}
 	onpointerup={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			pointerId.value = undefined;
+		if (!evt.isPrimary) {
+			return;
 		}
+		isActive.value = false;
 	}}
 	onpointercancel={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			pointerId.value = undefined;
+		if (!evt.isPrimary) {
+			return;
 		}
+		isActive.value = false;
 	}}
 />
 
@@ -229,12 +217,6 @@
 		stroke-width: 0;
 		outline: none;
 	}
-	.rotate-surface.rotating {
-		/*cursor:
-			var(--cursor-b) 16 16,
-			default;*/
-	}
-
 	.ref.active {
 		fill: darkgreen;
 		stroke: darkgreen;

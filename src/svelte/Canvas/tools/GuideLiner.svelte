@@ -28,7 +28,10 @@
 	} = $props();
 
 	const guide = atom(undefined);
-	const pointerId = view([L.removable("pointerId"), "pointerId"], guide);
+	const isActive = view(
+		L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
+		guide,
+	);
 
 	const guideStart = view(
 		[L.removable("start"), "start", L.removable("x", "y")],
@@ -141,40 +144,45 @@
 		if (guideStart.value) {
 			return;
 		}
-		if (!(evt.isPrimary && U.isLeftButton(evt))) {
+		if (!evt.isPrimary || !U.isLeftButton(evt)) {
 			return;
 		}
+
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 
-		const svgP = clientToCanvas(evt.clientX, evt.clientY);
+		const worldPos = clientToCanvas(evt.clientX, evt.clientY);
 
-		pointerId.value = evt.pointerId;
-		guideStart.value = { x: svgP.x, y: svgP.y };
-		guideEnd.value = { x: svgP.x, y: svgP.y };
+		guideStart.value = worldPos;
+		guideEnd.value = worldPos;
 	}}
 	onpointermove={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			const svgP = clientToCanvas(evt.clientX, evt.clientY);
-
-			guideEnd.value = { x: svgP.x, y: svgP.y };
+		if (!evt.isPrimary) {
+			return;
 		}
+		guideEnd.value = clientToCanvas(evt.clientX, evt.clientY);
 	}}
 	onpointerup={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			const svgP = clientToCanvas(evt.clientX, evt.clientY);
-			if (newGuideValid.value) {
-				newGuide.value = {
-					angle: guideAngle.value,
-					distance: guideDistance.value,
-				};
-			}
-			pointerId.value = undefined;
+		if (!evt.isPrimary) {
+			return;
 		}
+		if (!isActive.value) {
+			return;
+		}
+
+		if (newGuideValid.value) {
+			newGuide.value = {
+				angle: guideAngle.value,
+				distance: guideDistance.value,
+			};
+		}
+
+		isActive.value = false;
 	}}
 	onpointercancel={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			pointerId.value = undefined;
+		if (!evt.isPrimary) {
+			return;
 		}
+		isActive.value = false;
 	}}
 />
 

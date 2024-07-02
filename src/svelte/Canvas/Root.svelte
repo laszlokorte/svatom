@@ -551,10 +551,12 @@
 
 	const nodes = view("nodes", currentDocumentContent);
 	const textes = view(["textes", L.defaults([])], currentDocumentContent);
+	const newText = view(L.appendTo, textes);
 	const textBoxes = view(
 		["textBoxes", L.defaults([])],
 		currentDocumentContent,
 	);
+	const newTextBox = view(L.appendTo, textBoxes);
 	const guides = view(["guides", L.defaults([])], currentDocumentContent);
 	const axis = view(["axis"], currentDocumentContent);
 	const drawings = view(["drawings", L.defaults([])], currentDocumentContent);
@@ -753,7 +755,7 @@
 			name: "Text Line",
 			component: TextLineTyper,
 			parameters: {
-				textes,
+				newText,
 				clientToCanvas,
 				frameBoxPath,
 				rotationTransform,
@@ -771,7 +773,7 @@
 				rotationTransform,
 				cameraScale,
 				cameraOrientation,
-				textBoxes,
+				newTextBox,
 			},
 		},
 		lasso: {

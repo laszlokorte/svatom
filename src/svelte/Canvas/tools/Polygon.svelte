@@ -23,8 +23,12 @@
 	const snapRadiusVisual = 8;
 
 	const polygon = atom({ path: [], draft: null });
-	const pointerId = view(["pointerId"], polygon);
+	const dragging = view(["dragging", L.valueOr(false)], polygon);
 	const path = view([L.removable("path"), "path", L.defaults([])], polygon);
+	const isActive = view(
+		[L.lens(R.compose(R.lt(0), R.length), (n, o) => (n ? o : []))],
+		path,
+	);
 	const draft = view(["draft"], polygon);
 	const freeDraft = view(
 		[
@@ -146,49 +150,45 @@
 	const pathCanPop = read(R.lt(1), pathLength);
 
 	export function cancel() {
-		pointerId.value = undefined;
-		path.value = [];
+		isActive.value = false;
 	}
 </script>
 
 <g
 	role="button"
 	tabindex="-1"
-	class:dragging={pointerId.value !== undefined}
+	class:dragging={dragging.value}
 	onkeydown={(evt) => {
 		if (evt.key === "Escape" || evt.key === "Esc") {
-			if (pointerId.value === undefined) {
+			if (dragging.value) {
+				dragging.value = false;
+			} else {
 				path.value = [];
 			}
 		}
 		if (evt.key === "b") {
 			path.value = path.value.slice(0, path.value.length - 1);
 		}
-		evt.currentTarget.releasePointerCapture(evt.pointerId);
 	}}
 	oncontextmenu={(evt) => {
 		evt.preventDefault();
-		evt.currentTarget.releasePointerCapture(evt.pointerId);
-	}}
-	ongotpointercapture={(evt) => {
-		pointerId.value = evt.pointerId;
-	}}
-	onlostpointercapture={(evt) => {
-		pointerId.value = undefined;
+		if (dragging.value) {
+			dragging.value = false;
+		} else if (pathCanFinish.value) {
+			newDrawing.value = path.value;
+			path.value = [];
+		}
 	}}
 	onpointerdown={(evt) => {
 		if (!evt.isPrimary) {
 			return;
-		} else if (!U.isLeftButton(evt)) {
-			if (pointerId.value !== undefined) {
-				evt.currentTarget.releasePointerCapture(evt.pointerId);
-			} else if (pathCanFinish.value) {
-				newDrawing.value = path.value;
-				path.value = [];
-			}
+		}
+
+		if (!U.isLeftButton(evt)) {
 			return;
 		}
 
+		dragging.value = true;
 		const p = clientToCanvas(evt.clientX, evt.clientY);
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 
@@ -231,77 +231,92 @@
 		}
 	}}
 	onpointermove={(evt) => {
+		if (!evt.isPrimary) {
+			return;
+		}
+		if (!isActive.value) {
+			return;
+		}
+		const p = clientToCanvas(evt.clientX, evt.clientY);
 		if (
-			pointerId.value === evt.pointerId ||
-			(pointerId.value === undefined && startPath.value)
+			pathHead.value &&
+			Math.hypot(pathHead.value.x - p.x, pathHead.value.y - p.y) <
+				cameraScale.value * snapRadius +
+					Math.hypot(evt.width, evt.height) / 2
 		) {
-			const p = clientToCanvas(evt.clientX, evt.clientY);
-			if (
-				pathHead.value &&
-				Math.hypot(pathHead.value.x - p.x, pathHead.value.y - p.y) <
-					cameraScale.value * snapRadius +
-						Math.hypot(evt.width, evt.height) / 2
-			) {
-				if (pathCanFinish.value) {
-					finishDraft.value = pathHead.value;
-				} else {
-					draftSnappedPop.value = pathNeck.value;
-				}
-			} else if (
-				pathCanClose.value &&
-				Math.hypot(pathRoot.value.x - p.x, pathRoot.value.y - p.y) <
-					cameraScale.value * snapRadius +
-						Math.hypot(evt.width, evt.height) / 2
-			) {
-				closeDraft.value = pathRoot.value;
-			} else if (
-				pathNeck.value &&
-				Math.hypot(pathNeck.value.x - p.x, pathNeck.value.y - p.y) <
-					cameraScale.value * snapRadius +
-						Math.hypot(evt.width, evt.height) / 2
-			) {
-				popDraft.value = pathNeck.value;
+			if (pathCanFinish.value) {
+				finishDraft.value = pathHead.value;
 			} else {
-				freeDraft.value = p;
+				draftSnappedPop.value = pathNeck.value;
 			}
+		} else if (
+			pathCanClose.value &&
+			Math.hypot(pathRoot.value.x - p.x, pathRoot.value.y - p.y) <
+				cameraScale.value * snapRadius +
+					Math.hypot(evt.width, evt.height) / 2
+		) {
+			closeDraft.value = pathRoot.value;
+		} else if (
+			pathNeck.value &&
+			Math.hypot(pathNeck.value.x - p.x, pathNeck.value.y - p.y) <
+				cameraScale.value * snapRadius +
+					Math.hypot(evt.width, evt.height) / 2
+		) {
+			popDraft.value = pathNeck.value;
+		} else {
+			freeDraft.value = p;
 		}
 	}}
 	onpointerup={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			const p = clientToCanvas(evt.clientX, evt.clientY);
+		if (!evt.isPrimary) {
+			return;
+		}
+		if (!isActive.value) {
+			return;
+		}
+		if (!dragging.value) {
+			return;
+		}
 
-			if (draftSnappedFinish.value) {
-				finishDraft.value = pathHead.value;
-				currentPath.value = pathHead.value;
+		dragging.value = false;
+		const p = clientToCanvas(evt.clientX, evt.clientY);
+
+		if (draftSnappedFinish.value) {
+			finishDraft.value = pathHead.value;
+			currentPath.value = pathHead.value;
+			newDrawing.value = path.value;
+			path.value = [];
+		} else if (draftSnappedClose.value) {
+			if (pathCanClose.value) {
+				closeDraft.value = pathRoot.value;
+				currentPath.value = pathRoot.value;
 				newDrawing.value = path.value;
 				path.value = [];
-			} else if (draftSnappedClose.value) {
-				if (pathCanClose.value) {
-					closeDraft.value = pathRoot.value;
-					currentPath.value = pathRoot.value;
-					newDrawing.value = path.value;
-					path.value = [];
-				}
-			} else if (draftSnappedPop.value) {
-				path.value = path.value.slice(0, path.value.length - 1);
-				freeDraft.value = p;
-			} else {
-				if (
-					pathRoot.value &&
-					Math.hypot(pathRoot.value.x - p.x, pathRoot.value.y - p.y) >
-						cameraScale.value * snapRadius +
-							Math.hypot(evt.width, evt.height) / 2
-				) {
-					currentPath.value = draftPos.value;
-					finishDraft.value = pathHead.value;
-				}
+			}
+		} else if (draftSnappedPop.value) {
+			path.value = path.value.slice(0, path.value.length - 1);
+			freeDraft.value = p;
+		} else {
+			if (
+				pathRoot.value &&
+				Math.hypot(pathRoot.value.x - p.x, pathRoot.value.y - p.y) >
+					cameraScale.value * snapRadius +
+						Math.hypot(evt.width, evt.height) / 2
+			) {
+				currentPath.value = draftPos.value;
+				finishDraft.value = pathHead.value;
 			}
 		}
 	}}
 	onpointercancel={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			pointerId.value = undefined;
+		if (!evt.isPrimary) {
+			return;
 		}
+		if (!dragging.value) {
+			return;
+		}
+
+		dragging.value = false;
 	}}
 >
 	<path

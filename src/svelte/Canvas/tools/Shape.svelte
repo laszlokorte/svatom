@@ -32,14 +32,14 @@
 		],
 	});
 	const shape = atom(undefined);
-
-	const pointerId = view([L.removable("pointerId"), "pointerId"], shape);
-
-	const shapeBasis = view([L.removable("basis"), "basis"], shape);
+	const isActive = view(
+		L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
+		shape,
+	);
 
 	const shapeStart = view(
 		[L.removable("start"), "start", L.removable("x", "y")],
-		shapeBasis,
+		shape,
 	);
 	const shapeSize = view(
 		L.ifElse(
@@ -55,11 +55,11 @@
 			],
 			L.zero,
 		),
-		shapeBasis,
+		shape,
 	);
 	const shapeAngle = view(
 		[L.removable("angle"), "angle" /*L.normalize(R.always(0))*/],
-		shapeBasis,
+		shape,
 	);
 	const shapeAngleCos = view(
 		[L.reread((r) => Math.cos((r / 180) * Math.PI))],
@@ -71,7 +71,7 @@
 	);
 
 	const shapePath = read(
-		L.getter(({ shapeBasis: b, cameraScale: scale }) =>
+		L.getter(({ shape: b, cameraScale: scale }) =>
 			b && b.start && b.size
 				? `M${numberSvgFormat.format(b.start.x - 10 * scale * Math.sign(b.size.x))},${numberSvgFormat.format(b.start.y)}h${numberSvgFormat.format(b.size.x)}
 				m${Math.sign(b.size.x) * (10 * scale)},0l${Math.sign(b.size.x) * (-10 * scale)},${-10 * scale}v${2 * 10 * scale}l${Math.sign(b.size.x) * (10 * scale)},${-10 * scale}
@@ -80,7 +80,7 @@
 				`
 				: "",
 		),
-		combine({ shapeBasis, cameraScale }),
+		combine({ shape, cameraScale }),
 	);
 </script>
 
@@ -94,50 +94,57 @@
 	tabindex="-1"
 	onkeydown={(evt) => {
 		if (evt.key === "Escape" || evt.key === "Esc") {
-			pointerId.value = undefined;
+			isActive.value = false;
 		}
 	}}
 	onpointerdown={(evt) => {
-		if (shapeStart.value) {
+		if (!evt.isPrimary || !U.isLeftButton(evt)) {
 			return;
 		}
-		if (!(evt.isPrimary && U.isLeftButton(evt))) {
-			return;
-		}
-
-		pointerId.value = evt.pointerId;
 
 		evt.currentTarget.setPointerCapture(evt.pointerId);
-		const svgP = clientToCanvas(evt.clientX, evt.clientY);
-		shapeStart.value = { x: svgP.x, y: svgP.y };
+		shapeStart.value = clientToCanvas(evt.clientX, evt.clientY);
 		shapeSize.value = { x: 0, y: 0 };
 		shapeAngle.value = -cameraOrientation.value;
 	}}
 	onpointermove={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			const svgP = clientToCanvas(evt.clientX, evt.clientY);
-
-			const dx = svgP.x - shapeStart.value.x;
-			const dy = svgP.y - shapeStart.value.y;
-			shapeSize.value = {
-				x: shapeAngleCos.value * dx + shapeAngleSin.value * dy,
-				y: -shapeAngleSin.value * dx + shapeAngleCos.value * dy,
-			};
+		if (!evt.isPrimary) {
+			return;
 		}
+		if (!isActive.value) {
+			return;
+		}
+
+		const worldPos = clientToCanvas(evt.clientX, evt.clientY);
+
+		const dx = worldPos.x - shapeStart.value.x;
+		const dy = worldPos.y - shapeStart.value.y;
+		shapeSize.value = {
+			x: shapeAngleCos.value * dx + shapeAngleSin.value * dy,
+			y: -shapeAngleSin.value * dx + shapeAngleCos.value * dy,
+		};
 	}}
 	onpointerup={(evt) => {
-		if (pointerId.value === evt.pointerId && newShape) {
+		if (!evt.isPrimary) {
+			return;
+		}
+		if (!isActive.value) {
+			return;
+		}
+
+		if (newShape) {
 			newShape.value = {
-				placement: shapeBasis.value,
+				placement: shape.value,
 				content: template.value,
 			};
 		}
-		shapeSize.value = undefined;
+		isActive.value = false;
 	}}
 	onpointercancel={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			shapeSize.value = undefined;
+		if (!evt.isPrimary) {
+			return;
 		}
+		isActive.value = false;
 	}}
 />
 

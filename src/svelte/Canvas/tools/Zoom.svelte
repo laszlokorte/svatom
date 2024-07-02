@@ -25,11 +25,6 @@
 	const minRadius = 3;
 
 	const zoom = atom({});
-	const pointerId = view([L.removable("pointerId"), "pointerId"], zoom);
-	const zooming = view(
-		L.lens(R.compose(R.not, R.isNil), (b, o) => (b ? o : undefined)),
-		pointerId,
-	);
 	const zoomPivotClient = view(
 		[
 			L.props("pivotClient", "pivotWorld", "refClient"),
@@ -44,7 +39,6 @@
 		],
 		zoom,
 	);
-
 	const zoomPivotWorld = view(["pivotWorld"], zoom);
 
 	const zoomRefClient = view(
@@ -69,6 +63,10 @@
 		],
 		zoom,
 	);
+	const isActive = view(
+		L.lens(R.compose(R.not, R.isNil), (b, o) => (b ? o : undefined)),
+		zoomPivotWorld,
+	);
 
 	const zoomAngle = read(
 		({ r, p }) => Math.atan2(r.y - p.y, r.x - p.x),
@@ -79,51 +77,43 @@
 <path
 	d={frameBoxPath.value}
 	class="rotate-surface"
-	class:zooming={zooming.value}
+	class:zooming={isActive.value}
 	pointer-events="all"
 	fill="none"
 	role="button"
 	tabindex="-1"
-	use:disableTouchEventsIf={zooming}
+	use:disableTouchEventsIf={isActive}
 	onpointerdown={(evt) => {
-		if (zooming.value) {
+		if (!evt.isPrimary) {
 			return;
 		}
 
-		pointerId.value = evt.pointerId;
-		zoomPivotClient.value = { x: evt.clientX, y: evt.clientY };
 		evt.currentTarget.setPointerCapture(evt.pointerId);
+		zoomPivotClient.value = { x: evt.clientX, y: evt.clientY };
 	}}
 	onpointermove={(evt) => {
-		if (!(evt.isPrimary && U.isLeftButton(evt))) {
+		if (!evt.isPrimary) {
 			return;
 		}
-		if (pointerId.value === evt.pointerId) {
-			const newPos = { x: evt.clientX, y: evt.clientY };
+		if (!isActive.value) {
+			return;
+		}
 
-			const newDx = Math.abs(newPos.x - zoomPivotClient.value.x);
-			const newDy = newPos.y - zoomPivotClient.value.y;
-			const distance = Math.hypot(newDx, newDy);
+		const newPos = { x: evt.clientX, y: evt.clientY };
 
-			if (POLAR) {
-				if (distance > minRadius) {
-					const angle = Geo.angleRadBetween(
-						zoomRefClient.value,
-						zoomPivotClient.value,
-						newPos,
-					);
-					const factor = Math.pow(distance / 100, 2);
-					const dz = (angle / Math.PI) * factor;
+		const newDx = Math.abs(newPos.x - zoomPivotClient.value.x);
+		const newDy = newPos.y - zoomPivotClient.value.y;
+		const distance = Math.hypot(newDx, newDy);
 
-					zoomMovement.value = {
-						dz: dz,
-						px: zoomPivotWorld.value.x,
-						py: zoomPivotWorld.value.y,
-					};
-				}
-			} else {
-				const factor = newDx / 10000;
-				const dz = -(newPos.y - zoomRefClient.value.y) * factor;
+		if (POLAR) {
+			if (distance > minRadius) {
+				const angle = Geo.angleRadBetween(
+					zoomRefClient.value,
+					zoomPivotClient.value,
+					newPos,
+				);
+				const factor = Math.pow(distance / 100, 2);
+				const dz = (angle / Math.PI) * factor;
 
 				zoomMovement.value = {
 					dz: dz,
@@ -131,30 +121,41 @@
 					py: zoomPivotWorld.value.y,
 				};
 			}
+		} else {
+			const factor = newDx / 10000;
+			const dz = -(newPos.y - zoomRefClient.value.y) * factor;
 
-			zoomRefClient.value = newPos;
+			zoomMovement.value = {
+				dz: dz,
+				px: zoomPivotWorld.value.x,
+				py: zoomPivotWorld.value.y,
+			};
 		}
+
+		zoomRefClient.value = newPos;
 	}}
 	onpointerup={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			pointerId.value = undefined;
+		if (!evt.isPrimary) {
+			return;
 		}
+		if (!isActive.value) {
+			return;
+		}
+
+		isActive.value = false;
 	}}
 	onpointercancel={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			pointerId.value = undefined;
+		if (!evt.isPrimary) {
+			return;
 		}
-	}}
-	onlostpointercapture={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			pointerId.value = undefined;
-		}
+
+		isActive.value = false;
 	}}
 />
 
 <g transform={rotationTransform.value}>
-	{#if zooming.value}
-		{#if Math.hypot(zoomPivotWorld.value.y - zoomPivotCurrentWorld.value.y, zoomPivotWorld.value.x - zoomPivotCurrentWorld.value.x) / cameraScale.value > 45}
+	{#if isActive.value}
+		{#if Math.hypot(zoomPivotWorld.value.y - zoomPivotCurrentWorld.value.y, zoomPivotWorld.value.x - zoomPivotCurrentWorld.value.x) / cameraScale.value > 55}
 			<path
 				d="
 				 M {zoomPivotWorld.value.x} {zoomPivotWorld.value.y}

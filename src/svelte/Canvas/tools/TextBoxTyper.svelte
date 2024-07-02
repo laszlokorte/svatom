@@ -32,14 +32,12 @@
 		rotationTransform,
 		cameraOrientation,
 		cameraScale,
-		textBoxes = atom([]),
+		newTextBox = atom(undefined),
 	} = $props();
 
-	const newText = view(L.appendTo, textBoxes);
-
 	const textBox = atom(undefined);
-	const pointerId = view(["pointerId"], textBox);
 	const text = view(["text"], textBox);
+	const isDragging = view(["dragging", L.valueOr(false)], textBox);
 
 	const textBoxStart = view(
 		[L.removable("start"), "start", L.removable("x", "y")],
@@ -61,8 +59,11 @@
 		),
 		textBox,
 	);
+	const isActive = view(
+		L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
+		textBoxStart,
+	);
 
-	const isEditing = view(R.compose(R.not, R.isNil), pointerId);
 	const textEmpty = view(L.reread(R.isEmpty), text);
 	const textBoxValid = view(
 		L.reread(({ fontSize, size }) => {
@@ -110,59 +111,88 @@
 	pointer-events="all"
 	fill="none"
 	class="text-box-surface"
-	class:dim={isEditing.value}
+	class:dim={isActive.value && !isDragging.value}
 	class:dim-empty={textEmpty.value}
 	role="button"
 	tabindex="-1"
 	onkeydown={(evt) => {
 		if (evt.key === "Escape" || evt.key === "Esc") {
-			textBoxStart.value = undefined;
+			isActive.value = false;
 		}
 	}}
 	onpointerdown={(evt) => {
+		if (!evt.isPrimary || !U.isLeftButton(evt)) {
+			return;
+		}
+
 		if (text.value) {
-			return;
+			newTextBox.value = {
+				start: {
+					x: textBoxStart.value.x,
+					y: textBoxStart.value.y,
+				},
+				size: {
+					x: textBoxSize.value.x,
+					y: textBoxSize.value.y,
+				},
+				content: text.value,
+				angle: textBoxAngle.value,
+				fontSize: textBoxFontSize.value,
+			};
+
+			text.value = undefined;
 		}
-		if (!(evt.isPrimary && U.isLeftButton(evt))) {
-			return;
-		}
-		pointerId.value = evt.pointerId;
 
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 		textBoxStart.value = clientToCanvas(evt.clientX, evt.clientY);
+		isDragging.value = true;
 		textBoxFontSize.value = cameraScale.value;
 		textBoxSize.value = { x: 0, y: 0 };
 		textBoxAngle.value = -cameraOrientation.value;
 	}}
 	onpointermove={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			const svgP = clientToCanvas(evt.clientX, evt.clientY);
-
-			const dx = svgP.x - textBoxStart.value.x;
-			const dy = svgP.y - textBoxStart.value.y;
-			textBoxSize.value = {
-				x: textBoxAngleCos.value * dx + textBoxAngleSin.value * dy,
-				y: -textBoxAngleSin.value * dx + textBoxAngleCos.value * dy,
-			};
+		if (!evt.isPrimary) {
+			return;
 		}
+		if (!isActive.value) {
+			return;
+		}
+		if (!isDragging.value) {
+			return;
+		}
+
+		const svgP = clientToCanvas(evt.clientX, evt.clientY);
+
+		const dx = svgP.x - textBoxStart.value.x;
+		const dy = svgP.y - textBoxStart.value.y;
+		textBoxSize.value = {
+			x: textBoxAngleCos.value * dx + textBoxAngleSin.value * dy,
+			y: -textBoxAngleSin.value * dx + textBoxAngleCos.value * dy,
+		};
 	}}
 	onpointerup={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			pointerId.value = undefined;
+		if (!evt.isPrimary) {
+			return;
 		}
+		if (!isActive.value) {
+			return;
+		}
+		if (!isDragging.value) {
+			return;
+		}
+
+		isDragging.value = false;
 		if (!textBoxValid.value) {
 			textBoxStart.value = undefined;
 		}
 	}}
 	onpointercancel={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			pointerId.value = undefined;
-		}
+		isDragging.value = false;
 	}}
 />
 
 <g transform={rotationTransform.value}>
-	{#if pointerId.value === undefined && textBoxStart.value !== undefined}
+	{#if isActive.value && !isDragging.value}
 		<g
 			shape-rendering="geometricPrecision"
 			text-rendering="optimizeLegibility"
@@ -184,7 +214,7 @@
 					onsubmit={(evt) => {
 						evt.preventDefault();
 						if (text.value) {
-							newText.value = {
+							newTextBox.value = {
 								start: {
 									x: textBoxStart.value.x,
 									y: textBoxStart.value.y,
@@ -214,7 +244,7 @@
 						)}
 						onkeydown={(evt) => {
 							if (evt.key === "Escape" || evt.key === "Esc") {
-								textBoxStart.value = undefined;
+								isActive.value = false;
 							} else if (
 								evt.key === "Enter" &&
 								evt.shiftKey &&
@@ -245,7 +275,7 @@
 		fill="none"
 		class="text-box"
 		pointer-events="none"
-		class:ready={pointerId.value === undefined}
+		class:ready={!isDragging.value}
 		class:valid={textBoxValid.value}
 	/>
 </g>

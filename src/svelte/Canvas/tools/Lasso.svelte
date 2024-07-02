@@ -10,9 +10,11 @@
 
 	const lasso = atom({});
 
-	const lassoPoints = view(["points", L.valueOr([])], lasso);
-	const pointerId = view([L.removable("pointerId"), "pointerId"], lasso);
-	const startLasso = view([L.index(0), L.defaults(false)], lassoPoints);
+	const lassoPoints = view(["points", L.defaults([])], lasso);
+	const isActive = view(
+		[L.lens(R.compose(R.lt(0), R.length), (n, old) => (n ? old : []))],
+		lassoPoints,
+	);
 	const currentLasso = view(
 		[
 			L.setter(R.takeLast(200)), // limit the lasso length just for fun
@@ -64,7 +66,7 @@
 </script>
 
 <path
-	use:disableTouchEventsIf={startLasso}
+	use:disableTouchEventsIf={isActive}
 	d={frameBoxPath.value}
 	pointer-events="all"
 	fill="none"
@@ -77,36 +79,29 @@
 		}
 	}}
 	onpointerdown={(evt) => {
-		if (startLasso.value) {
-			return;
-		}
-		if (!(evt.isPrimary && U.isLeftButton(evt))) {
+		if (!evt.isPrimary || !U.isLeftButton(evt)) {
 			return;
 		}
 
-		pointerId.value = evt.pointerId;
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 
-		const svgP = clientToCanvas(evt.clientX, evt.clientY);
-		startLasso.value = { x: svgP.x, y: svgP.y };
-		currentLasso.value = { x: svgP.x, y: svgP.y };
+		currentLasso.value = clientToCanvas(evt.clientX, evt.clientY);
 	}}
 	onpointermove={(evt) => {
-		if (evt.pointerId === pointerId.value) {
-			const svgP = clientToCanvas(evt.clientX, evt.clientY);
-
-			currentLasso.value = { x: svgP.x, y: svgP.y };
+		if (!evt.isPrimary) {
+			return;
 		}
+		if (!isActive.value) {
+			return;
+		}
+
+		currentLasso.value = clientToCanvas(evt.clientX, evt.clientY);
 	}}
 	onpointerup={(evt) => {
-		if (evt.pointerId === pointerId.value) {
-			pointerId.value = undefined;
-		}
+		isActive.value = false;
 	}}
 	onpointercancel={(evt) => {
-		if (evt.pointerId === pointerId.value) {
-			pointerId.value = undefined;
-		}
+		isActive.value = false;
 	}}
 />
 

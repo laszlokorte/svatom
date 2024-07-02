@@ -27,13 +27,9 @@
 
 	const axis = atom(undefined);
 
-	const pointerId = view([L.removable("pointerId"), "pointerId"], axis);
-
-	const axisBasis = view([L.removable("basis"), "basis"], axis);
-
 	const axisStart = view(
 		[L.removable("start"), "start", L.removable("x", "y")],
-		axisBasis,
+		axis,
 	);
 	const axisSize = view(
 		L.ifElse(
@@ -41,9 +37,14 @@
 			[L.removable("size"), "size", L.removable("x", "y")],
 			L.zero,
 		),
-		axisBasis,
+		axis,
 	);
-	const axisAngle = view([L.removable("angle"), "angle"], axisBasis);
+	const isActive = view(
+		L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
+		axis,
+	);
+
+	const axisAngle = view([L.removable("angle"), "angle"], axis);
 	const axisAngleCos = view(
 		[L.reread((r) => Math.cos((r / 180) * Math.PI))],
 		axisAngle,
@@ -54,7 +55,7 @@
 	);
 
 	const axisPath = read(
-		L.getter(({ axisBasis: b, cameraScale: scale }) =>
+		L.getter(({ axis: b, cameraScale: scale }) =>
 			b && b.start && b.size
 				? `M${numberSvgFormat.format(b.start.x - 10 * scale * Math.sign(b.size.x))},${numberSvgFormat.format(b.start.y)}h${numberSvgFormat.format(b.size.x)}
 				m${Math.sign(b.size.x) * (10 * scale)},0l${Math.sign(b.size.x) * (-10 * scale)},${-10 * scale}v${2 * 10 * scale}l${Math.sign(b.size.x) * (10 * scale)},${-10 * scale}
@@ -63,7 +64,7 @@
 				`
 				: "",
 		),
-		combine({ axisBasis, cameraScale }),
+		combine({ axis, cameraScale }),
 	);
 </script>
 
@@ -77,47 +78,51 @@
 	tabindex="-1"
 	onkeydown={(evt) => {
 		if (evt.key === "Escape" || evt.key === "Esc") {
-			pointerId.value = undefined;
+			isActive.value = false;
 		}
 	}}
 	onpointerdown={(evt) => {
-		if (axisStart.value) {
+		if (!evt.isPrimary || !U.isLeftButton(evt)) {
 			return;
 		}
-		if (!(evt.isPrimary && U.isLeftButton(evt))) {
-			return;
-		}
-
-		pointerId.value = evt.pointerId;
 
 		evt.currentTarget.setPointerCapture(evt.pointerId);
-		const svgP = clientToCanvas(evt.clientX, evt.clientY);
-		axisStart.value = { x: svgP.x, y: svgP.y };
+		axisStart.value = clientToCanvas(evt.clientX, evt.clientY);
 		axisSize.value = { x: 0, y: 0 };
 		axisAngle.value = -cameraOrientation.value;
 	}}
 	onpointermove={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			const svgP = clientToCanvas(evt.clientX, evt.clientY);
-
-			const dx = svgP.x - axisStart.value.x;
-			const dy = svgP.y - axisStart.value.y;
-			axisSize.value = {
-				x: axisAngleCos.value * dx + axisAngleSin.value * dy,
-				y: -axisAngleSin.value * dx + axisAngleCos.value * dy,
-			};
+		if (!evt.isPrimary) {
+			return;
 		}
+		if (!isActive.value) {
+			return;
+		}
+
+		const svgP = clientToCanvas(evt.clientX, evt.clientY);
+
+		const dx = svgP.x - axisStart.value.x;
+		const dy = svgP.y - axisStart.value.y;
+		axisSize.value = {
+			x: axisAngleCos.value * dx + axisAngleSin.value * dy,
+			y: -axisAngleSin.value * dx + axisAngleCos.value * dy,
+		};
 	}}
 	onpointerup={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			newAxis.value = axisBasis.value;
-			axisSize.value = undefined;
+		if (!evt.isPrimary) {
+			return;
 		}
+		if (!isActive.value) {
+			return;
+		}
+		newAxis.value = axis.value;
+		isActive.value = false;
 	}}
 	onpointercancel={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			axisSize.value = undefined;
+		if (!evt.isPrimary) {
+			return;
 		}
+		isActive.value = false;
 	}}
 />
 

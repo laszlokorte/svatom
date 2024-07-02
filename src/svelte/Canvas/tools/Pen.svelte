@@ -13,10 +13,12 @@
 		newDrawing,
 	} = $props();
 
-	const pen = atom([]);
-	const pointerId = view(["pointerId"], pen);
-	const path = view("path", pen);
-	const startPath = view([L.index(0), L.defaults(false)], path);
+	const pen = atom({});
+	const path = view(["path", L.defaults([])], pen);
+	const isActive = view(
+		[L.lens(R.compose(R.lt(0), R.length), (n, o) => (n ? o : []))],
+		path,
+	);
 	const currentPath = view(
 		[
 			L.setter(
@@ -69,7 +71,7 @@
 </script>
 
 <path
-	use:disableTouchEventsIf={startPath}
+	use:disableTouchEventsIf={isActive}
 	class="pen-surface"
 	d={frameBoxPath.value}
 	pointer-events="all"
@@ -79,60 +81,43 @@
 	tabindex="-1"
 	onkeydown={(evt) => {
 		if (evt.key === "Escape" || evt.key === "Esc") {
-			evt.currentTarget.releasePointerCapture(evt.pointerId);
-		}
-	}}
-	ongotpointercapture={(evt) => {
-		if (pointerId.value === undefined) {
-			pointerId.value = evt.pointerId;
-		}
-	}}
-	onlostpointercapture={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			pointerId.value = undefined;
+			isActive.value = false;
 		}
 	}}
 	onpointerdown={(evt) => {
-		if (startPath.value) {
-			return;
-		}
-		if (!(evt.isPrimary && U.isLeftButton(evt))) {
-			return;
-		}
-
-		if (pointerId.value !== undefined) {
+		if (!evt.isPrimary || !U.isLeftButton(evt)) {
 			return;
 		}
 
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 
 		const svgP = clientToCanvas(evt.clientX, evt.clientY);
-		startPath.value = svgP;
 		currentPath.value = svgP;
 	}}
 	onpointermove={(evt) => {
-		if (pointerId.value === undefined) {
-			evt.currentTarget.setPointerCapture(evt.pointerId);
+		if (!evt.isPrimary) {
+			return;
+		}
+		if (!isActive.value) {
+			return;
 		}
 
-		if (evt.currentTarget.hasPointerCapture(evt.pointerId)) {
-			currentPath.value = clientToCanvas(evt.clientX, evt.clientY);
-		}
+		currentPath.value = clientToCanvas(evt.clientX, evt.clientY);
 	}}
 	onpointerup={(evt) => {
-		if (evt.currentTarget.hasPointerCapture(evt.pointerId)) {
-			const svgP = clientToCanvas(evt.clientX, evt.clientY);
-
-			if (newDrawing) {
-				newDrawing.value = path.value;
-			}
-			path.value = undefined;
+		if (!evt.isPrimary) {
+			return;
 		}
+		if (newDrawing) {
+			newDrawing.value = path.value;
+		}
+		path.value = undefined;
 	}}
 	onpointercancel={(evt) => {
-		if (evt.currentTarget.hasPointerCapture(evt.pointerId)) {
-			path.value = undefined;
+		if (!evt.isPrimary) {
+			return;
 		}
+		path.value = undefined;
 	}}
 />
 

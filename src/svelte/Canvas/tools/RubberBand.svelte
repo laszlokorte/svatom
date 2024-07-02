@@ -32,7 +32,6 @@
 	} = $props();
 
 	const rubberBand = atom(undefined);
-	const pointerId = view([L.removable("pointerId"), "pointerId"], rubberBand);
 
 	const rubberBandStart = view(
 		[L.removable("start"), "start", L.removable("x", "y")],
@@ -45,6 +44,10 @@
 			L.zero,
 		),
 		rubberBand,
+	);
+	const isActive = view(
+		L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
+		rubberBandStart,
 	);
 
 	const rubberBandAngle = view([L.removable("angle"), "angle"], rubberBand);
@@ -73,7 +76,7 @@
 </script>
 
 <path
-	use:disableTouchEventsIf={rubberBandStart}
+	use:disableTouchEventsIf={isActive}
 	d={frameBoxPath.value}
 	pointer-events="all"
 	fill="none"
@@ -82,49 +85,49 @@
 	tabindex="-1"
 	onkeydown={(evt) => {
 		if (evt.key === "Escape" || evt.key === "Esc") {
-			pointerId.value = undefined;
+			isActive.value = false;
 		}
 	}}
 	onpointerdown={(evt) => {
-		if (rubberBandStart.value) {
-			evt.preventDefault();
+		if (!evt.isPrimary || !U.isLeftButton(evt)) {
 			return;
 		}
-		if (!(evt.isPrimary && U.isLeftButton(evt))) {
-			return;
-		}
-		pointerId.value = evt.pointerId;
 
 		evt.currentTarget.setPointerCapture(evt.pointerId);
+
 		rubberBandStart.value = clientToCanvas(evt.clientX, evt.clientY);
 		rubberBandSize.value = { x: 0, y: 0 };
 		rubberBandAngle.value = -cameraOrientation.value;
 	}}
 	onpointermove={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			const svgP = clientToCanvas(evt.clientX, evt.clientY);
-
-			const dx = svgP.x - rubberBandStart.value.x;
-			const dy = svgP.y - rubberBandStart.value.y;
-			rubberBandSize.value = {
-				x:
-					rubberBandAngleCos.value * dx +
-					rubberBandAngleSin.value * dy,
-				y:
-					-rubberBandAngleSin.value * dx +
-					rubberBandAngleCos.value * dy,
-			};
+		if (!evt.isPrimary) {
+			return;
 		}
+
+		if (!isActive.value) {
+			return;
+		}
+
+		const worldPos = clientToCanvas(evt.clientX, evt.clientY);
+
+		const dx = worldPos.x - rubberBandStart.value.x;
+		const dy = worldPos.y - rubberBandStart.value.y;
+		rubberBandSize.value = {
+			x: rubberBandAngleCos.value * dx + rubberBandAngleSin.value * dy,
+			y: -rubberBandAngleSin.value * dx + rubberBandAngleCos.value * dy,
+		};
 	}}
 	onpointerup={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			pointerId.value = undefined;
+		if (!evt.isPrimary) {
+			return;
 		}
+		isActive.value = false;
 	}}
 	onpointercancel={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			pointerId.value = undefined;
+		if (!evt.isPrimary) {
+			return;
 		}
+		isActive.value = false;
 	}}
 />
 

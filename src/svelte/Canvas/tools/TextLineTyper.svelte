@@ -16,18 +16,22 @@
 		cameraOrientation,
 		frameBoxPath,
 		clientToCanvas,
-		textes = atom([]),
+		newText = atom(undefined),
 	} = $props();
 
 	const typer = atom({});
-	const newText = view(L.appendTo, textes);
-	const pointerId = view(["pointerId"], typer);
 
 	const position = view([L.removable("position"), "position"], typer);
 	const text = view(["text", L.valueOr("")], typer);
 	const fontSize = view(["fontSize", L.valueOr(1)], typer);
 	const isEditing = view(R.compose(R.not, R.isNil), position);
 	const textEmpty = view(L.reread(R.isEmpty), text);
+
+	const isActive = view(
+		L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
+		position,
+	);
+	const isDragging = view(["dragging", L.valueOr(false)], typer);
 </script>
 
 <path
@@ -45,11 +49,9 @@
 		}
 	}}
 	onpointerdown={(evt) => {
-		if (!(evt.isPrimary && U.isLeftButton(evt))) {
+		if (!evt.isPrimary || !U.isLeftButton(evt)) {
 			return;
 		}
-
-		pointerId.value = evt.pointerId;
 
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 
@@ -64,9 +66,7 @@
 					fontSize: fontSize.value,
 					content: text.value,
 				};
-				position.value = undefined;
-				pointerId.value = undefined;
-				evt.currentTarget.releasePointerCapture(evt.pointerId);
+				isActive.value = false;
 
 				return;
 			}
@@ -74,25 +74,32 @@
 			fontSize.value = cameraScale.value;
 		}
 
-		const svgP = clientToCanvas(evt.clientX, evt.clientY);
-		position.value = svgP;
+		isDragging.value = true;
+		position.value = clientToCanvas(evt.clientX, evt.clientY);
 	}}
 	onpointermove={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			const svgP = clientToCanvas(evt.clientX, evt.clientY);
-
-			position.value = svgP;
+		if (!evt.isPrimary) {
+			return;
 		}
+		if (!isDragging.value) {
+			return;
+		}
+
+		position.value = clientToCanvas(evt.clientX, evt.clientY);
 	}}
 	onpointerup={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			pointerId.value = undefined;
+		if (!evt.isPrimary) {
+			return;
 		}
+
+		isDragging.value = false;
 	}}
 	onpointercancel={(evt) => {
-		if (pointerId.value === evt.pointerId) {
-			pointerId.value = undefined;
+		if (!evt.isPrimary) {
+			return;
 		}
+
+		isDragging.value = false;
 	}}
 />
 
