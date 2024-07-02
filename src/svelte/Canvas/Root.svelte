@@ -57,6 +57,7 @@
 	import Magnifier from "./tools/Magnifier.svelte";
 	import GuideLiner from "./tools/GuideLiner.svelte";
 	import Guides from "./tools/Guides.svelte";
+	import Grid from "./tools/Grid.svelte";
 	import Axis from "./tools/Axis.svelte";
 	import ShowAxis from "./tools/ShowAxis.svelte";
 	import Pan from "./tools/Pan.svelte";
@@ -657,6 +658,35 @@
 							y: start.y,
 						}),
 				}),
+				R.always({}),
+			),
+			L.values,
+		],
+		shapes: [
+			L.elems,
+			L.ifElse(
+				R.is(Object),
+				[
+					"placement",
+					L.pick({
+						start: "start",
+						a: ({ start, size, angle }) =>
+							Geo.rotatePivotDegree(start, angle, {
+								x: start.x + size.x,
+								y: start.y + size.y,
+							}),
+						b: ({ start, size, angle }) =>
+							Geo.rotatePivotDegree(start, angle, {
+								x: start.x,
+								y: start.y + size.y,
+							}),
+						c: ({ start, size, angle }) =>
+							Geo.rotatePivotDegree(start, angle, {
+								x: start.x + size.x,
+								y: start.y,
+							}),
+					}),
+				],
 				R.always({}),
 			),
 			L.values,
@@ -1555,6 +1585,12 @@
 				<Bounds
 					{extension}
 					{cameraBounds}
+					{rotationTransform}
+					{cameraScale}
+				/>
+				<Grid
+					{frameBoxPath}
+					{frameBoxObject}
 					{rotationTransform}
 					{cameraScale}
 				/>
