@@ -26,8 +26,9 @@
 		stroke: black;
 		fill-opacity: 0.2;
 		fill-rule: evenodd;
-		stroke-width: 4px;
+		stroke-width: 2px;
 		stroke-linecap: round;
 		stroke-linejoin: round;
+		vector-effect: non-scaling-stroke;
 	}
 </style>
