@@ -117,7 +117,9 @@ function panWithPivotZeroDelta(cam) {
 
 const pivotZoomLens = L.lens(zoomWithPivotZeroDelta, zoomWithPivot)
 const pivotRotationLens =  L.lens(rotateWithPivotZeroDelta, rotateWithPivot)
-const panLens =  L.lens(panWithPivotZeroDelta, panWithPivotScreen)
+const pivotZoomScreenLens = L.lens(zoomWithPivotZeroDelta, zoomWithPivotScreen)
+const pivotRotationScreenLens =  L.lens(rotateWithPivotZeroDelta, rotateWithPivotScreen)
+const panScreenLens =  L.lens(panWithPivotZeroDelta, panWithPivotScreen)
 
 
 export function bindEvents(node, {camera, worldClientIso}) {
@@ -125,7 +127,7 @@ export function bindEvents(node, {camera, worldClientIso}) {
 
 	const zoomDelta = view(['focus', pivotZoomLens], camera)
 	const rotationDelta = view(['focus', pivotRotationLens], camera)
-	const panDelta = view(['focus', panLens], camera)
+	const panScreenDelta = view(['focus', panScreenLens], camera)
 
 	function onWheel(evt) {
 		if(evt.shiftKey || evt.altKey) {
@@ -182,7 +184,7 @@ export function bindEvents(node, {camera, worldClientIso}) {
 		}
 
 		if(Math.hypot(dx, dy) < 10) {
-			panDelta.value = {
+			panScreenDelta.value = {
 				dx,
 				dy,
 			}
@@ -210,7 +212,16 @@ export function bindEvents(node, {camera, worldClientIso}) {
 
 	const pointerIds = []
 
+	let mouseGrab
 	function onPointerStart(evt) {
+		if(evt.pointerType === 'mouse' && evt.button === 1 && evt.shiftKey) {
+			node.setPointerCapture(evt.pointerId)
+			mouseGrab = {
+				x: evt.clientX,
+				y: evt.clientY,
+			}
+		}
+
 		if(evt.pointerType !== 'touch') {
 			return
 		}
@@ -218,6 +229,10 @@ export function bindEvents(node, {camera, worldClientIso}) {
 	}
 
 	function onPointerEnd(evt) {
+		if(node.hasPointerCapture(evt.pointerId)) {
+			mouseGrab = undefined
+		}
+
 		if(evt.pointerType !== 'touch') {
 			return
 		}
@@ -225,6 +240,21 @@ export function bindEvents(node, {camera, worldClientIso}) {
 	}
 
 	function onPointerMove(evt) {
+		if(node.hasPointerCapture(evt.pointerId)) {
+			
+			const dx = mouseGrab.x - evt.clientX
+			const dy = mouseGrab.y - evt.clientY
+
+			panScreenDelta.value = {
+				dx,
+				dy,
+			}
+			mouseGrab = {
+				x: evt.clientX,
+				y: evt.clientY,
+			}
+		}
+
 		if(evt.pointerType !== 'touch') {
 			return
 		}
