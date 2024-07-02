@@ -552,8 +552,8 @@
 		outline: 1px solid #444;
 		box-shadow: 0px 0px 15px 1px #000a;
 		font-family: monospace;
-		user-select: none;
 		-webkit-user-select: none;
+		user-select: none;
 	}
 
 	.grid-row {
@@ -683,9 +683,10 @@
 		padding: 0.5em;
 		box-sizing: border-box;
 		outline: 1px solid #eee;
-		border-radius: none;
 		-webkit-appearance: none;
+		appearance: none;
 		-webkit-border-radius: 0px;
+		border-radius: none;
 	}
 	.grid-pinned-column .cell-input {
 		background: #fafafa;

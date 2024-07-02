@@ -125,8 +125,8 @@ export function rayInsideQuad(angle, dist, quad) {
 	const sides = [
 		[quad.a, quad.b],
 		[quad.b, quad.c],
-		[quad.d, quad.c],
-		[quad.a, quad.d],
+		[quad.c, quad.d],
+		[quad.d, quad.a],
 	];
 	const [intersectionA, intersectionB] = R.compose(
 		R.take(2),
@@ -134,7 +134,7 @@ export function rayInsideQuad(angle, dist, quad) {
 		R.map(([from, to]) => RayToLineSegment(supX, supY, dirX, dirY, from, to)),
 	)(sides);
 
-	return (intersectionA && intersectionB) ? ({a: intersectionA, b: intersectionB, sup: {x: supX, y:supY, dx: dirX, dy: dirY}}) : undefined
+	return (intersectionA && intersectionB) ? ({a: intersectionA, b: intersectionB/*, sup: {x: supX, y:supY, dx: dirX, dy: dirY}*/}) : undefined
 };
 
 

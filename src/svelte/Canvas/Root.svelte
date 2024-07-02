@@ -134,6 +134,7 @@
 	);
 
 	const debugFrames = atom(false);
+	const showBounds = atom(false);
 
 	const allTabs = atom({
 		current: 0,
@@ -1158,6 +1159,14 @@
 					bind:checked={debugFrames.value}
 				/> Show Debug Frames</label
 			>
+
+			<label
+				><input
+					type="checkbox"
+					value={true}
+					bind:checked={showBounds.value}
+				/> Show Paper Bounds</label
+			>
 		</div>
 
 		<div>
@@ -1583,6 +1592,7 @@
 
 			<g pointer-events="none">
 				<Bounds
+					show={showBounds}
 					{extension}
 					{cameraBounds}
 					{rotationTransform}

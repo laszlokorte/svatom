@@ -338,6 +338,7 @@
 					class:phantom={!thisEntry.value}
 					type="button"
 					onclick={() => (thisName.value = "")}
+					aria-label="Delete"
 				>
 					<svg width="10" height="10" viewBox="-16 -16 32 32">
 						<title>Delete</title>

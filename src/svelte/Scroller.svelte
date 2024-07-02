@@ -102,14 +102,16 @@
 		grid-template-columns: 1fr;
 		grid-template-rows: 1fr;
 		touch-action: manipulation;
-		user-select: none;
-		-webkit-user-select: none;
 		-webkit-touch-callout: none;
         -webkit-user-callout: none;
         -webkit-user-select: none;
         -webkit-user-drag: none;
         -webkit-user-modify: none;
         -webkit-highlight: none;
+		user-select: none;
+        user-drag: none;
+        user-modify: none;
+        highlight: none;
 	}
 
 	.scroller > * {
@@ -146,8 +148,8 @@
 		grid-template-rows: 1fr;
 		top: 0;
 		left: 0;
-		user-select: none;
 		-webkit-user-select: none;
+		user-select: none;
 		touch-action: manipulation;
 	}
 
