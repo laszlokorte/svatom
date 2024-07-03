@@ -98,9 +98,21 @@
 		currentLasso.value = clientToCanvas(evt.clientX, evt.clientY);
 	}}
 	onpointerup={(evt) => {
+		if (!evt.isPrimary) {
+			return;
+		}
 		isActive.value = false;
 	}}
 	onpointercancel={(evt) => {
+		if (!evt.isPrimary) {
+			return;
+		}
+		isActive.value = false;
+	}}
+	onlostpointercapture={(evt) => {
+		if (!evt.isPrimary) {
+			return;
+		}
 		isActive.value = false;
 	}}
 />

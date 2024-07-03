@@ -152,6 +152,12 @@
 		}
 		isActive.value = false;
 	}}
+	onlostpointercapture={(evt) => {
+		if (!evt.isPrimary) {
+			return;
+		}
+		isActive.value = false;
+	}}
 />
 
 <g transform={rotationTransform.value}>

@@ -189,6 +189,15 @@
 	onpointercancel={(evt) => {
 		isDragging.value = false;
 	}}
+	onlostpointercapture={(evt) => {
+		if (!evt.isPrimary) {
+			return;
+		}
+		if (!isDragging.value) {
+			return;
+		}
+		isActive.value = undefined;
+	}}
 />
 
 <g transform={rotationTransform.value}>

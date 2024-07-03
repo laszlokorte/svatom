@@ -237,6 +237,12 @@
 		if (!isActive.value) {
 			return;
 		}
+		if (
+			evt.pointerId &&
+			!evt.currentTarget.hasPointerCapture(evt.pointerId)
+		) {
+			return;
+		}
 		const p = clientToCanvas(evt.clientX, evt.clientY);
 		if (
 			pathHead.value &&
@@ -279,7 +285,6 @@
 		}
 
 		dragging.value = false;
-		const p = clientToCanvas(evt.clientX, evt.clientY);
 
 		if (draftSnappedFinish.value) {
 			finishDraft.value = pathHead.value;
@@ -295,11 +300,14 @@
 			}
 		} else if (draftSnappedPop.value) {
 			path.value = path.value.slice(0, path.value.length - 1);
-			freeDraft.value = p;
+			draftPos.value = undefined;
 		} else {
 			if (
 				pathRoot.value &&
-				Math.hypot(pathRoot.value.x - p.x, pathRoot.value.y - p.y) >
+				Math.hypot(
+					pathRoot.value.x - draftPos.value.x,
+					pathRoot.value.y - draftPos.value.y,
+				) >
 					cameraScale.value * snapRadius +
 						Math.hypot(evt.width, evt.height) / 2
 			) {
@@ -317,6 +325,21 @@
 		}
 
 		dragging.value = false;
+	}}
+	onlostpointercapture={(evt) => {
+		if (!evt.isPrimary) {
+			return;
+		}
+		if (!dragging.value) {
+			return;
+		}
+		dragging.value = false;
+
+		if (pathLength.value < 2) {
+			path.value = [];
+		} else {
+			draft.value = undefined;
+		}
 	}}
 >
 	<path

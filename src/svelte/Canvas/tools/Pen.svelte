@@ -118,6 +118,12 @@
 		}
 		path.value = undefined;
 	}}
+	onlostpointercapture={(evt) => {
+		if (!evt.isPrimary) {
+			return;
+		}
+		path.value = undefined;
+	}}
 />
 
 <g transform={rotationTransform.value}>

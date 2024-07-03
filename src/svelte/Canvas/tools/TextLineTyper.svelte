@@ -101,6 +101,15 @@
 
 		isDragging.value = false;
 	}}
+	onlostpointercapture={(evt) => {
+		if (!evt.isPrimary) {
+			return;
+		}
+		if (!isDragging.value) {
+			return;
+		}
+		position.value = undefined;
+	}}
 />
 
 {#if position.value}
@@ -134,8 +143,7 @@
 					}}
 				>
 					<input
-						use:autofocusIf={position.value.x * position.value.x +
-							position.value.y * position.value.y}
+						use:autofocusIf={!isDragging.value}
 						type="text"
 						bind:value={text.value}
 						onkeydown={(evt) => {
@@ -152,8 +160,8 @@
 									content: text.value,
 									fontSize: fontSize.value,
 								};
+								position.value = undefined;
 							}
-							position.value = undefined;
 						}}
 					/>
 				</form>

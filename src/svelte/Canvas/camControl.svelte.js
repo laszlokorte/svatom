@@ -211,9 +211,14 @@ export function bindEvents(node, {camera, worldClientIso}) {
 	};
 
 	const pointerIds = []
+	let primaryPointer = null
 
 	let mouseGrab
 	function onPointerStart(evt) {
+		if(evt.isPrimary) {
+			primaryPointer = evt.pointerId
+		}
+
 		if(evt.pointerType === 'mouse' && evt.button === 1 && evt.shiftKey) {
 			node.setPointerCapture(evt.pointerId)
 			mouseGrab = {
@@ -226,9 +231,17 @@ export function bindEvents(node, {camera, worldClientIso}) {
 			return
 		}
 		pointerIds.push(evt.pointerId)
+
+		if(pointerIds.length >= 2) {
+			node.setPointerCapture(evt.pointerId)
+		}
 	}
 
 	function onPointerEnd(evt) {
+		if(evt.isPrimary) {
+			primaryPointer = null
+		}
+
 		if(node.hasPointerCapture(evt.pointerId)) {
 			mouseGrab = undefined
 		}
@@ -237,6 +250,16 @@ export function bindEvents(node, {camera, worldClientIso}) {
 			return
 		}
 		removeItemOnce(pointerIds, evt.pointerId)
+
+		if(pointerIds.length <= 2) {
+			if(primaryPointer) {
+				node.releasePointerCapture(primaryPointer)
+			}
+			for (let j=pointerIds.length-1;j>=0;j--) {
+				node.releasePointerCapture(
+				pointerIds[j])
+			}
+		}
 	}
 
 	function onPointerMove(evt) {
@@ -261,6 +284,10 @@ export function bindEvents(node, {camera, worldClientIso}) {
 		if(pointerIds.length > 1) {
 			evt.stopImmediatePropagation()
 			evt.stopPropagation()
+
+			if(!node.hasPointerCapture(primaryPointer)) {
+				node.setPointerCapture(primaryPointer)
+			}
 		}
 	}
 

@@ -32,6 +32,9 @@
 		grabPosition.value = clientToCanvas(evt.clientX, evt.clientY);
 	}}
 	onpointermove={(evt) => {
+		if (!evt.isPrimary) {
+			return;
+		}
 		if (!isActive.value) {
 			return;
 		}
@@ -42,9 +45,21 @@
 		};
 	}}
 	onpointerup={(evt) => {
+		if (!evt.isPrimary) {
+			return;
+		}
 		grabPosition.value = undefined;
 	}}
 	onpointercancel={(evt) => {
+		if (!evt.isPrimary) {
+			return;
+		}
+		grabPosition.value = undefined;
+	}}
+	onlostpointercapture={(evt) => {
+		if (!evt.isPrimary) {
+			return;
+		}
 		grabPosition.value = undefined;
 	}}
 />
