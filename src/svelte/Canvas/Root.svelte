@@ -546,16 +546,20 @@
 		allTabs,
 	);
 
-	const tabIds = view(
-		[
-			"tabs",
-			L.valueOr([]),
-			L.lens(R.compose(R.range(0), R.length), (newIds, olds) =>
-				R.map((i) => olds[i], newIds),
-			),
-		],
+	const tabIds = read(
+		["tabs", L.valueOr([]), L.reread(R.compose(R.range(0), R.length))],
 		allTabs,
 	);
+
+	const closeTab = view(
+		L.setter((r, old) => ({
+			current:
+				old.current > r ? Math.max(0, old.current - 1) : old.current,
+			tabs: R.addIndex(R.filter)((v, i) => i !== r, old.tabs),
+		})),
+		allTabs,
+	);
+
 	const currentTabId = view("current", allTabs);
 
 	const tool = atom("pen");
@@ -1502,7 +1506,7 @@
 					type="button"
 					class="doc-tab-del"
 					onclick={() => {
-						view(d, tabIds).value = undefined;
+						closeTab.value = d;
 					}}
 					class:active={d === currentTabId.value}
 					title="Close"
