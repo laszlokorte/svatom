@@ -4,13 +4,7 @@
 	import * as U from "../../utils";
 	import * as C from "../../combinators";
 	import * as Geo from "../../geometry";
-	import {
-		atom,
-		view,
-		read,
-		combine,
-		disableTouchEventsIf,
-	} from "../../svatom.svelte.js";
+	import { atom, view, read, combine } from "../../svatom.svelte.js";
 
 	const POLAR = true;
 
@@ -82,7 +76,6 @@
 	fill="none"
 	role="button"
 	tabindex="-1"
-	use:disableTouchEventsIf={isActive}
 	onpointerdown={(evt) => {
 		if (!evt.isPrimary) {
 			return;
@@ -156,7 +149,7 @@
 	}}
 />
 
-<g transform={rotationTransform.value}>
+<g transform={rotationTransform.value} pointer-events="none">
 	{#if isActive.value}
 		{#if Math.hypot(zoomPivotWorld.value.y - zoomPivotCurrentWorld.value.y, zoomPivotWorld.value.x - zoomPivotCurrentWorld.value.x) / cameraScale.value > 55}
 			<path

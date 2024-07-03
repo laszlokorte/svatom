@@ -3,7 +3,7 @@
 	import * as R from "ramda";
 	import * as U from "../../utils";
 	import * as C from "../../combinators";
-	import { atom, view, disableTouchEventsIf } from "../../svatom.svelte.js";
+	import { atom, view } from "../../svatom.svelte.js";
 
 	const { frameBoxPath, clientToCanvas, cameraScale, rotationTransform } =
 		$props();
@@ -66,7 +66,6 @@
 </script>
 
 <path
-	use:disableTouchEventsIf={isActive}
 	d={frameBoxPath.value}
 	pointer-events="all"
 	fill="none"
@@ -117,13 +116,8 @@
 	}}
 />
 
-<g transform={rotationTransform.value}>
-	<polyline
-		points={lassoPath.value}
-		fill="none"
-		class="lasso-area"
-		pointer-events="none"
-	/>
+<g transform={rotationTransform.value} pointer-events="none">
+	<polyline points={lassoPath.value} fill="none" class="lasso-area" />
 </g>
 
 <style>

@@ -3,13 +3,7 @@
 	import * as R from "ramda";
 	import * as U from "../../utils";
 	import * as Geo from "../../geometry";
-	import {
-		atom,
-		view,
-		read,
-		combine,
-		disableTouchEventsIf,
-	} from "../../svatom.svelte.js";
+	import { view, read, combine } from "../../svatom.svelte.js";
 
 	const minDragDistance = 25;
 	const numberSvgFormat = new Intl.NumberFormat("en-US", {
@@ -201,10 +195,9 @@
 	);
 </script>
 
-<g transform={rotationTransform.value}>
+<g transform={rotationTransform.value} pointer-events="none">
 	<path
 		class="grid-lines-secondary"
-		pointer-events="none"
 		d={gridPathSecondary.value}
 		stroke="#eee"
 		stroke-width="1px"
@@ -213,7 +206,6 @@
 	/>
 	<path
 		class="grid-lines-primary"
-		pointer-events="none"
 		d={gridPathPrimary.value}
 		stroke="#eee"
 		stroke-width="1px"

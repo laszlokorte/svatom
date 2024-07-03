@@ -14,7 +14,6 @@
 		bindSize,
 		autofocusIf,
 		string,
-		disableTouchEventsIf,
 		/*auto update text size according to text content*/
 		readTextreaScrollSize,
 	} from "../../svatom.svelte.js";
@@ -106,7 +105,6 @@
 </script>
 
 <path
-	use:disableTouchEventsIf={textBoxStart}
 	d={frameBoxPath.value}
 	pointer-events="all"
 	fill="none"

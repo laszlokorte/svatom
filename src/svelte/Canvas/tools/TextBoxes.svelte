@@ -14,7 +14,6 @@
 		bindSize,
 		autofocusIf,
 		string,
-		disableTouchEventsIf,
 	} from "../../svatom.svelte.js";
 
 	const numberSvgFormat = new Intl.NumberFormat("en-US", {
@@ -34,7 +33,11 @@
 	} = $props();
 </script>
 
-<g transform={rotationTransform.value} vector-effect="non-rotation">
+<g
+	transform={rotationTransform.value}
+	vector-effect="non-rotation"
+	pointer-events="none"
+>
 	{#each textBoxes.value as t}
 		<g
 			transform="translate({t.start.x}, {t.start

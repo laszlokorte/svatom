@@ -28,12 +28,14 @@
 				cy={t.y + t.fontSize}
 				r={t.fontSize}
 				fill="#55aaee"
+				pointer-events="none"
 			/>
 			<text
 				x={t.x}
 				y={t.y}
 				stroke="white"
 				fill="white"
+				pointer-events="none"
 				paint-order="stroke"
 				stroke-width="1px"
 				font-size="{t.fontSize}em"

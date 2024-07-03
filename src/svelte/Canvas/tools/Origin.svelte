@@ -14,5 +14,6 @@
 		vector-effect="non-scaling-stroke"
 		stroke="gray"
 		opacity="0.2"
+		pointer-events="none"
 	/>
 </g>

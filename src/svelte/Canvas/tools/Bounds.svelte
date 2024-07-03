@@ -12,7 +12,7 @@
 </script>
 
 {#if show.value}
-	<g transform={rotationTransform.value}>
+	<g transform={rotationTransform.value} pointer-events="none">
 		<path
 			fill="none"
 			class="clamp-bounds"

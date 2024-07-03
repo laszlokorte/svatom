@@ -167,29 +167,26 @@ export function bindEvents(node, {camera, worldClientIso}) {
 		const dx = basePivot.x - evt.clientX
 		const dy = basePivot.y - evt.clientY
 
-		if(Math.abs(dw) < 30) {
+		const suddenAngle = Math.abs(dw) > 30
+		const suddenZoom = Math.abs(dz) > 0.2
+		const suddenPan = Math.hypot(dx, dy) > 15 * window.devicePixelRatio
+
+		if(!suddenAngle && !suddenZoom && !suddenPan) {
 			rotationDelta.value = {
 				px: worldPos.x,
 				py: worldPos.y,
 				dw: dw,
 			}
-		}
-
-		if(Math.abs(dz) < 0.2) {
 			zoomDelta.value = {
 				px: worldPos.x,
 				py: worldPos.y,
 				dz: dz,
 			}
-		}
-
-		if(Math.hypot(dx, dy) < 10) {
 			panScreenDelta.value = {
 				dx,
 				dy,
 			}
 		}
-
 
 		baseScale = evt.scale
 		baseRot = evt.rotation
@@ -299,9 +296,9 @@ export function bindEvents(node, {camera, worldClientIso}) {
 	  return arr;
 	}
 
-	node.addEventListener('wheel', onWheel, { passive:false })
-	node.addEventListener('gesturestart', onGestureStart, false)
-	node.addEventListener('gesturechange', onGestureChange, false)
+	node.addEventListener('wheel', onWheel, { passive:false, capture: false })
+	node.addEventListener('gesturestart', onGestureStart, true)
+	node.addEventListener('gesturechange', onGestureChange, true)
 	node.addEventListener('pointerdown', onPointerStart, true)
 	node.addEventListener('pointermove', onPointerMove, true)
 	node.addEventListener('pointercancel', onPointerEnd, true)
@@ -312,8 +309,8 @@ export function bindEvents(node, {camera, worldClientIso}) {
 		node.removeEventListener('pointermove', onPointerMove, true)
 		node.removeEventListener('pointercancel', onPointerEnd, true)
 		node.removeEventListener('pointerdown', onPointerStart, true)
-		node.removeEventListener('gesturechange', onGestureStart, false)
-		node.removeEventListener('gesturestart', onGestureChange, false)
-		node.removeEventListener('wheel', onWheel, { passive:false })
+		node.removeEventListener('gesturechange', onGestureStart, true)
+		node.removeEventListener('gesturestart', onGestureChange, true)
+		node.removeEventListener('wheel', onWheel, { passive:false, capture: false })
 	}
 }

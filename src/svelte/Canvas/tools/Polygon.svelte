@@ -3,13 +3,7 @@
 	import * as R from "ramda";
 	import * as U from "../../utils";
 	import * as C from "../../combinators";
-	import {
-		atom,
-		view,
-		read,
-		combine,
-		disableTouchEventsIf,
-	} from "../../svatom.svelte.js";
+	import { atom, view, read, combine } from "../../svatom.svelte.js";
 
 	const {
 		frameBoxPath,
@@ -154,7 +148,12 @@
 	}
 </script>
 
-<g
+<path
+	class="polygon-surface"
+	d={frameBoxPath.value}
+	pointer-events="all"
+	stroke="none"
+	fill="none"
 	role="button"
 	tabindex="-1"
 	class:dragging={dragging.value}
@@ -343,68 +342,59 @@
 			draftPos.value = undefined;
 		}
 	}}
->
-	<path
-		use:disableTouchEventsIf={startPath}
-		class="polygon-surface"
-		d={frameBoxPath.value}
-		pointer-events="all"
-		stroke="none"
+/>
+
+<g transform={rotationTransform.value} pointer-events="none">
+	<polyline
+		points={pathPath.value}
+		pointer-events="none"
 		fill="none"
+		class="draft-line"
 	/>
 
-	<g transform={rotationTransform.value} pointer-events="none">
-		<polyline
-			points={pathPath.value}
-			pointer-events="none"
-			fill="none"
-			class="draft-line"
-		/>
+	<polyline
+		points={draftPath.value}
+		fill="none"
+		stroke="none"
+		stroke-width="2px"
+		class="draft-line-head"
+		pointer-events="none"
+	/>
+	{#if pathCanClose.value}
+		<circle
+			cx={pathRoot.value.x}
+			cy={pathRoot.value.y}
+			r={snapRadiusVisual * cameraScale.value}
+			class="capture-spot close"
+			class:snapped={draftSnappedClose.value}
+		></circle>
+	{/if}
+	{#if pathLength.value > 0}
+		<circle
+			cx={pathHead.value.x}
+			cy={pathHead.value.y}
+			r={snapRadiusVisual * cameraScale.value}
+			class="capture-spot finish"
+			class:snapped={draftSnappedFinish.value}
+		></circle>
 
-		<polyline
-			points={draftPath.value}
-			fill="none"
-			stroke="none"
-			stroke-width="2px"
-			class="draft-line-head"
-			pointer-events="none"
-		/>
-		{#if pathCanClose.value}
-			<circle
-				cx={pathRoot.value.x}
-				cy={pathRoot.value.y}
-				r={snapRadiusVisual * cameraScale.value}
-				class="capture-spot close"
-				class:snapped={draftSnappedClose.value}
-			></circle>
-		{/if}
-		{#if pathLength.value > 0}
-			<circle
-				cx={pathHead.value.x}
-				cy={pathHead.value.y}
-				r={snapRadiusVisual * cameraScale.value}
-				class="capture-spot finish"
-				class:snapped={draftSnappedFinish.value}
-			></circle>
-
-			<circle
-				cx={pathHead.value.x}
-				cy={pathHead.value.y}
-				r={(snapRadiusVisual / 2) * cameraScale.value}
-				class="capture-spot-center"
-			></circle>
-		{/if}
-		{#if pathNeck.value}
-			<circle
-				pointer-events="all"
-				cx={pathNeck.value.x}
-				cy={pathNeck.value.y}
-				r={snapRadiusVisual * cameraScale.value}
-				class="cancel-spot"
-				class:snapped={draftSnappedPop.value}
-			></circle>
-		{/if}
-	</g>
+		<circle
+			cx={pathHead.value.x}
+			cy={pathHead.value.y}
+			r={(snapRadiusVisual / 2) * cameraScale.value}
+			class="capture-spot-center"
+		></circle>
+	{/if}
+	{#if pathNeck.value}
+		<circle
+			pointer-events="all"
+			cx={pathNeck.value.x}
+			cy={pathNeck.value.y}
+			r={snapRadiusVisual * cameraScale.value}
+			class="cancel-spot"
+			class:snapped={draftSnappedPop.value}
+		></circle>
+	{/if}
 </g>
 
 <style>
