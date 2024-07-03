@@ -149,7 +149,6 @@
 </script>
 
 <path
-	use:disableTouchEventsIf={startPath}
 	class="polygon-surface"
 	d={frameBoxPath.value}
 	pointer-events="all"

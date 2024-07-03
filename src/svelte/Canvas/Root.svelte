@@ -65,21 +65,7 @@
 	import Zoom from "./tools/Zoom.svelte";
 
 	const svgElement = atom(null);
-	const currentToolElementRaw = atom(null);
-
-	const currentToolElement = view(
-		L.lens(R.identity, (a, b) => {
-			// console.log(a);
-			// alert(
-			// 	"old:" +
-			// 		(b && Object.getOwnPropertyNames(b).join(",")) +
-			// 		", new:" +
-			// 		(a && Object.getOwnPropertyNames(a).join(",")),
-			// );
-			return a;
-		}),
-		currentToolElementRaw,
-	);
+	let currentToolElement = $state(null);
 
 	function clientToCanvas(x, y, screen = false) {
 		const screenPoint = U.screenToElementViewbox(
@@ -1549,11 +1535,8 @@
 			onclick={() => {
 				currentDocumentContent.value = {};
 
-				if (
-					currentToolElement.value &&
-					currentToolElement.value.cancel
-				) {
-					currentToolElement.value.cancel();
+				if (currentToolElement && currentToolElement.cancel) {
+					currentToolElement.cancel();
 				}
 
 				update(
@@ -1674,8 +1657,7 @@
 
 			<svelte:component
 				this={tools[tool.value].component}
-				key={tool.value}
-				bind:this={currentToolElement.value}
+				bind:this={currentToolElement}
 				{...tools[tool.value].parameters}
 			></svelte:component>
 		</svg>
