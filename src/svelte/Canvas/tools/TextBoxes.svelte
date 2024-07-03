@@ -84,8 +84,8 @@
 
 	.text-output {
 		pointer-events: none;
-		font-size: 1.2em;
 		font: inherit;
+		font-family: monospace;
 		border: none;
 		padding: 2px;
 		display: block;
@@ -102,6 +102,7 @@
 		margin: 0;
 		overflow-wrap: break-word;
 		text-indent: 0;
+		-webkit-text-size-adjust: none;
 
 		overflow: visible;
 		/*overflow: auto;

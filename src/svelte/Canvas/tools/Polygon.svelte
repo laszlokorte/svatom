@@ -198,8 +198,8 @@
 		} else if (
 			!pathCanFinish.value &&
 			Math.hypot(pathRoot.value.x - p.x, pathRoot.value.y - p.y) <
-				cameraScale.value * snapRadius +
-					Math.hypot(evt.width, evt.height) / 2
+				cameraScale.value *
+					(snapRadius + Math.hypot(evt.width, evt.height) / 2)
 		) {
 			path.value = [];
 			return;
@@ -208,22 +208,22 @@
 		if (
 			pathCanFinish.value &&
 			Math.hypot(pathHead.value.x - p.x, pathHead.value.y - p.y) <
-				cameraScale.value * snapRadius +
-					Math.hypot(evt.width, evt.height) / 2
+				cameraScale.value *
+					(snapRadius + Math.hypot(evt.width, evt.height) / 2)
 		) {
 			finishDraft.value = pathHead.value;
 		} else if (
 			pathCanClose.value &&
 			Math.hypot(pathRoot.value.x - p.x, pathRoot.value.y - p.y) <
-				cameraScale.value * snapRadius +
-					Math.hypot(evt.width, evt.height) / 2
+				cameraScale.value *
+					(snapRadius + Math.hypot(evt.width, evt.height) / 2)
 		) {
 			closeDraft.value = pathRoot.value;
 		} else if (
 			pathNeck.value &&
 			Math.hypot(pathNeck.value.x - p.x, pathNeck.value.y - p.y) <
-				cameraScale.value * snapRadius +
-					Math.hypot(evt.width, evt.height) / 2
+				cameraScale.value *
+					(snapRadius + Math.hypot(evt.width, evt.height) / 2)
 		) {
 			popDraft.value = pathNeck.value;
 		} else {
@@ -241,8 +241,8 @@
 		if (
 			pathHead.value &&
 			Math.hypot(pathHead.value.x - p.x, pathHead.value.y - p.y) <
-				cameraScale.value * snapRadius +
-					Math.hypot(evt.width, evt.height) / 2
+				cameraScale.value *
+					(snapRadius + Math.hypot(evt.width, evt.height) / 2)
 		) {
 			if (pathCanFinish.value) {
 				finishDraft.value = pathHead.value;
@@ -252,15 +252,15 @@
 		} else if (
 			pathCanClose.value &&
 			Math.hypot(pathRoot.value.x - p.x, pathRoot.value.y - p.y) <
-				cameraScale.value * snapRadius +
-					Math.hypot(evt.width, evt.height) / 2
+				cameraScale.value *
+					(snapRadius + Math.hypot(evt.width, evt.height) / 2)
 		) {
 			closeDraft.value = pathRoot.value;
 		} else if (
 			pathNeck.value &&
 			Math.hypot(pathNeck.value.x - p.x, pathNeck.value.y - p.y) <
-				cameraScale.value * snapRadius +
-					Math.hypot(evt.width, evt.height) / 2
+				cameraScale.value *
+					(snapRadius + Math.hypot(evt.width, evt.height) / 2)
 		) {
 			popDraft.value = pathNeck.value;
 		} else {
@@ -339,6 +339,8 @@
 		<polyline
 			points={draftPath.value}
 			fill="none"
+			stroke="none"
+			stroke-width="2px"
 			class="draft-line-head"
 			pointer-events="none"
 		/>
@@ -347,8 +349,6 @@
 				cx={pathRoot.value.x}
 				cy={pathRoot.value.y}
 				r={snapRadiusVisual * cameraScale.value}
-				role="button"
-				tabindex="-1"
 				class="capture-spot close"
 				class:snapped={draftSnappedClose.value}
 			></circle>
@@ -395,8 +395,7 @@
 		stroke-width: 3px;
 		stroke-opacity: 0.8;
 		vector-effect: non-scaling-stroke;
-		stroke-linecap: round;
-		stroke-linejoin: round;
+		outline: none;
 	}
 
 	.draft-line-head {
@@ -405,8 +404,7 @@
 		stroke-width: 3px;
 		stroke-opacity: 0.3;
 		vector-effect: non-scaling-stroke;
-		stroke-linecap: round;
-		stroke-linejoin: round;
+		outline: none;
 	}
 
 	[role="button"] {
@@ -416,7 +414,9 @@
 	.capture-spot {
 		stroke: #ff6e60;
 		fill: #ffcec0;
+		stroke-width: 1px;
 		vector-effect: non-scaling-stroke;
+		outline: none;
 	}
 	.capture-spot.close {
 		stroke: #0e70dd;
@@ -430,6 +430,8 @@
 	}
 	.capture-spot-center {
 		fill: #1e9910;
+		stroke-width: 1px;
+		vector-effect: non-scaling-stroke;
 	}
 
 	.capture-spot.snapped {
@@ -444,8 +446,10 @@
 
 	.cancel-spot {
 		stroke: #aa0000;
+		stroke-width: 1px;
 		fill: #ff8888;
 		vector-effect: non-scaling-stroke;
+		outline: none;
 	}
 
 	.cancel-spot.snapped {

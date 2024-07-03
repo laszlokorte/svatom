@@ -384,10 +384,10 @@ export function bindScroll(node, someAtom) {
 
 	});
 
-	node.addEventListener("scroll", onscroll, { passive: false });
+	node.addEventListener("scroll", onscroll, { passive: true });
 
 	return () => {
-		node.removeEventListener("scroll", onscroll, { passive: false });
+		node.removeEventListener("scroll", onscroll, { passive: true });
 	};
 }
 
@@ -401,10 +401,10 @@ export function readScroll(node, someAtom) {
 	 	}
 	}
 
-	node.addEventListener("scroll", onscroll, { passive: false });
+	node.addEventListener("scroll", onscroll, { passive: true });
 
 	return () => {
-		node.removeEventListener("scroll", onscroll, { passive: false });
+		node.removeEventListener("scroll", onscroll, { passive: true });
 	};
 }
 

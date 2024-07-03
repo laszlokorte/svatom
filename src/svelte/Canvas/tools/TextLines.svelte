@@ -54,5 +54,6 @@
 <style>
 	text {
 		-webkit-text-size-adjust: none;
+		font-family: monospace;
 	}
 </style>

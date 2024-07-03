@@ -189,6 +189,7 @@
 
 	input {
 		font: inherit;
+		font-family: monospace;
 		border: none;
 		border-top: 4px solid transparent; /*needed for same offset as svg text*/
 		width: 100%;
@@ -204,6 +205,7 @@
 		padding-inline: 0;
 		padding-block: 0;
 		caret-color: #00aaff;
+		-webkit-text-size-adjust: none;
 	}
 
 	.dim {

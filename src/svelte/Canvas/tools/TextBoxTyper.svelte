@@ -335,6 +335,10 @@
 		overflow-x: auto;
 		scrollbar-gutter: stable;
 		scrollbar-width: thin;*/
+		scrollbar-gutter: auto;
+		caret-shape: bar;
+		font-family: monospace;
+		-webkit-text-size-adjust: none;
 	}
 
 	.dim {
