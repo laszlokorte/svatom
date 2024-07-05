@@ -128,6 +128,7 @@
 						Math.round(Math.log(scale) / Math.log(2) - 1),
 					);
 
+
 					const camCenterX = (rect.a.x + rect.c.x) / 2;
 					const camCenterY = (rect.a.y + rect.d.y) / 2;
 					const gridDistance = 128 * logRoundedScale;
@@ -169,7 +170,7 @@
 							R.reject(R.isNil),
 							R.map((i) =>
 								Geo.rayInsideQuad(
-									(Math.sign(baseDistanceY) * Math.PI) / 2,
+									-Math.PI / 2,
 									baseDistanceX + i * gridDistance,
 									rect,
 								),
@@ -181,7 +182,7 @@
 							R.reject(R.isNil),
 							R.map((i) =>
 								Geo.rayInsideQuad(
-									(Math.sign(baseDistanceY) * Math.PI) / 2,
+									-Math.PI / 2,
 									baseDistanceX - i * gridDistance,
 									rect,
 								),

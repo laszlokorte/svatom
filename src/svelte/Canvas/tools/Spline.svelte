@@ -22,7 +22,7 @@
 	  context: {
 	    path: [],
 	  },
-	  intial: 'EMPTY',
+	  initial: 'EMPTY',
 	  states: {
 	  	'EMPTY': {},
 	  },
@@ -64,7 +64,6 @@
 			return;
 		}
 
-		dragging.value = true;
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 		const p = clientToCanvas(evt.clientX, evt.clientY);
 
@@ -91,7 +90,7 @@
 		}
 
 		
-		machine.send({ type: 'RELEASE', position: p, scale: cameraScale.value, pointerSize: Math.hypot(evt.width, evt.height) });
+		machine.send({ type: 'RELEASE' });
 		
 	}}
 	onpointercancel={(evt) => {

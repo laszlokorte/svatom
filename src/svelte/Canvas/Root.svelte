@@ -45,6 +45,7 @@ zoomMovementLens} from "./camera/lenses";
 
 	import Scroller from "../Scroller.svelte";
 	import NodeCreator from "./tools/NodeCreator.svelte";
+	import EdgeCreator from "./tools/EdgeCreator.svelte";
 	import Lasso from "./tools/Lasso.svelte";
 	import Pen from "./tools/Pen.svelte";
 	import Polygon from "./tools/Polygon.svelte";
@@ -54,6 +55,7 @@ zoomMovementLens} from "./camera/lenses";
 
 	import RubberBand from "./tools/RubberBand.svelte";
 	import Nodes from "./tools/Nodes.svelte";
+	import Edges from "./tools/Edges.svelte";
 	import Drawings from "./tools/Drawings.svelte";
 	import Bounds from "./tools/Bounds.svelte";
 	import Origin from "./tools/Origin.svelte";
@@ -89,7 +91,15 @@ zoomMovementLens} from "./camera/lenses";
 							size: { x: 200, y: -200 },
 							angle: 0,
 						},
-						nodes: [{ x: 200, y: 100 }],
+						nodes: [
+							{ x: 200, y: 100 }, {
+					        "x": 266,
+					        "y": -217
+					      },
+					      {
+					        "x": -110,
+					        "y": -10
+					      }],
 						textes: [
 							{
 								x: 119.35297908638951,
@@ -426,7 +436,8 @@ zoomMovementLens} from "./camera/lenses";
 	const tool = atom("pen");
 	const currentDocumentContent = view(["content"], canvasDocument);
 
-	const nodes = view("nodes", currentDocumentContent);
+	const nodes = view(["nodes", L.define([])], currentDocumentContent);
+	const edges = view(["edges", L.define([])], currentDocumentContent);
 	const textes = view(["textes", L.defaults([])], currentDocumentContent);
 	const newText = view(L.appendTo, textes);
 	const textBoxes = view(
@@ -440,6 +451,11 @@ zoomMovementLens} from "./camera/lenses";
 	const shapes = view(["shapes", L.defaults([])], currentDocumentContent);
 	const rubberBand = atom(undefined);
 	const newNode = view([L.appendTo, L.required("x", "y")], nodes);
+	const newEdge = view([L.appendTo, L.required("x", "y")], edges);
+	const newEdgeNode = view(L.setter(({source, newTarget}, {e, n}) => ({
+		e: [...e, {source, target: n.length}],
+		n: [...n, newTarget]
+	})), combine({e: edges, n: nodes}));
 
 	const newDrawing = view(
 		[L.appendTo, L.setter((n, o) => (n.length > 1 ? n : o))],
@@ -646,7 +662,7 @@ zoomMovementLens} from "./camera/lenses";
 				cameraOrientation,
 			},
 		},
-		create: {
+		createNode: {
 			name: "Node",
 			component: NodeCreator,
 			parameters: {
@@ -656,6 +672,20 @@ zoomMovementLens} from "./camera/lenses";
 				rotationTransform,
 				cameraScale,
 				cameraTow,
+			},
+		},
+		createEdge: {
+			name: "Edge",
+			component: EdgeCreator,
+			parameters: {
+				clientToCanvas,
+				frameBoxPath,
+				rotationTransform,
+				cameraScale,
+				cameraTow,
+				nodes,
+				newEdge,
+				newEdgeNode,
 			},
 		},
 		text: {
@@ -811,7 +841,9 @@ zoomMovementLens} from "./camera/lenses";
 	const toolGroups = [
 		["select", "lasso"],
 		["magnifier", "pan", "rotate", "zoom"],
-		["pen", "create", "text", "text_box", "polygon", "spline", "shape"],
+		["pen", "polygon", "spline"],
+		["createNode","createEdge", ],
+		["text", "text_box", "shape"],
 		["axis", "guides"],
 	];
 
@@ -1473,6 +1505,7 @@ zoomMovementLens} from "./camera/lenses";
 						{rotationTransform}
 						{cameraScale}
 					/>
+					<Edges {nodes} {edges} {rotationTransform} {cameraScale} />
 					<Nodes {nodes} {rotationTransform} {cameraScale} />
 
 					<Drawings {drawings} {rotationTransform} {cameraScale} />
