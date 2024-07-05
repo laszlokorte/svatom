@@ -75,7 +75,7 @@ zoomMovementLens} from "./camera/lenses";
 
 	const svgElement = atom(null);
 	const cameraTow = atom(null);
-	let currentToolElement = $state(null);
+	let currentToolElement = atom(null);
 
 	const debugFrames = atom(false);
 	const showBounds = atom(false);
@@ -1429,8 +1429,8 @@ zoomMovementLens} from "./camera/lenses";
 			onclick={() => {
 				currentDocumentContent.value = {};
 
-				if (currentToolElement && currentToolElement.cancel) {
-					currentToolElement.cancel();
+				if (currentToolElement.value && currentToolElement.value.cancel) {
+					currentToolElement.value.cancel();
 				}
 
 				update(
@@ -1552,7 +1552,7 @@ zoomMovementLens} from "./camera/lenses";
 
 				<svelte:component
 					this={tools[tool.value].component}
-					bind:this={currentToolElement}
+					bind:this={currentToolElement.value}
 					{...tools[tool.value].parameters}
 				></svelte:component>
 			</Navigator>
