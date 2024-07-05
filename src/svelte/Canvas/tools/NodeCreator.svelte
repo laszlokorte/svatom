@@ -10,6 +10,7 @@
 		newNode,
 		rotationTransform,
 		cameraScale,
+		cameraTow,
 	} = $props();
 
 	const creator = atom(undefined);
@@ -49,7 +50,10 @@
 			return;
 		}
 
-		draft.value = clientToCanvas(evt.clientX, evt.clientY);
+		const worldPos = clientToCanvas(evt.clientX, evt.clientY);
+
+		draft.value = worldPos
+		cameraTow.value = worldPos
 	}}
 	onpointerup={(evt) => {
 		if (!evt.isPrimary) {
@@ -58,9 +62,10 @@
 		if (!isActive.value) {
 			return;
 		}
-		newNode.value = clientToCanvas(evt.clientX, evt.clientY);
+		newNode.value = draft.value;
 
 		isActive.value = false;
+		cameraTow.value = false
 	}}
 	onclick={(evt) => {
 		//newNode.value = clientToCanvas(evt.clientX, evt.clientY);
@@ -70,12 +75,14 @@
 			return;
 		}
 		isActive.value = false;
+		cameraTow.value = false
 	}}
 	onlostpointercapture={(evt) => {
 		if (!evt.isPrimary) {
 			return;
 		}
 		isActive.value = false;
+		cameraTow.value = false
 	}}
 />
 

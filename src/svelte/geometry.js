@@ -179,3 +179,40 @@ export function angleDegreeBetween(a,b,c) {
 export function angleDegreeBetweenXY(ax,ay,bx,by,cx,cy) {
 	return rad2degree(angleRadBetweenXY(ax,ay,bx,by,cx,cy))
 }
+
+export function quadContainsPoint({a,b,c,d}, p) {
+	return triangleContainsPoint(a,b,c, p) || triangleContainsPoint(c,d,a, p)
+}
+
+export function triangleContainsPoint(a,b,c, p) {
+	// Compute vectors        
+	const v0 = diff2d(c, a)
+	const v1 = diff2d(b, a)
+	const v2 = diff2d(p, a)
+
+	// Compute dot products
+	const dot00 = dot2d(v0, v0)
+	const dot01 = dot2d(v0, v1)
+	const dot02 = dot2d(v0, v2)
+	const dot11 = dot2d(v1, v1)
+	const dot12 = dot2d(v1, v2)
+
+	// Compute barycentric coordinates
+	const invDenom = 1 / (dot00 * dot11 - dot01 * dot01)
+	const u = (dot11 * dot02 - dot01 * dot12) * invDenom
+	const v = (dot00 * dot12 - dot01 * dot02) * invDenom
+
+	// Check if point is in triangle
+	return (u > 0) && (v > 0) && (u + v < 1)
+}
+
+function dot2d(a,b) {
+	return a.x*b.x + a.y*b.y
+}
+
+function diff2d(a,b) {
+	return {
+		x: a.x - b.x,
+		y: a.y - b.y,
+	}
+}

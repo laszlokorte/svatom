@@ -3,7 +3,13 @@
 	import * as R from "ramda";
 	import * as Geo from "../geometry";
 	import * as U from "../utils";
-	import * as Cam from "./camControl.svelte";
+	import Navigator from "./camera/Navigator.svelte";
+	import * as CamNavigation from "./camera/navigation";
+	import {cameraAsViewbox} from "./camera/functions";
+	import {frameBoxLens, panMovementLens,
+rotateMovementLens,
+zoomMovementLens} from "./camera/lenses";
+
 	import {
 		atom,
 		view,
@@ -16,6 +22,7 @@
 		bindSize,
 		traverse,
 	} from "../svatom.svelte.js";
+	import {constructLenses} from "./camera/live.js";
 
 	const numberFormat = new Intl.NumberFormat("en-US", {
 		minimumFractionDigits: 2,
@@ -65,73 +72,8 @@
 	import Zoom from "./tools/Zoom.svelte";
 
 	const svgElement = atom(null);
+	const cameraTow = atom(null);
 	let currentToolElement = $state(null);
-
-	function clientToCanvas(x, y, screen = false) {
-		const screenPoint = U.screenToElementViewbox(
-			x,
-			y,
-			svgElement.value,
-			cameraAsViewbox(camera.value),
-		);
-
-		if (screen) {
-			return screenPoint;
-		} else {
-			return Geo.rotatePivotXYDegree(
-				camera.value.focus.x,
-				camera.value.focus.y,
-				-camera.value.focus.w,
-				screenPoint,
-			);
-		}
-	}
-
-	function clientToCanvasV(v) {
-		return clientToCanvas(v.x, v.y);
-	}
-
-	function canvasToClient(x, y, screen = false) {
-		const screenPos = screen
-			? { x, y }
-			: Geo.rotatePivotXYDegree(
-					camera.value.focus.x,
-					camera.value.focus.y,
-					camera.value.focus.w,
-					{ x, y },
-				);
-
-		return U.elementViewboxToScreen(
-			screenPos.x,
-			screenPos.y,
-			svgElement.value,
-			cameraAsViewbox(camera.value),
-		);
-	}
-
-	function clientToPage({ x, y }) {
-		return {
-			x: x + window.scrollX,
-			y: y + window.scrollY,
-		};
-	}
-
-	function pageToClient({ x, y }) {
-		return {
-			x: x - window.scrollX,
-			y: y - window.scrollY,
-		};
-	}
-
-	const worldPageIso = L.iso(
-		(v) => (v ? clientToPage(canvasToClient(v.x, v.y)) : v),
-		(v) => (v ? clientToCanvasV(pageToClient(v.x, v.y)) : v),
-	);
-
-	const worldClientIso = L.iso(
-		(v) => (v ? canvasToClient(v.x, v.y) : v),
-		(v) => (v ? clientToCanvas(v.x, v.y) : v),
-	);
 
 	const debugFrames = atom(false);
 	const showBounds = atom(false);
@@ -223,6 +165,16 @@
 		combine({ focus: cameraFocus, settings: cameraSettings }),
 	);
 
+
+	const {
+		clientToCanvas,
+		canvasToClient,
+		clientToPage,
+		pageToClient,
+		worldPageIso,
+		worldClientIso,
+	} = constructLenses(svgElement, camera)
+
 	const aspectRatioAlignLens = L.iso(
 		({ alignX, alignY }) => `x${alignX}Y${alignY}`,
 		R.compose(
@@ -271,60 +223,6 @@
 
 	const viewBoxPath = view(viewBoxPathLens, camera);
 
-	const cameraAsViewbox = (camera) => {
-		return {
-			alignmentX: camera.frame.alignX,
-			alignmentY: camera.frame.alignY,
-			width: camera.plane.x * Math.exp(-camera.focus.z),
-			height: camera.plane.y * Math.exp(-camera.focus.z),
-			minX:
-				camera.focus.x -
-				(camera.plane.x / 2) * Math.exp(-camera.focus.z),
-			minY:
-				camera.focus.y -
-				(camera.plane.y / 2) * Math.exp(-camera.focus.z),
-			scaling: camera.frame.aspect,
-		};
-	};
-
-	const frameBoxLens = L.reread((camera) => {
-		const { minX, minY, width, height } = U.scaleViewBox(
-			cameraAsViewbox(camera),
-			camera.frame.size.x,
-			camera.frame.size.y,
-			0,
-		);
-
-		return {
-			screenSpaceAligned: { minX, minY, width, height },
-			worldSpace: {
-				a: Geo.rotatePivotXYDegree(
-					camera.focus.x,
-					camera.focus.y,
-					-camera.focus.w,
-					{ x: minX, y: minY },
-				),
-				b: Geo.rotatePivotXYDegree(
-					camera.focus.x,
-					camera.focus.y,
-					-camera.focus.w,
-					{ x: minX + width, y: minY },
-				),
-				c: Geo.rotatePivotXYDegree(
-					camera.focus.x,
-					camera.focus.y,
-					-camera.focus.w,
-					{ x: minX + width, y: minY + height },
-				),
-				d: Geo.rotatePivotXYDegree(
-					camera.focus.x,
-					camera.focus.y,
-					-camera.focus.w,
-					{ x: minX, y: minY + height },
-				),
-			},
-		};
-	});
 
 	const boxPathLens = L.reread(
 		({ minX, minY, width, height }) =>
@@ -460,7 +358,7 @@
 		camera,
 	);
 
-	const zoomDelta = view(["focus", L.setter(Cam.zoomWithPivot)], camera);
+	const zoomDelta = view(["focus", L.setter(CamNavigation.zoomWithPivot)], camera);
 
 	const cameraZoomFrameLens = [
 		L.setter((frame, oldCamera) => {
@@ -491,43 +389,6 @@
 				},
 			};
 		}),
-	];
-
-	const panMovementLens = [
-		"focus",
-		L.props("x", "y"),
-		L.lens(R.always({ x: 0, y: 0 }), (delta, { x, y }) => {
-			return {
-				x: x + delta.x,
-				y: y + delta.y,
-			};
-		}),
-	];
-
-	const rotateMovementLens = [
-		"focus",
-		L.props("w", "x", "y"),
-		L.lens(
-			R.compose(
-				R.assoc("dw", 0),
-				R.zipObj(["px", "py"]),
-				R.props(["x", "y"]),
-			),
-			Cam.rotateWithPivot,
-		),
-	];
-
-	const zoomMovementLens = [
-		"focus",
-		L.props("z", "x", "y"),
-		L.lens(
-			R.compose(
-				R.assoc("dz", 0),
-				R.zipObj(["px", "py"]),
-				R.props(["x", "y"]),
-			),
-			Cam.zoomWithPivot,
-		),
 	];
 
 	const canvasDocument = view(
@@ -794,6 +655,7 @@
 				newNode,
 				rotationTransform,
 				cameraScale,
+				cameraTow,
 			},
 		},
 		text: {
@@ -1573,93 +1435,94 @@
 		<svg
 			class="canvas"
 			bind:this={svgElement.value}
-			use:Cam.bindEvents={{ camera, worldClientIso }}
 			viewBox={viewBox.value}
 			preserveAspectRatio={preserveAspectRatio.value}
-		>
-			<g class:hidden={!debugFrames.value} pointer-events="none">
-				<path
-					d={viewBoxPath.value}
-					class="view-box"
-					stroke-opacity="0.5"
-					stroke="magenta"
-					vector-effect="non-scaling-stroke"
-					stroke-width="8px"
-					fill="#ddffee"
-				/>
-				<path
-					d={frameBoxPath.value}
-					stroke="#ff88cc"
-					fill="none"
-					vector-effect="non-scaling-stroke"
-					stroke-width="14px"
-					shape-rendering="crispEdges"
-				/>
-			</g>
+		>	
+			<Navigator {camera} {frameBoxPath} {cameraTow}>
+				<g class:hidden={!debugFrames.value} pointer-events="none">
+					<path
+						d={viewBoxPath.value}
+						class="view-box"
+						stroke-opacity="0.5"
+						stroke="magenta"
+						vector-effect="non-scaling-stroke"
+						stroke-width="8px"
+						fill="#ddffee"
+					/>
+					<path
+						d={frameBoxPath.value}
+						stroke="#ff88cc"
+						fill="none"
+						vector-effect="non-scaling-stroke"
+						stroke-width="14px"
+						shape-rendering="crispEdges"
+					/>
+				</g>
 
-			<g pointer-events="none">
-				<Bounds
-					show={showBounds}
-					{extension}
-					{cameraBounds}
-					{rotationTransform}
-					{cameraScale}
-				/>
-				<Grid
-					{frameBoxPath}
-					{frameBoxObject}
-					{rotationTransform}
-					{cameraScale}
-				/>
-				<Nodes {nodes} {rotationTransform} {cameraScale} />
+				<g pointer-events="none">
+					<Bounds
+						show={showBounds}
+						{extension}
+						{cameraBounds}
+						{rotationTransform}
+						{cameraScale}
+					/>
+					<Grid
+						{frameBoxPath}
+						{frameBoxObject}
+						{rotationTransform}
+						{cameraScale}
+					/>
+					<Nodes {nodes} {rotationTransform} {cameraScale} />
 
-				<Drawings {drawings} {rotationTransform} {cameraScale} />
+					<Drawings {drawings} {rotationTransform} {cameraScale} />
 
-				<TextBoxes
-					{textBoxes}
-					{clientToCanvas}
-					{frameBoxPath}
-					{rotationTransform}
-					{cameraScale}
-					{cameraOrientation}
-				/>
+					<TextBoxes
+						{textBoxes}
+						{clientToCanvas}
+						{frameBoxPath}
+						{rotationTransform}
+						{cameraScale}
+						{cameraOrientation}
+					/>
 
-				<TextLines
-					{textes}
-					{clientToCanvas}
-					{frameBoxPath}
-					{rotationTransform}
-					{cameraScale}
-					{cameraOrientation}
-				/>
+					<TextLines
+						{textes}
+						{clientToCanvas}
+						{frameBoxPath}
+						{rotationTransform}
+						{cameraScale}
+						{cameraOrientation}
+					/>
 
-				<Guides
-					{guides}
-					{frameBoxObject}
-					{rotationTransform}
-					{cameraScale}
-				/>
-				<Shapes
-					{shapes}
-					{frameBoxObject}
-					{rotationTransform}
-					{cameraScale}
-				/>
-				<ShowAxis
-					{axis}
-					{frameBoxObject}
-					{rotationTransform}
-					{cameraScale}
-				/>
+					<Guides
+						{guides}
+						{frameBoxObject}
+						{rotationTransform}
+						{cameraScale}
+					/>
+					<Shapes
+						{shapes}
+						{frameBoxObject}
+						{rotationTransform}
+						{cameraScale}
+					/>
+					<ShowAxis
+						{axis}
+						{frameBoxObject}
+						{rotationTransform}
+						{cameraScale}
+					/>
 
-				<Origin {rotationTransform} {cameraScale} />
-			</g>
+					<Origin {rotationTransform} {cameraScale} />
+				</g>
 
-			<svelte:component
-				this={tools[tool.value].component}
-				bind:this={currentToolElement}
-				{...tools[tool.value].parameters}
-			></svelte:component>
+				<svelte:component
+					this={tools[tool.value].component}
+					bind:this={currentToolElement}
+					{...tools[tool.value].parameters}
+				></svelte:component>
+			</Navigator>
 		</svg>
 		<div class="scroller-hud">
 			<input

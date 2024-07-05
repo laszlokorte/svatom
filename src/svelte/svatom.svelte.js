@@ -1,6 +1,30 @@
 import { get, set, collect, foldl, propsExcept } from 'partial.lenses'
 import * as R from "ramda";
 import {tick} from "svelte";
+import { createActor } from 'xstate';
+
+
+export function fsm(machineDef) {
+
+	let machineState = $state.frozen({value: undefined});
+
+	const machineActor = createActor(machineDef).start();
+	
+	machineActor.subscribe((newState) => {
+		machineState = {value: newState}
+	})
+
+	return {
+		get value() {
+			return machineState.value
+		},
+
+		send(evt) {
+			machineActor.send(evt)
+		}
+	}
+}
+
 
 export function atom(init) {
 	let root = $state.frozen({
@@ -119,6 +143,43 @@ export function view(opticLense, someAtom) {
 
 export function update(fn, someAtom) {
 	someAtom.value = fn(someAtom.value)
+}
+
+
+export function toggle(someAtom, fn) {
+	let prev = null
+
+	$effect(() => {
+		const currentValue = someAtom.value
+		const next = !!currentValue
+
+		if(next !== prev) {			
+			prev = next
+
+			fn(currentValue)
+		}
+	})
+}
+
+export function during(someAtom, fn) {
+	let raf = null
+
+	toggle(someAtom, (val) => {
+		if (val) {
+			function tick() {
+				raf = requestAnimationFrame(() => {
+					fn(someAtom.value)
+					tick()
+				})
+			}
+
+			tick()
+		} else {
+			cancelAnimationFrame(raf)
+			raf = null
+		}
+	})
+
 }
 
 export function failableView(opticLense, someAtom, autoReset = true, errorAtom = atom(null), transientAtom = atom(null)) {

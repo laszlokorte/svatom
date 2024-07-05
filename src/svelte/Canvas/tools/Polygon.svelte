@@ -254,15 +254,18 @@
 			if (pathCanFinish.value) {
 				finishDraft.value = pathHead.value;
 			} else {
-				draftSnappedPop.value = pathNeck.value;
+				freeDraft.value = p;
 			}
 		} else if (
-			pathCanClose.value &&
 			Math.hypot(pathRoot.value.x - p.x, pathRoot.value.y - p.y) <
 				cameraScale.value *
 					(snapRadius + Math.hypot(evt.width, evt.height) / 2)
 		) {
-			closeDraft.value = pathRoot.value;
+			if(pathCanClose.value) {
+				closeDraft.value = pathRoot.value;
+			} else {
+				popDraft.value = pathNeck.value;
+			}
 		} else if (
 			pathNeck.value &&
 			Math.hypot(pathNeck.value.x - p.x, pathNeck.value.y - p.y) <
@@ -287,6 +290,7 @@
 
 		dragging.value = false;
 
+
 		if (draftSnappedFinish.value) {
 			finishDraft.value = pathHead.value;
 			currentPath.value = pathHead.value;
@@ -298,24 +302,23 @@
 				currentPath.value = pathRoot.value;
 				newDrawing.value = path.value;
 				path.value = [];
-			}
+			} 
 		} else if (draftSnappedPop.value) {
 			path.value = path.value.slice(0, path.value.length - 1);
 			draftPos.value = undefined;
-		} else {
-			if (
-				pathRoot.value &&
-				Math.hypot(
-					pathRoot.value.x - draftPos.value.x,
-					pathRoot.value.y - draftPos.value.y,
-				) >
-					cameraScale.value * snapRadius +
-						Math.hypot(evt.width, evt.height) / 2
-			) {
-				currentPath.value = draftPos.value;
-				finishDraft.value = pathHead.value;
-			}
+		} else if (
+			pathRoot.value &&
+			Math.hypot(
+				pathRoot.value.x - draftPos.value.x,
+				pathRoot.value.y - draftPos.value.y,
+			) >
+				cameraScale.value * snapRadius +
+					Math.hypot(evt.width, evt.height) / 2
+		) {
+			currentPath.value = draftPos.value;
+			finishDraft.value = pathHead.value;
 		}
+		
 	}}
 	onpointercancel={(evt) => {
 		if (!evt.isPrimary) {
@@ -345,12 +348,7 @@
 />
 
 <g transform={rotationTransform.value} pointer-events="none">
-	<polyline
-		points={pathPath.value}
-		pointer-events="none"
-		fill="none"
-		class="draft-line"
-	/>
+	<polyline points={pathPath.value} fill="none" class="draft-line" />
 
 	<polyline
 		points={draftPath.value}
@@ -358,7 +356,6 @@
 		stroke="none"
 		stroke-width="2px"
 		class="draft-line-head"
-		pointer-events="none"
 	/>
 	{#if pathCanClose.value}
 		<circle
@@ -387,7 +384,6 @@
 	{/if}
 	{#if pathNeck.value}
 		<circle
-			pointer-events="all"
 			cx={pathNeck.value.x}
 			cy={pathNeck.value.y}
 			r={snapRadiusVisual * cameraScale.value}
