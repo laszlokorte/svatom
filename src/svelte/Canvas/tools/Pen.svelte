@@ -14,7 +14,7 @@
 	} = $props();
 
 	const pen = atom({});
-	const path = view(["path", L.defaults([])], pen);
+	const path = view(["path", L.define([])], pen);
 	const isActive = view(
 		[L.lens(R.compose(R.lt(0), R.length), (n, o) => (n ? o : []))],
 		path,
@@ -90,6 +90,7 @@
 
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 
+		isActive.value = false;
 		currentPath.value = clientToCanvas(evt.clientX, evt.clientY);
 	}}
 	onpointermove={(evt) => {
@@ -109,19 +110,19 @@
 		if (newDrawing) {
 			newDrawing.value = path.value;
 		}
-		path.value = undefined;
+		isActive.value = false;
 	}}
 	onpointercancel={(evt) => {
 		if (!evt.isPrimary) {
 			return;
 		}
-		path.value = undefined;
+		isActive.value = false;
 	}}
 	onlostpointercapture={(evt) => {
 		if (!evt.isPrimary) {
 			return;
 		}
-		path.value = undefined;
+		isActive.value = false;
 	}}
 />
 

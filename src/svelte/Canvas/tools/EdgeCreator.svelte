@@ -96,6 +96,7 @@
 		if(!isActive.value) {
 			return
 		}
+		cameraTow.value = undefined
 
 		if(validConnection.value && newEdge) {
 			newEdge.value = connection.value
@@ -107,9 +108,15 @@
 		}
 
 		isActive.value = false
-		cameraTow.value = undefined
 	}}
 	onpointercancel={(evt) => {
+		if(!evt.isPrimary) {
+			return
+		}
+		isActive.value = false
+		cameraTow.value = undefined
+	}}
+	onlostpointercapture={(evt) => {
 		if(!evt.isPrimary) {
 			return
 		}

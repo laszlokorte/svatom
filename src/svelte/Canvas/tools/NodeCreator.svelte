@@ -67,9 +67,6 @@
 		isActive.value = false;
 		cameraTow.value = false
 	}}
-	onclick={(evt) => {
-		//newNode.value = clientToCanvas(evt.clientX, evt.clientY);
-	}}
 	onpointercancel={(evt) => {
 		if (!evt.isPrimary) {
 			return;
