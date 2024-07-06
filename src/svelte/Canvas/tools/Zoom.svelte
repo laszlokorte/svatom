@@ -78,6 +78,8 @@
 	tabindex="-1"
 	onpointerdown={(evt) => {
 		if (!evt.isPrimary) {
+			isActive.value = false;
+
 			return;
 		}
 

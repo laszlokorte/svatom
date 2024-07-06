@@ -32,6 +32,7 @@
 	}}
 	onpointermove={(evt) => {
 		if (!evt.isPrimary) {
+			isActive.value = false
 			return;
 		}
 		if (!isActive.value) {
@@ -47,19 +48,19 @@
 		if (!evt.isPrimary) {
 			return;
 		}
-		grabPosition.value = undefined;
+		isActive.value = false
 	}}
 	onpointercancel={(evt) => {
 		if (!evt.isPrimary) {
 			return;
 		}
-		grabPosition.value = undefined;
+		isActive.value = false
 	}}
 	onlostpointercapture={(evt) => {
 		if (!evt.isPrimary) {
 			return;
 		}
-		grabPosition.value = undefined;
+		isActive.value = false
 	}}
 />
 

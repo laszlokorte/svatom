@@ -45,18 +45,19 @@ export function bindEvents(node, {camera, worldClientIso}) {
 		}
 	}
 
-	let baseRot
-	let baseScale
-	let basePivot = null
+	let gestureBaseRot
+	let gestureBaseScale
+	let gestureBasePivot = null
 	let prevTouchCount
 	function onGestureChange(evt) {
+		evt.preventDefault()
 		const worldPos = L.get(eventWorld, evt)
 
 
-		const dw = Math.atan2(Math.sin((evt.rotation - baseRot)/180*Math.PI), Math.cos((evt.rotation - baseRot)/180*Math.PI))*180/Math.PI
-		const dz = Math.log(evt.scale / baseScale)
-		const dx = basePivot.x - evt.clientX
-		const dy = basePivot.y - evt.clientY
+		const dw = Math.atan2(Math.sin((evt.rotation - gestureBaseRot)/180*Math.PI), Math.cos((evt.rotation - gestureBaseRot)/180*Math.PI))*180/Math.PI
+		const dz = Math.log(evt.scale / gestureBaseScale)
+		const dx = gestureBasePivot.x - evt.clientX
+		const dy = gestureBasePivot.y - evt.clientY
 
 		const suddenAngle = Math.abs(dw) > 30
 		const suddenZoom = Math.abs(dz) > 0.2
@@ -79,9 +80,9 @@ export function bindEvents(node, {camera, worldClientIso}) {
 			}
 		}
 
-		baseScale = evt.scale
-		baseRot = evt.rotation
-		basePivot = {
+		gestureBaseScale = evt.scale
+		gestureBaseRot = evt.rotation
+		gestureBasePivot = {
 			x: evt.clientX,
 			y: evt.clientY,
 		}
@@ -89,88 +90,41 @@ export function bindEvents(node, {camera, worldClientIso}) {
 
 
 	function onGestureStart(evt) {
-		baseRot = evt.rotation
-		baseScale = evt.scale
+		evt.preventDefault()
+		gestureBaseRot = evt.rotation
+		gestureBaseScale = evt.scale
 
-		basePivot = {
+		gestureBasePivot = {
 			x: evt.clientX,
 			y: evt.clientY,
 		}
-
 	};
 
 	function onGestureEnd(evt) {
-		baseRot = null
-		baseScale = null
-
-		basePivot = null
+		evt.preventDefault()
+		gestureBaseRot = null
+		gestureBaseScale = null
+		gestureBasePivot = null
 
 	};
 
-	const pointerIds = []
-	let primaryPointer = null
-
 	let mouseGrab
 	function onPointerStart(evt) {
-		if(evt.isPrimary) {
-			primaryPointer = evt.pointerId
-		}
-
 		if(evt.pointerType === 'mouse' && evt.button === 1 && evt.shiftKey) {
 			node.setPointerCapture(evt.pointerId)
-			mouseGrab = {
-				pointerId: evt.pointerId,
-				x: evt.clientX,
-				y: evt.clientY,
-			}
 		}
 
-		if(evt.pointerType === 'touch') {
-			pointerIds.push(evt.pointerId)
-
-			if(pointerIds.length >= 2) {
-				for (let j=pointerIds.length-1;j>=0;j--) {
-					if(!node.hasPointerCapture(pointerIds[j])) {
-						node.setPointerCapture(pointerIds[j])
-					}
-				}
-			}
-		}
 	}
 
 	function onPointerEnd(evt) {
-		if(mouseGrab && mouseGrab.pointerId == evt.pointerId) {
-			mouseGrab = undefined
-		}
-
-		if(evt.pointerType === 'touch') {
-			if(removeItemOnce(pointerIds, evt.pointerId)) {
-				if(node.hasPointerCapture(evt.pointerId)) {
-					node.releasePointerCapture(evt.pointerId)
-				}
-			}
-
-			if(pointerIds.length < 2) {
-				for (let j=pointerIds.length-1;j>=0;j--) {
-					if(node.hasPointerCapture(pointerIds[j])) {
-						node.releasePointerCapture(pointerIds[j])
-					}
-				}
-			}
-		}
 	}
 
-	function onPointerLost(evt) {
+	function onPointerGotCapture(evt) {
+	}
+
+	function onPointerLostCapture(evt) {
 		if(mouseGrab && mouseGrab.pointerId == evt.pointerId) {
 			mouseGrab = undefined
-		}
-
-		if(evt.pointerType === 'touch') {
-			removeItemOnce(pointerIds, evt.pointerId)
-		}
-
-		if(evt.isPrimary) {
-			primaryPointer = null
 		}
 	}
 
@@ -189,25 +143,6 @@ export function bindEvents(node, {camera, worldClientIso}) {
 				y: evt.clientY,
 			}
 		}
-
-		if(basePivot !== null) {
-			evt.stopPropagation()
-		}
-
-		if(evt.pointerType === 'touch') {
-			if(pointerIds.length >= 2) {
-				evt.stopPropagation()
-			}
-		}
-	}
-
-	function removeItemOnce(arr, value) {
-	  let index = arr.indexOf(value);
-	  if (index > -1) {
-	    arr.splice(index, 1);
-	    return true
-	  }
-	  return false
 	}
 
 	window.addEventListener('error', (e) => {
@@ -215,25 +150,27 @@ export function bindEvents(node, {camera, worldClientIso}) {
 	})
 
 
-	node.addEventListener('wheel', onWheel, { passive:true, capture: false })
-	node.addEventListener('gesturestart', onGestureStart, true)
-	node.addEventListener('gestureend', onGestureEnd, true)
-	node.addEventListener('gesturechange', onGestureChange, true)
+	node.addEventListener('wheel', onWheel, { passive:false, capture: true })
+	node.addEventListener('gesturestart', onGestureStart, false)
+	node.addEventListener('gestureend', onGestureEnd, false)
+	node.addEventListener('gesturechange', onGestureChange, false)
 	node.addEventListener('pointerdown', onPointerStart, true)
 	node.addEventListener('pointermove', onPointerMove, true)
 	node.addEventListener('pointercancel', onPointerEnd, true)
-	node.addEventListener('lostpointercapture', onPointerLost, true)
+	node.addEventListener('lostpointercapture', onPointerLostCapture, true)
+	node.addEventListener('getpointercapture', onPointerGotCapture, true)
 	node.addEventListener('pointerup', onPointerEnd, true)
 
 	return () => {
 		node.removeEventListener('pointerup', onPointerEnd, true)
 		node.removeEventListener('pointermove', onPointerMove, true)
-		node.removeEventListener('lostpointercapture', onPointerLost, true)
+		node.removeEventListener('lostpointercapture', onPointerLostCapture, true)
+		node.removeEventListener('getpointercapture', onPointerGotCapture, true)
 		node.removeEventListener('pointercancel', onPointerEnd, true)
 		node.removeEventListener('pointerdown', onPointerStart, true)
-		node.removeEventListener('gesturechange', onGestureStart, true)
-		node.removeEventListener('gesturestart', onGestureChange, true)
-		node.removeEventListener('gestureend', onGestureEnd, true)
-		node.removeEventListener('wheel', onWheel, { passive:true, capture: false })
+		node.removeEventListener('gesturechange', onGestureStart, false)
+		node.removeEventListener('gesturestart', onGestureChange, false)
+		node.removeEventListener('gestureend', onGestureEnd, false)
+		node.removeEventListener('wheel', onWheel, { passive:false, capture: true })
 	}
 }

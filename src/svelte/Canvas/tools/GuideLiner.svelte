@@ -134,10 +134,8 @@
 		}
 	}}
 	onpointerdown={(evt) => {
-		if (guideStart.value) {
-			return;
-		}
 		if (!evt.isPrimary || !U.isLeftButton(evt)) {
+			isActive.value = false;
 			return;
 		}
 

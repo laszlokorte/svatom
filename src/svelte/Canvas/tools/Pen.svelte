@@ -84,13 +84,16 @@
 		}
 	}}
 	onpointerdown={(evt) => {
+		if(!evt.isPrimary && isActive.value) {
+			isActive.value = false;
+		}
+
 		if (!evt.isPrimary || !U.isLeftButton(evt)) {
 			return;
 		}
 
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 
-		isActive.value = false;
 		currentPath.value = clientToCanvas(evt.clientX, evt.clientY);
 	}}
 	onpointermove={(evt) => {

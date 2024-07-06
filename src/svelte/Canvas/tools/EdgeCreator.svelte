@@ -52,6 +52,9 @@
 	}}
 	onpointerdown={(evt) => {
 		if (!evt.isPrimary || !U.isLeftButton(evt)) {
+
+			isActive.value = false;
+
 			return;
 		}
 		const nodeId = evt.target.getAttribute('data-idx');

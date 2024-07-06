@@ -180,6 +180,12 @@
 	}}
 	onpointerdown={(evt) => {
 		if (!evt.isPrimary) {
+
+			dragging.value = false;
+			if (pathLength.value < 2) {
+				path.value = [];
+			}
+
 			return;
 		}
 
@@ -350,6 +356,7 @@
 <g transform={rotationTransform.value} pointer-events="none">
 	<polyline points={pathPath.value} fill="none" class="draft-line" />
 
+	{#if dragging.value}
 	<polyline
 		points={draftPath.value}
 		fill="none"
@@ -357,6 +364,7 @@
 		stroke-width="2px"
 		class="draft-line-head"
 	/>
+	{/if}
 	{#if pathCanClose.value}
 		<circle
 			cx={pathRoot.value.x}
