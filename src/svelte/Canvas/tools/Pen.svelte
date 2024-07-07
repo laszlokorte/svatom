@@ -3,7 +3,7 @@
 	import * as R from "ramda";
 	import * as U from "../../utils";
 	import * as C from "../../combinators";
-	import { atom, view } from "../../svatom.svelte.js";
+	import { atom, view, read } from "../../svatom.svelte.js";
 
 	const {
 		frameBoxPath,
@@ -19,6 +19,10 @@
 		[L.lens(R.compose(R.lt(0), R.length), (n, o) => (n ? o : []))],
 		path,
 	);
+	export const canCancel = read(R.identity, isActive);
+	export function cancel() {
+		isActive.value = false;
+	}
 	const currentPath = view(
 		[
 			L.setter(
@@ -83,8 +87,11 @@
 			isActive.value = false;
 		}
 	}}
+	oncontextmenu={(evt) => {
+		isActive.value = false;
+	}}
 	onpointerdown={(evt) => {
-		if(!evt.isPrimary && isActive.value) {
+		if (!evt.isPrimary && isActive.value) {
 			isActive.value = false;
 		}
 

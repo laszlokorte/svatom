@@ -119,6 +119,10 @@
 		L.reread(({ a, b }) => `M${a.x},${a.y}L${b.x},${b.y}`),
 		newGuideEdgePoints,
 	);
+	export const canCancel = read(R.identity, isActive);
+	export function cancel() {
+		isActive.value = false;
+	}
 </script>
 
 <path

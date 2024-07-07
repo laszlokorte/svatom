@@ -146,6 +146,8 @@
 	export function cancel() {
 		isActive.value = false;
 	}
+
+	export const canCancel = read(R.identity, isActive);
 </script>
 
 <path
@@ -180,7 +182,6 @@
 	}}
 	onpointerdown={(evt) => {
 		if (!evt.isPrimary) {
-
 			dragging.value = false;
 			if (pathLength.value < 2) {
 				path.value = [];
@@ -264,10 +265,10 @@
 			}
 		} else if (
 			Math.hypot(pathRoot.value.x - p.x, pathRoot.value.y - p.y) <
-				cameraScale.value *
-					(snapRadius + Math.hypot(evt.width, evt.height) / 2)
+			cameraScale.value *
+				(snapRadius + Math.hypot(evt.width, evt.height) / 2)
 		) {
-			if(pathCanClose.value) {
+			if (pathCanClose.value) {
 				closeDraft.value = pathRoot.value;
 			} else {
 				popDraft.value = pathNeck.value;
@@ -296,7 +297,6 @@
 
 		dragging.value = false;
 
-
 		if (draftSnappedFinish.value) {
 			finishDraft.value = pathHead.value;
 			currentPath.value = pathHead.value;
@@ -308,7 +308,7 @@
 				currentPath.value = pathRoot.value;
 				newDrawing.value = path.value;
 				path.value = [];
-			} 
+			}
 		} else if (draftSnappedPop.value) {
 			path.value = path.value.slice(0, path.value.length - 1);
 			draftPos.value = undefined;
@@ -324,7 +324,6 @@
 			currentPath.value = draftPos.value;
 			finishDraft.value = pathHead.value;
 		}
-		
 	}}
 	onpointercancel={(evt) => {
 		if (!evt.isPrimary) {
@@ -357,13 +356,13 @@
 	<polyline points={pathPath.value} fill="none" class="draft-line" />
 
 	{#if dragging.value}
-	<polyline
-		points={draftPath.value}
-		fill="none"
-		stroke="none"
-		stroke-width="2px"
-		class="draft-line-head"
-	/>
+		<polyline
+			points={draftPath.value}
+			fill="none"
+			stroke="none"
+			stroke-width="2px"
+			class="draft-line-head"
+		/>
 	{/if}
 	{#if pathCanClose.value}
 		<circle

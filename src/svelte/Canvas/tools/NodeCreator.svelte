@@ -2,7 +2,7 @@
 	import * as L from "partial.lenses";
 	import * as R from "ramda";
 	import * as U from "../../utils";
-	import { atom, view } from "../../svatom.svelte.js";
+	import { atom, view, read } from "../../svatom.svelte.js";
 
 	const {
 		frameBoxPath,
@@ -20,6 +20,12 @@
 		L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
 		draft,
 	);
+
+	export const canCancel = read(R.identity, isActive);
+
+	export function cancel() {
+		isActive.value = false;
+	}
 </script>
 
 <path
@@ -53,8 +59,8 @@
 
 		const worldPos = clientToCanvas(evt.clientX, evt.clientY);
 
-		draft.value = worldPos
-		cameraTow.value = worldPos
+		draft.value = worldPos;
+		cameraTow.value = worldPos;
 	}}
 	onpointerup={(evt) => {
 		if (!evt.isPrimary) {
@@ -66,21 +72,21 @@
 		newNode.value = draft.value;
 
 		isActive.value = false;
-		cameraTow.value = false
+		cameraTow.value = false;
 	}}
 	onpointercancel={(evt) => {
 		if (!evt.isPrimary) {
 			return;
 		}
 		isActive.value = false;
-		cameraTow.value = false
+		cameraTow.value = false;
 	}}
 	onlostpointercapture={(evt) => {
 		if (!evt.isPrimary) {
 			return;
 		}
 		isActive.value = false;
-		cameraTow.value = false
+		cameraTow.value = false;
 	}}
 />
 

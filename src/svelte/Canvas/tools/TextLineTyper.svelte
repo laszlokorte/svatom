@@ -8,6 +8,7 @@
 		string,
 		read,
 		autofocusIf,
+		combine,
 	} from "../../svatom.svelte.js";
 
 	const {
@@ -32,6 +33,15 @@
 		position,
 	);
 	const isDragging = view(["dragging", L.valueOr(false)], typer);
+
+	export const canCancel = read(
+		({ a, d }) => a || d,
+		combine({ d: isDragging, a: isActive }),
+	);
+
+	export function cancel() {
+		isActive.value = false;
+	}
 </script>
 
 <path
@@ -55,8 +65,6 @@
 		}
 
 		evt.currentTarget.setPointerCapture(evt.pointerId);
-
-		evt.preventDefault();
 
 		if (isEditing.value) {
 			if (text.value) {
@@ -111,6 +119,18 @@
 		}
 		position.value = undefined;
 	}}
+	onfocus={(evt) => {
+		evt.preventDefault();
+		if (text.value) {
+			newText.value = {
+				x: position.value.x,
+				y: position.value.y,
+				content: text.value,
+				fontSize: fontSize.value,
+			};
+			position.value = undefined;
+		}
+	}}
 />
 
 {#if position.value}
@@ -149,18 +169,6 @@
 						bind:value={text.value}
 						onkeydown={(evt) => {
 							if (evt.key === "Escape" || evt.key === "Esc") {
-								position.value = undefined;
-							}
-						}}
-						onblur={(evt) => {
-							evt.preventDefault();
-							if (text.value) {
-								newText.value = {
-									x: position.value.x,
-									y: position.value.y,
-									content: text.value,
-									fontSize: fontSize.value,
-								};
 								position.value = undefined;
 							}
 						}}

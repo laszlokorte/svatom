@@ -172,15 +172,20 @@ input[type="text"] {
 	cursor: pointer;
 }
 
-button:hover, .button:hover {
+button:disabled {
+	background: #777;
+	cursor: default;
+}
+
+button:not(:disabled):hover, .button:not(:disabled):hover {
 	background: #333;
 }
 
-button:active, .button:active {
+button:not(:disabled):active, .button:not(:disabled):active {
 	background: #000;
 }
 
-button:focus-visible, .button:focus-visible {
+button:not(:disabled):focus-visible, .button:not(:disabled):focus-visible {
 	outline: 3px solid #00ccdd;
 }
 

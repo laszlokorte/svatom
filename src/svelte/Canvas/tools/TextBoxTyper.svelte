@@ -102,6 +102,15 @@
 		x: Math.sign(x) * Math.abs(newV.x),
 		y: Math.sign(y) * Math.abs(newV.y),
 	}));
+
+	export const canCancel = read(
+		({ a, d }) => a || d,
+		combine({ d: isDragging, a: isActive }),
+	);
+
+	export function cancel() {
+		isActive.value = false;
+	}
 </script>
 
 <path
@@ -197,6 +206,16 @@
 		}
 		isActive.value = undefined;
 	}}
+	onfocus={(evt) => {
+		if (text.value) {
+			evt.currentTarget.form.dispatchEvent(
+				new CustomEvent("submit", {
+					cancelable: true,
+				}),
+			);
+		}
+		textBoxStart.value = undefined;
+	}}
 />
 
 <g transform={rotationTransform.value}>
@@ -260,17 +279,6 @@
 							) {
 								evt.currentTarget.blur();
 							}
-						}}
-						onblur={(evt) => {
-							evt.preventDefault();
-							if (text.value) {
-								evt.currentTarget.form.dispatchEvent(
-									new CustomEvent("submit", {
-										cancelable: true,
-									}),
-								);
-							}
-							textBoxStart.value = undefined;
 						}}
 					></textarea>
 				</form>

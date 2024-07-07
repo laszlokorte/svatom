@@ -5,10 +5,13 @@
 	import * as U from "../utils";
 	import Navigator from "./camera/Navigator.svelte";
 	import * as CamNavigation from "./camera/navigation";
-	import {cameraAsViewbox} from "./camera/functions";
-	import {frameBoxLens, panMovementLens,
-rotateMovementLens,
-zoomMovementLens} from "./camera/lenses";
+	import { cameraAsViewbox } from "./camera/functions";
+	import {
+		frameBoxLens,
+		panMovementLens,
+		rotateMovementLens,
+		zoomMovementLens,
+	} from "./camera/lenses";
 
 	import {
 		atom,
@@ -22,7 +25,7 @@ zoomMovementLens} from "./camera/lenses";
 		bindSize,
 		traverse,
 	} from "../svatom.svelte.js";
-	import {constructLenses} from "./camera/live.js";
+	import { constructLenses } from "./camera/live.js";
 
 	const numberFormat = new Intl.NumberFormat("en-US", {
 		minimumFractionDigits: 2,
@@ -92,14 +95,16 @@ zoomMovementLens} from "./camera/lenses";
 							angle: 0,
 						},
 						nodes: [
-							{ x: 200, y: 100 }, {
-					        "x": 266,
-					        "y": -217
-					      },
-					      {
-					        "x": -110,
-					        "y": -10
-					      }],
+							{ x: 200, y: 100 },
+							{
+								x: 266,
+								y: -217,
+							},
+							{
+								x: -110,
+								y: -10,
+							},
+						],
 						textes: [
 							{
 								x: 119.35297908638951,
@@ -175,7 +180,6 @@ zoomMovementLens} from "./camera/lenses";
 		combine({ focus: cameraFocus, settings: cameraSettings }),
 	);
 
-
 	const {
 		clientToCanvas,
 		canvasToClient,
@@ -183,7 +187,7 @@ zoomMovementLens} from "./camera/lenses";
 		pageToClient,
 		worldPageIso,
 		worldClientIso,
-	} = constructLenses(svgElement, camera)
+	} = constructLenses(svgElement, camera);
 
 	const aspectRatioAlignLens = L.iso(
 		({ alignX, alignY }) => `x${alignX}Y${alignY}`,
@@ -232,7 +236,6 @@ zoomMovementLens} from "./camera/lenses";
 	});
 
 	const viewBoxPath = view(viewBoxPathLens, camera);
-
 
 	const boxPathLens = L.reread(
 		({ minX, minY, width, height }) =>
@@ -368,7 +371,10 @@ zoomMovementLens} from "./camera/lenses";
 		camera,
 	);
 
-	const zoomDelta = view(["focus", L.setter(CamNavigation.zoomWithPivot)], camera);
+	const zoomDelta = view(
+		["focus", L.setter(CamNavigation.zoomWithPivot)],
+		camera,
+	);
 
 	const cameraZoomFrameLens = [
 		L.setter((frame, oldCamera) => {
@@ -452,10 +458,13 @@ zoomMovementLens} from "./camera/lenses";
 	const rubberBand = atom(undefined);
 	const newNode = view([L.appendTo, L.required("x", "y")], nodes);
 	const newEdge = view([L.appendTo, L.required("x", "y")], edges);
-	const newEdgeNode = view(L.setter(({source, newTarget}, {e, n}) => ({
-		e: [...e, {source, target: n.length}],
-		n: [...n, newTarget]
-	})), combine({e: edges, n: nodes}));
+	const newEdgeNode = view(
+		L.setter(({ source, newTarget }, { e, n }) => ({
+			e: [...e, { source, target: n.length }],
+			n: [...n, newTarget],
+		})),
+		combine({ e: edges, n: nodes }),
+	);
 
 	const newDrawing = view(
 		[L.appendTo, L.setter((n, o) => (n.length > 1 ? n : o))],
@@ -842,7 +851,7 @@ zoomMovementLens} from "./camera/lenses";
 		["select", "lasso"],
 		["magnifier", "pan", "rotate", "zoom"],
 		["pen", "polygon", "spline"],
-		["createNode","createEdge", ],
+		["createNode", "createEdge"],
 		["text", "text_box", "shape"],
 		["axis", "guides"],
 	];
@@ -1429,7 +1438,10 @@ zoomMovementLens} from "./camera/lenses";
 			onclick={() => {
 				currentDocumentContent.value = {};
 
-				if (currentToolElement.value && currentToolElement.value.cancel) {
+				if (
+					currentToolElement.value &&
+					currentToolElement.value.cancel
+				) {
 					currentToolElement.value.cancel();
 				}
 
@@ -1456,6 +1468,22 @@ zoomMovementLens} from "./camera/lenses";
 	</div>
 </fieldset>
 
+<fieldset>
+	<legend>{tools[tool.value].name}</legend>
+
+	<div>
+		{#if currentToolElement.value && currentToolElement.value.canCancel && currentToolElement.value.cancel}
+			<button
+				type="button"
+				disabled={!currentToolElement.value.canCancel.value}
+				onclick={() => {
+					currentToolElement.value.cancel();
+				}}>Cancel</button
+			>
+		{/if}
+	</div>
+</fieldset>
+
 <div class="prevent-selection">
 	<Scroller
 		alignment="center"
@@ -1469,7 +1497,7 @@ zoomMovementLens} from "./camera/lenses";
 			bind:this={svgElement.value}
 			viewBox={viewBox.value}
 			preserveAspectRatio={preserveAspectRatio.value}
-		>	
+		>
 			<Navigator {camera} {frameBoxPath} {cameraTow}>
 				<g class:hidden={!debugFrames.value} pointer-events="none">
 					<path

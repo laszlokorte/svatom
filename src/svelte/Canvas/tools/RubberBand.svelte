@@ -72,6 +72,11 @@
 		L.reread((r) => `rotate(${r.angle}, ${r.start.x}, ${r.start.y})`),
 		rubberBand,
 	);
+
+	export const canCancel = read(R.identity, isActive);
+	export function cancel() {
+		isActive.value = false;
+	}
 </script>
 
 <path
