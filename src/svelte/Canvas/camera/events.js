@@ -50,7 +50,6 @@ export function bindEvents(node, {camera, worldClientIso}) {
 	let gestureBasePivot = null
 	let prevTouchCount
 	function onGestureChange(evt) {
-		evt.preventDefault()
 		const worldPos = L.get(eventWorld, evt)
 
 
@@ -90,7 +89,6 @@ export function bindEvents(node, {camera, worldClientIso}) {
 
 
 	function onGestureStart(evt) {
-		evt.preventDefault()
 		gestureBaseRot = evt.rotation
 		gestureBaseScale = evt.scale
 
@@ -101,7 +99,6 @@ export function bindEvents(node, {camera, worldClientIso}) {
 	};
 
 	function onGestureEnd(evt) {
-		evt.preventDefault()
 		gestureBaseRot = null
 		gestureBaseScale = null
 		gestureBasePivot = null

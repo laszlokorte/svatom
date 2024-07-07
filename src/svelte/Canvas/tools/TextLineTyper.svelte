@@ -145,7 +145,7 @@
 				height="50"
 				x={position.value.x - 100}
 				y={position.value.y}
-				style:transform="translate(0,-25px) translate(0,-.5em)"
+				style:transform="translate(0,-25px) translate(0,-.25em)"
 				style:overflow="visible"
 			>
 				<form
@@ -183,7 +183,7 @@
 				x={position.value.x - 100}
 				y={position.value.y}
 				style:overflow="visible"
-				style:transform="translate(0,-25px) translate(0,-.5em)"
+				style:transform="translate(0,-25px) translate(0,-.25em)"
 				stroke="#00aaff"
 				stroke-width="2px"
 				pointer-events="none"
@@ -208,7 +208,6 @@
 		font: inherit;
 		font-family: monospace;
 		border: none;
-		border-top: 4px solid transparent; /*needed for same offset as svg text*/
 		width: 100%;
 		height: 100%;
 		box-sizing: border-box;

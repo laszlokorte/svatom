@@ -3,7 +3,7 @@
 	import * as R from "ramda";
 	import * as U from "../../utils";
 	import * as C from "../../combinators";
-	import { atom, view } from "../../svatom.svelte.js";
+	import { atom, view, read } from "../../svatom.svelte.js";
 
 	const { frameBoxPath, clientToCanvas, cameraScale, rotationTransform } =
 		$props();
@@ -86,6 +86,8 @@
 		if (!evt.isPrimary || !U.isLeftButton(evt)) {
 			return;
 		}
+
+		evt.preventDefault();
 
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 

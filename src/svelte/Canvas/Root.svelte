@@ -1764,6 +1764,9 @@
 		gap: 2px;
 		align-items: stretch;
 		font-family: monospace;
+		-webkit-user-select: none;
+		user-select: none;
+		--webkit-user-callout: none;
 	}
 
 	.button-bar {

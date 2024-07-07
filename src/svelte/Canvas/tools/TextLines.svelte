@@ -57,5 +57,6 @@
 	text {
 		-webkit-text-size-adjust: none;
 		font-family: monospace;
+		line-height: 1;
 	}
 </style>
