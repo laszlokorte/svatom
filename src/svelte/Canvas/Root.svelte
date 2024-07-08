@@ -72,6 +72,7 @@
 	import GuideLiner from "./tools/GuideLiner.svelte";
 	import Guides from "./tools/Guides.svelte";
 	import Grid from "./tools/Grid.svelte";
+	import Ruler from "./tools/Ruler.svelte";
 	import Axis from "./tools/Axis.svelte";
 	import ShowAxis from "./tools/ShowAxis.svelte";
 	import Pan from "./tools/Pan.svelte";
@@ -1608,6 +1609,13 @@
 					bind:this={currentToolElement.value}
 					{...tools[tool.value].parameters}
 				></svelte:component>
+
+				<Ruler
+					{frameBoxPath}
+					{frameBoxObject}
+					{rotationTransform}
+					{cameraScale}
+				/>
 			</Navigator>
 		</svg>
 
