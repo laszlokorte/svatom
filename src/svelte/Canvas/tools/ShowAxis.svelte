@@ -28,11 +28,11 @@
 	const axisPath = read(
 		L.getter(({ axis: b, cameraScale: scale }) =>
 			b && b.start && b.size
-				? `M${numberSvgFormat.format(b.start.x)},${numberSvgFormat.format(b.start.y)}
+				? `M${numberSvgFormat.format(b.start.x - 10 * scale * Math.sign(b.size.x))},${numberSvgFormat.format(b.start.y)}
 				m${numberSvgFormat.format(b.size.x)},0
-				h${numberSvgFormat.format(-b.size.x - 10 * scale * Math.sign(b.size.x))}
+				h${numberSvgFormat.format(-b.size.x)}
 				m${numberSvgFormat.format(10 * scale * Math.sign(b.size.x))},${numberSvgFormat.format(-10 * scale * Math.sign(b.size.y))}
-				v${numberSvgFormat.format(b.size.y + 10 * scale * Math.sign(b.size.y))}
+				v${numberSvgFormat.format(b.size.y)}
 				`
 				: "",
 		),
@@ -45,11 +45,11 @@
 				? `M${numberSvgFormat.format(b.start.x)},${numberSvgFormat.format(b.start.y)}
 				m0,${numberSvgFormat.format(b.size.y)}
 
-				m0,${Math.sign(b.size.y) * (10 * scale)}l${-10 * scale},${Math.sign(b.size.y) * (-10 * scale)}h${2 * 10 * scale}z
+				m0,${0}l${-10 * scale},${Math.sign(b.size.y) * (-10 * scale)}h${2 * 10 * scale}z
 
 				M${numberSvgFormat.format(b.start.x)},${numberSvgFormat.format(b.start.y)}
 				m${numberSvgFormat.format(b.size.x)},0
-				m${Math.sign(b.size.x) * (10 * scale)},0l${Math.sign(b.size.x) * (-10 * scale)},${-10 * scale}v${2 * 10 * scale}z
+				m${0},0l${Math.sign(b.size.x) * (-10 * scale)},${-10 * scale}v${2 * 10 * scale}z
 
 				`
 				: "",

@@ -90,6 +90,10 @@
 	fill="none"
 	role="button"
 	tabindex="-1"
+	oncontextmenu={(evt) => {
+		evt.preventDefault();
+		isActive.value = false;
+	}}
 	onpointerdown={(evt) => {
 		if (!evt.isPrimary || !U.isLeftButton(evt)) {
 			isActive.value = false;

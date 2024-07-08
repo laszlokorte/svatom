@@ -91,6 +91,10 @@
 			isActive.value = false;
 		}
 	}}
+	oncontextmenu={(evt) => {
+		evt.preventDefault();
+		isActive.value = false;
+	}}
 	onpointerdown={(evt) => {
 		if (!evt.isPrimary || !U.isLeftButton(evt)) {
 			return;

@@ -23,6 +23,10 @@
 	fill="none"
 	role="button"
 	tabindex="-1"
+	oncontextmenu={(evt) => {
+		evt.preventDefault();
+		isActive.value = false;
+	}}
 	onpointerdown={(evt) => {
 		if (!evt.isPrimary || !U.isLeftButton(evt)) {
 			return;
@@ -32,7 +36,7 @@
 	}}
 	onpointermove={(evt) => {
 		if (!evt.isPrimary) {
-			isActive.value = false
+			isActive.value = false;
 			return;
 		}
 		if (!isActive.value) {
@@ -48,19 +52,19 @@
 		if (!evt.isPrimary) {
 			return;
 		}
-		isActive.value = false
+		isActive.value = false;
 	}}
 	onpointercancel={(evt) => {
 		if (!evt.isPrimary) {
 			return;
 		}
-		isActive.value = false
+		isActive.value = false;
 	}}
 	onlostpointercapture={(evt) => {
 		if (!evt.isPrimary) {
 			return;
 		}
-		isActive.value = false
+		isActive.value = false;
 	}}
 />
 

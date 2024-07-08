@@ -88,6 +88,7 @@
 		}
 	}}
 	oncontextmenu={(evt) => {
+		evt.preventDefault();
 		isActive.value = false;
 	}}
 	onpointerdown={(evt) => {

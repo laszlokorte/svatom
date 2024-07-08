@@ -21,26 +21,49 @@ export function bindEvents(node, {camera, worldClientIso}) {
 	const panScreenDelta = view(['focus', panScreenLens], camera)
 
 	function onWheel(evt) {
-		if(evt.shiftKey || evt.altKey) {
-			return
-		}
+		if (evt.deltaMode === WheelEvent.DOM_DELTA_PIXEL) {
+			if(evt.ctrlKey) {
+				evt.preventDefault()
+				evt.stopPropagation()
 
-		evt.preventDefault()
-		evt.stopPropagation()
+				const worldPos = L.get(eventWorld, evt)
 
-		const worldPos = L.get(eventWorld, evt)
-
-		if(evt.ctrlKey) {
-			rotationDelta.value = {
-				px: worldPos.x,
-				py: worldPos.y,
-				dw: -evt.deltaY/1000 * 90,
+				if(evt.shiftKey) {
+					rotationDelta.value = {
+						px: worldPos.x,
+						py: worldPos.y,
+						dw: -evt.deltaY/50 * 90,
+					}
+				} else {
+					zoomDelta.value = {
+						px: worldPos.x,
+						py: worldPos.y,
+						dz: -evt.deltaY/50,
+					}
+				}
 			}
 		} else {
-			zoomDelta.value = {
-				px: worldPos.x,
-				py: worldPos.y,
-				dz: -evt.deltaY/1000,
+			if(!evt.altKey && !evt.ctrlKey) {
+				return
+			}
+
+			evt.preventDefault()
+			evt.stopPropagation()
+
+			const worldPos = L.get(eventWorld, evt)
+
+			if(evt.altKey) {
+				rotationDelta.value = {
+					px: worldPos.x,
+					py: worldPos.y,
+					dw: -evt.deltaY/100 * 90 * (evt.ctrlKey ? 5 : 1),
+				}
+			} else {
+				zoomDelta.value = {
+					px: worldPos.x,
+					py: worldPos.y,
+					dz: -evt.deltaY/50,
+				}
 			}
 		}
 	}
@@ -109,6 +132,11 @@ export function bindEvents(node, {camera, worldClientIso}) {
 	function onPointerStart(evt) {
 		if(evt.pointerType === 'mouse' && evt.button === 1 && evt.shiftKey) {
 			node.setPointerCapture(evt.pointerId)
+			mouseGrab = {
+				pointerId: evt.pointerId,
+				x: evt.clientX,
+				y: evt.clientY,
+			}
 		}
 
 	}

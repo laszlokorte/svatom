@@ -82,6 +82,10 @@
 			currentLasso.value = undefined;
 		}
 	}}
+	oncontextmenu={(evt) => {
+		evt.preventDefault();
+		isActive.value = false;
+	}}
 	onpointerdown={(evt) => {
 		if (!evt.isPrimary || !U.isLeftButton(evt)) {
 			return;

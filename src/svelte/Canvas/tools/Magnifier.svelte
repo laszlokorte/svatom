@@ -140,6 +140,10 @@
 		magnifierFrameSize.value = { x: 0, y: 0 };
 		magnifierFrameAngle.value = -cameraOrientation.value;
 	}}
+	oncontextmenu={(evt) => {
+		evt.preventDefault();
+		isActive.value = false;
+	}}
 	onpointermove={(evt) => {
 		if (!evt.isPrimary) {
 			return;

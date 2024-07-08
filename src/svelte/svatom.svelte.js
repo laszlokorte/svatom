@@ -167,10 +167,8 @@ export function during(someAtom, fn) {
 	toggle(someAtom, (val) => {
 		if (val) {
 			function tick() {
-				raf = requestAnimationFrame(() => {
-					fn(someAtom.value)
-					tick()
-				})
+				fn(someAtom.value)
+				raf = requestAnimationFrame(tick)
 			}
 
 			tick()
@@ -179,7 +177,59 @@ export function during(someAtom, fn) {
 			raf = null
 		}
 	})
+}
 
+export function animateWith(someAtom, fn) {
+	let raf = null
+
+	$effect(() => {
+		const currentVal = someAtom.value
+		const restore = (event) => {
+			fn(currentVal)
+		}
+		if(currentVal) {
+			currentVal.el.addEventListener("contextrestored", restore);
+			function tick() {
+				const currentVal = someAtom.value
+				if(currentVal) {
+					fn(currentVal)
+					raf = requestAnimationFrame(tick)
+				}
+			}
+
+			tick()
+
+			return () => {
+				currentVal.el.removeEventListener("contextrestored", restore);
+			}
+		} else if(raf) {
+			cancelAnimationFrame(raf)
+			raf = null
+		}
+	})
+}
+
+
+export function adjustSize(node, someAtom) {
+	let prevX = 0;
+	let prevY = 0;
+
+	$effect.pre(() => {
+		const newVal = someAtom.value;
+
+		if (prevX !== newVal.x) {
+			prevX = newVal.x;
+			tick().then(() => {
+				node.width = prevX;
+			});
+		}
+		if (prevY !== newVal.y) {
+			prevY = newVal.y;
+			tick().then(() => {
+				node.height = prevY;
+			});
+		}
+	});
 }
 
 export function failableView(opticLense, someAtom, autoReset = true, errorAtom = atom(null), transientAtom = atom(null)) {

@@ -112,6 +112,10 @@
 	role="button"
 	tabindex="-1"
 	transform={rotationTransform.value}
+	oncontextmenu={(evt) => {
+		evt.preventDefault();
+		isActive.value = false;
+	}}
 	onkeydown={(evt) => {
 		evt.preventDefault();
 		if (evt.key === "Escape" || evt.key === "Esc") {

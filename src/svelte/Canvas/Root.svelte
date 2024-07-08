@@ -24,6 +24,8 @@
 		bindScroll,
 		bindSize,
 		traverse,
+		animateWith,
+		adjustSize,
 	} from "../svatom.svelte.js";
 	import { constructLenses } from "./camera/live.js";
 
@@ -76,12 +78,29 @@
 	import Rotate from "./tools/Rotate.svelte";
 	import Zoom from "./tools/Zoom.svelte";
 
-	const svgElement = atom(null);
-	const cameraTow = atom(null);
-	let currentToolElement = atom(null);
+	const svgElement = atom(undefined);
+	const bitmapCanvas = atom(undefined);
+	const cameraTow = atom(undefined);
+	let currentToolElement = atom(undefined);
 
 	const debugFrames = atom(false);
 	const showBounds = atom(false);
+
+	animateWith(
+		read(
+			L.reread((el) =>
+				el ? { el, ctx: el.getContext("2d") } : undefined,
+			),
+			bitmapCanvas,
+		),
+		({ el, ctx }) => {
+			ctx.clearRect(0, 0, el.width, el.height);
+
+			ctx.fillStyle = "black";
+			ctx.font = "20px arial";
+			ctx.fillText("Hello World", 100, 100);
+		},
+	);
 
 	const allTabs = atom({
 		current: 0,
@@ -1475,7 +1494,13 @@
 		{#if currentToolElement.value && currentToolElement.value.canCancel && currentToolElement.value.cancel}
 			<button
 				type="button"
+				class="tool-action"
 				disabled={!currentToolElement.value.canCancel.value}
+				onpointerup={(evt) => {
+					if (!evt.isPrimary) {
+						evt.currentTarget.click();
+					}
+				}}
 				onclick={() => {
 					currentToolElement.value.cancel();
 				}}>Cancel</button
@@ -1585,6 +1610,16 @@
 				></svelte:component>
 			</Navigator>
 		</svg>
+
+		<canvas
+			bind:this={bitmapCanvas.value}
+			class="canvas bitmap-canvas"
+			use:adjustSize={read(
+				R.map(R.multiply(window.devicePixelRatio)),
+				scrollWindowSize,
+			)}
+		></canvas>
+
 		<div class="scroller-hud">
 			<input
 				type="range"
@@ -1654,6 +1689,15 @@
 		user-select: none;
 		-webkit-user-select: none;
 		touch-action: none;
+	}
+
+	.bitmap-canvas {
+		display: block;
+		width: 100%;
+		height: 100%;
+		pointer-events: none;
+		background: none;
+		border: none;
 	}
 
 	textarea {
@@ -1792,8 +1836,15 @@
 		touch-action: none;
 	}
 
-	.tool-button:has(:checked) {
-		background: #cd3e30;
+	.tool-button:has(:checked):not(:disabled),
+	.tool-button:has(:checked):not(:disabled):active,
+	.tool-button:has(:checked):not(:disabled):focus-visible,
+	.tool-button:has(:checked):not(:disabled):focus,
+	.tool-button:has(:checked):disabled,
+	.tool-button:has(:checked):disabled:active,
+	.tool-button:has(:checked):disabled:focus-visible,
+	.tool-button:has(:checked):disabled:focus {
+		background: #cd3e30 !important;
 		color: #fff;
 	}
 
@@ -1807,6 +1858,23 @@
 		padding: 0;
 		display: block;
 		position: absolute;
+	}
+
+	.tool-action:disabled,
+	.tool-action:disabled:active,
+	.tool-action:disabled:focus-visible,
+	.tool-action:disabled:focus {
+		background: #999;
+	}
+
+	.tool-action,
+	.tool-action:active,
+	.tool-action:focus-visible,
+	.tool-action:focus {
+		user-select: none;
+		touch-action: none;
+		background: #333;
+		color: #fff;
 	}
 
 	.debug-dot {
