@@ -456,9 +456,26 @@ export function bindValue(node, someAtom) {
 	};
 }
 
+function throttled(fn) {
+	let ticking = false;
+
+	return (...args) => {
+		if (!ticking) {
+		    window.requestAnimationFrame(() => {
+		      fn(args);
+		      ticking = false;
+		    });
+
+		    ticking = true;
+		}
+	}
+}
+
 export function bindScroll(node, someAtom) {
-	 function onscroll(e) {
-	 	if((!$state.is(someAtom.value.x, node.scrollLeft) || !$state.is(someAtom.value.y, node.scrollTop))) {
+	 const onScrollThrottled = throttled(function onscroll(e) {
+	
+	 	const newValue = someAtom.value
+	 	if((!$state.is(newValue.x, node.scrollLeft) || !$state.is(newValue.y, node.scrollTop))) {
 
 			const scrollMaxX = Math.max(0, node.scrollLeftMax  ? node.scrollLeftMax : node.scrollWidth - node.offsetWidth)
 			const scrollMaxY = Math.max(0, node.scrollTopMax  ? node.scrollTopMax : node.scrollHeight - node.offsetHeight)
@@ -475,47 +492,51 @@ export function bindScroll(node, someAtom) {
 				atMinY: newY <= 0,
 			}
 	 	}
-	}
+	})
+
 
 	$effect.pre(() => {
-		const scrollMaxX = Math.max(0, node.scrollLeftMax  ? node.scrollLeftMax : node.scrollWidth - node.offsetWidth)
-		const scrollMaxY = Math.max(0, node.scrollTopMax  ? node.scrollTopMax : node.scrollHeight - node.offsetHeight)
-		const newX =  R.clamp(0, scrollMaxX, someAtom.value.x)
-		const newY =  R.clamp(0, scrollMaxY, someAtom.value.y)
-		const oldX = R.clamp(0, scrollMaxX, node.scrollLeft)
-		const oldY = R.clamp(0, scrollMaxY, node.scrollTop)
+		const newPos = someAtom.value
+		tick().then(() => {
+			const scrollMaxX = Math.max(0, node.scrollLeftMax  ? node.scrollLeftMax : node.scrollWidth - node.offsetWidth)
+			const scrollMaxY = Math.max(0, node.scrollTopMax  ? node.scrollTopMax : node.scrollHeight - node.offsetHeight)
+			const newX =  R.clamp(0, scrollMaxX, newPos.x)
+			const newY =  R.clamp(0, scrollMaxY, newPos.y)
+			const oldX = R.clamp(0, scrollMaxX, node.scrollLeft)
+			const oldY = R.clamp(0, scrollMaxY, node.scrollTop)
 
 
-		if(oldX != newX) {
-			node.scrollLeft = newX;
-		}
-		if(oldY != newY) {
-			node.scrollTop = newY
-		}
-
+			if(oldX != newX) {
+				node.scrollLeft = newX;
+			}
+			if(oldY != newY) {
+				node.scrollTop = newY
+			}
+		})
 	});
 
-	node.addEventListener("scroll", onscroll, { passive: true });
+	node.addEventListener("scroll", onScrollThrottled, { passive: true });
 
 	return () => {
-		node.removeEventListener("scroll", onscroll, { passive: true });
+		node.removeEventListener("scroll", onScrollThrottled, { passive: true });
 	};
 }
 
 export function readScroll(node, someAtom) {
-	 function onscroll(e) {
-	 	if((!$state.is(someAtom.value.x, node.scrollLeft) || !$state.is(someAtom.value.y, node.scrollTop))) {
+	 const onScrollThrottled = throttled(function onscroll(e) {
+	 	const newValue = someAtom.value
+	 	if((!$state.is(newValue.x, node.scrollLeft) || !$state.is(newValue.y, node.scrollTop))) {
 			someAtom.value = {
 				x: node.scrollLeft,
 				y: node.scrollTop,
 			}
 	 	}
-	}
+	})
 
-	node.addEventListener("scroll", onscroll, { passive: true });
+	node.addEventListener("scroll", onScrollThrottled, { passive: true });
 
 	return () => {
-		node.removeEventListener("scroll", onscroll, { passive: true });
+		node.removeEventListener("scroll", onScrollThrottled, { passive: true });
 	};
 }
 
