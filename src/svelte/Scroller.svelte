@@ -34,11 +34,11 @@
 	})), combine({pad: scrollPadding, conSize: contentSize}, {}))
 
 	const adjustedScrollPosition = view(L.lens(({ pos, windowSize, conSize, o, pad }) => ({
-			x: R.clamp(-pad.left, Math.max(0, conSize.x - Math.floor(windowSize.x)), pos.x) + o.x + pad.left,
-			y: R.clamp(-pad.top, Math.max(0, conSize.y - Math.floor(windowSize.y)), pos.y) + o.y + pad.top,
+			x: R.clamp(-pad.left, Math.max(0, conSize.x - Math.floor(windowSize.x) -pad.left), pos.x) + o.x + pad.left,
+			y: R.clamp(-pad.top, Math.max(0, conSize.y - Math.floor(windowSize.y) -pad.top), pos.y) + o.y + pad.top,
 		}), (pos, { windowSize, conSize, pad }) => {
-			const clampedX = R.clamp(-pad.left, Math.max(pad.left, conSize.x - Math.floor(windowSize.x)), pos.x - pad.left)
-			const clampedY = R.clamp(-pad.top, Math.max(pad.top, conSize.y - Math.floor(windowSize.y)), pos.y - pad.top)
+			const clampedX = R.clamp(-pad.left, Math.max(pad.left, conSize.x - Math.floor(windowSize.x)-pad.left), pos.x - pad.left)
+			const clampedY = R.clamp(-pad.top, Math.max(pad.top, conSize.y - Math.floor(windowSize.y)-pad.top), pos.y - pad.top)
 
 
 			return {
