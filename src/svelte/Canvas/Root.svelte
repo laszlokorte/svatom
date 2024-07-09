@@ -1618,7 +1618,7 @@
 				/>
 			</Navigator>
 		</svg>
-
+		<!-- 
 		<canvas
 			bind:this={bitmapCanvas.value}
 			class="canvas bitmap-canvas"
@@ -1627,7 +1627,7 @@
 				scrollWindowSize,
 			)}
 		></canvas>
-
+ -->
 		<div class="scroller-hud">
 			<input
 				type="range"

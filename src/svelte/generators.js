@@ -18,6 +18,30 @@ export function* map(fn, seq) {
 	}
 }
 
+export function* flatMap(fn, seq) {
+	for(let x of seq) {
+		for(let y of fn(x)) {
+			yield y
+		}
+	}
+}
+
+export function* concat(seqA, seqB, ...more) {
+	for(let x of seqA) {
+		yield x
+	}
+
+	for(let y of seqB) {
+		yield y
+	}
+
+	for (let s of more) {
+		for(let z of s) {
+			yield z
+		}
+	}
+}
+
 export function* mapIndexed(fn, seq) {
 	let i = 0;
 	for(let x of seq) {
@@ -33,7 +57,15 @@ export function* filter(fn, seq) {
 	}
 }
 
-export function* reduce(fn, init, seq) {
+export function* reject(fn, seq) {
+	for(let x of seq) {
+		if(!fn(x)) {
+			yield x
+		}
+	}
+}
+
+export function reduce(fn, init, seq) {
 	let acc = init
 	for(let x of seq) {
 		acc = fn(acc, x)

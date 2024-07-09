@@ -2,6 +2,7 @@
 	import * as L from "partial.lenses";
 	import * as R from "ramda";
 	import * as U from "../../utils";
+	import * as G from "../../generators";
 	import * as Geo from "../../geometry";
 	import { view, read, combine } from "../../svatom.svelte.js";
 
@@ -30,6 +31,77 @@
 		frameBoxObject,
 	);
 
+	const gridBuilder =
+		(offset) =>
+		({ rect, scale, screen: { minX, minY, width, height } }) => {
+			const size = Math.hypot(width, height);
+
+			const logRoundedScale = Math.pow(
+				2,
+				Math.round(Math.log(scale) / Math.log(2) - offset),
+			);
+
+			const camCenterX = (rect.a.x + rect.c.x) / 2;
+			const camCenterY = (rect.a.y + rect.d.y) / 2;
+			const gridDistance = 128 * logRoundedScale;
+
+			const range = Math.floor(size / gridDistance);
+			const baseDistanceX =
+				Math.floor(camCenterX / gridDistance) * gridDistance;
+			const baseDistanceY =
+				Math.floor(camCenterY / gridDistance) * gridDistance;
+
+			const rays = G.reject(
+				R.isNil,
+				G.concat(
+					G.map(
+						(i) =>
+							Geo.rayInsideQuad(
+								0,
+								baseDistanceY + i * gridDistance,
+								rect,
+							),
+						G.range(0, range),
+					),
+					G.map(
+						(i) =>
+							Geo.rayInsideQuad(
+								0,
+								baseDistanceY - i * gridDistance,
+								rect,
+							),
+						G.range(1, range),
+					),
+					G.map(
+						(i) =>
+							Geo.rayInsideQuad(
+								Math.PI / 2,
+								-baseDistanceX - i * gridDistance,
+								rect,
+							),
+						G.range(0, range),
+					),
+					G.map(
+						(i) =>
+							Geo.rayInsideQuad(
+								Math.PI / 2,
+								-baseDistanceX + i * gridDistance,
+								rect,
+							),
+						G.range(1, range),
+					),
+				),
+			);
+
+			const path = G.reduce(
+				(acc, { a, b }) => `${acc}M${a.x},${a.y}L${b.x},${b.y}`,
+				"",
+				rays,
+			);
+
+			return path;
+		};
+
 	const gridPathPrimary = view(
 		[
 			L.pick({
@@ -37,77 +109,7 @@
 				screen: ["frameBoxObject", "screenSpaceAligned"],
 				scale: "cameraScale",
 			}),
-			L.reread(
-				({ rect, scale, screen: { minX, minY, width, height } }) => {
-					const size = Math.hypot(width, height);
-
-					const logRoundedScale = Math.pow(
-						2,
-						Math.round(Math.log(scale) / Math.log(2)),
-					);
-
-					const camCenterX = (rect.a.x + rect.c.x) / 2;
-					const camCenterY = (rect.a.y + rect.d.y) / 2;
-					const gridDistance = 128 * logRoundedScale;
-
-					const range = Math.floor(size / gridDistance);
-					const baseDistanceX =
-						Math.floor(camCenterX / gridDistance) * gridDistance;
-					const baseDistanceY =
-						Math.floor(camCenterY / gridDistance) * gridDistance;
-
-					return (
-						R.compose(
-							R.join(""),
-							R.map(({ a, b }) => `M${a.x},${a.y}L${b.x},${b.y}`),
-							R.reject(R.isNil),
-							R.map((i) =>
-								Geo.rayInsideQuad(
-									0,
-									baseDistanceY + i * gridDistance,
-									rect,
-								),
-							),
-						)(R.range(0, range)) +
-						R.compose(
-							R.join(""),
-							R.map(({ a, b }) => `M${a.x},${a.y}L${b.x},${b.y}`),
-							R.reject(R.isNil),
-							R.map((i) =>
-								Geo.rayInsideQuad(
-									0,
-									baseDistanceY - i * gridDistance,
-									rect,
-								),
-							),
-						)(R.range(1, range)) +
-						R.compose(
-							R.join(""),
-							R.map(({ a, b }) => `M${a.x},${a.y}L${b.x},${b.y}`),
-							R.reject(R.isNil),
-							R.map((i) =>
-								Geo.rayInsideQuad(
-									Math.PI / 2,
-									-baseDistanceX - i * gridDistance,
-									rect,
-								),
-							),
-						)(R.range(0, range)) +
-						R.compose(
-							R.join(""),
-							R.map(({ a, b }) => `M${a.x},${a.y}L${b.x},${b.y}`),
-							R.reject(R.isNil),
-							R.map((i) =>
-								Geo.rayInsideQuad(
-									Math.PI / 2,
-									-baseDistanceX + i * gridDistance,
-									rect,
-								),
-							),
-						)(R.range(1, range))
-					);
-				},
-			),
+			L.reread(gridBuilder(0)),
 		],
 		combine({ frameBoxObject, cameraScale }),
 	);
@@ -119,77 +121,7 @@
 				screen: ["frameBoxObject", "screenSpaceAligned"],
 				scale: "cameraScale",
 			}),
-			L.reread(
-				({ rect, scale, screen: { minX, minY, width, height } }) => {
-					const size = Math.hypot(width, height);
-
-					const logRoundedScale = Math.pow(
-						2,
-						Math.round(Math.log(scale) / Math.log(2) - 1),
-					);
-
-					const camCenterX = (rect.a.x + rect.c.x) / 2;
-					const camCenterY = (rect.a.y + rect.d.y) / 2;
-					const gridDistance = 128 * logRoundedScale;
-
-					const range = Math.floor(size / gridDistance);
-					const baseDistanceX =
-						Math.floor(camCenterX / gridDistance) * gridDistance;
-					const baseDistanceY =
-						Math.floor(camCenterY / gridDistance) * gridDistance;
-
-					return (
-						R.compose(
-							R.join(""),
-							R.map(({ a, b }) => `M${a.x},${a.y}L${b.x},${b.y}`),
-							R.reject(R.isNil),
-							R.map((i) =>
-								Geo.rayInsideQuad(
-									0,
-									baseDistanceY + i * gridDistance,
-									rect,
-								),
-							),
-						)(R.range(0, range)) +
-						R.compose(
-							R.join(""),
-							R.map(({ a, b }) => `M${a.x},${a.y}L${b.x},${b.y}`),
-							R.reject(R.isNil),
-							R.map((i) =>
-								Geo.rayInsideQuad(
-									0,
-									baseDistanceY - i * gridDistance,
-									rect,
-								),
-							),
-						)(R.range(1, range)) +
-						R.compose(
-							R.join(""),
-							R.map(({ a, b }) => `M${a.x},${a.y}L${b.x},${b.y}`),
-							R.reject(R.isNil),
-							R.map((i) =>
-								Geo.rayInsideQuad(
-									Math.PI / 2,
-									-baseDistanceX - i * gridDistance,
-									rect,
-								),
-							),
-						)(R.range(0, range)) +
-						R.compose(
-							R.join(""),
-							R.map(({ a, b }) => `M${a.x},${a.y}L${b.x},${b.y}`),
-							R.reject(R.isNil),
-							R.map((i) =>
-								Geo.rayInsideQuad(
-									Math.PI / 2,
-									-baseDistanceX + i * gridDistance,
-									rect,
-								),
-							),
-						)(R.range(1, range))
-					);
-				},
-			),
+			L.reread(gridBuilder(1)),
 		],
 		combine({ frameBoxObject, cameraScale }),
 	);
