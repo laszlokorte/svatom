@@ -1068,84 +1068,85 @@
 	const camClientY = view("y", camClient);
 </script>
 
-<div class="beside">
-	<fieldset>
-		<legend>Frame</legend>
+<div class="container">
+	<div class="beside">
+		<fieldset>
+			<legend>Frame</legend>
 
-		<div>
-			<label
-				><input
-					type="checkbox"
-					bind:checked={autosize.value}
-				/>Autofit</label
-			>
+			<div>
+				<label
+					><input
+						type="checkbox"
+						bind:checked={autosize.value}
+					/>Autofit</label
+				>
 
-			<label
-				><input
-					type="checkbox"
-					value={true}
-					bind:checked={debugFrames.value}
-				/> Show Debug Frames</label
-			>
+				<label
+					><input
+						type="checkbox"
+						value={true}
+						bind:checked={debugFrames.value}
+					/> Show Debug Frames</label
+				>
 
-			<label
-				><input
-					type="checkbox"
-					value={true}
-					bind:checked={showBounds.value}
-				/> Show Paper Bounds</label
-			>
-		</div>
+				<label
+					><input
+						type="checkbox"
+						value={true}
+						bind:checked={showBounds.value}
+					/> Show Paper Bounds</label
+				>
+			</div>
 
-		<div>
-			<label class="number-picker"
-				>Camera Width:<input
-					type="range"
-					min="100"
-					max="1500"
-					bind:value={planeWidth.value}
-					disabled={autosize.value}
-				/></label
-			><br />
-			<label class="number-picker"
-				>Camera Height:<input
-					type="range"
-					min="100"
-					max="1500"
-					bind:value={planeHeight.value}
-					disabled={autosize.value}
-				/></label
-			>
-		</div>
+			<div>
+				<label class="number-picker"
+					>Camera Width:<input
+						type="range"
+						min="100"
+						max="1500"
+						bind:value={planeWidth.value}
+						disabled={autosize.value}
+					/></label
+				><br />
+				<label class="number-picker"
+					>Camera Height:<input
+						type="range"
+						min="100"
+						max="1500"
+						bind:value={planeHeight.value}
+						disabled={autosize.value}
+					/></label
+				>
+			</div>
 
-		<div>
-			Aspect:
-			<label
-				><input
-					type="radio"
-					value="meet"
-					bind:group={aspect.value}
-					disabled={autosize.value}
-				/> meet</label
-			>
-			<label
-				><input
-					type="radio"
-					value="slice"
-					bind:group={aspect.value}
-					disabled={autosize.value}
-				/> slice</label
-			>
-			<label
-				><input
-					type="radio"
-					value="none"
-					bind:group={aspect.value}
-					disabled={autosize.value}
-				/> none</label
-			>
-		</div>
-		<!-- <div>
+			<div>
+				Aspect:
+				<label
+					><input
+						type="radio"
+						value="meet"
+						bind:group={aspect.value}
+						disabled={autosize.value}
+					/> meet</label
+				>
+				<label
+					><input
+						type="radio"
+						value="slice"
+						bind:group={aspect.value}
+						disabled={autosize.value}
+					/> slice</label
+				>
+				<label
+					><input
+						type="radio"
+						value="none"
+						bind:group={aspect.value}
+						disabled={autosize.value}
+					/> none</label
+				>
+			</div>
+			<!-- <div>
 		Align-X:
 		{#each alignments as a (a)}
 			<label
@@ -1164,484 +1165,499 @@
 		{/each}
 	</div> -->
 
-		Alignment:
-		<div class="alignment-grid">
-			{#each alignments as ay (ay)}
-				{#each alignments as ax (ax)}
-					<label tabindex="-1" class="alignment-grid-label"
-						><input
-							disabled={autosize.value}
-							type="radio"
-							value={`x${ax}Y${ay}`}
-							bind:group={alignCombi.value}
-						/>
-						x{ax}Y{ay}</label
-					>
+			Alignment:
+			<div class="alignment-grid">
+				{#each alignments as ay (ay)}
+					{#each alignments as ax (ax)}
+						<label tabindex="-1" class="alignment-grid-label"
+							><input
+								disabled={autosize.value}
+								type="radio"
+								value={`x${ax}Y${ay}`}
+								bind:group={alignCombi.value}
+							/>
+							x{ax}Y{ay}</label
+						>
+					{/each}
 				{/each}
-			{/each}
-		</div>
+			</div>
 
-		Auto-Padding:
-		<div>
-			<label
-				><input
-					type="checkbox"
-					bind:checked={cameraAutoPadding.value}
-				/> Extend Scrollbars</label
+			Auto-Padding:
+			<div>
+				<label
+					><input
+						type="checkbox"
+						bind:checked={cameraAutoPadding.value}
+					/> Extend Scrollbars</label
+				>
+			</div>
+		</fieldset>
+
+		<fieldset>
+			<legend>Focus</legend>
+
+			<div class="form-grid">
+				<label class="number-picker"
+					><span>X:</span>
+					<input
+						type="range"
+						bind:value={cameraXFormatted.value}
+						min={cameraBounds.value.minX}
+						max={cameraBounds.value.maxX}
+						step="0.1"
+					/>
+					<button
+						type="button"
+						onclick={(_) => {
+							cameraXFormatted.value = 0;
+						}}>reset</button
+					>
+					<output>{cameraXFormatted.value}</output>
+				</label>
+				<label class="number-picker"
+					><span>Y:</span>
+					<input
+						type="range"
+						bind:value={cameraYFormatted.value}
+						min={cameraBounds.value.minY}
+						max={cameraBounds.value.maxY}
+						step="0.1"
+					/>
+					<button
+						type="button"
+						onclick={(_) => {
+							cameraYFormatted.value = 0;
+						}}>reset</button
+					>
+					<output>{cameraYFormatted.value}</output>
+				</label>
+				<label class="number-picker"
+					><span>Zoom:</span>
+					<input
+						type="range"
+						bind:value={cameraZoomFormatted.value}
+						min="-5"
+						max="5"
+						step="0.01"
+					/>
+					<button
+						type="button"
+						onclick={(_) => {
+							cameraZoomFormatted.value = 0;
+						}}>reset</button
+					>
+					<output>{cameraZoomFormatted.value}</output>
+				</label>
+				<label class="number-picker"
+					><span>Rotation:</span>
+					<input
+						type="range"
+						bind:value={cameraAngleFormatted.value}
+						min="-180"
+						max="180"
+						step="0.01"
+					/>
+					<button
+						type="button"
+						onclick={(_) => {
+							cameraAngleFormatted.value = 0;
+						}}>reset</button
+					>
+					<output>{cameraAngleFormatted.value}</output>
+				</label>
+
+				<hr />
+				<label class="number-picker"
+					><span>Scroll X:</span>
+					<input
+						type="range"
+						bind:value={cameraXScreenFormatted.value}
+						min={cameraBounds.value.minX - cameraBounds.value.maxX}
+						max={cameraBounds.value.maxX - cameraBounds.value.minX}
+						step="0.1"
+					/>
+					<button
+						type="button"
+						onclick={(_) => {
+							cameraXScreenFormatted.value = 0;
+						}}>reset</button
+					>
+					<output>{cameraXScreenFormatted.value}</output>
+				</label>
+				<label class="number-picker"
+					><span>Scroll Y:</span>
+					<input
+						type="range"
+						bind:value={cameraYScreenFormatted.value}
+						min={cameraBounds.value.minY - cameraBounds.value.maxY}
+						max={cameraBounds.value.maxY - cameraBounds.value.minY}
+						step="0.1"
+					/>
+					<button
+						type="button"
+						onclick={(_) => {
+							cameraYScreenFormatted.value = 0;
+						}}>reset</button
+					>
+					<output>{cameraYScreenFormatted.value}</output>
+				</label>
+			</div>
+
+			<hr />
+			<div class="button-bar">
+				<button
+					type="button"
+					onclick={(_) => {
+						update(L.set(["focus", L.values], 0), camera);
+					}}>Reset all to zero</button
+				><button
+					type="button"
+					onclick={(_) => {
+						update(
+							L.set(["focus", L.props("x", "y")], { x: 0, y: 0 }),
+							camera,
+						);
+					}}>re-Center to Origin</button
+				><button
+					type="button"
+					onclick={(_) => {
+						update(
+							L.set(
+								["focus", L.props("x", "y")],
+								boundsCenter.value,
+							),
+							camera,
+						);
+					}}>re-Center Content</button
+				><button
+					type="button"
+					onclick={(_) => {
+						update(L.set(["focus", "w"], 0), camera);
+					}}>re-Orient Upwards</button
+				><button
+					type="button"
+					onclick={(_) => {
+						update(
+							L.set(["focus", L.props("z", "x", "y", "w")], {
+								x:
+									(cameraBounds.value.maxX +
+										cameraBounds.value.minX) /
+									2,
+								y:
+									(cameraBounds.value.maxY +
+										cameraBounds.value.minY) /
+									2,
+								z: -Math.max(
+									Math.log(
+										cameraBounds.value.maxX -
+											cameraBounds.value.minX,
+									) - Math.log(camera.value.plane.x),
+									Math.log(
+										cameraBounds.value.maxY -
+											cameraBounds.value.minY,
+									) - Math.log(camera.value.plane.y),
+								),
+								w: cameraBounds.value.angle,
+							}),
+							camera,
+						);
+					}}>re-Fit to Content</button
+				>
+			</div>
+			<hr />
+
+			<div>
+				<label class="number-picker"
+					><span>Grid Size:</span>
+					<input
+						type="range"
+						bind:value={gridDistance.value}
+						min={0}
+						max={512}
+						step="32"
+					/>
+					<button
+						type="button"
+						onclick={(_) => {
+							gridDistance.value = 32;
+						}}>reset</button
+					>
+					<output>{gridDistance.value}</output>
+				</label>
+			</div>
+		</fieldset>
+	</div>
+
+	<fieldset>
+		<legend>Documents</legend>
+
+		<div class="tool-bar">
+			<button
+				class="doc-tab-action"
+				type="button"
+				onclick={() => (newTab.value = {})}
+				><svg width="32" height="32" viewBox="-16 -16 32 32">
+					<title>New</title>
+					<path
+						d="M-12,0L12,0M0,12L0,-12"
+						stroke="currentColor"
+						stroke-width="2px"
+						vector-effect="non-scaling-stroke"
+						stroke-linecap="round"
+						shape-rendering="crispEdges"
+					/>
+				</svg></button
 			>
+			<hr class="tool-bar-sep" />
+			{#each tabIds.value as d}
+				{@const docName = view(
+					["tabs", d, "document", "title", L.defaults("")],
+					allTabs,
+				)}
+				{@const fallbackName = view(
+					[
+						"tabs",
+						d,
+						"document",
+						"content",
+						L.choices(
+							["textes", L.first, "content"],
+							["textBoxes", L.first, "content"],
+						),
+						L.valueOr(""),
+						L.ifElse(
+							R.isEmpty,
+							L.inverse(L.dropPrefix("untitled")),
+							L.inverse(L.dropPrefix("untitled - ")),
+						),
+					],
+					allTabs,
+				)}
+				<span
+					class="doc-tab-group"
+					class:active={d === currentTabId.value}
+				>
+					{#if d === currentTabId.value}
+						<input
+							placeholder={fallbackName.value}
+							class="doc-tab-titel"
+							class:untitled={!docName.value}
+							bind:value={docName.value}
+							class:active={true}
+						/>
+					{:else}
+						<button
+							class="doc-tab-titel"
+							class:active={false}
+							class:untitled={!docName.value}
+							onclick={() => (currentTabId.value = d)}
+							>{docName.value || fallbackName.value}</button
+						>
+					{/if}
+					<button
+						type="button"
+						class="doc-tab-del"
+						onclick={() => {
+							closeTab.value = d;
+						}}
+						class:active={d === currentTabId.value}
+						title="Close"
+					>
+						<svg width="10" height="10" viewBox="-16 -16 32 32">
+							<title>Delete</title>
+							<path
+								d="M-8,-8L8,8M-8,8L8,-8"
+								stroke="currentColor"
+								stroke-width="4px"
+								stroke-linecap="round"
+							/>
+						</svg>
+					</button>
+				</span>
+			{/each}
 		</div>
 	</fieldset>
 
 	<fieldset>
-		<legend>Focus</legend>
+		<legend>Tools</legend>
 
-		<div class="form-grid">
-			<label class="number-picker"
-				><span>X:</span>
-				<input
-					type="range"
-					bind:value={cameraXFormatted.value}
-					min={cameraBounds.value.minX}
-					max={cameraBounds.value.maxX}
-					step="0.1"
-				/>
-				<button
-					type="button"
-					onclick={(_) => {
-						cameraXFormatted.value = 0;
-					}}>reset</button
-				>
-				<output>{cameraXFormatted.value}</output>
-			</label>
-			<label class="number-picker"
-				><span>Y:</span>
-				<input
-					type="range"
-					bind:value={cameraYFormatted.value}
-					min={cameraBounds.value.minY}
-					max={cameraBounds.value.maxY}
-					step="0.1"
-				/>
-				<button
-					type="button"
-					onclick={(_) => {
-						cameraYFormatted.value = 0;
-					}}>reset</button
-				>
-				<output>{cameraYFormatted.value}</output>
-			</label>
-			<label class="number-picker"
-				><span>Zoom:</span>
-				<input
-					type="range"
-					bind:value={cameraZoomFormatted.value}
-					min="-5"
-					max="5"
-					step="0.01"
-				/>
-				<button
-					type="button"
-					onclick={(_) => {
-						cameraZoomFormatted.value = 0;
-					}}>reset</button
-				>
-				<output>{cameraZoomFormatted.value}</output>
-			</label>
-			<label class="number-picker"
-				><span>Rotation:</span>
-				<input
-					type="range"
-					bind:value={cameraAngleFormatted.value}
-					min="-180"
-					max="180"
-					step="0.01"
-				/>
-				<button
-					type="button"
-					onclick={(_) => {
-						cameraAngleFormatted.value = 0;
-					}}>reset</button
-				>
-				<output>{cameraAngleFormatted.value}</output>
-			</label>
-
-			<hr />
-			<label class="number-picker"
-				><span>Scroll X:</span>
-				<input
-					type="range"
-					bind:value={cameraXScreenFormatted.value}
-					min={cameraBounds.value.minX - cameraBounds.value.maxX}
-					max={cameraBounds.value.maxX - cameraBounds.value.minX}
-					step="0.1"
-				/>
-				<button
-					type="button"
-					onclick={(_) => {
-						cameraXScreenFormatted.value = 0;
-					}}>reset</button
-				>
-				<output>{cameraXScreenFormatted.value}</output>
-			</label>
-			<label class="number-picker"
-				><span>Scroll Y:</span>
-				<input
-					type="range"
-					bind:value={cameraYScreenFormatted.value}
-					min={cameraBounds.value.minY - cameraBounds.value.maxY}
-					max={cameraBounds.value.maxY - cameraBounds.value.minY}
-					step="0.1"
-				/>
-				<button
-					type="button"
-					onclick={(_) => {
-						cameraYScreenFormatted.value = 0;
-					}}>reset</button
-				>
-				<output>{cameraYScreenFormatted.value}</output>
-			</label>
-		</div>
-
-		<hr />
-		<div class="button-bar">
+		<div class="tool-bar">
 			<button
 				type="button"
-				onclick={(_) => {
-					update(L.set(["focus", L.values], 0), camera);
-				}}>Reset all to zero</button
-			><button
-				type="button"
-				onclick={(_) => {
-					update(
-						L.set(["focus", L.props("x", "y")], { x: 0, y: 0 }),
-						camera,
-					);
-				}}>re-Center to Origin</button
-			><button
-				type="button"
-				onclick={(_) => {
-					update(
-						L.set(["focus", L.props("x", "y")], boundsCenter.value),
-						camera,
-					);
-				}}>re-Center Content</button
-			><button
-				type="button"
-				onclick={(_) => {
-					update(L.set(["focus", "w"], 0), camera);
-				}}>re-Orient Upwards</button
-			><button
-				type="button"
-				onclick={(_) => {
-					update(
-						L.set(["focus", L.props("z", "x", "y", "w")], {
-							x:
-								(cameraBounds.value.maxX +
-									cameraBounds.value.minX) /
-								2,
-							y:
-								(cameraBounds.value.maxY +
-									cameraBounds.value.minY) /
-								2,
-							z: -Math.max(
-								Math.log(
-									cameraBounds.value.maxX -
-										cameraBounds.value.minX,
-								) - Math.log(camera.value.plane.x),
-								Math.log(
-									cameraBounds.value.maxY -
-										cameraBounds.value.minY,
-								) - Math.log(camera.value.plane.y),
-							),
-							w: cameraBounds.value.angle,
-						}),
-						camera,
-					);
-				}}>re-Fit to Content</button
-			>
-		</div>
-		<hr />
+				onclick={() => {
+					currentDocumentContent.value = {};
 
-		<div>
-			<label class="number-picker"
-				><span>Grid Size:</span>
-				<input
-					type="range"
-					bind:value={gridDistance.value}
-					min={0}
-					max={512}
-					step="32"
-				/>
-				<button
-					type="button"
-					onclick={(_) => {
-						gridDistance.value = 32;
-					}}>reset</button
-				>
-				<output>{gridDistance.value}</output>
-			</label>
+					if (
+						currentToolElement.value &&
+						currentToolElement.value.cancel
+					) {
+						currentToolElement.value.cancel();
+					}
+
+					update(
+						L.set(["focus", L.props("x", "y"), L.values], 0),
+						camera,
+					);
+				}}>Clear</button
+			>
+			{#each toolGroups as g}
+				<hr class="tool-bar-sep" />
+				{#each g as t}
+					<label class="button tool-button"
+						><input
+							class="tool-button-radio"
+							type="radio"
+							bind:group={tool.value}
+							value={t}
+						/>
+						{tools[t].name}</label
+					>
+				{/each}
+			{/each}
 		</div>
 	</fieldset>
-</div>
 
-<fieldset>
-	<legend>Documents</legend>
+	<fieldset>
+		<legend>{tools[tool.value].name}</legend>
 
-	<div class="tool-bar">
-		<button
-			class="doc-tab-action"
-			type="button"
-			onclick={() => (newTab.value = {})}
-			><svg width="32" height="32" viewBox="-16 -16 32 32">
-				<title>New</title>
-				<path
-					d="M-12,0L12,0M0,12L0,-12"
-					stroke="currentColor"
-					stroke-width="2px"
-					vector-effect="non-scaling-stroke"
-					stroke-linecap="round"
-					shape-rendering="crispEdges"
-				/>
-			</svg></button
-		>
-		<hr class="tool-bar-sep" />
-		{#each tabIds.value as d}
-			{@const docName = view(
-				["tabs", d, "document", "title", L.defaults("")],
-				allTabs,
-			)}
-			{@const fallbackName = view(
-				[
-					"tabs",
-					d,
-					"document",
-					"content",
-					L.choices(
-						["textes", L.first, "content"],
-						["textBoxes", L.first, "content"],
-					),
-					L.valueOr(""),
-					L.ifElse(
-						R.isEmpty,
-						L.inverse(L.dropPrefix("untitled")),
-						L.inverse(L.dropPrefix("untitled - ")),
-					),
-				],
-				allTabs,
-			)}
-			<span class="doc-tab-group" class:active={d === currentTabId.value}>
-				{#if d === currentTabId.value}
-					<input
-						placeholder={fallbackName.value}
-						class="doc-tab-titel"
-						class:untitled={!docName.value}
-						bind:value={docName.value}
-						class:active={true}
-					/>
-				{:else}
-					<button
-						class="doc-tab-titel"
-						class:active={false}
-						class:untitled={!docName.value}
-						onclick={() => (currentTabId.value = d)}
-						>{docName.value || fallbackName.value}</button
-					>
-				{/if}
+		<div>
+			{#if currentToolElement.value && currentToolElement.value.canCancel && currentToolElement.value.cancel}
 				<button
 					type="button"
-					class="doc-tab-del"
-					onclick={() => {
-						closeTab.value = d;
+					class="tool-action"
+					disabled={!currentToolElement.value.canCancel.value}
+					onpointerup={(evt) => {
+						if (!evt.isPrimary) {
+							evt.currentTarget.click();
+						}
 					}}
-					class:active={d === currentTabId.value}
-					title="Close"
+					onclick={() => {
+						currentToolElement.value.cancel();
+					}}>Cancel</button
 				>
-					<svg width="10" height="10" viewBox="-16 -16 32 32">
-						<title>Delete</title>
-						<path
-							d="M-8,-8L8,8M-8,8L8,-8"
-							stroke="currentColor"
-							stroke-width="4px"
-							stroke-linecap="round"
-						/>
-					</svg>
-				</button>
-			</span>
-		{/each}
-	</div>
-</fieldset>
+			{/if}
+		</div>
+	</fieldset>
 
-<fieldset>
-	<legend>Tools</legend>
-
-	<div class="tool-bar">
-		<button
-			type="button"
-			onclick={() => {
-				currentDocumentContent.value = {};
-
-				if (
-					currentToolElement.value &&
-					currentToolElement.value.cancel
-				) {
-					currentToolElement.value.cancel();
-				}
-
-				update(
-					L.set(["focus", L.props("x", "y"), L.values], 0),
-					camera,
-				);
-			}}>Clear</button
+	<div class="prevent-selection">
+		<Scroller
+			alignment="center"
+			extraScrollPadding={cameraAutoPadding}
+			{scrollPosition}
+			contentSize={scrollContentSize}
+			{scrollWindowSize}
 		>
-		{#each toolGroups as g}
-			<hr class="tool-bar-sep" />
-			{#each g as t}
-				<label class="button tool-button"
-					><input
-						class="tool-button-radio"
-						type="radio"
-						bind:group={tool.value}
-						value={t}
-					/>
-					{tools[t].name}</label
-				>
-			{/each}
-		{/each}
-	</div>
-</fieldset>
-
-<fieldset>
-	<legend>{tools[tool.value].name}</legend>
-
-	<div>
-		{#if currentToolElement.value && currentToolElement.value.canCancel && currentToolElement.value.cancel}
-			<button
-				type="button"
-				class="tool-action"
-				disabled={!currentToolElement.value.canCancel.value}
-				onpointerup={(evt) => {
-					if (!evt.isPrimary) {
-						evt.currentTarget.click();
-					}
-				}}
-				onclick={() => {
-					currentToolElement.value.cancel();
-				}}>Cancel</button
+			<svg
+				class="canvas"
+				bind:this={svgElement.value}
+				viewBox={viewBox.value}
+				preserveAspectRatio={preserveAspectRatio.value}
 			>
-		{/if}
-	</div>
-</fieldset>
+				<Navigator {camera} {frameBoxPath} {cameraTow}>
+					<g class:hidden={!debugFrames.value} pointer-events="none">
+						<path
+							d={viewBoxPath.value}
+							class="view-box"
+							stroke-opacity="0.5"
+							stroke="magenta"
+							vector-effect="non-scaling-stroke"
+							stroke-width="8px"
+							fill="#ddffee"
+						/>
+						<path
+							d={frameBoxPath.value}
+							stroke="#ff88cc"
+							fill="none"
+							vector-effect="non-scaling-stroke"
+							stroke-width="14px"
+							shape-rendering="crispEdges"
+						/>
+					</g>
 
-<div class="prevent-selection">
-	<Scroller
-		alignment="center"
-		extraScrollPadding={cameraAutoPadding}
-		{scrollPosition}
-		contentSize={scrollContentSize}
-		{scrollWindowSize}
-	>
-		<svg
-			class="canvas"
-			bind:this={svgElement.value}
-			viewBox={viewBox.value}
-			preserveAspectRatio={preserveAspectRatio.value}
-		>
-			<Navigator {camera} {frameBoxPath} {cameraTow}>
-				<g class:hidden={!debugFrames.value} pointer-events="none">
-					<path
-						d={viewBoxPath.value}
-						class="view-box"
-						stroke-opacity="0.5"
-						stroke="magenta"
-						vector-effect="non-scaling-stroke"
-						stroke-width="8px"
-						fill="#ddffee"
-					/>
-					<path
-						d={frameBoxPath.value}
-						stroke="#ff88cc"
-						fill="none"
-						vector-effect="non-scaling-stroke"
-						stroke-width="14px"
-						shape-rendering="crispEdges"
-					/>
-				</g>
+					<g pointer-events="none">
+						<Bounds
+							show={showBounds}
+							{extension}
+							{cameraBounds}
+							{rotationTransform}
+							{cameraScale}
+						/>
+						<Grid
+							{frameBoxPath}
+							{frameBoxObject}
+							{rotationTransform}
+							{cameraScale}
+							{gridDistance}
+						/>
+						<Edges
+							{nodes}
+							{edges}
+							{rotationTransform}
+							{cameraScale}
+						/>
+						<Nodes {nodes} {rotationTransform} {cameraScale} />
 
-				<g pointer-events="none">
-					<Bounds
-						show={showBounds}
-						{extension}
-						{cameraBounds}
-						{rotationTransform}
-						{cameraScale}
-					/>
-					<Grid
+						<Drawings
+							{drawings}
+							{rotationTransform}
+							{cameraScale}
+						/>
+
+						<TextBoxes
+							{textBoxes}
+							{clientToCanvas}
+							{frameBoxPath}
+							{rotationTransform}
+							{cameraScale}
+							{cameraOrientation}
+						/>
+
+						<TextLines
+							{textes}
+							{clientToCanvas}
+							{frameBoxPath}
+							{rotationTransform}
+							{cameraScale}
+							{cameraOrientation}
+						/>
+
+						<Guides
+							{guides}
+							{frameBoxObject}
+							{rotationTransform}
+							{cameraScale}
+						/>
+						<Shapes
+							{shapes}
+							{frameBoxObject}
+							{rotationTransform}
+							{cameraScale}
+						/>
+						<ShowAxis
+							{axis}
+							{frameBoxObject}
+							{rotationTransform}
+							{cameraScale}
+						/>
+
+						<Origin {rotationTransform} {cameraScale} />
+					</g>
+
+					<svelte:component
+						this={tools[tool.value].component}
+						bind:this={currentToolElement.value}
+						{...tools[tool.value].parameters}
+					></svelte:component>
+
+					<Ruler
 						{frameBoxPath}
 						{frameBoxObject}
 						{rotationTransform}
 						{cameraScale}
-						{gridDistance}
 					/>
-					<Edges {nodes} {edges} {rotationTransform} {cameraScale} />
-					<Nodes {nodes} {rotationTransform} {cameraScale} />
-
-					<Drawings {drawings} {rotationTransform} {cameraScale} />
-
-					<TextBoxes
-						{textBoxes}
-						{clientToCanvas}
-						{frameBoxPath}
-						{rotationTransform}
-						{cameraScale}
-						{cameraOrientation}
-					/>
-
-					<TextLines
-						{textes}
-						{clientToCanvas}
-						{frameBoxPath}
-						{rotationTransform}
-						{cameraScale}
-						{cameraOrientation}
-					/>
-
-					<Guides
-						{guides}
-						{frameBoxObject}
-						{rotationTransform}
-						{cameraScale}
-					/>
-					<Shapes
-						{shapes}
-						{frameBoxObject}
-						{rotationTransform}
-						{cameraScale}
-					/>
-					<ShowAxis
-						{axis}
-						{frameBoxObject}
-						{rotationTransform}
-						{cameraScale}
-					/>
-
-					<Origin {rotationTransform} {cameraScale} />
-				</g>
-
-				<svelte:component
-					this={tools[tool.value].component}
-					bind:this={currentToolElement.value}
-					{...tools[tool.value].parameters}
-				></svelte:component>
-
-				<Ruler
-					{frameBoxPath}
-					{frameBoxObject}
-					{rotationTransform}
-					{cameraScale}
-				/>
-			</Navigator>
-		</svg>
-		<!-- 
+				</Navigator>
+			</svg>
+			<!-- 
 		<canvas
 			bind:this={bitmapCanvas.value}
 			class="canvas bitmap-canvas"
@@ -1651,35 +1667,36 @@
 			)}
 		></canvas>
  -->
-		<div class="scroller-hud">
-			<input
-				type="range"
-				bind:value={cameraZoom.value}
-				min="-5"
-				max="5"
-				step="0.01"
-			/>
-		</div>
-	</Scroller>
-</div>
-
-{#if debugFrames.value}
-	<div
-		class="debug-dot"
-		style:left="{Math.round(camClientX.value)}px"
-		style:top="{Math.round(camClientY.value)}px"
-	></div>
-{/if}
-
-<div class="beside">
-	<div>
-		<h3>Camera Parameter</h3>
-		<textarea use:bindValue={cameraJson.stableAtom}></textarea>
+			<div class="scroller-hud">
+				<input
+					type="range"
+					bind:value={cameraZoom.value}
+					min="-5"
+					max="5"
+					step="0.01"
+				/>
+			</div>
+		</Scroller>
 	</div>
 
-	<div>
-		<h3>Drawing</h3>
-		<textarea use:bindValue={canvasJson.stableAtom}></textarea>
+	{#if debugFrames.value}
+		<div
+			class="debug-dot"
+			style:left="{Math.round(camClientX.value)}px"
+			style:top="{Math.round(camClientY.value)}px"
+		></div>
+	{/if}
+
+	<div class="beside">
+		<div>
+			<h3>Camera Parameter</h3>
+			<textarea use:bindValue={cameraJson.stableAtom}></textarea>
+		</div>
+
+		<div>
+			<h3>Drawing</h3>
+			<textarea use:bindValue={canvasJson.stableAtom}></textarea>
+		</div>
 	</div>
 </div>
 
@@ -2071,5 +2088,11 @@
 			display: grid;
 			visibility: visible;
 		}
+	}
+
+	.container {
+		user-select: none;
+		-webkit-user-select: none;
+		touch-action: pan-x pan-y;
 	}
 </style>

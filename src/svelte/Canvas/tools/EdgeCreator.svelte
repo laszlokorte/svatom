@@ -111,7 +111,6 @@
 	class:active={isActive.value}
 	role="button"
 	tabindex="-1"
-	transform={rotationTransform.value}
 	oncontextmenu={(evt) => {
 		evt.preventDefault();
 		isActive.value = false;
@@ -216,34 +215,39 @@
 		class:active={isActive.value}
 	/>
 
-	{#each nodes.value as v, i (i)}
-		<circle
-			data-idx={i}
-			class="socket"
-			cx={v.x}
-			cy={v.y}
-			r={snapRadiusScaled.value}
-			class:active-source={draftSourceId.value === i}
-			class:active-target={draftTargetId.value === i}
-		></circle>
-	{/each}
+	<g transform={rotationTransform.value} pointer-events="none">
+		{#each nodes.value as v, i (i)}
+			<circle
+				data-idx={i}
+				class="socket"
+				cx={v.x}
+				cy={v.y}
+				pointer-events="all"
+				r={snapRadiusScaled.value}
+				class:active-source={draftSourceId.value === i}
+				class:active-target={draftTargetId.value === i}
+			></circle>
+		{/each}
 
-	{#if draftSourcePosition.value && draftTargetSnappedPosition.value}
-		<path
-			class:valid={validConnection.value}
-			class="edge"
-			stroke="black"
-			d="M{draftSourcePosition.value.x} {draftSourcePosition.value
-				.y} L {draftTargetSnappedPosition.value
-				.x} {draftTargetSnappedPosition.value.y}"
-		/>
-	{/if}
-	}
+		{#if draftSourcePosition.value && draftTargetSnappedPosition.value}
+			<path
+				class:valid={validConnection.value}
+				class="edge"
+				stroke="black"
+				pointer-events="none"
+				d="M{draftSourcePosition.value.x} {draftSourcePosition.value
+					.y} L {draftTargetSnappedPosition.value
+					.x} {draftTargetSnappedPosition.value.y}"
+			/>
+		{/if}
+	</g>
 </g>
 
 <style>
 	.edge-surface {
-
+		stroke-width: 0;
+		outline: none;
+		stroke: none;
 	}
 
 	.edge-surface.active {
@@ -257,9 +261,10 @@
 	.socket {
 		fill: lightblue;
 		opacity: 0.5;
-		stroke: none
+		stroke: none;
 		cursor: alias;
 	}
+
 	.socket.active-source {
 		opacity: 0.8;
 		stroke: lightblue;
@@ -274,12 +279,12 @@
 	}
 
 	.edge {
-
 		vector-effect: non-scaling-stroke;
 		stroke-width: 3px;
 		stroke: black;
 		stroke-linecap: round;
 		stroke-opacity: 0.5;
+		pointer-events: none;
 	}
 
 	.edge.valid {
