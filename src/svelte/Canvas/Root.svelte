@@ -75,6 +75,8 @@
 	import Ruler from "./tools/Ruler.svelte";
 	import Axis from "./tools/Axis.svelte";
 	import ShowAxis from "./tools/ShowAxis.svelte";
+	import ShowAlert from "./tools/ShowAlert.svelte";
+	import ShowPlot from "./tools/ShowPlot.svelte";
 	import Pan from "./tools/Pan.svelte";
 	import Rotate from "./tools/Rotate.svelte";
 	import Zoom from "./tools/Zoom.svelte";
@@ -1635,6 +1637,16 @@
 						/>
 						<ShowAxis
 							{axis}
+							{frameBoxObject}
+							{rotationTransform}
+							{cameraScale}
+						/>
+						<ShowAlert
+							{frameBoxObject}
+							{rotationTransform}
+							{cameraScale}
+						/>
+						<ShowPlot
 							{frameBoxObject}
 							{rotationTransform}
 							{cameraScale}
