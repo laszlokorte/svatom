@@ -1,5 +1,6 @@
 import * as L from "partial.lenses";
 import * as R from "ramda";
+import * as G from "./generators";
 
 export function translateXY(dx, dy, vec) {
 	return {
@@ -123,16 +124,14 @@ export function rayInsideQuad(angle, dist, quad) {
 	const dirY = Math.sin(angle);
 
 	const sides = [
-		[quad.a, quad.b],
-		[quad.b, quad.c],
-		[quad.c, quad.d],
-		[quad.d, quad.a],
+		{from: quad.a, to: quad.b},
+		{from: quad.b, to: quad.c},
+		{from: quad.c, to: quad.d},
+		{from: quad.d, to: quad.a},
 	];
-	const [intersectionA, intersectionB] = R.compose(
-		R.take(2),
-		R.reject(R.isNil),
-		R.map(([from, to]) => RayToLineSegment(supX, supY, dirX, dirY, from, to)),
-	)(sides);
+	const [intersectionA, intersectionB] = G.take(2,
+		G.reject(R.isNil, G.map(({from, to}) => RayToLineSegment(supX, supY, dirX, dirY, from, to), sides)))
+	;
 
 	return (intersectionA && intersectionB) ? ({a: intersectionA, b: intersectionB/*, sup: {x: supX, y:supY, dx: dirX, dy: dirY}*/}) : undefined
 };

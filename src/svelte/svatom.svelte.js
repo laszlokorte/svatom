@@ -127,9 +127,11 @@ export function combineArray(listOfAtoms) {
 }
 
 export function view(opticLense, someAtom) {
+	const cached = $derived(get(opticLense, someAtom.value))
+
 	return {
 		get value() {
-			return get(opticLense, someAtom.value)
+			return cached
 		},
 		set value(newVal) {
 			const transformed = set(opticLense, newVal, someAtom.value)
@@ -299,9 +301,11 @@ export function failableView(opticLense, someAtom, autoReset = true, errorAtom =
 }
 
 export function read(opticLense, someAtom) {
+	const cached = $derived(get(opticLense, someAtom.value))
+
 	return {
 		get value() {
-			return get(opticLense, someAtom.value)
+			return cached
 		},
 
 		get all() {

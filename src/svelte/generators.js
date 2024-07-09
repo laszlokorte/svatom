@@ -26,19 +26,13 @@ export function* flatMap(fn, seq) {
 	}
 }
 
-export function* concat(seqA, seqB, ...more) {
+export function* concat(seqA, seqB) {
 	for(let x of seqA) {
 		yield x
 	}
 
 	for(let y of seqB) {
 		yield y
-	}
-
-	for (let s of more) {
-		for(let z of s) {
-			yield z
-		}
 	}
 }
 

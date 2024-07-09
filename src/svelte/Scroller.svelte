@@ -34,11 +34,11 @@
 	})), combine({pad: scrollPadding, conSize: contentSize}, {}))
 
 	const adjustedScrollPosition = view(L.lens(({ pos, windowSize, conSize, o, pad }) => ({
-			x: R.clamp(-pad.left, Math.max(0, conSize.x - Math.floor(windowSize.x) -pad.left), pos.x) + o.x + pad.left,
-			y: R.clamp(-pad.top, Math.max(0, conSize.y - Math.floor(windowSize.y) -pad.top), pos.y) + o.y + pad.top,
+			x: R.clamp(-pad.left, Math.max(0, conSize.x - Math.floor(windowSize.x) - pad.left + 1), pos.x) + o.x + pad.left,
+			y: R.clamp(-pad.top, Math.max(0, conSize.y - Math.floor(windowSize.y) - pad.top + 1), pos.y) + o.y + pad.top,
 		}), (pos, { windowSize, conSize, pad }) => {
-			const clampedX = R.clamp(-pad.left, Math.max(pad.left, conSize.x - Math.floor(windowSize.x)-pad.left), pos.x - pad.left)
-			const clampedY = R.clamp(-pad.top, Math.max(pad.top, conSize.y - Math.floor(windowSize.y)-pad.top), pos.y - pad.top)
+			const clampedX = R.clamp(-pad.left, Math.max(pad.left, conSize.x - Math.floor(windowSize.x)- pad.left + 1), pos.x - pad.left)
+			const clampedY = R.clamp(-pad.top, Math.max(pad.top, conSize.y - Math.floor(windowSize.y)- pad.top + 1), pos.y - pad.top)
 
 
 			return {
@@ -63,35 +63,42 @@
 			o: true,
 		}),
 	);
+
+	const paddedContentSizeValue = $derived(paddedContentSize.value)
+	const scrollPositionValue = $derived(scrollPosition.value)
+	const contentSizeValue = $derived(contentSize.value)
+	const scrollWindowSizeValue = $derived(scrollWindowSize.value)
+	const browserChromeOverscrollValue = $derived(browserChromeOverscroll.value)
+	const adjustedScrollPositionValue  = $derived(adjustedScrollPosition.value)
 </script>
 
 <div
 	class="scroller"
 	use:bindScroll={adjustedScrollPosition}
-	style:--scroll-total-x={paddedContentSize.value.x}
-	style:--scroll-total-y={paddedContentSize.value.y}
-	style:--scroll-x={scrollPosition.value.x}
-	style:--scroll-y={scrollPosition.value.y}
+	style:--scroll-total-x={paddedContentSizeValue.x}
+	style:--scroll-total-y={paddedContentSizeValue.y}
+	style:--scroll-x={scrollPositionValue.x}
+	style:--scroll-y={scrollPositionValue.y}
 >
 	<div class="scroller-body">
 		{@render children()}
 		{#if !children || debug}
 		<div class="debug">
 			<div>
-				Logical Scroll Pos.: {scrollPosition.value.x} / {scrollPosition.value.y}<br>
-				Physical Scroll Pos.: {adjustedScrollPosition.value.x} / {adjustedScrollPosition.value.y}
+				Logical Scroll Pos.: {scrollPositionValue.x} / {scrollPositionValue.y}<br>
+				Physical Scroll Pos.: {adjustedScrollPositionValue.x} / {adjustedScrollPositionValue.y}
 			</div>
 			<div>
-				Content Size: {contentSize.value.x} / {contentSize.value.y}
+				Content Size: {contentSizeValue.x} / {contentSizeValue.y}
 			</div>
 			<div>
-				Padded Size: {paddedContentSize.value.x} / {paddedContentSize.value.y}
+				Padded Size: {paddedContentSizeValue.x} / {paddedContentSizeValue.y}
 			</div>
 			<div>
-				Window Size: {scrollWindowSize.value.x} / {scrollWindowSize.value.y}
+				Window Size: {scrollWindowSizeValue.x} / {scrollWindowSizeValue.y}
 			</div>
 			<div>
-				Overscroll: {browserChromeOverscroll.value.x} / {browserChromeOverscroll.value.y}
+				Overscroll: {browserChromeOverscrollValue.x} / {browserChromeOverscrollValue.y}
 			</div>
 		</div>
 		{/if}

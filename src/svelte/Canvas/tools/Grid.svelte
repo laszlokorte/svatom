@@ -43,40 +43,18 @@
 				R.isNil,
 				G.concat(
 					G.map(
-						(i) =>
-							Geo.rayInsideQuad(
-								0,
-								baseDistanceY + i * scaledDistance,
-								rect,
-							),
-						G.range(0, range),
+						(dist) => Geo.rayInsideQuad(Math.PI, dist, rect),
+						G.map(
+							(i) => -baseDistanceY + i * scaledDistance,
+							G.range(-range, range, 1, true),
+						),
 					),
 					G.map(
-						(i) =>
-							Geo.rayInsideQuad(
-								0,
-								baseDistanceY - i * scaledDistance,
-								rect,
-							),
-						G.range(1, range),
-					),
-					G.map(
-						(i) =>
-							Geo.rayInsideQuad(
-								Math.PI / 2,
-								-baseDistanceX - i * scaledDistance,
-								rect,
-							),
-						G.range(0, range),
-					),
-					G.map(
-						(i) =>
-							Geo.rayInsideQuad(
-								Math.PI / 2,
-								-baseDistanceX + i * scaledDistance,
-								rect,
-							),
-						G.range(1, range),
+						(dist) => Geo.rayInsideQuad(Math.PI / 2, dist, rect),
+						G.map(
+							(i) => -baseDistanceX + i * scaledDistance,
+							G.range(-range, range, 1, true),
+						),
 					),
 				),
 			);
