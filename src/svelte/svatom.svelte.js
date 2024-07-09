@@ -456,13 +456,13 @@ export function bindValue(node, someAtom) {
 	};
 }
 
-function throttled(fn) {
+export function throttled(fn) {
 	let ticking = false;
 
 	return (...args) => {
 		if (!ticking) {
 		    window.requestAnimationFrame(() => {
-		      fn(args);
+		      fn(...args);
 		      ticking = false;
 		    });
 

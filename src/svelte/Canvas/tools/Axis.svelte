@@ -4,12 +4,6 @@
 	import * as U from "../../utils";
 	import { atom, view, read, combine } from "../../svatom.svelte.js";
 
-	const numberSvgFormat = new Intl.NumberFormat("en-US", {
-		minimumFractionDigits: 5,
-		maximumFractionDigits: 5,
-		useGrouping: false,
-	});
-
 	const {
 		frameBoxPath,
 		clientToCanvas,
@@ -51,9 +45,9 @@
 	const axisPath = read(
 		L.getter(({ axis: b, cameraScale: scale }) =>
 			b && b.start && b.size
-				? `M${numberSvgFormat.format(b.start.x - 10 * scale * Math.sign(b.size.x))},${numberSvgFormat.format(b.start.y)}h${numberSvgFormat.format(b.size.x)}
+				? U.formattedNumbers`M${b.start.x - 10 * scale * Math.sign(b.size.x)},${b.start.y}h${b.size.x}
 				m${Math.sign(b.size.x) * (10 * scale)},0l${Math.sign(b.size.x) * (-10 * scale)},${-10 * scale}v${2 * 10 * scale}l${Math.sign(b.size.x) * (10 * scale)},${-10 * scale}
-				M${numberSvgFormat.format(b.start.x)},${numberSvgFormat.format(b.start.y - 10 * scale * Math.sign(b.size.y))}v${numberSvgFormat.format(b.size.y)}
+				M${b.start.x},${b.start.y - 10 * scale * Math.sign(b.size.y)}v${b.size.y}
 				m0,${Math.sign(b.size.y) * (10 * scale)}l${-10 * scale},${Math.sign(b.size.y) * (-10 * scale)}h${2 * 10 * scale}l${-10 * scale},${Math.sign(b.size.y) * (10 * scale)}
 				`
 				: "",

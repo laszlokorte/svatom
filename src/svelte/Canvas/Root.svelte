@@ -310,6 +310,7 @@
 	const cameraScale = read(cameraScaleLens, camera);
 	const cameraOrientationLens = L.reread((c) => c.focus.w);
 	const cameraOrientation = read(cameraOrientationLens, camera);
+	const gridDistance = atom(128);
 
 	const affineLens = (dim, xDim, yDim, angleDim) => {
 		if (dim == xDim) {
@@ -1359,6 +1360,27 @@
 				}}>re-Fit to Content</button
 			>
 		</div>
+		<hr />
+
+		<div>
+			<label class="number-picker"
+				><span>Grid Size:</span>
+				<input
+					type="range"
+					bind:value={gridDistance.value}
+					min={0}
+					max={512}
+					step="32"
+				/>
+				<button
+					type="button"
+					onclick={(_) => {
+						gridDistance.value = 32;
+					}}>reset</button
+				>
+				<output>{gridDistance.value}</output>
+			</label>
+		</div>
 	</fieldset>
 </div>
 
@@ -1558,6 +1580,7 @@
 						{frameBoxObject}
 						{rotationTransform}
 						{cameraScale}
+						{gridDistance}
 					/>
 					<Edges {nodes} {edges} {rotationTransform} {cameraScale} />
 					<Nodes {nodes} {rotationTransform} {cameraScale} />
@@ -1697,6 +1720,13 @@
 		user-select: none;
 		-webkit-user-select: none;
 		touch-action: none;
+
+		-webkit-touch-callout: none;
+		-webkit-user-callout: none;
+		-webkit-user-select: none;
+		-webkit-user-drag: none;
+		-webkit-user-modify: none;
+		-webkit-highlight: none;
 	}
 
 	.bitmap-canvas {
@@ -1784,6 +1814,11 @@
 
 	.hidden {
 		display: none;
+	}
+
+	output {
+		font-size: 1em;
+		font-family: monospace;
 	}
 
 	.form-grid {

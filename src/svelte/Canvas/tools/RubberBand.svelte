@@ -15,13 +15,6 @@
 		autofocusIf,
 		string,
 	} from "../../svatom.svelte.js";
-
-	const numberSvgFormat = new Intl.NumberFormat("en-US", {
-		minimumFractionDigits: 5,
-		maximumFractionDigits: 5,
-		useGrouping: false,
-	});
-
 	const {
 		frameBoxPath,
 		clientToCanvas,
@@ -62,7 +55,7 @@
 	const rubberBandPath = read(
 		L.getter((b) =>
 			b && b.start && b.size
-				? `M${numberSvgFormat.format(b.start.x)},${numberSvgFormat.format(b.start.y)}h${numberSvgFormat.format(b.size.x)}v${numberSvgFormat.format(b.size.y)}M${numberSvgFormat.format(b.start.x)},${numberSvgFormat.format(b.start.y)}v${numberSvgFormat.format(b.size.y)}h${numberSvgFormat.format(b.size.x)}`
+				? U.formattedNumbers`M${b.start.x},${b.start.y}h${b.size.x}v${b.size.y}M${b.start.x},${b.start.y}v${b.size.y}h${b.size.x}`
 				: "",
 		),
 		rubberBand,

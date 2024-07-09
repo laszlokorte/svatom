@@ -264,11 +264,13 @@
 		opacity: 0.8;
 		stroke: lightblue;
 		stroke-width: 10px;
+		vector-effect: non-scaling-stroke;
 	}
 	.socket.active-target {
 		opacity: 0.8;
 		stroke: lightblue;
 		stroke-width: 10px;
+		vector-effect: non-scaling-stroke;
 	}
 
 	.edge {

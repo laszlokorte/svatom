@@ -2,6 +2,7 @@
 	import * as R from "ramda";
 	import * as L from "partial.lenses";
 	import * as Geo from "../../geometry";
+	import * as U from "../../utils";
 	import { read, combine } from "../../svatom.svelte.js";
 	const { guides, rotationTransform, frameBoxObject } = $props();
 
@@ -9,7 +10,10 @@
 	const segmentPaths = read(
 		L.reread(({ gs, quad }) => {
 			return R.compose(
-				R.map(({ a, b }) => `M${a.x},${a.y}L${b.x},${b.y}`),
+				R.map(
+					({ a, b }) =>
+						U.formattedNumbers`M${a.x},${a.y}L${b.x},${b.y}`,
+				),
 				R.reject(R.isNil),
 				R.map(({ distance, angle }) =>
 					Geo.rayInsideQuad(angle, distance, quad),

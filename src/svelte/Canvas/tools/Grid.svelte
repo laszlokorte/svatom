@@ -4,14 +4,7 @@
 	import * as U from "../../utils";
 	import * as G from "../../generators";
 	import * as Geo from "../../geometry";
-	import { view, read, combine } from "../../svatom.svelte.js";
-
-	const minDragDistance = 25;
-	const numberSvgFormat = new Intl.NumberFormat("en-US", {
-		minimumFractionDigits: 5,
-		maximumFractionDigits: 5,
-		useGrouping: false,
-	});
+	import { view, read, combine, atom } from "../../svatom.svelte.js";
 
 	const {
 		frameBoxPath,
@@ -19,21 +12,16 @@
 		rotationTransform,
 		frameBoxObject,
 		cameraScale,
+		gridDistance = atom(128),
 	} = $props();
-
-	const crossPath = read(
-		[
-			"worldSpace",
-			L.reread(({ a, b, c, d }) => {
-				return `M${a.x},${a.y}L${c.x},${c.y}M${b.x},${b.y}L${d.x},${d.y}`;
-			}),
-		],
-		frameBoxObject,
-	);
 
 	const gridBuilder =
 		(offset) =>
-		({ rect, scale, screen: { minX, minY, width, height } }) => {
+		({ cellSize, rect, scale, screen: { minX, minY, width, height } }) => {
+			if (cellSize < 5) {
+				return "";
+			}
+
 			const size = Math.hypot(width, height);
 
 			const logRoundedScale = Math.pow(
@@ -43,13 +31,13 @@
 
 			const camCenterX = (rect.a.x + rect.c.x) / 2;
 			const camCenterY = (rect.a.y + rect.d.y) / 2;
-			const gridDistance = 128 * logRoundedScale;
+			const scaledDistance = cellSize * logRoundedScale;
 
-			const range = Math.floor(size / gridDistance);
+			const range = Math.floor(size / scaledDistance);
 			const baseDistanceX =
-				Math.floor(camCenterX / gridDistance) * gridDistance;
+				Math.floor(camCenterX / scaledDistance) * scaledDistance;
 			const baseDistanceY =
-				Math.floor(camCenterY / gridDistance) * gridDistance;
+				Math.floor(camCenterY / scaledDistance) * scaledDistance;
 
 			const rays = G.reject(
 				R.isNil,
@@ -58,7 +46,7 @@
 						(i) =>
 							Geo.rayInsideQuad(
 								0,
-								baseDistanceY + i * gridDistance,
+								baseDistanceY + i * scaledDistance,
 								rect,
 							),
 						G.range(0, range),
@@ -67,7 +55,7 @@
 						(i) =>
 							Geo.rayInsideQuad(
 								0,
-								baseDistanceY - i * gridDistance,
+								baseDistanceY - i * scaledDistance,
 								rect,
 							),
 						G.range(1, range),
@@ -76,7 +64,7 @@
 						(i) =>
 							Geo.rayInsideQuad(
 								Math.PI / 2,
-								-baseDistanceX - i * gridDistance,
+								-baseDistanceX - i * scaledDistance,
 								rect,
 							),
 						G.range(0, range),
@@ -85,7 +73,7 @@
 						(i) =>
 							Geo.rayInsideQuad(
 								Math.PI / 2,
-								-baseDistanceX + i * gridDistance,
+								-baseDistanceX + i * scaledDistance,
 								rect,
 							),
 						G.range(1, range),
@@ -94,7 +82,8 @@
 			);
 
 			const path = G.reduce(
-				(acc, { a, b }) => `${acc}M${a.x},${a.y}L${b.x},${b.y}`,
+				(acc, { a, b }) =>
+					U.formattedNumbers`${acc}M${a.x},${a.y}L${b.x},${b.y}`,
 				"",
 				rays,
 			);
@@ -102,29 +91,20 @@
 			return path;
 		};
 
-	const gridPathPrimary = view(
+	const gridPathGeneral = view(
 		[
 			L.pick({
 				rect: ["frameBoxObject", "worldSpace"],
 				screen: ["frameBoxObject", "screenSpaceAligned"],
 				scale: "cameraScale",
+				cellSize: "gridDistance",
 			}),
-			L.reread(gridBuilder(0)),
 		],
-		combine({ frameBoxObject, cameraScale }),
+		combine({ gridDistance, frameBoxObject, cameraScale }),
 	);
 
-	const gridPathSecondary = view(
-		[
-			L.pick({
-				rect: ["frameBoxObject", "worldSpace"],
-				screen: ["frameBoxObject", "screenSpaceAligned"],
-				scale: "cameraScale",
-			}),
-			L.reread(gridBuilder(1)),
-		],
-		combine({ frameBoxObject, cameraScale }),
-	);
+	const gridPathPrimary = view(L.reread(gridBuilder(0)), gridPathGeneral);
+	const gridPathSecondary = view(L.reread(gridBuilder(1)), gridPathGeneral);
 </script>
 
 <g transform={rotationTransform.value} pointer-events="none">

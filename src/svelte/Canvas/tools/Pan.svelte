@@ -3,7 +3,7 @@
 	import * as R from "ramda";
 	import * as U from "../../utils";
 	import * as C from "../../combinators";
-	import { atom, view } from "../../svatom.svelte.js";
+	import { atom, view, throttled } from "../../svatom.svelte.js";
 
 	const { frameBoxPath, clientToCanvas, panMovement } = $props();
 

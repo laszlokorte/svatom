@@ -80,6 +80,10 @@
 		},
 		combine({ rot: rotation, min: minRadius }),
 	);
+
+	const rotPivot = $derived(rotationPivot.value);
+	const active = $derived(radiusIsLargeEnough.value);
+	const clampedRefValue = $derived(clampedRef.value);
 </script>
 
 <path
@@ -113,26 +117,21 @@
 		}
 
 		const newPos = clientToCanvas(evt.clientX, evt.clientY);
-		const distance = Math.hypot(
-			newPos.x - rotationPivot.value.x,
-			newPos.y - rotationPivot.value.y,
-		);
+		const piv = rotationPivot.value;
+		const distance = Math.hypot(newPos.x - piv.x, newPos.y - piv.y);
 
 		if (distance > minRadius.value) {
 			const dw =
+				Math.atan2(newPos.y - piv.y, newPos.x - piv.x) -
 				Math.atan2(
-					newPos.y - rotationPivot.value.y,
-					newPos.x - rotationPivot.value.x,
-				) -
-				Math.atan2(
-					rotationRef.value.y - rotationPivot.value.y,
-					rotationRef.value.x - rotationPivot.value.x,
+					rotationRef.value.y - piv.y,
+					rotationRef.value.x - piv.x,
 				);
 
 			rotateMovement.value = {
 				dw: (dw * 180) / Math.PI,
-				px: rotationPivot.value.x,
-				py: rotationPivot.value.y,
+				px: piv.x,
+				py: piv.y,
 			};
 			rotationRadius.value = distance;
 		} else {
@@ -160,26 +159,26 @@
 />
 
 <g transform={rotationTransform.value} pointer-events="none">
-	{#if rotationPivot.value}
+	{#if rotPivot}
 		<circle
-			cx={rotationPivot.value.x}
-			cy={rotationPivot.value.y}
+			cx={rotPivot.x}
+			cy={rotPivot.y}
 			r={minRadius.value}
 			stroke="#444"
 			class="ring"
-			class:active={radiusIsLargeEnough.value}
+			class:active
 			fill-opacity="0.1"
 			stroke-width="4px"
 			vector-effect="non-scaling-stroke"
 		/>
 		<circle
-			cx={rotationPivot.value.x}
-			cy={rotationPivot.value.y}
+			cx={rotPivot.x}
+			cy={rotPivot.y}
 			r={minRadius.value * 0.92}
 			stroke-dasharray="7 4"
 			fill="#aa8888"
 			class="ring"
-			class:active={radiusIsLargeEnough.value}
+			class:active
 			fill-opacity="0.3"
 			stroke="#444"
 			stroke-width="4px"
@@ -187,8 +186,8 @@
 		/>
 
 		<circle
-			cx={rotationPivot.value.x}
-			cy={rotationPivot.value.y}
+			cx={rotPivot.x}
+			cy={rotPivot.y}
 			r={cameraScale.value * 3}
 			class="ref"
 			stroke="#444"
@@ -200,19 +199,19 @@
 			class="ref"
 			stroke="#444"
 			vector-effect="non-scaling-stroke"
-			x1={rotationPivot.value.x}
-			y1={rotationPivot.value.y}
-			x2={clampedRef.value.x}
-			y2={clampedRef.value.y}
+			x1={rotPivot.x}
+			y1={rotPivot.y}
+			x2={clampedRefValue.x}
+			y2={clampedRefValue.y}
 		/>
 
 		<circle
-			cx={clampedRef.value.x}
-			cy={clampedRef.value.y}
+			cx={clampedRefValue.x}
+			cy={clampedRefValue.y}
 			r={cameraScale.value * 5}
 			class="ref"
 			fill="#444"
-			class:active={radiusIsLargeEnough.value}
+			class:active
 		/>
 	{/if}
 </g>

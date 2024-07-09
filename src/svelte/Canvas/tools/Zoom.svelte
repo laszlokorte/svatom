@@ -66,6 +66,79 @@
 		({ r, p }) => Math.atan2(r.y - p.y, r.x - p.x),
 		combine({ r: zoomRefClient, p: zoomPivotClient }),
 	);
+
+	const piePath = view(
+		({ pivotWorld, currentWorld, scale }) => {
+			if (
+				Math.hypot(
+					pivotWorld.y - currentWorld.y,
+					pivotWorld.x - currentWorld.x,
+				) /
+					scale <
+				55
+			) {
+				return undefined;
+			}
+
+			return `
+				 M ${pivotWorld.x} ${pivotWorld.y}
+				L${
+					currentWorld.x +
+					scale *
+						42 *
+						Math.cos(
+							-Math.PI / 2 +
+								Math.atan2(
+									pivotWorld.y - currentWorld.y,
+									pivotWorld.x - currentWorld.x,
+								),
+						)
+				} ${
+					currentWorld.y -
+					scale *
+						42 *
+						-Math.sin(
+							-Math.PI / 2 +
+								Math.atan2(
+									pivotWorld.y - currentWorld.y,
+									pivotWorld.x - currentWorld.x,
+								),
+						)
+				}
+						A ${scale * 42} ${scale * 42} 0 0 1  ${
+							currentWorld.x +
+							scale *
+								42 *
+								-Math.cos(
+									-Math.PI / 2 +
+										Math.atan2(
+											pivotWorld.y - currentWorld.y,
+											pivotWorld.x - currentWorld.x,
+										),
+								)
+						} ${
+							currentWorld.y -
+							scale *
+								42 *
+								Math.sin(
+									-Math.PI / 2 +
+										Math.atan2(
+											pivotWorld.y - currentWorld.y,
+											pivotWorld.x - currentWorld.x,
+										),
+								)
+						} Z`;
+		},
+		combine({
+			pivotWorld: zoomPivotWorld,
+			currentWorld: zoomPivotCurrentWorld,
+			scale: cameraScale,
+		}),
+	);
+
+	const currentWorld = $derived(zoomPivotCurrentWorld.value);
+	const scale = $derived(cameraScale.value);
+	const refWorld = $derived(zoomRefWorld.value);
 </script>
 
 <path
@@ -157,57 +230,9 @@
 
 <g transform={rotationTransform.value} pointer-events="none">
 	{#if isActive.value}
-		{#if Math.hypot(zoomPivotWorld.value.y - zoomPivotCurrentWorld.value.y, zoomPivotWorld.value.x - zoomPivotCurrentWorld.value.x) / cameraScale.value > 55}
+		{#if piePath.value}
 			<path
-				d="
-				 M {zoomPivotWorld.value.x} {zoomPivotWorld.value.y}
-				L{zoomPivotCurrentWorld.value.x +
-					cameraScale.value *
-						42 *
-						Math.cos(
-							-Math.PI / 2 +
-								Math.atan2(
-									zoomPivotWorld.value.y -
-										zoomPivotCurrentWorld.value.y,
-									zoomPivotWorld.value.x -
-										zoomPivotCurrentWorld.value.x,
-								),
-						)} {zoomPivotCurrentWorld.value.y -
-					cameraScale.value *
-						42 *
-						-Math.sin(
-							-Math.PI / 2 +
-								Math.atan2(
-									zoomPivotWorld.value.y -
-										zoomPivotCurrentWorld.value.y,
-									zoomPivotWorld.value.x -
-										zoomPivotCurrentWorld.value.x,
-								),
-						)}
-						A {cameraScale.value * 42} {cameraScale.value *
-					42} 0 0 1  {zoomPivotCurrentWorld.value.x +
-					cameraScale.value *
-						42 *
-						-Math.cos(
-							-Math.PI / 2 +
-								Math.atan2(
-									zoomPivotWorld.value.y -
-										zoomPivotCurrentWorld.value.y,
-									zoomPivotWorld.value.x -
-										zoomPivotCurrentWorld.value.x,
-								),
-						)} {zoomPivotCurrentWorld.value.y -
-					cameraScale.value *
-						42 *
-						Math.sin(
-							-Math.PI / 2 +
-								Math.atan2(
-									zoomPivotWorld.value.y -
-										zoomPivotCurrentWorld.value.y,
-									zoomPivotWorld.value.x -
-										zoomPivotCurrentWorld.value.x,
-								),
-						)} Z"
+				d={piePath.value}
 				fill="gray"
 				opacity="0.6"
 				fill-rule="nonzero"
@@ -215,10 +240,10 @@
 			/>
 		{:else}
 			<line
-				x1={zoomPivotCurrentWorld.value.x}
-				x2={zoomPivotWorld.value.x}
-				y1={zoomPivotCurrentWorld.value.y}
-				y2={zoomPivotWorld.value.y}
+				x1={currentWorld.x}
+				x2={currentWorld.x}
+				y1={currentWorld.y}
+				y2={currentWorld.y}
 				stroke="#4477aa"
 				stroke-width="1px"
 				opacity="0.5"
@@ -229,17 +254,17 @@
 			stroke="#4477aa"
 			stroke-width="1px"
 			vector-effect="non-scaling-stroke"
-			x1={zoomPivotWorld.value.x}
-			y1={zoomPivotWorld.value.y}
-			x2={zoomRefWorld.value.x}
-			y2={zoomRefWorld.value.y}
+			x1={currentWorld.x}
+			y1={currentWorld.y}
+			x2={refWorld.x}
+			y2={refWorld.y}
 		/>
  -->
 
 		<circle
-			cx={zoomPivotCurrentWorld.value.x}
-			cy={zoomPivotCurrentWorld.value.y}
-			r={cameraScale.value * 40}
+			cx={currentWorld.x}
+			cy={currentWorld.y}
+			r={scale * 40}
 			class="ref"
 			stroke="#111"
 			stroke-opacity="0.8"
@@ -249,16 +274,16 @@
 		/>
 
 		<circle
-			cx={zoomRefWorld.value.x}
-			cy={zoomRefWorld.value.y}
-			r={cameraScale.value * 5}
+			cx={refWorld.x}
+			cy={refWorld.y}
+			r={scale * 5}
 			class="ref"
 			fill="#4477aa"
 		/>
 		<circle
-			cx={zoomPivotCurrentWorld.value.x}
-			cy={zoomPivotCurrentWorld.value.y}
-			r={cameraScale.value * 40}
+			cx={currentWorld.x}
+			cy={currentWorld.y}
+			r={scale * 40}
 			class="ref"
 			stroke="white"
 			fill="#4477aa"
@@ -271,24 +296,24 @@
 		/>
 
 		<circle
-			cx={zoomPivotWorld.value.x}
-			cy={zoomPivotWorld.value.y}
-			r={cameraScale.value * 3}
+			cx={currentWorld.x}
+			cy={currentWorld.y}
+			r={scale * 3}
 			class="ref"
 			fill="#4477aa"
 		/>
 		<circle
-			cx={zoomPivotCurrentWorld.value.x}
-			cy={zoomPivotCurrentWorld.value.y}
-			r={cameraScale.value * 3}
+			cx={currentWorld.x}
+			cy={currentWorld.y}
+			r={scale * 3}
 			class="ref"
 			fill="#4477aa"
 		/>
 		<line
-			x1={zoomPivotCurrentWorld.value.x}
-			x2={zoomRefWorld.value.x}
-			y1={zoomPivotCurrentWorld.value.y}
-			y2={zoomRefWorld.value.y}
+			x1={currentWorld.x}
+			x2={refWorld.x}
+			y1={currentWorld.y}
+			y2={refWorld.y}
 			stroke="#4477aa"
 			stroke-width="1px"
 			vector-effect="non-scaling-stroke"

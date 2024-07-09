@@ -4,12 +4,6 @@
 	import * as U from "../../utils";
 	import { atom, view, read, combine } from "../../svatom.svelte.js";
 
-	const numberSvgFormat = new Intl.NumberFormat("en-US", {
-		minimumFractionDigits: 5,
-		maximumFractionDigits: 5,
-		useGrouping: false,
-	});
-
 	const {
 		frameBoxPath,
 		clientToCanvas,
@@ -73,10 +67,10 @@
 					y: b.start.y + cos * b.size.y,
 				}); // v
 
-				return `${frame}M${numberSvgFormat.format(A.x)},${numberSvgFormat.format(A.y)}
-				L${numberSvgFormat.format(B.x)},${numberSvgFormat.format(B.y)}
-				L${numberSvgFormat.format(C.x)},${numberSvgFormat.format(C.y)}
-				L${numberSvgFormat.format(D.x)},${numberSvgFormat.format(D.y)}z`;
+				return U.formattedNumbers`${frame}M${A.x},${A.y}
+				L${B.x},${B.y}
+				L${C.x},${C.y}
+				L${D.x},${D.y}z`;
 			} else {
 				return "";
 			}
