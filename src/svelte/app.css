@@ -179,10 +179,12 @@ button:disabled {
 
 button:not(:disabled):hover, .button:not(:disabled):hover {
 	background: #333;
+	color: #fff;
 }
 
 button:not(:disabled):active, .button:not(:disabled):active {
 	background: #000;
+	color: #fff;
 }
 
 button:not(:disabled):focus-visible, .button:not(:disabled):focus-visible {

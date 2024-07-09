@@ -1966,6 +1966,7 @@
 
 	@media (hover) {
 		.doc-tab-titel:hover {
+			background: none;
 			color: #cd3e30;
 		}
 	}
