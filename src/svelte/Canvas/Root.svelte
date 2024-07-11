@@ -74,9 +74,10 @@
 	import Grid from "./tools/Grid.svelte";
 	import Ruler from "./tools/Ruler.svelte";
 	import Axis from "./tools/Axis.svelte";
+	import PlotCreator from "./tools/PlotCreator.svelte";
 	import ShowAxis from "./tools/ShowAxis.svelte";
 	import ShowAlert from "./tools/ShowAlert.svelte";
-	import ShowPlot from "./tools/ShowPlot.svelte";
+	import ShowPlots from "./tools/ShowPlots.svelte";
 	import Pan from "./tools/Pan.svelte";
 	import Rotate from "./tools/Rotate.svelte";
 	import Zoom from "./tools/Zoom.svelte";
@@ -167,7 +168,7 @@
 				L.defaults([]),
 				L.choices(current, L.appendTo),
 				"camera",
-				L.valueOr({ x: 0, y: 0, z: 0, w: 0 })
+				L.valueOr({ x: 0, y: 0, z: 0, w: 0 }),
 			]),
 		],
 		allTabs,
@@ -478,6 +479,7 @@
 	const axis = view(["axis"], currentDocumentContent);
 	const drawings = view(["drawings", L.defaults([])], currentDocumentContent);
 	const shapes = view(["shapes", L.defaults([])], currentDocumentContent);
+	const plots = view(["plots", L.defaults([])], currentDocumentContent);
 	const rubberBand = atom(undefined);
 	const newNode = view([L.appendTo, L.required("x", "y")], nodes);
 	const newEdge = view([L.appendTo, L.required("x", "y")], edges);
@@ -496,6 +498,7 @@
 	const newShape = view([L.appendTo], shapes);
 	const newGuide = view([L.appendTo], guides);
 	const newAxis = view(L.identity, axis);
+	const newPlot = view([L.appendTo], plots);
 
 	function calculateBoundingBox(padding, allEntities, lens) {
 		const branch = L.branch(lens);
@@ -837,6 +840,18 @@
 				cameraOrientation,
 			},
 		},
+		plot: {
+			name: "Plot",
+			component: PlotCreator,
+			parameters: {
+				frameBoxPath,
+				clientToCanvas,
+				rotationTransform,
+				newPlot,
+				cameraScale,
+				cameraOrientation,
+			},
+		},
 		pan: {
 			name: "Pan",
 			component: Pan,
@@ -876,7 +891,7 @@
 		["pen", "polygon", "spline"],
 		["createNode", "createEdge"],
 		["text", "text_box", "shape"],
-		["axis", "guides"],
+		["axis", "plot", "guides"],
 	];
 
 	const makeSquareLens = L.lens(R.identity, (n, o) => ({
@@ -1642,7 +1657,8 @@
 							{rotationTransform}
 							{cameraScale}
 						/>
-						<ShowPlot
+						<ShowPlots
+							{plots}
 							{frameBoxObject}
 							{rotationTransform}
 							{cameraScale}
@@ -1664,14 +1680,13 @@
 						{cameraScale}
 					/>
 
-
-						<ShowAlert
-							{frameBoxObject}
-							{rotationTransform}
-							{cameraOrientation}
-							{cameraScale}
-							{cameraFocus}
-						/>
+					<ShowAlert
+						{frameBoxObject}
+						{rotationTransform}
+						{cameraOrientation}
+						{cameraScale}
+						{cameraFocus}
+					/>
 				</Navigator>
 			</svg>
 			<!-- 
