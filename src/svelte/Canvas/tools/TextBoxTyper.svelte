@@ -149,6 +149,7 @@
 			};
 
 			text.value = undefined;
+			return;
 		}
 
 		evt.currentTarget.setPointerCapture(evt.pointerId);
@@ -157,6 +158,7 @@
 		textBoxFontSize.value = cameraScale.value;
 		textBoxSize.value = { x: 0, y: 0 };
 		textBoxAngle.value = -cameraOrientation.value;
+		text.value = undefined;
 	}}
 	onpointermove={(evt) => {
 		if (!evt.isPrimary) {
@@ -207,6 +209,9 @@
 		isActive.value = undefined;
 	}}
 	onfocus={(evt) => {
+		if (isDragging.value) {
+			return;
+		}
 		if (text.value) {
 			evt.currentTarget.form.dispatchEvent(
 				new CustomEvent("submit", {
