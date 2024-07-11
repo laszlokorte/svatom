@@ -39,6 +39,9 @@
 	const cameraCenter = view(L.props('x','y'), cameraFocus)
 
 	function scrollTo(evt) {
+		if(!evt.isPrimary) {
+			return
+		}
 		const x = parseFloat(evt.currentTarget.getAttribute('data-pos-x'))
 		const y = parseFloat(evt.currentTarget.getAttribute('data-pos-y'))
 
@@ -54,12 +57,11 @@
 	}), positions)), combine({positions: screenspacePositions, basePath}))
 </script>
 
-	{#each paths.value as p, i (i)}
+{#each paths.value as p, i (i)}
 	<path
 		tabindex="-1"
 		role="button"
-		onclick={scrollTo}
-		onkeydown={scrollTo}
+		onpointerdown={scrollTo}
 		class="alert-badge"
 		data-pos-x={p.x}
 		data-pos-y={p.y}
@@ -69,6 +71,7 @@
 
 <style>
 	.alert-badge {
+		outline: none;
 		cursor: pointer;
 		fill: pink;
 		stroke: darkred;

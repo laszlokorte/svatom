@@ -119,8 +119,8 @@
 		{@const toY = p.start.y+dy1/p.size.x*maxRight}
 		{@const fromX = p.start.x+dx1/p.size.x*minRight}
 		{@const fromY = p.start.y+dy1/p.size.x*minRight}
-		{@const stepSize = 20}
-		{@const sampleCount = Math.ceil((maxRight-minRight)/stepSize)}
+		{@const stepSize = 1}
+		{@const sampleCount = Math.ceil((maxRight-minRight)/stepSize/cameraScale.value)}
 		{@const samplePoints = R.map((i) => ({
 			x: U.lerp(toX, fromX, i/sampleCount),
 			y: U.lerp(toY, fromY, i/sampleCount),
