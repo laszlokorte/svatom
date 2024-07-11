@@ -205,11 +205,11 @@ export function triangleContainsPoint(a,b,c, p) {
 	return (u > 0) && (v > 0) && (u + v < 1)
 }
 
-function dot2d(a,b) {
+export function dot2d(a,b) {
 	return a.x*b.x + a.y*b.y
 }
 
-function diff2d(a,b) {
+export function diff2d(a,b) {
 	return {
 		x: a.x - b.x,
 		y: a.y - b.y,
