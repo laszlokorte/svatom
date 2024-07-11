@@ -77,7 +77,6 @@
 			isActive.value = false;
 			return;
 		}
-		x = y;
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 		axisStart.value = clientToCanvas(evt.clientX, evt.clientY);
 		axisSize.value = { x: 0, y: 0 };
