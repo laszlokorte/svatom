@@ -19,11 +19,65 @@
 		        "y": 60
 		      },
 		      "size": {
-		        "x": 200,
-		        "y": -200
+		        "x": 100,
+		        "y": -100
 		      },
-		      "angle": 0
-		    }
+		      "angle": 0,
+		      "fn" : Math.cos,
+		      "color": "red"
+		    },
+		    {
+		      "start": {
+		        "x": 80,
+		        "y": 60
+		      },
+		      "size": {
+		        "x": 50,
+		        "y": -50
+		      },
+		      "angle": 30,
+		      "fn" : Math.sin,
+		      "color": "blue"
+		    },
+		    // {
+		    //   "start": {
+		    //     "x": 80,
+		    //     "y": 60
+		    //   },
+		    //   "size": {
+		    //     "x": 50,
+		    //     "y": -50
+		    //   },
+		    //   "angle": 10,
+		    //   "fn" : (x) => 1/x,
+		    //   "color": "magenta"
+		    // },
+		    // {
+		    //   "start": {
+		    //     "x": 80,
+		    //     "y": 60
+		    //   },
+		    //   "size": {
+		    //     "x": 50,
+		    //     "y": -50
+		    //   },
+		    //   "angle": 10,
+		    //   "fn" : Math.exp,
+		    //   "color": "orange"
+		    // },
+		    // {
+		    //   "start": {
+		    //     "x": -180,
+		    //     "y": 60
+		    //   },
+		    //   "size": {
+		    //     "x": 50,
+		    //     "y": -50
+		    //   },
+		    //   "angle": 10,
+		    //   "fn" : Math.log,
+		    //   "color": "orange"
+		    // }
 		])
 	} = $props();
 
@@ -32,7 +86,7 @@
 
 </script>
 
-<g pointer-events="none" transform={rotationTransform.value}>
+<g color="gray" pointer-events="none" transform={rotationTransform.value}>
 	{#each plots.value as p, i (i)}
 		{@const quad = worldQuad.value}
 
@@ -51,27 +105,60 @@
 		{@const maxRight = R.compose(R.reduce(R.max, -Infinity), R.map((v) => Geo.dot2d(Geo.diff2d(v, p.start), {x: cos, y: -sin})), R.props(['a','b','c','d']))(quad)}
 		{@const minRight = R.compose(R.reduce(R.min, Infinity), R.map((v) => Geo.dot2d(Geo.diff2d(v, p.start), {x: cos, y: -sin})), R.props(['a','b','c','d']))(quad)}
 		{#if xRay}
-		<line x1={xRay.a.x} x2={xRay.b.x} y1={xRay.a.y} y2={xRay.b.y} stroke="gray" />
+		<line class="plot-axis" x1={xRay.a.x} x2={xRay.b.x} y1={xRay.a.y} y2={xRay.b.y} stroke="gray" />
 
 		{/if}
 		{#if yRay}
-		<line x1={yRay.a.x} x2={yRay.b.x} y1={yRay.a.y} y2={yRay.b.y} stroke="gray" />
+		<line class="plot-axis" x1={yRay.a.x} x2={yRay.b.x} y1={yRay.a.y} y2={yRay.b.y} stroke="gray" />
 		{/if}
 
-		<path d="M{p.start.x} {p.start.y} m {dx1} {dy1} l {-dx1} {-dy1} l{dx2} {dy2}" stroke="green" stroke-width="3" fill="none" />
+		<path class="plot-axis-handle" d="M{p.start.x} {p.start.y} m {dx1} {dy1} l {-dx1} {-dy1} l{dx2} {dy2}" stroke="black" stroke-width="3" fill="none" />
 
 
 		{@const toX = p.start.x+dx1/p.size.x*maxRight}
 		{@const toY = p.start.y+dy1/p.size.x*maxRight}
 		{@const fromX = p.start.x+dx1/p.size.x*minRight}
 		{@const fromY = p.start.y+dy1/p.size.x*minRight}
-		{@const yy = maxRight-minRight}
-		{#each G.range(0, 1000) as ix, i (i)}
-		{@const f = Math.sin(U.lerp(minRight, maxRight, i)/5000)*10}
-		<circle cx={U.lerp(toX, fromX, i/1000)+dx2*f} cy={U.lerp(toY, fromY, i/1000)+dy2*f} r={3*cameraScale.value} fill="#0088aa"  />
-		{/each}
+		{@const stepSize = 20}
+		{@const sampleCount = Math.ceil((maxRight-minRight)/stepSize)}
+		{@const samplePoints = R.map((i) => ({
+			x: U.lerp(toX, fromX, i/sampleCount),
+			y: U.lerp(toY, fromY, i/sampleCount),
+		}), R.range(0, sampleCount))}
+
+		{@const pp = G.join(" ", G.map(({x,y}) => {
+			const fVal = p.fn(((x-p.start.x)*cos + (y-p.start.y)*sin)/p.size.x)*1
+			return (isFinite(fVal) && !isNaN(fVal)) ? U.formattedNumbers`${x+dx2*fVal} ${y+dy2*fVal}` : ('')
+		}, samplePoints))}
+
+
+		<polyline class="plot-line" points={pp} fill="none" color={p.color} stroke-width="3" />
 	{/each}
 
-
-
 </g>
+
+<style>
+
+	.plot-axis {
+		fill: none;
+		stroke-width: 1px;
+		stroke: currentColor;
+		vector-effect: non-scaling-stroke;
+	}
+
+	.plot-axis-handle {
+		fill: none;
+		stroke-width: 4px;
+		stroke: currentColor;
+		vector-effect: non-scaling-stroke;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	.plot-line {
+		fill: none;
+		stroke-width: 2px;
+		stroke: currentColor;
+		vector-effect: non-scaling-stroke;
+	}
+</style>

@@ -70,10 +70,14 @@
 <style>
 	.alert-badge {
 		cursor: pointer;
-		fill: darkred;
-		stroke: pink;
-		stroke-width: 4px;
+		fill: pink;
+		stroke: darkred;
+		stroke-width: 3px;
 		vector-effect: non-scaling-stroke;
 		stroke-linejoin: round;
+	}
+
+	.alert-badge:hover {
+		fill: #dd5555;
 	}
 </style>

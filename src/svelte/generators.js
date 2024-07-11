@@ -68,6 +68,10 @@ export function reduce(fn, init, seq) {
 	return acc
 }
 
+export function join(sep, seq) {
+	return reduce((a,b) => a+sep+b, "", seq)
+}
+
 export function* scan(fn, init, seq) {
 	let acc = init
 	for(let x of seq) {
