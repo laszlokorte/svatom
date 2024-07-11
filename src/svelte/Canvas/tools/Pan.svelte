@@ -3,7 +3,12 @@
 	import * as R from "ramda";
 	import * as U from "../../utils";
 	import * as C from "../../combinators";
-	import { atom, view, throttled } from "../../svatom.svelte.js";
+	import {
+		atom,
+		view,
+		throttled,
+		disableEventIf,
+	} from "../../svatom.svelte.js";
 
 	const { frameBoxPath, clientToCanvas, panMovement } = $props();
 
@@ -66,6 +71,7 @@
 		}
 		isActive.value = false;
 	}}
+	use:disableEventIf={{ eventType: "wheel", cond: isActive }}
 />
 
 <style>

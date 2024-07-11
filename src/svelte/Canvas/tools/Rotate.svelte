@@ -3,7 +3,13 @@
 	import * as R from "ramda";
 	import * as U from "../../utils";
 	import * as C from "../../combinators";
-	import { atom, view, read, combine } from "../../svatom.svelte.js";
+	import {
+		atom,
+		view,
+		read,
+		combine,
+		disableEventIf,
+	} from "../../svatom.svelte.js";
 
 	const {
 		frameBoxPath,
@@ -156,6 +162,7 @@
 		}
 		isActive.value = false;
 	}}
+	use:disableEventIf={{ eventType: "wheel", cond: isActive }}
 />
 
 <g transform={rotationTransform.value} pointer-events="none">

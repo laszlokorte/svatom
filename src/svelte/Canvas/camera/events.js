@@ -22,7 +22,7 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 
 	function onWheel(evt) {
 		if (evt.deltaMode === WheelEvent.DOM_DELTA_PIXEL) {
-			if(evt.ctrlKey) {
+			if(evt.ctrlKey || mouseGrab || evt.defaultPrevented) {
 				evt.preventDefault()
 				evt.stopPropagation()
 
@@ -43,7 +43,7 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 				}
 			}
 		} else {
-			if(!evt.altKey && !evt.ctrlKey) {
+			if(!evt.altKey && !evt.ctrlKey && !mouseGrab && !evt.defaultPrevented) {
 				return
 			}
 
@@ -182,7 +182,7 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 	window.addEventListener('error', onError)
 
 
-	node.addEventListener('wheel', onWheel, { passive:false, capture: true })
+	node.addEventListener('wheel', onWheel, { passive:false, capture: false })
 	node.addEventListener('gesturestart', onGestureStart, false)
 	node.addEventListener('gestureend', onGestureEnd, false)
 	node.addEventListener('gesturechange', onGestureChange, false)
@@ -203,7 +203,7 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 		node.removeEventListener('gesturechange', onGestureStart, false)
 		node.removeEventListener('gesturestart', onGestureChange, false)
 		node.removeEventListener('gestureend', onGestureEnd, false)
-		node.removeEventListener('wheel', onWheel, { passive:false, capture: true })
+		node.removeEventListener('wheel', onWheel, { passive:false, capture: false })
 
 		window.addEventListener('error', onError)
 	}
