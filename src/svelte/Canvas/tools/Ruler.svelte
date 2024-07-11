@@ -27,9 +27,9 @@
 	width={frameBoxObject.value.screenSpaceAligned.width -
 		cameraScale.value * 20}
 	height={cameraScale.value * 20}
-	fill="#aab"
-	stroke="#888"
-	stroke-width="1px"
+	fill="#eee"
+	stroke="#fff"
+	stroke-width="2px"
 	vector-effect="non-scaling-stroke"
 ></rect>
 
@@ -39,9 +39,9 @@
 	height={frameBoxObject.value.screenSpaceAligned.height -
 		cameraScale.value * 20}
 	width={cameraScale.value * 20}
-	fill="#aab"
-	stroke="#888"
-	stroke-width="1px"
+	fill="#eee"
+	stroke="#fff"
+	stroke-width="2px"
 	vector-effect="non-scaling-stroke"
 ></rect>
 

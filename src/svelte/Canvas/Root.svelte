@@ -167,7 +167,7 @@
 				L.defaults([]),
 				L.choices(current, L.appendTo),
 				"camera",
-				L.valueOr({ x: 0, y: 0, z: 0, w: 0 }),
+				L.valueOr({ x: 0, y: 0, z: 0, w: 0 })
 			]),
 		],
 		allTabs,
@@ -1543,6 +1543,7 @@
 
 	<div class="prevent-selection">
 		<Scroller
+			allowOverscroll={false}
 			alignment="center"
 			extraScrollPadding={cameraAutoPadding}
 			{scrollPosition}
@@ -1641,11 +1642,6 @@
 							{rotationTransform}
 							{cameraScale}
 						/>
-						<ShowAlert
-							{frameBoxObject}
-							{rotationTransform}
-							{cameraScale}
-						/>
 						<ShowPlot
 							{frameBoxObject}
 							{rotationTransform}
@@ -1667,6 +1663,15 @@
 						{rotationTransform}
 						{cameraScale}
 					/>
+
+
+						<ShowAlert
+							{frameBoxObject}
+							{rotationTransform}
+							{cameraOrientation}
+							{cameraScale}
+							{cameraFocus}
+						/>
 				</Navigator>
 			</svg>
 			<!-- 

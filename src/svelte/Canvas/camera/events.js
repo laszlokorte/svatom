@@ -32,13 +32,13 @@ export function bindEvents(node, {camera, worldClientIso}) {
 					rotationDelta.value = {
 						px: worldPos.x,
 						py: worldPos.y,
-						dw: -Math.sign(evt.deltaY)/8 * 90,
+						dw: -Math.sign(evt.deltaY)/16 * 90,
 					}
 				} else {
 					zoomDelta.value = {
 						px: worldPos.x,
 						py: worldPos.y,
-						dz: -Math.sign(evt.deltaY)/8,
+						dz: -Math.sign(evt.deltaY)/16,
 					}
 				}
 			}

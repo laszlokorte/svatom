@@ -215,3 +215,10 @@ function diff2d(a,b) {
 		y: a.y - b.y,
 	}
 }
+
+export function clamp2DBox({minX, minY, width, height, padding = 0}, v) {
+	return {
+		x: R.clamp(minX+padding, minX+width-padding, v.x),
+		y: R.clamp(minY+padding, minY+height-padding, v.y)
+	}
+}

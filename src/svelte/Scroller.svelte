@@ -17,7 +17,8 @@
 		scrollPosition = atom({ x: 0, y: 0 }),
 		contentSize = atom({ x: 0, y: 0 }),
 		scrollWindowSize = atom({ x: 0, y: 0 }),
-		extraScrollPadding = atom(false)
+		extraScrollPadding = atom(false),
+		allowOverscroll = true
 	} = $props();
 
 	const browserChromeOverscroll = atom({x:0,y:0})
@@ -74,6 +75,8 @@
 
 <div
 	class="scroller"
+	class:overscroll-enabled={allowOverscroll}
+	class:overscroll-disabled={!allowOverscroll}
 	use:bindScroll={adjustedScrollPosition}
 	style:--scroll-total-x={paddedContentSizeValue.x}
 	style:--scroll-total-y={paddedContentSizeValue.y}
@@ -125,6 +128,14 @@
         -webkit-user-modify: none;
         -webkit-highlight: none;
 		user-select: none;
+	}
+
+	.overscroll-enabled {
+    	overscroll-behavior: auto;
+	}
+
+	.overscroll-disabled {
+    	overscroll-behavior: none;
 	}
 
 	.scroller > * {

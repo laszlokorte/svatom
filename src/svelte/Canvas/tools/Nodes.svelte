@@ -24,18 +24,18 @@
 
 <g transform={rotationTransform.value} pointer-events="none">
 	<path d={paths.value} class="node" />
+	<!--
+		{#each nodes.value as v, i (i)}
+			<circle
+				class="node"
+				cx={v.x}
+				cy={v.y}
+				r={Math.min(cameraScale.value * 20, 20)}
+			></circle>
+		{/each}
+	 -->
 </g>
 
-<!-- 
-	{#each nodes.value as v, i (i)}
-		<circle
-			class="node"
-			cx={v.x}
-			cy={v.y}
-			r={Math.min(cameraScale.value * 20, 20)}
-		></circle>
-	{/each}
- -->
 <style>
 	.node {
 		fill: #dd4e40;

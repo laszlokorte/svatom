@@ -9,6 +9,7 @@
 		rotationTransform,
 		cameraOrientation,
 		cameraScale,
+		plots = atom([])
 	} = $props();
 </script>
 
