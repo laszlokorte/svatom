@@ -13,7 +13,7 @@ import {pivotZoomLens,
 pivotRotationLens,
 panScreenLens} from './navigation'
 
-export function bindEvents(node, {camera, worldClientIso}) {
+export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 	const eventWorld = [L.props('clientX', 'clientY'), L.pick({x: 'clientX', y: 'clientY'}), L.inverse(worldClientIso), L.props('x','y')]
 
 	const zoomDelta = view(['focus', pivotZoomLens], camera)
@@ -170,9 +170,16 @@ export function bindEvents(node, {camera, worldClientIso}) {
 		}
 	}
 
-	window.addEventListener('error', (e) => {
-		alert(e.message)
-	})
+	const onError = (e) => {
+		if(errorHandler) {
+			const pos = L.get(eventWorld, {clientX: window.innerWidth / 2, clientY: window.innerHeight / 2})
+			errorHandler.value = { msg: e.message, ...pos }
+		} else {
+			alert(e.message)
+		}
+	};
+
+	window.addEventListener('error', onError)
 
 
 	node.addEventListener('wheel', onWheel, { passive:false, capture: true })
@@ -197,5 +204,7 @@ export function bindEvents(node, {camera, worldClientIso}) {
 		node.removeEventListener('gesturestart', onGestureChange, false)
 		node.removeEventListener('gestureend', onGestureEnd, false)
 		node.removeEventListener('wheel', onWheel, { passive:false, capture: true })
+
+		window.addEventListener('error', onError)
 	}
 }

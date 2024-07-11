@@ -15,6 +15,7 @@
 		cameraTow,
 		frameBoxPath,
 		children,
+		errorHandler,
 	} = $props();
 
 
@@ -49,7 +50,7 @@
 </script>
 
 
-<g bind:this={thisElement.value} use:bindEvents={{camera, worldClientIso: liveLenses.worldClientIso }}>
+<g bind:this={thisElement.value} use:bindEvents={{camera, worldClientIso: liveLenses.worldClientIso, errorHandler }}>
 	<path d={frameBoxPath.value}  stroke="none" fill="#ffffff00" pointer-events="all" />
 
 	{@render children()}

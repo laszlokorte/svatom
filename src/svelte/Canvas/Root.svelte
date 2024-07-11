@@ -480,7 +480,9 @@
 	const drawings = view(["drawings", L.defaults([])], currentDocumentContent);
 	const shapes = view(["shapes", L.defaults([])], currentDocumentContent);
 	const plots = view(["plots", L.defaults([])], currentDocumentContent);
+	const alerts = view(["alerts", L.defaults([])], currentDocumentContent);
 	const rubberBand = atom(undefined);
+	const newAlert = view([L.appendTo], alerts);
 	const newNode = view([L.appendTo, L.required("x", "y")], nodes);
 	const newEdge = view([L.appendTo, L.required("x", "y")], edges);
 	const newEdgeNode = view(
@@ -1531,6 +1533,15 @@
 					>
 				{/each}
 			{/each}
+			<button
+				type="button"
+				class="button tool-button"
+				onclick={() =>
+					(newAlert.value = {
+						...cameraFocus.value,
+						msg: "Test Error",
+					})}>Error</button
+			>
 		</div>
 	</fieldset>
 
@@ -1571,7 +1582,12 @@
 				viewBox={viewBox.value}
 				preserveAspectRatio={preserveAspectRatio.value}
 			>
-				<Navigator {camera} {frameBoxPath} {cameraTow}>
+				<Navigator
+					{camera}
+					{frameBoxPath}
+					{cameraTow}
+					errorHandler={newAlert}
+				>
 					<g class:hidden={!debugFrames.value} pointer-events="none">
 						<path
 							d={viewBoxPath.value}
@@ -1681,6 +1697,7 @@
 					/>
 
 					<ShowAlert
+						{alerts}
 						{frameBoxObject}
 						{rotationTransform}
 						{cameraOrientation}
