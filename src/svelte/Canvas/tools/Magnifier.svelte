@@ -140,6 +140,7 @@
 	}}
 	onpointermove={(evt) => {
 		if (!evt.isPrimary) {
+			isActive.value = false;
 			return;
 		}
 		if (!isActive.value) {

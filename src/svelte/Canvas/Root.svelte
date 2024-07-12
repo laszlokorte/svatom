@@ -528,6 +528,7 @@
 
 	const extension = calculateBoundingBox(100, currentDocumentContent, {
 		nodes: L.elems,
+		alerts: L.elems,
 		drawings: [L.elems, L.elems],
 		axis: [
 			L.ifElse(
@@ -606,6 +607,32 @@
 							}),
 					}),
 				],
+				R.always({}),
+			),
+			L.values,
+		],
+		plots: [
+			L.elems,
+			L.ifElse(
+				R.is(Object),
+				L.pick({
+					start: "start",
+					a: ({ start, size, angle }) =>
+						Geo.rotatePivotDegree(start, angle, {
+							x: start.x + size.x,
+							y: start.y + size.y,
+						}),
+					b: ({ start, size, angle }) =>
+						Geo.rotatePivotDegree(start, angle, {
+							x: start.x,
+							y: start.y + size.y,
+						}),
+					c: ({ start, size, angle }) =>
+						Geo.rotatePivotDegree(start, angle, {
+							x: start.x + size.x,
+							y: start.y,
+						}),
+				}),
 				R.always({}),
 			),
 			L.values,
