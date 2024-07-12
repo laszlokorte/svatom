@@ -84,124 +84,108 @@
 	} = $props();
 
 	const worldQuad = read("worldSpace", frameBoxObject);
+
+	function fn(x) {
+		return Math.cos(x * Math.PI * 2);
+	}
+
+	const plotLines = view(
+		({ plots, worldQuad, cameraScale }) => {
+			const quad = worldQuad;
+
+			return R.map((p) => {
+				const cos = Math.cos((-p.angle / 180) * Math.PI);
+				const sin = Math.sin((-p.angle / 180) * Math.PI);
+				const sizeAbs = Math.hypot(p.size.x, p.size.y);
+				const dx1 = cos * p.size.x;
+				const dy1 = -sin * p.size.x;
+
+				const dx2 = sin * p.size.y;
+				const dy2 = cos * p.size.y;
+
+				const corners = R.props(["a", "b", "c", "d"], quad);
+				const maxRight = R.transduce(
+					R.map((v) =>
+						Geo.dot2d(Geo.diff2d(v, p.start), { x: cos, y: -sin }),
+					),
+					R.max,
+					-Infinity,
+					corners,
+				);
+
+				const minRight = R.transduce(
+					R.map((v) =>
+						Geo.dot2d(Geo.diff2d(v, p.start), { x: cos, y: -sin }),
+					),
+					R.min,
+					Infinity,
+					corners,
+				);
+
+				const toX = p.start.x + (dx1 / p.size.x) * maxRight;
+				const toY = p.start.y + (dy1 / p.size.x) * maxRight;
+				const fromX = p.start.x + (dx1 / p.size.x) * minRight;
+				const fromY = p.start.y + (dy1 / p.size.x) * minRight;
+				const stepSize = 1;
+				const sampleCount = Math.ceil(
+					(maxRight - minRight) / stepSize / cameraScale,
+				);
+				const samplePoints = G.map(
+					(i) => ({
+						x: U.lerp(toX, fromX, i / sampleCount),
+						y: U.lerp(toY, fromY, i / sampleCount),
+					}),
+					G.range(0, sampleCount),
+				);
+				const points = [
+					...G.reject(
+						R.isNil,
+						G.map(({ x, y }) => {
+							const fx =
+								((x - p.start.x) * cos +
+									(y - p.start.y) * sin) /
+								p.size.x;
+							const fVal = fn(fx);
+							return isFinite(fVal) && !isNaN(fVal)
+								? {
+										x: x + dx2 * fVal,
+										y: y + dy2 * fVal,
+										segment: p.poles
+											? p.poles.findIndex((v) => v < fx)
+											: -Infinity,
+									}
+								: null;
+						}, samplePoints),
+					),
+				];
+
+				const segments = G.reject(
+					R.isEmpty,
+					R.groupWith((a, b) => a.segment == b.segment, points),
+				);
+
+				return {
+					segments,
+					color: p.color,
+				};
+			}, plots);
+		},
+		combine({
+			plots,
+			worldQuad,
+			cameraScale,
+		}),
+	);
 </script>
 
 <g color="gray" pointer-events="none" transform={rotationTransform.value}>
-	{#each plots.value as p, i (i)}
-		{@const quad = worldQuad.value}
-
-		{@const cos = Math.cos((-p.angle / 180) * Math.PI)}
-		{@const sin = Math.sin((-p.angle / 180) * Math.PI)}
-		{@const sizeAbs = Math.hypot(p.size.x, p.size.y)}
-		{@const dx1 = cos * p.size.x}
-		{@const dy1 = -sin * p.size.x}
-
-		{@const dx2 = sin * p.size.y}
-		{@const dy2 = cos * p.size.y}
-
-		{@const maxRight = R.compose(
-			R.reduce(R.max, -Infinity),
-			R.map((v) =>
-				Geo.dot2d(Geo.diff2d(v, p.start), { x: cos, y: -sin }),
-			),
-			R.props(["a", "b", "c", "d"]),
-		)(quad)}
-		{@const minRight = R.compose(
-			R.reduce(R.min, Infinity),
-			R.map((v) =>
-				Geo.dot2d(Geo.diff2d(v, p.start), { x: cos, y: -sin }),
-			),
-			R.props(["a", "b", "c", "d"]),
-		)(quad)}
-		<!-- 
-		{@const xRay = Geo.rayInsideQuad(
-			(p.angle / 180) * Math.PI,
-			cos * p.start.y + sin * p.start.x,
-			quad,
-		)}
-		{@const yRay = Geo.rayInsideQuad(
-			(p.angle / 180) * Math.PI - Math.PI / 2,
-			cos * p.start.x - sin * p.start.y,
-			quad,
-		)}
-
-		{#if xRay}
-			<line
-				class="plot-axis"
-				x1={xRay.a.x}
-				x2={xRay.b.x}
-				y1={xRay.a.y}
-				y2={xRay.b.y}
-				color="#e0e0e0"
-			/>
-		{/if}
-		{#if yRay}
-			<line
-				class="plot-axis"
-				x1={yRay.a.x}
-				x2={yRay.b.x}
-				y1={yRay.a.y}
-				y2={yRay.b.y}
-				color="#e0e0e0"
-			/>
-		{/if} -->
-
-		<!-- <path
-			class="plot-axis-handle"
-			d="M{p.start.x} {p.start
-				.y} m {dx1} {dy1} l {-dx1} {-dy1} l{dx2} {dy2}"
-			stroke="black"
-			stroke-width="3"
-			fill="none"
-		/> -->
-
-		{@const toX = p.start.x + (dx1 / p.size.x) * maxRight}
-		{@const toY = p.start.y + (dy1 / p.size.x) * maxRight}
-		{@const fromX = p.start.x + (dx1 / p.size.x) * minRight}
-		{@const fromY = p.start.y + (dy1 / p.size.x) * minRight}
-		{@const stepSize = 1}
-		{@const sampleCount = Math.ceil(
-			(maxRight - minRight) / stepSize / cameraScale.value,
-		)}
-		{@const samplePoints = R.map(
-			(i) => ({
-				x: U.lerp(toX, fromX, i / sampleCount),
-				y: U.lerp(toY, fromY, i / sampleCount),
-			}),
-			R.range(0, sampleCount),
-		)}
-		{@const points = [
-			...G.reject(
-				R.isNil,
-				G.map(({ x, y }) => {
-					const fx =
-						((x - p.start.x) * cos + (y - p.start.y) * sin) /
-						p.size.x;
-					const fVal = p.fn(fx) * 1;
-					return isFinite(fVal) && !isNaN(fVal)
-						? {
-								x: x + dx2 * fVal,
-								y: y + dy2 * fVal,
-								segment: p.poles
-									? R.findIndex(R.lt(fx), p.poles)
-									: -Infinity,
-							}
-						: null;
-				}, samplePoints),
-			),
-		]}
-
-		{@const segments = R.reject(
-			R.isEmpty,
-			R.groupWith((a, b) => a.segment == b.segment, points),
-		)}
-
-		{#each segments as seg, s (s)}
+	{#each plotLines.value as p, i (i)}
+		{#each p.segments as seg, s (s)}
 			<polyline
 				class="plot-line"
-				points={R.join(
+				points={G.join(
 					" ",
-					R.map(({ x, y }) => `${x} ${y}`, seg),
+					G.map(({ x, y }) => `${x} ${y}`, seg),
 				)}
 				fill="none"
 				color={p.color}
