@@ -13,21 +13,19 @@ export function* repeated(val) {
 }
 
 export function* map(fn, seq) {
-	for(let x of seq) {
+	for(const x of seq) {
 		yield fn(x)
 	}
 }
 
 export function* flatMap(fn, seq) {
-	for(let x of seq) {
-		for(let y of fn(x)) {
-			yield y
-		}
+	for(const x of seq) {
+		yield* fn(x)
 	}
 }
 
 export function* concat(seqA, seqB) {
-	for(let x of seqA) {
+	for(const x of seqA) {
 		yield x
 	}
 
@@ -38,30 +36,34 @@ export function* concat(seqA, seqB) {
 
 export function* mapIndexed(fn, seq) {
 	let i = 0;
-	for(let x of seq) {
+	for(const x of seq) {
 		yield fn(i++, sq)
 	}
 }
 
 export function* filter(fn, seq) {
-	for(let x of seq) {
-		if(fn(x)) {
-			yield x
+	for(const x of seq) {
+		if(!fn(x)) {
+			continue
 		}
+		yield x
 	}
 }
 
 export function* reject(fn, seq) {
-	for(let x of seq) {
-		if(!fn(x)) {
-			yield x
+	for(const x of seq) {
+		if(fn(x)) {
+			continue
 		}
+
+		yield x
 	}
 }
 
 export function reduce(fn, init, seq) {
 	let acc = init
-	for(let x of seq) {
+
+	for(const x of seq) {
 		acc = fn(acc, x)
 	}
 
@@ -74,8 +76,9 @@ export function join(sep, seq) {
 
 export function* scan(fn, init, seq) {
 	let acc = init
-	for(let x of seq) {
+	for(const x of seq) {
 		yield acc
+
 		acc = fn(acc, x)
 	}
 	
@@ -85,23 +88,25 @@ export function* scan(fn, init, seq) {
 
 export function* skip(num, seq) {
 	let i = num;
-	for(let x of seq) {
+	for(const x of seq) {
 		if(num > 0) {
 			num--;
-		} else {
-			yield x
+			continue
 		}
+
+		yield x
 	}
 }
 
 export function* take(num, seq) {
 	let i = num;
-	for(let x of seq) {
-		if(num > 0) {
-			num--;
-			yield x
-		} else {
+	
+	for(const x of seq) {
+		if(i <= 0) {
 			return
 		}
+
+		i--;
+		yield x
 	}
 }
