@@ -62,6 +62,7 @@
 	import Nodes from "./tools/Nodes.svelte";
 	import Edges from "./tools/Edges.svelte";
 	import Drawings from "./tools/Drawings.svelte";
+	import ShowSplines from "./tools/ShowSplines.svelte";
 	import Bounds from "./tools/Bounds.svelte";
 	import Origin from "./tools/Origin.svelte";
 	import TextLines from "./tools/TextLines.svelte";
@@ -478,6 +479,7 @@
 	const guides = view(["guides", L.defaults([])], currentDocumentContent);
 	const axis = view(["axis"], currentDocumentContent);
 	const drawings = view(["drawings", L.defaults([])], currentDocumentContent);
+	const splines = view(["splines", L.defaults([])], currentDocumentContent);
 	const shapes = view(["shapes", L.defaults([])], currentDocumentContent);
 	const plots = view(["plots", L.defaults([])], currentDocumentContent);
 	const alerts = view(["alerts", L.defaults([])], currentDocumentContent);
@@ -497,6 +499,7 @@
 		[L.appendTo, L.setter((n, o) => (n.length > 1 ? n : o))],
 		drawings,
 	);
+	const newSpline = view([L.appendTo], splines);
 	const newShape = view([L.appendTo], shapes);
 	const newGuide = view([L.appendTo], guides);
 	const newAxis = view(L.identity, axis);
@@ -632,6 +635,20 @@
 							x: start.x + size.x,
 							y: start.y,
 						}),
+				}),
+				R.always({}),
+			),
+			L.values,
+		],
+		splines: [
+			L.elems,
+			L.elems,
+			L.ifElse(
+				R.is(Object),
+				L.pick({
+					point: "point",
+					front: "front",
+					back: "back",
 				}),
 				R.always({}),
 			),
@@ -817,6 +834,7 @@
 				frameBoxPath,
 				cameraScale,
 				rotationTransform,
+				newSpline,
 			},
 		},
 		shape: {
@@ -1660,6 +1678,12 @@
 
 						<Drawings
 							{drawings}
+							{rotationTransform}
+							{cameraScale}
+						/>
+
+						<ShowSplines
+							{splines}
 							{rotationTransform}
 							{cameraScale}
 						/>

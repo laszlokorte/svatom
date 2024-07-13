@@ -6,10 +6,10 @@ import { createActor } from 'xstate';
 
 export function fsm(machineDef) {
 
-	let machineState = $state.frozen({value: undefined});
-
 	const machineActor = createActor(machineDef).start();
-	
+
+	let machineState = $state.frozen({value: machineActor.getSnapshot()});
+
 	machineActor.subscribe((newState) => {
 		machineState = {value: newState}
 	})
@@ -19,9 +19,25 @@ export function fsm(machineDef) {
 			return machineState.value
 		},
 
+		get state() {
+			return read('value', this)
+		},
+
+		get context() {
+			return read('context', this)
+		},
+
 		send(evt) {
 			machineActor.send(evt)
-		}
+		},
+
+		on(event, listener) {
+			machineActor.on(event, listener)
+		},
+
+		dispose() {
+			machineActor.stop()
+		},
 	}
 }
 
