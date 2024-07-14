@@ -24,6 +24,7 @@
 	    draftPoint: null,
 	    draftBackHandle: null,
 	    draftFrontHandle: null,
+		detached: false,
 	  },
 	  initial: 'EMPTY',
 	  states: {
@@ -33,6 +34,7 @@
 	  			draftPoint: null,
 				draftFrontHandle: null,
 				draftBackHandle: null,
+				detached: false,
 			})],
 	  		on: {
 	  			'PRESS': {
@@ -48,6 +50,7 @@
 	  			draftPoint: null,
 				draftFrontHandle: null,
 				draftBackHandle: null,
+				detached: false,
 			})],
   			always: {
   				target: 'EMPTY',
@@ -60,10 +63,15 @@
 	  					draftPoint: ({event: {position}}) => position
 	  				})
 	  			},
-
-	  			'FINISH': {
+	  			'FINISH_OPEN': {
 	  				target: 'EMPTY',
+	  				guard: ({context}) => context.path.length > 1,
 	  				actions: emit(({context}) =>  ({type: 'COMPLETED', path: context.path}))
+	  			},
+	  			'FINISH_CLOSE': {
+	  				target: 'EMPTY',
+	  				guard: ({context}) => context.path.length > 1,
+	  				actions: emit(({context}) =>  ({type: 'COMPLETED', path: [...context.path, context.path[0]]}))
 	  			},
 	  			'ESCAPE': {
 	  				target: 'EMPTY',
@@ -106,7 +114,7 @@
 	  			'POP': {
 	  				target: 'IDLE',
 	  			},
-	  			'FINISH': {
+	  			'FINISH_OPEN': {
 	  				target: 'IDLE',
 	  			},
 	  			'INTERUPT': {
@@ -120,10 +128,10 @@
 	  				target: 'PRESSED',
 	  				actions: assign({
 	  					draftFrontHandle: ({event: {position}}) => position,
-	  					draftBackHandle: ({event: {position, detached}, context}) => detached ? context.draftBackHandle :({
+	  					draftBackHandle: ({event: {position}, context}) => context.detached ? context.draftBackHandle :({
 	  						x:context.draftPoint.x * 2 - position.x,
 	  						y:context.draftPoint.y * 2 - position.y,
-	  					})
+	  					}),
 	  				})
 	  			},
 	  			'RELEASE': {
@@ -139,13 +147,39 @@
 	  			'CANCEL': {
 	  				target: 'EMPTY',
 	  			},
+	  			'DETACH': {
+	  				target: 'PRESSED',
+	  				actions: assign({
+	  					detached: true
+	  				})
+	  			},
+	  			'ATTACH': {
+	  				target: 'PRESSED',
+	  				actions: assign({
+	  					draftBackHandle: ({context: {draftPoint, draftFrontHandle}}) => ({
+	  						x:draftPoint.x * 2 - draftFrontHandle.x,
+	  						y:draftPoint.y * 2 - draftFrontHandle.y,
+	  					}),
+	  					detached: false,
+	  				})
+	  			},
+	  			'TOOGLE_ATTACHMENT': {
+	  				target: 'PRESSED',
+	  				actions: assign({
+	  					draftBackHandle: ({context: {draftPoint, draftFrontHandle, detached, draftBackHandle}}) => detached ? ({
+	  						x:draftPoint.x * 2 - draftFrontHandle.x,
+	  						y:draftPoint.y * 2 - draftFrontHandle.y,
+	  					}) : draftBackHandle,
+	  					detached: ({context: {detached}}) => !detached,
+	  				})
+	  			},
 	  			'ESCAPE': {
 	  				target: 'INITIAL_PRESSED',
 	  			},
 	  			'POP': {
 	  				target: 'IDLE',
 	  			},
-	  			'FINISH': {
+	  			'FINISH_OPEN': {
 	  				target: 'IDLE',
 	  			},
 	  			'INTERUPT': {
@@ -206,9 +240,13 @@
 		})],
 		path: 'path',
 		pathHead: ['path', L.last],
+		pathRoot: ['path', L.first],
+		pathNeck: ['path', L.reread(x => x.length > 0 ? x[Math.max(0, x.length-2)] : undefined)],
 		draftPoint: 'draftPoint',
 		draftFrontHandle: 'draftFrontHandle',
 		draftBackHandle: 'draftBackHandle',
+		canFinish: ['path', 'length', R.lt(1)],
+		isDetached: 'detached',
 	}), machine.context)
 
 
@@ -221,10 +259,13 @@
 	  }
 	});
 
+	$inspect(currentDraftValue)
 
 	export function cancel() {
 		machine.send({ type: 'CANCEL' });
 	}
+
+	export const canCancel = read(s => s!='EMPTY', machine.state)
 </script>
 
 <path
@@ -245,13 +286,28 @@
 			evt.preventDefault()
 			machine.send({ type: 'POP' });
 		}
+		if (evt.key === "Shift") {
+			evt.preventDefault()
+			machine.send({ type: 'DETACH' });
+		}
+	}}
+	onkeyup={(evt) => {
+		if (evt.key === "Shift") {
+			evt.preventDefault()
+			machine.send({ type: 'ATTACH' });
+		}
 	}}
 	oncontextmenu={(evt) => {
 		evt.preventDefault();
-		machine.send({ type: 'FINISH' });
+		if(evt.altKey) {
+			machine.send({ type: 'FINISH_CLOSE' });
+		} else {
+			machine.send({ type: 'FINISH_OPEN' });
+		}
 	}}
 	onpointerdown={(evt) => {
 		if (!evt.isPrimary) {
+			machine.send({ type: 'INTERUPT' });
 			return;
 		}
 
@@ -277,7 +333,7 @@
 
 		const p = clientToCanvas(evt.clientX, evt.clientY);
 
-		machine.send({ type: 'MOVE', position: p, scale: cameraScale.value, pointerSize: Math.hypot(evt.width, evt.height), detached: evt.shiftKey });
+		machine.send({ type: 'MOVE', position: p, scale: cameraScale.value, pointerSize: Math.hypot(evt.width, evt.height) });
 	}}
 	onpointerup={(evt) => {
 		if (!evt.isPrimary) {
@@ -337,6 +393,30 @@
 			y2={currentDraftValue.draftBackHandle.y}
 			class="handle-bar" />
 			<circle cx={currentDraftValue.draftBackHandle.x} cy={currentDraftValue.draftBackHandle.y} r={3*cameraScaleValue} class="handle" />
+
+
+			<circle cx={currentDraftValue.draftBackHandle.x} cy={currentDraftValue.draftBackHandle.y} r={10*cameraScaleValue} class="detach"
+				class:active={currentDraftValue.isDetached}
+				pointer-events="all"
+				tabindex="-1"
+				role="button"
+				onpointerdown={(evt) => {
+					evt.stopPropagation()
+					evt.preventDefault()
+				}}
+				onclick={(evt) => {
+					evt.stopPropagation()
+					evt.preventDefault()
+
+					machine.send({type: 'TOOGLE_ATTACHMENT'})
+				}}
+				onkeydown={(evt) => {
+					evt.stopPropagation()
+					evt.preventDefault()
+
+					machine.send({type: 'TOOGLE_ATTACHMENT'})
+				}}
+			 />
 		{/if}
 
 
@@ -369,6 +449,7 @@
 			class="handle-bar" />
 
 			<circle cx={currentDraftValue.pathHead.back.x} cy={currentDraftValue.pathHead.back.y} r={3*cameraScaleValue} class="handle" />
+
 		{/if}
 
 
@@ -384,6 +465,60 @@
 			{/if}
 		{/if}
 	{/each}
+
+	{#if currentDraftValue.canFinish}
+		<g
+		tabindex="-1"
+		role="button"
+		onkeydown={() => {
+			machine.send({type: 'FINISH_OPEN'})
+		}}
+		pointer-events="all" onclick={() => {
+			machine.send({type: 'FINISH_OPEN'})
+		}}>
+			{#if currentDraftValue.pathHead.front || currentDraftValue.pathHead.back}
+				<circle cx={currentDraftValue.pathHead.point.x} cy={currentDraftValue.pathHead.point.y} r={10*cameraScaleValue} class="finish" />
+			{:else}
+				<rect x={currentDraftValue.pathHead.point.x-10*cameraScaleValue} y={currentDraftValue.pathHead.point.y-10*cameraScaleValue} width={20*cameraScaleValue} height={20*cameraScaleValue} class="finish" />
+			{/if}
+		</g>
+	{/if}
+
+	{#if currentDraftValue.canFinish}
+		<g
+		tabindex="-1"
+		role="button"
+		onkeydown={() => {
+			machine.send({type: 'FINISH_CLOSE'})
+		}}
+		pointer-events="all" onclick={() => {
+			machine.send({type: 'FINISH_CLOSE'})
+		}}>
+			{#if currentDraftValue.pathRoot.front || currentDraftValue.pathRoot.back}
+				<circle cx={currentDraftValue.pathRoot.point.x} cy={currentDraftValue.pathRoot.point.y} r={10*cameraScaleValue} class="close" />
+			{:else}
+				<rect x={currentDraftValue.pathRoot.point.x-10*cameraScaleValue} y={currentDraftValue.pathRoot.point.y-10*cameraScaleValue} width={20*cameraScaleValue} height={20*cameraScaleValue} class="close" />
+			{/if}
+		</g>
+	{/if}
+
+	{#if currentDraftValue.pathNeck}
+		<g
+		tabindex="-1"
+		role="button"
+		onkeydown={() => {
+			machine.send({type: 'FINISH_CLOSE'})
+		}}
+		pointer-events="all" onclick={() => {
+			machine.send({type: 'POP'})
+		}}>
+			{#if currentDraftValue.pathNeck.front || currentDraftValue.pathNeck.back}
+				<circle cx={currentDraftValue.pathNeck.point.x} cy={currentDraftValue.pathNeck.point.y} r={10*cameraScaleValue} class="back" />
+			{:else}
+				<rect x={currentDraftValue.pathNeck.point.x-10*cameraScaleValue} y={currentDraftValue.pathNeck.point.y-10*cameraScaleValue} width={20*cameraScaleValue} height={20*cameraScaleValue} class="back" />
+			{/if}
+		</g>
+	{/if}
 
 </g>
 
@@ -446,6 +581,90 @@
 		stroke-width: 1px;
 		stroke-dasharray: 2 2;
 		vector-effect: non-scaling-stroke;
+	}
+
+	.finish {
+		fill: #33cc77;
+		stroke: transparent;
+		stroke-width: 20px;
+		vector-effect: non-scaling-stroke;
+		cursor: pointer;
+	}
+
+
+	.finish:hover {
+		fill: #33ffaa;
+	}
+
+	.close {
+		fill: #3377ff;
+		stroke: #fff0;
+		stroke-width: 20px;
+		vector-effect: non-scaling-stroke;
+		cursor: pointer;
+		-webkit-tap-highlight-color: transparent;
+		-webkit-touch-callout: none;
+		-webkit-user-select: none;
+		-khtml-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+		user-select: none;
+		touch-action: none;
+	}
+
+	.close:hover {
+		fill: #7799ff;
+	}
+
+	.back {
+		fill: #ff7777;
+		stroke: #fff0;
+		stroke-width: 20px;
+		vector-effect: non-scaling-stroke;
+		cursor: pointer;
+		-webkit-tap-highlight-color: transparent;
+		-webkit-touch-callout: none;
+		-webkit-user-select: none;
+		-khtml-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+		user-select: none;
+		touch-action: none;
+	}
+
+	.back:hover {
+		fill: #ff9999;
+	}
+
+	.detach {
+		display: none;
+		fill: #ffdd77;
+		stroke: #fff0;
+		stroke-width: 20px;
+		vector-effect: non-scaling-stroke;
+		cursor: pointer;
+		-webkit-tap-highlight-color: transparent;
+		-webkit-touch-callout: none;
+		-webkit-user-select: none;
+		-khtml-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+		user-select: none;
+		touch-action: none;
+	}
+
+	.detach:hover {
+		fill: #ffdd99;
+	}
+
+	.detach.active {
+		fill: #eeaa44;
+	}
+
+	@media(pointer: coarse) {
+		.detach {
+			display: initial;
+		}
 	}
 
 
