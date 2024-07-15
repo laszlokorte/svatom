@@ -82,10 +82,12 @@
 	import Pan from "./tools/Pan.svelte";
 	import Rotate from "./tools/Rotate.svelte";
 	import Zoom from "./tools/Zoom.svelte";
+	import Dropper from "./tools/Dropper.svelte";
 
 	const svgElement = atom(undefined);
 	const bitmapCanvas = atom(undefined);
 	const cameraTow = atom(undefined);
+	const dragging = atom(false);
 	let currentToolElement = atom(undefined);
 
 	const debugFrames = atom(false);
@@ -1101,12 +1103,14 @@
 			L.setter((newScroll, old) => ({
 				x:
 					(newScroll.atMinX && old.x < newScroll.x) ||
-					(newScroll.atMaxX && old.x > newScroll.x)
+					(newScroll.atMaxX && old.x > newScroll.x) ||
+					dragging.value
 						? old.x
 						: newScroll.x,
 				y:
 					(newScroll.atMinY && old.y < newScroll.y) ||
-					(newScroll.atMaxY && old.y > newScroll.y)
+					(newScroll.atMaxY && old.y > newScroll.y) ||
+					dragging.value
 						? old.y
 						: newScroll.y,
 			})),
@@ -1732,27 +1736,36 @@
 						<Origin {rotationTransform} {cameraScale} />
 					</g>
 
-					<svelte:component
-						this={tools[tool.value].component}
-						bind:this={currentToolElement.value}
-						{...tools[tool.value].parameters}
-					></svelte:component>
-
-					<Ruler
+					<Dropper
 						{frameBoxPath}
-						{frameBoxObject}
-						{rotationTransform}
+						{newText}
+						{clientToCanvas}
 						{cameraScale}
-					/>
+						{newNode}
+						{dragging}
+					>
+						<svelte:component
+							this={tools[tool.value].component}
+							bind:this={currentToolElement.value}
+							{...tools[tool.value].parameters}
+						></svelte:component>
 
-					<ShowAlert
-						{alerts}
-						{frameBoxObject}
-						{rotationTransform}
-						{cameraOrientation}
-						{cameraScale}
-						{cameraFocus}
-					/>
+						<Ruler
+							{frameBoxPath}
+							{frameBoxObject}
+							{rotationTransform}
+							{cameraScale}
+						/>
+
+						<ShowAlert
+							{alerts}
+							{frameBoxObject}
+							{rotationTransform}
+							{cameraOrientation}
+							{cameraScale}
+							{cameraFocus}
+						/>
+					</Dropper>
 				</Navigator>
 			</svg>
 			<!-- 
@@ -1775,6 +1788,48 @@
 				/>
 			</div>
 		</Scroller>
+	</div>
+
+	<div class="template-bar">
+		<div
+			class="drag-template"
+			draggable="true"
+			ondragstart={(evt) => {
+				evt.dataTransfer.items.add(JSON.stringify({}), "x-custom/node");
+				evt.dataTransfer.effectAllowed = "copy";
+			}}
+		>
+			<svg viewBox="-50 -50 100 100">
+				<circle
+					cx="0"
+					cy="0"
+					r="40"
+					fill="#cc3300"
+					stroke="#bb2200"
+					stroke-width="7px"
+				></circle>
+			</svg>
+		</div>
+		<div
+			class="drag-template"
+			draggable="true"
+			ondragstart={(evt) => {
+				evt.dataTransfer.items.add("T", "text/plain");
+				evt.dataTransfer.effectAllowed = "copy";
+			}}
+		>
+			<svg viewBox="-50 -50 100 100">
+				<text
+					font-size="100"
+					x="0"
+					y="0"
+					fill="#333"
+					dominant-baseline="central"
+					text-anchor="middle"
+					font-family="sans-serif">T</text
+				>
+			</svg>
+		</div>
 	</div>
 
 	{#if debugFrames.value}
@@ -2192,5 +2247,14 @@
 		user-select: none;
 		-webkit-user-select: none;
 		touch-action: pan-x pan-y;
+	}
+
+	.template-bar {
+		display: flex;
+	}
+
+	.drag-template {
+		width: 3em;
+		height: 3em;
 	}
 </style>

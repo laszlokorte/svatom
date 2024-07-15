@@ -529,12 +529,12 @@ export function bindScroll(node, someAtom) {
 			const oldX = R.clamp(0, scrollMaxX, node.scrollLeft)
 			const oldY = R.clamp(0, scrollMaxY, node.scrollTop)
 
-
-			if(oldX != newX) {
-				node.scrollLeft = newX;
-			}
-			if(oldY != newY) {
-				node.scrollTop = newY
+			if(oldX != newX | oldY != newY) {
+				node.scrollTo({
+					left: newX,
+					top: newY,
+					behavior: "instant",
+				})
 			}
 		})
 	});
@@ -696,6 +696,7 @@ export function disableTouchEventsIf(node, atom) {
 export function disableEventIf(node, {eventType, cond}) {
 	return activeEvent(node, {eventType, fn: (evt) => {
 		if (cond.value) {
+			console.log("x")
 			evt.preventDefault();
 		}
 	}})

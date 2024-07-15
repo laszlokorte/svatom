@@ -128,6 +128,7 @@
         -webkit-user-modify: none;
         -webkit-highlight: none;
 		user-select: none;
+		scroll-behavior: smooth;
 	}
 
 	.overscroll-enabled {
