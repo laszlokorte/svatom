@@ -88,6 +88,10 @@
 	const plotLines = view(
 		({ plots, worldQuad, cameraScale }) => {
 			const quad = worldQuad;
+			const longestDist = Math.hypot(
+				quad.a.x - quad.c.x,
+				quad.a.y - quad.c.y,
+			);
 
 			return R.map((p) => {
 				const fn = Function(
@@ -147,15 +151,25 @@
 									(y - p.start.y) * sin) /
 								p.size.x;
 							const fVal = fn(fx);
-							return isFinite(fVal) && !isNaN(fVal)
-								? {
-										x: x + dx2 * fVal,
-										y: y + dy2 * fVal,
-										segment: p.poles
-											? p.poles.findIndex((v) => v < fx)
-											: -Infinity,
-									}
-								: null;
+							if (isNaN(fVal)) {
+								return null;
+							}
+							if (!isFinite(fVal)) {
+								console.log(fVal);
+							}
+							const clamped = R.clamp(
+								-longestDist,
+								longestDist,
+								fVal,
+							);
+
+							return {
+								x: x + dx2 * clamped,
+								y: y + dy2 * clamped,
+								segment: p.poles
+									? p.poles.findIndex((v) => v < fx)
+									: -Infinity,
+							};
 						}, samplePoints),
 					),
 				];

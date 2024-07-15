@@ -19,6 +19,7 @@
 		newGuide,
 		frameBoxObject,
 		cameraScale,
+		cameraOrientation,
 	} = $props();
 
 	const guide = atom(undefined);
@@ -154,7 +155,35 @@
 		if (!evt.isPrimary) {
 			return;
 		}
-		guideEnd.value = clientToCanvas(evt.clientX, evt.clientY);
+
+		if (!isActive.value) {
+			return;
+		}
+
+		const target = clientToCanvas(evt.clientX, evt.clientY);
+		const start = guideStart.value;
+
+		const dx = target.x - start.x;
+		const dy = target.y - start.y;
+
+		const len = Math.hypot(dx, dy);
+		const angle = Math.atan2(dy, dx);
+
+		const snapCount = evt.ctrlKey ? 18 : 4;
+		const snappedAngle = evt.shiftKey
+			? (Math.round(
+					(angle / Math.PI + cameraOrientation.value / 180) *
+						snapCount,
+				) *
+					Math.PI) /
+					snapCount -
+				(cameraOrientation.value / 180) * Math.PI
+			: angle;
+
+		guideEnd.value = {
+			x: start.x + Math.cos(snappedAngle) * len,
+			y: start.y + Math.sin(snappedAngle) * len,
+		};
 	}}
 	onpointerup={(evt) => {
 		if (!evt.isPrimary) {

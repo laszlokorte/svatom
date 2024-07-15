@@ -15,6 +15,37 @@
 
 	let seqNumber = 0;
 
+	const examplesFns = [
+		{
+			fn: ["x", "Math.cos(x * Math.PI * 2)"],
+			poles: [],
+		},
+		{
+			fn: ["x", "Math.sin(x * Math.PI * 2)"],
+			poles: [],
+		},
+		{
+			fn: ["x", "Math.pow(x * Math.PI * 2, 2)"],
+			poles: [],
+		},
+		{
+			fn: ["x", "Math.pow(x * Math.PI * 2, 3)"],
+			poles: [],
+		},
+		{
+			fn: ["x", "Math.exp(x * Math.PI * 2)"],
+			poles: [],
+		},
+		{
+			fn: ["x", "Math.log(x * Math.PI * 2)"],
+			poles: [0],
+		},
+		{
+			fn: ["x", "1/(x * Math.PI * 2)"],
+			poles: [0],
+		},
+	];
+
 	const plot = atom(undefined);
 
 	const plotStart = view(
@@ -109,13 +140,15 @@
 		if (!isActive.value) {
 			return;
 		}
-		seqNumber++;
-		newPlot.value = {
-			...plot.value,
-			fn: ["x", "Math.cos(x * Math.PI * 2)"],
-			color: `hsl(${180 + ((seqNumber * 1.6180339887499) % 1) * 360}, 40%, 60%)`,
-		};
-		isActive.value = false;
+		if (plotSize.value.x != 0 && plotSize.value.y != 0) {
+			newPlot.value = {
+				...plot.value,
+				...examplesFns[seqNumber % examplesFns.length],
+				color: `hsl(${180 + ((seqNumber * 1.6180339887499) % 1) * 360}, 40%, 60%)`,
+			};
+			seqNumber++;
+			isActive.value = false;
+		}
 	}}
 	onpointercancel={(evt) => {
 		if (!evt.isPrimary) {

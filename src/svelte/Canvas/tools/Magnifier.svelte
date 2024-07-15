@@ -8,7 +8,7 @@
 		frameBoxPath,
 		clientToCanvas,
 		rotationTransform,
-		rotationTransformFunction,
+		cameraRotationLens,
 		cameraOrientation,
 		zoomDelta,
 		zoomFrame,
@@ -48,21 +48,21 @@
 	);
 
 	const magnifierFramePath = read(
-		L.reread(({ frame, b, cos, sin, t }) => {
+		L.reread(({ frame, b, cos, sin }) => {
 			if (b && b.start && b.size) {
 				const h = cos * b.size.x - sin * b.size.y;
 				const v = sin * b.size.x + cos * b.size.y;
 
-				const A = L.get(["start", t], b);
-				const B = L.get(t, {
+				const A = L.get(["start", cameraRotationLens], b);
+				const B = L.get(cameraRotationLens, {
 					x: b.start.x + cos * b.size.x,
 					y: b.start.y + sin * b.size.x,
 				}); // h
-				const C = L.get(t, {
+				const C = L.get(cameraRotationLens, {
 					x: b.start.x + cos * b.size.x - sin * b.size.y,
 					y: b.start.y + sin * b.size.x + cos * b.size.y,
 				}); //h v
-				const D = L.get(t, {
+				const D = L.get(cameraRotationLens, {
 					x: b.start.x - sin * b.size.y,
 					y: b.start.y + cos * b.size.y,
 				}); // v
@@ -80,7 +80,6 @@
 			b: magnifierFrame,
 			sin: magnifierFrameAngleSin,
 			cos: magnifierFrameAngleCos,
-			t: rotationTransformFunction,
 		}),
 	);
 

@@ -278,36 +278,33 @@
 	);
 
 	const rotationTransform = read(cameraRotationTransformLens, camera);
-	const rotationTransformFunction = read(
-		L.reread((c) =>
-			L.iso(
-				({ x, y }) => {
-					const cos = Math.cos((-c.focus.w / 180) * Math.PI);
-					const sin = Math.sin((-c.focus.w / 180) * Math.PI);
+	const cameraRotationLens = L.iso(
+		({ x, y }) => {
+			const c = camera.value;
+			const cos = Math.cos((-c.focus.w / 180) * Math.PI);
+			const sin = Math.sin((-c.focus.w / 180) * Math.PI);
 
-					const dx = x - c.focus.x;
-					const dy = y - c.focus.y;
+			const dx = x - c.focus.x;
+			const dy = y - c.focus.y;
 
-					return {
-						x: c.focus.x + dx * cos + dy * sin,
-						y: c.focus.y + dx * -sin + dy * cos,
-					};
-				},
-				({ x, y }) => {
-					const cos = Math.cos((c.focus.w / 180) * Math.PI);
-					const sin = Math.sin((c.focus.w / 180) * Math.PI);
+			return {
+				x: c.focus.x + dx * cos + dy * sin,
+				y: c.focus.y + dx * -sin + dy * cos,
+			};
+		},
+		({ x, y }) => {
+			const c = camera.value;
+			const cos = Math.cos((c.focus.w / 180) * Math.PI);
+			const sin = Math.sin((c.focus.w / 180) * Math.PI);
 
-					const dx = x - c.focus.x;
-					const dy = y - c.focus.y;
+			const dx = x - c.focus.x;
+			const dy = y - c.focus.y;
 
-					return {
-						x: c.focus.x + dx * cos + dy * sin,
-						y: c.focus.y + dx * -sin + dy * cos,
-					};
-				},
-			),
-		),
-		camera,
+			return {
+				x: c.focus.x + dx * cos + dy * sin,
+				y: c.focus.y + dx * -sin + dy * cos,
+			};
+		},
 	);
 
 	const cameraScaleLens = L.reread((c) => Math.exp(-c.focus.z));
@@ -858,7 +855,7 @@
 				zoomDelta,
 				zoomFrame,
 				rotationTransform,
-				rotationTransformFunction,
+				cameraRotationLens,
 				cameraOrientation,
 				cameraScale,
 			},
@@ -873,6 +870,7 @@
 				frameBoxObject,
 				newGuide,
 				cameraScale,
+				cameraOrientation,
 			},
 		},
 		axis: {
