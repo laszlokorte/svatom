@@ -28,11 +28,15 @@ export function fsm(machineDef) {
 		},
 
 		send(evt) {
-			machineActor.send(evt)
+			return machineActor.send(evt)
 		},
 
 		on(event, listener) {
-			machineActor.on(event, listener)
+			return machineActor.on(event, listener)
+		},
+
+		can(event) {
+			return machineState.value.can(event)
 		},
 
 		dispose() {

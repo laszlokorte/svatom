@@ -112,7 +112,7 @@
 		seqNumber++;
 		newPlot.value = {
 			...plot.value,
-			fn: (x) => Math.cos(x * Math.PI * 2),
+			fn: ["x", "Math.cos(x * Math.PI * 2)"],
 			color: `hsl(${180 + ((seqNumber * 1.6180339887499) % 1) * 360}, 40%, 60%)`,
 		};
 		isActive.value = false;

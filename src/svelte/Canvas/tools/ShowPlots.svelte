@@ -85,15 +85,16 @@
 
 	const worldQuad = read("worldSpace", frameBoxObject);
 
-	function fn(x) {
-		return Math.cos(x * Math.PI * 2);
-	}
-
 	const plotLines = view(
 		({ plots, worldQuad, cameraScale }) => {
 			const quad = worldQuad;
 
 			return R.map((p) => {
+				const fn = Function(
+					...p.fn.slice(0, p.fn.length - 1),
+					"return " + p.fn[p.fn.length - 1],
+				);
+
 				const cos = Math.cos((-p.angle / 180) * Math.PI);
 				const sin = Math.sin((-p.angle / 180) * Math.PI);
 				const sizeAbs = Math.hypot(p.size.x, p.size.y);
