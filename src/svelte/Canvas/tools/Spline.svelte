@@ -876,7 +876,7 @@
 	.finish {
 		fill: #33cc77;
 		stroke: #0000;
-		stroke-width: 3em;
+		stroke-width: 3px;
 		vector-effect: non-scaling-stroke;
 		cursor: pointer;
 	}
@@ -900,14 +900,14 @@
 	.close {
 		fill: #3377ff;
 		stroke: #0000;
-		stroke-width: 3em;
+		stroke-width: 3px;
 		vector-effect: non-scaling-stroke;
 		cursor: pointer;
 	}
 	.back {
 		fill: #ff7777;
 		stroke: #0000;
-		stroke-width: 3em;
+		stroke-width: 3px;
 		vector-effect: non-scaling-stroke;
 		cursor: pointer;
 		-webkit-tap-highlight-color: transparent;
@@ -916,7 +916,7 @@
 		display: none;
 		fill: #ffdd77;
 		stroke: #0000;
-		stroke-width: 3em;
+		stroke-width: 3px;
 		vector-effect: non-scaling-stroke;
 		cursor: pointer;
 		-webkit-tap-highlight-color: transparent;
