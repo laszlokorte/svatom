@@ -4,7 +4,7 @@
 	import * as U from "../../utils";
 	import * as C from "../../combinators";
 	import { atom, view, read } from "../../svatom.svelte.js";
-	const {children, frameBoxPath, newText, clientToCanvas, cameraScale, newNode, dragging = atom(false)} = $props()
+	const {children, frameBoxPath, newText, clientToCanvas, cameraScale, cameraOrientation, newNode, newShape, dragging = atom(false)} = $props()
 
 	const onDragOver = (evt) => {
 		if(evt.dataTransfer.items.length < 1) {
@@ -52,6 +52,22 @@
 						x: position.x,
 						y: position.y,
 					}
+				})
+			} else if(item.type === 'x-custom/shape') {
+				item.getAsString((s) => {
+					const n = JSON.parse(s)
+					const box = n.box.split(" ")
+					newShape.value = {
+						placement: {
+							start: {x: position.x + box[0]*cameraScale.value/2, y: position.y + box[1]*cameraScale.value/2},
+							size: {x: box[2]*cameraScale.value/2, y: box[3]*cameraScale.value/2},
+							angle: -cameraOrientation.value,
+						},
+						content: {
+							box: n.box,
+							paths: n.paths,
+						},
+					};
 				})
 			} else if(item.kind === 'string') {
 				item.getAsString((s) => {
