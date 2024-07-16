@@ -129,11 +129,28 @@ export function rayInsideQuad(angle, dist, quad) {
 		{from: quad.c, to: quad.d},
 		{from: quad.d, to: quad.a},
 	];
-	const [intersectionA, intersectionB] = G.take(2,
-		G.reject(R.isNil, G.map(({from, to}) => RayToLineSegment(supX, supY, dirX, dirY, from, to), sides)))
-	;
 
-	return (intersectionA && intersectionB) ? ({a: intersectionA, b: intersectionB/*, sup: {x: supX, y:supY, dx: dirX, dy: dirY}*/}) : undefined
+	for(let i=0;i<4;i++) {
+		const interA = RayToLineSegment(supX, supY, dirX, dirY, sides[i].from, sides[i].to)
+		if(interA) {
+			for(let j=i+1;j<4;j++) {
+				const interB = RayToLineSegment(supX, supY, dirX, dirY, sides[j].from, sides[j].to)
+				if(interB) {
+					return {a: interA, b: interB}
+				}
+			}
+
+			return undefined
+		}
+	}
+
+	return undefined;
+
+	// const [intersectionA, intersectionB] = G.take(2,
+	// 	G.reject(R.isNil, G.map(({from, to}) => RayToLineSegment(supX, supY, dirX, dirY, from, to), sides)))
+	// ;
+
+	// return (intersectionA && intersectionB) ? ({a: intersectionA, b: intersectionB/*, sup: {x: supX, y:supY, dx: dirX, dy: dirY}*/}) : undefined
 };
 
 

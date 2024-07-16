@@ -39,32 +39,57 @@
 			const baseDistanceY =
 				Math.floor(camCenterY / scaledDistance) * scaledDistance;
 
-			const rays = G.reject(
-				R.isNil,
-				G.concat(
-					G.map(
-						(dist) => Geo.rayInsideQuad(Math.PI, dist, rect),
-						G.map(
-							(i) => -baseDistanceY + i * scaledDistance,
-							G.range(-range, range, 1, true),
-						),
-					),
-					G.map(
-						(dist) => Geo.rayInsideQuad(Math.PI / 2, dist, rect),
-						G.map(
-							(i) => -baseDistanceX + i * scaledDistance,
-							G.range(-range, range, 1, true),
-						),
-					),
-				),
-			);
+			// const rays = G.reject(
+			// 	R.isNil,
+			// 	G.concat(
+			// 		G.map(
+			// 			(dist) => Geo.rayInsideQuad(Math.PI, dist, rect),
+			// 			G.map(
+			// 				(i) => -baseDistanceY + i * scaledDistance,
+			// 				G.range(-range, range, 1, true),
+			// 			),
+			// 		),
+			// 		G.map(
+			// 			(dist) => Geo.rayInsideQuad(Math.PI / 2, dist, rect),
+			// 			G.map(
+			// 				(i) => -baseDistanceX + i * scaledDistance,
+			// 				G.range(-range, range, 1, true),
+			// 			),
+			// 		),
+			// 	),
+			// );
 
-			const path = G.reduce(
-				(acc, { a, b }) =>
-					U.formattedNumbers`${acc}M${a.x},${a.y}L${b.x},${b.y}`,
-				"",
-				rays,
-			);
+			// const path = G.reduce(
+			// 	(acc, { a, b }) =>
+			// 		U.formattedNumbers`${acc}M${a.x},${a.y}L${b.x},${b.y}`,
+			// 	"",
+			// 	rays,
+			// );
+
+			let path = "";
+
+			for (let i = -range; i < range; i++) {
+				{
+					const dist = -baseDistanceY + i * scaledDistance;
+					const raySegment = Geo.rayInsideQuad(Math.PI, dist, rect);
+
+					if (raySegment) {
+						path += U.formattedNumbers`M${raySegment.a.x},${raySegment.a.y}L${raySegment.b.x},${raySegment.b.y}`;
+					}
+				}
+				{
+					const dist = -baseDistanceX + i * scaledDistance;
+					const raySegment = Geo.rayInsideQuad(
+						Math.PI / 2,
+						dist,
+						rect,
+					);
+
+					if (raySegment) {
+						path += U.formattedNumbers`M${raySegment.a.x},${raySegment.a.y}L${raySegment.b.x},${raySegment.b.y}`;
+					}
+				}
+			}
 
 			return path;
 		};
