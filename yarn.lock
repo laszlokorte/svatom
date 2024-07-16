@@ -350,7 +350,7 @@ fsevents@~2.3.2, fsevents@~2.3.3:
   resolved "https://registry.yarnpkg.com/fsevents/-/fsevents-2.3.3.tgz#cac6407785d03675a2a5e1a5305c697b347d90d6"
   integrity sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==
 
-infestines@^0.4.11:
+infestines@^0.4.10, infestines@^0.4.11:
   version "0.4.11"
   resolved "https://registry.yarnpkg.com/infestines/-/infestines-0.4.11.tgz#1d0d164ff1831ffcbafbd02f53bc60140dd52197"
   integrity sha512-09nHagZLOYUaXKHqdV+nxEaYaD0hRlKyhQMhgTMwfbvWpMkowXf4XLZzAkLq6Y90wZ7Wqm6aMoL2trBsNNKGeg==
@@ -389,7 +389,24 @@ nanoid@^3.3.7:
   resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.3.7.tgz#d0c301a691bc8d54efa0a2226ccf3fe2fd656bd8"
   integrity sha512-eSRppjcPIatRIMC1U6UngP8XFcz8MQWGQdt1MTBQ7NaAmvXDfvNxbvWV3x2y6CdEUciCSsDHDQZbhYaB8QEo2g==
 
-partial.lenses@^14.17.0:
+partial.lenses.history@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/partial.lenses.history/-/partial.lenses.history-1.2.0.tgz#10b04433b62097466a010b0dd699a8748cc08103"
+  integrity sha512-T8QCHShFcs5zDveYTpJs7bt+K4gZys26ifX6j1DWdhzVVaFm3OttLHLP7rtljAxTHnwvptiX0uZHugVjDFKUQQ==
+  dependencies:
+    infestines "^0.4.10"
+    partial.lenses ">=2.2.0"
+    partial.lenses.validation ">=1.0.0 <3.0.0"
+
+"partial.lenses.validation@>=1.0.0 <3.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/partial.lenses.validation/-/partial.lenses.validation-2.0.0.tgz#9b518b58a9c2281f375d5e4a5b63464daa3213a2"
+  integrity sha512-NBZhmrunQWc4Ih5pJGYPHCEJfjIITPEkYn0Z6YB8qmW0iN4ZeqN0eZTWAPAH8MxjsEGx3G+8xnTMsEHbzy0k/A==
+  dependencies:
+    infestines "^0.4.10"
+    partial.lenses "^14.0.0"
+
+partial.lenses@>=2.2.0, partial.lenses@^14.0.0, partial.lenses@^14.17.0:
   version "14.17.0"
   resolved "https://registry.yarnpkg.com/partial.lenses/-/partial.lenses-14.17.0.tgz#5a57590668d5dfda6d2f7ac550068c1607e00eff"
   integrity sha512-Iq+wDw5b5iwmn7b9MO+//buOqF0YoAC2Hsj+HoeG88BGeT3NkL/YwHNGDrySyX7xZSqj0LFEWwfgGSj4cSFmXQ==

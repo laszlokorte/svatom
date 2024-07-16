@@ -701,3 +701,31 @@ export function disableEventIf(node, {eventType, cond}) {
 		}
 	}})
 }
+
+export function onPointerClick(node, fn) {
+	let wasDown = false
+	const onDown = (evt) => {
+		evt.stopPropagation()
+		evt.stopImmediatePropagation()
+		wasDown = true
+	}
+	const onEnd = (evt) => {
+		wasDown = false
+	}
+	const onClick = (evt) => {
+		if(wasDown) {
+			fn(evt)
+			wasDown = false
+		}
+	}
+
+	node.addEventListener('pointerdown', onDown)
+	node.addEventListener('click', onClick)
+	node.addEventListener('onpointercancel', onEnd)
+
+	return () => {
+		node.removeEventListener('onpointercancel', onEnd)
+		node.removeEventListener('click', onClick)
+		node.removeEventListener('pointerdown', onDown)
+	}
+}

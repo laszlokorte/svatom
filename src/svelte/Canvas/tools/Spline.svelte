@@ -3,7 +3,14 @@
 	import * as R from "ramda";
 	import * as U from "../../utils";
 	import * as C from "../../combinators";
-	import { atom, view, read, combine, fsm } from "../../svatom.svelte.js";
+	import {
+		atom,
+		view,
+		read,
+		combine,
+		fsm,
+		onPointerClick,
+	} from "../../svatom.svelte.js";
 	import { createMachine, assign, emit } from "xstate";
 
 	const {
@@ -92,7 +99,7 @@
 							detached: false,
 						}),
 					},
-					TOOGLE_ATTACHMENT: {
+					TOGGLE_ATTACHMENT: {
 						actions: assign({
 							detached: ({ context: { detached } }) => !detached,
 						}),
@@ -149,7 +156,7 @@
 							detached: false,
 						}),
 					},
-					TOOGLE_ATTACHMENT: {
+					TOGGLE_ATTACHMENT: {
 						actions: assign({
 							detached: ({ context: { detached } }) => !detached,
 						}),
@@ -158,9 +165,6 @@
 						target: "EMPTY",
 					},
 					ESCAPE: {
-						target: "IDLE",
-					},
-					POP: {
 						target: "IDLE",
 					},
 					INTERUPT: {
@@ -225,7 +229,7 @@
 							detached: false,
 						}),
 					},
-					TOOGLE_ATTACHMENT: {
+					TOGGLE_ATTACHMENT: {
 						target: "PRESSED",
 						actions: assign({
 							draftBackHandle: ({
@@ -251,9 +255,6 @@
 					},
 					ESCAPE: {
 						target: "INITIAL_PRESSED",
-					},
-					POP: {
-						target: "IDLE",
 					},
 					INTERUPT: {
 						target: "IDLE",
@@ -374,9 +375,7 @@
 	export const canCancel = read((s) => s != "EMPTY", machine.state);
 </script>
 
-<path
-	class="spline-surface no-highlight"
-	d={frameBoxPath.value}
+<g
 	pointer-events="all"
 	stroke="none"
 	fill="none"
@@ -477,339 +476,323 @@
 
 		machine.send({ type: "INTERUPT" });
 	}}
-/>
+>
+	<path class="spline-surface no-highlight" d={frameBoxPath.value} />
 
-<g transform={rotationTransform.value}>
-	{#if currentDraftValue.bezier}
-		<path
-			class="draft-line"
-			pointer-events="none"
-			fill="none"
-			stroke-width="3px"
-			d={currentDraftValue.bezier}
-			stroke="darkgray"
-		/>
-	{/if}
-
-	{#if currentDraftValue.draftBezier}
-		<path
-			class="draft-line-head"
-			pointer-events="none"
-			fill="none"
-			stroke-width="3px"
-			d={currentDraftValue.draftBezier}
-			stroke="lightgray"
-		/>
-	{/if}
-
-	{#if currentDraftValue.draftPoint}
-		{#if currentDraftValue.draftFrontHandle}
-			<line
-				x1={currentDraftValue.draftPoint.x}
-				y1={currentDraftValue.draftPoint.y}
-				x2={currentDraftValue.draftFrontHandle.x}
-				y2={currentDraftValue.draftFrontHandle.y}
-				class="handle-bar"
+	<g transform={rotationTransform.value}>
+		{#if currentDraftValue.bezier}
+			<path
+				class="draft-line"
 				pointer-events="none"
-			/>
-			<circle
-				cx={currentDraftValue.draftFrontHandle.x}
-				cy={currentDraftValue.draftFrontHandle.y}
-				r={3 * cameraScaleValue}
-				class="handle"
-				pointer-events="none"
+				fill="none"
+				stroke-width="3px"
+				d={currentDraftValue.bezier}
+				stroke="darkgray"
 			/>
 		{/if}
 
-		{#if currentDraftValue.draftBackHandle}
-			<line
-				x1={currentDraftValue.draftPoint.x}
-				y1={currentDraftValue.draftPoint.y}
-				x2={currentDraftValue.draftBackHandle.x}
-				y2={currentDraftValue.draftBackHandle.y}
-				class="handle-bar"
+		{#if currentDraftValue.draftBezier}
+			<path
+				class="draft-line-head"
 				pointer-events="none"
-			/>
-			<circle
-				cx={currentDraftValue.draftBackHandle.x}
-				cy={currentDraftValue.draftBackHandle.y}
-				r={3 * cameraScaleValue}
-				class="handle"
-				pointer-events="none"
+				fill="none"
+				stroke-width="3px"
+				d={currentDraftValue.draftBezier}
+				stroke="lightgray"
 			/>
 		{/if}
 
-		{#if currentDraftValue.draftFrontHandle || currentDraftValue.draftBackHandle}
-			<circle
-				cx={currentDraftValue.draftPoint.x}
-				cy={currentDraftValue.draftPoint.y}
-				r={5 * cameraScaleValue}
-				class="point-hard"
-				pointer-events="none"
-			/>
-		{:else}
-			<rect
-				x={currentDraftValue.draftPoint.x - 5 * cameraScaleValue}
-				y={currentDraftValue.draftPoint.y - 5 * cameraScaleValue}
-				width={10 * cameraScaleValue}
-				height={10 * cameraScaleValue}
-				class="point-soft"
-				pointer-events="none"
-			/>
-		{/if}
-	{:else if currentDraftValue.pathHead}
-		{#if currentDraftValue.pathHead.front}
-			<line
-				x1={currentDraftValue.pathHead.point.x}
-				y1={currentDraftValue.pathHead.point.y}
-				x2={currentDraftValue.pathHead.front.x}
-				y2={currentDraftValue.pathHead.front.y}
-				class="handle-bar"
-				pointer-events="none"
-			/>
-
-			<circle
-				cx={currentDraftValue.pathHead.front.x}
-				cy={currentDraftValue.pathHead.front.y}
-				r={3 * cameraScaleValue}
-				class="handle"
-				pointer-events="none"
-			/>
-		{/if}
-
-		{#if currentDraftValue.pathHead.back}
-			<line
-				x1={currentDraftValue.pathHead.point.x}
-				y1={currentDraftValue.pathHead.point.y}
-				x2={currentDraftValue.pathHead.back.x}
-				y2={currentDraftValue.pathHead.back.y}
-				class="handle-bar"
-				pointer-events="none"
-			/>
-
-			<circle
-				cx={currentDraftValue.pathHead.back.x}
-				cy={currentDraftValue.pathHead.back.y}
-				r={3 * cameraScaleValue}
-				class="handle"
-				pointer-events="none"
-			/>
-		{/if}
-	{/if}
-
-	{#each currentDraftValue.path as segment, i (i)}
-		{#if segment.point}
-			{#if segment.front || segment.back}
+		{#if currentDraftValue.draftPoint}
+			{#if currentDraftValue.draftFrontHandle}
+				<line
+					x1={currentDraftValue.draftPoint.x}
+					y1={currentDraftValue.draftPoint.y}
+					x2={currentDraftValue.draftFrontHandle.x}
+					y2={currentDraftValue.draftFrontHandle.y}
+					class="handle-bar"
+					pointer-events="none"
+				/>
 				<circle
-					cx={segment.point.x}
-					cy={segment.point.y}
+					cx={currentDraftValue.draftFrontHandle.x}
+					cy={currentDraftValue.draftFrontHandle.y}
+					r={3 * cameraScaleValue}
+					class="handle"
+					pointer-events="none"
+				/>
+			{/if}
+
+			{#if currentDraftValue.draftBackHandle}
+				<line
+					x1={currentDraftValue.draftPoint.x}
+					y1={currentDraftValue.draftPoint.y}
+					x2={currentDraftValue.draftBackHandle.x}
+					y2={currentDraftValue.draftBackHandle.y}
+					class="handle-bar"
+					pointer-events="none"
+				/>
+				<circle
+					cx={currentDraftValue.draftBackHandle.x}
+					cy={currentDraftValue.draftBackHandle.y}
+					r={3 * cameraScaleValue}
+					class="handle"
+					pointer-events="none"
+				/>
+			{/if}
+
+			{#if currentDraftValue.draftFrontHandle || currentDraftValue.draftBackHandle}
+				<circle
+					cx={currentDraftValue.draftPoint.x}
+					cy={currentDraftValue.draftPoint.y}
 					r={5 * cameraScaleValue}
 					class="point-hard"
 					pointer-events="none"
 				/>
 			{:else}
 				<rect
-					x={segment.point.x - 5 * cameraScaleValue}
-					y={segment.point.y - 5 * cameraScaleValue}
+					x={currentDraftValue.draftPoint.x - 5 * cameraScaleValue}
+					y={currentDraftValue.draftPoint.y - 5 * cameraScaleValue}
 					width={10 * cameraScaleValue}
 					height={10 * cameraScaleValue}
 					class="point-soft"
 					pointer-events="none"
 				/>
 			{/if}
-		{/if}
-	{/each}
+		{:else if currentDraftValue.pathHead}
+			{#if currentDraftValue.pathHead.front}
+				<line
+					x1={currentDraftValue.pathHead.point.x}
+					y1={currentDraftValue.pathHead.point.y}
+					x2={currentDraftValue.pathHead.front.x}
+					y2={currentDraftValue.pathHead.front.y}
+					class="handle-bar"
+					pointer-events="none"
+				/>
 
-	{#key "pop"}
-		{#if currentDraftValue.pathNeck && canAction.pop}
-			<g
-				tabindex="-1"
-				class="no-highlight"
-				role="button"
-				onpointerdown={(evt) => {
-					evt.stopPropagation();
-					evt.stopImmediatePropagation();
-					evt.preventDefault();
-				}}
-				onkeydown={() => {
-					machine.send({ type: "POP" });
-				}}
-				pointer-events="all"
-				onclick={() => {
-					machine.send({ type: "POP" });
-				}}
-			>
-				{#if currentDraftValue.pathNeck.front || currentDraftValue.pathNeck.back}
+				<circle
+					cx={currentDraftValue.pathHead.front.x}
+					cy={currentDraftValue.pathHead.front.y}
+					r={3 * cameraScaleValue}
+					class="handle"
+					pointer-events="none"
+				/>
+			{/if}
+
+			{#if currentDraftValue.pathHead.back}
+				<line
+					x1={currentDraftValue.pathHead.point.x}
+					y1={currentDraftValue.pathHead.point.y}
+					x2={currentDraftValue.pathHead.back.x}
+					y2={currentDraftValue.pathHead.back.y}
+					class="handle-bar"
+					pointer-events="none"
+				/>
+
+				<circle
+					cx={currentDraftValue.pathHead.back.x}
+					cy={currentDraftValue.pathHead.back.y}
+					r={3 * cameraScaleValue}
+					class="handle"
+					pointer-events="none"
+				/>
+			{/if}
+		{/if}
+
+		{#each currentDraftValue.path as segment, i (i)}
+			{#if segment.point}
+				{#if segment.front || segment.back}
+					<circle
+						cx={segment.point.x}
+						cy={segment.point.y}
+						r={5 * cameraScaleValue}
+						class="point-hard"
+						pointer-events="none"
+					/>
+				{:else}
+					<rect
+						x={segment.point.x - 5 * cameraScaleValue}
+						y={segment.point.y - 5 * cameraScaleValue}
+						width={10 * cameraScaleValue}
+						height={10 * cameraScaleValue}
+						class="point-soft"
+						pointer-events="none"
+					/>
+				{/if}
+			{/if}
+		{/each}
+
+		{#key "pop"}
+			{#if currentDraftValue.pathNeck && canAction.pop}
+				<g
+					tabindex="-1"
+					class="no-highlight"
+					role="button"
+					onkeydown={() => {
+						machine.send({ type: "POP" });
+					}}
+					pointer-events="all"
+					use:onPointerClick={(evt) => {
+						machine.send({ type: "POP" });
+					}}
+				>
+					{#if currentDraftValue.pathNeck.front || currentDraftValue.pathNeck.back}
+						<circle
+							cx={currentDraftValue.pathNeck.point.x}
+							cy={currentDraftValue.pathNeck.point.y}
+							r={10 * cameraScaleValue}
+							class="back"
+						/>
+					{:else}
+						<rect
+							x={currentDraftValue.pathNeck.point.x -
+								10 * cameraScaleValue}
+							y={currentDraftValue.pathNeck.point.y -
+								10 * cameraScaleValue}
+							width={20 * cameraScaleValue}
+							height={20 * cameraScaleValue}
+							class="back"
+						/>
+					{/if}
 					<circle
 						cx={currentDraftValue.pathNeck.point.x}
 						cy={currentDraftValue.pathNeck.point.y}
-						r={10 * cameraScaleValue}
-						class="back"
+						r={30 * cameraScaleValue}
+						class="touch-padding"
+						fill="none"
+						stroke-width="0"
+						pointer-events="all"
 					/>
-				{:else}
-					<rect
-						x={currentDraftValue.pathNeck.point.x -
-							10 * cameraScaleValue}
-						y={currentDraftValue.pathNeck.point.y -
-							10 * cameraScaleValue}
-						width={20 * cameraScaleValue}
-						height={20 * cameraScaleValue}
-						class="back"
-					/>
-				{/if}
-				<circle
-					cx={currentDraftValue.pathNeck.point.x}
-					cy={currentDraftValue.pathNeck.point.y}
-					r={30 * cameraScaleValue}
-					class="touch-padding"
-					fill="none"
-					stroke-width="0"
-					pointer-events="all"
-				/>
-			</g>
-		{/if}
-	{/key}
+				</g>
+			{/if}
+		{/key}
 
-	{#key "finishOpen"}
-		{#if canAction.finishOpen}
-			<g
-				tabindex="-1"
-				class="no-highlight"
-				role="button"
-				onpointerdown={(evt) => {
-					evt.stopPropagation();
-					evt.stopImmediatePropagation();
-					evt.preventDefault();
-				}}
-				onkeydown={() => {
-					machine.send({ type: "FINISH_OPEN" });
-				}}
-				pointer-events="all"
-				onclick={() => {
-					machine.send({ type: "FINISH_OPEN" });
-				}}
-			>
-				{#if currentDraftValue.pathHead.front || currentDraftValue.pathHead.back}
+		{#key "finishOpen"}
+			{#if canAction.finishOpen}
+				<g
+					tabindex="-1"
+					class="no-highlight"
+					role="button"
+					onkeydown={() => {
+						machine.send({ type: "FINISH_OPEN" });
+					}}
+					pointer-events="all"
+					use:onPointerClick={(evt) => {
+						machine.send({ type: "FINISH_OPEN" });
+					}}
+				>
+					{#if currentDraftValue.pathHead.front || currentDraftValue.pathHead.back}
+						<circle
+							cx={currentDraftValue.pathHead.point.x}
+							cy={currentDraftValue.pathHead.point.y}
+							r={10 * cameraScaleValue}
+							class="finish"
+						/>
+					{:else}
+						<rect
+							x={currentDraftValue.pathHead.point.x -
+								10 * cameraScaleValue}
+							y={currentDraftValue.pathHead.point.y -
+								10 * cameraScaleValue}
+							width={20 * cameraScaleValue}
+							height={20 * cameraScaleValue}
+							class="finish"
+						/>
+					{/if}
 					<circle
 						cx={currentDraftValue.pathHead.point.x}
 						cy={currentDraftValue.pathHead.point.y}
-						r={10 * cameraScaleValue}
-						class="finish"
+						r={30 * cameraScaleValue}
+						class="touch-padding"
+						fill="none"
+						stroke-width="0"
+						pointer-events="all"
 					/>
-				{:else}
-					<rect
-						x={currentDraftValue.pathHead.point.x -
-							10 * cameraScaleValue}
-						y={currentDraftValue.pathHead.point.y -
-							10 * cameraScaleValue}
-						width={20 * cameraScaleValue}
-						height={20 * cameraScaleValue}
-						class="finish"
-					/>
-				{/if}
-				<circle
-					cx={currentDraftValue.pathHead.point.x}
-					cy={currentDraftValue.pathHead.point.y}
-					r={30 * cameraScaleValue}
-					class="touch-padding"
-					fill="none"
-					stroke-width="0"
-					pointer-events="all"
-				/>
-			</g>
-		{/if}
-	{/key}
+				</g>
+			{/if}
+		{/key}
 
-	{#key "finishClose"}
-		{#if canAction.finishClose}
-			<g
-				tabindex="-1"
-				class="no-highlight"
-				role="button"
-				onpointerdown={(evt) => {
-					evt.stopPropagation();
-					evt.stopImmediatePropagation();
-					evt.preventDefault();
-				}}
-				onkeydown={() => {
-					machine.send({ type: "FINISH_CLOSE" });
-				}}
-				pointer-events="all"
-				onclick={() => {
-					machine.send({ type: "FINISH_CLOSE" });
-				}}
-			>
-				{#if currentDraftValue.pathRoot.front || currentDraftValue.pathRoot.back}
+		{#key "finishClose"}
+			{#if canAction.finishClose}
+				<g
+					tabindex="-1"
+					class="no-highlight"
+					role="button"
+					onkeydown={() => {
+						machine.send({ type: "FINISH_CLOSE" });
+					}}
+					pointer-events="all"
+					use:onPointerClick={(evt) => {
+						machine.send({ type: "FINISH_CLOSE" });
+					}}
+				>
+					{#if currentDraftValue.pathRoot.front || currentDraftValue.pathRoot.back}
+						<circle
+							cx={currentDraftValue.pathRoot.point.x}
+							cy={currentDraftValue.pathRoot.point.y}
+							r={10 * cameraScaleValue}
+							class="close"
+						/>
+					{:else}
+						<rect
+							x={currentDraftValue.pathRoot.point.x -
+								10 * cameraScaleValue}
+							y={currentDraftValue.pathRoot.point.y -
+								10 * cameraScaleValue}
+							width={20 * cameraScaleValue}
+							height={20 * cameraScaleValue}
+							class="close"
+						/>
+					{/if}
 					<circle
 						cx={currentDraftValue.pathRoot.point.x}
 						cy={currentDraftValue.pathRoot.point.y}
+						r={30 * cameraScaleValue}
+						class="touch-padding"
+						fill="none"
+						stroke-width="0"
+						pointer-events="all"
+					/>
+				</g>
+			{/if}
+		{/key}
+
+		{#key "atttachment"}
+			{#if currentDraftValue.draftPoint && currentDraftValue.draftBackHandle}
+				<g
+					pointer-events="all"
+					tabindex="-1"
+					class="no-highlight"
+					role="button"
+					use:onPointerClick={(evt) => {
+						machine.send({ type: "TOGGLE_ATTACHMENT" });
+					}}
+					onkeydown={(evt) => {
+						evt.stopPropagation();
+						evt.preventDefault();
+
+						machine.send({ type: "TOGGLE_ATTACHMENT" });
+					}}
+				>
+					<circle
+						cx={currentDraftValue.draftBackHandle.x}
+						cy={currentDraftValue.draftBackHandle.y}
 						r={10 * cameraScaleValue}
-						class="close"
+						class="detach"
+						pointer-events="all"
+						class:active={currentDraftValue.isDetached}
 					/>
-				{:else}
-					<rect
-						x={currentDraftValue.pathRoot.point.x -
-							10 * cameraScaleValue}
-						y={currentDraftValue.pathRoot.point.y -
-							10 * cameraScaleValue}
-						width={20 * cameraScaleValue}
-						height={20 * cameraScaleValue}
-						class="close"
+					<circle
+						cx={currentDraftValue.draftBackHandle.x}
+						cy={currentDraftValue.draftBackHandle.y}
+						r={30 * cameraScaleValue}
+						class="touch-padding"
+						fill="none"
+						stroke-width="0"
+						pointer-events="all"
 					/>
-				{/if}
-				<circle
-					cx={currentDraftValue.pathRoot.point.x}
-					cy={currentDraftValue.pathRoot.point.y}
-					r={30 * cameraScaleValue}
-					class="touch-padding"
-					fill="none"
-					stroke-width="0"
-					pointer-events="all"
-				/>
-			</g>
-		{/if}
-	{/key}
-
-	{#key "atttachment"}
-		{#if currentDraftValue.draftPoint && currentDraftValue.draftBackHandle}
-			<g
-				pointer-events="all"
-				tabindex="-1"
-				class="no-highlight"
-				role="button"
-				onpointerdown={(evt) => {
-					evt.stopPropagation();
-					evt.stopImmediatePropagation();
-					evt.preventDefault();
-					machine.send({ type: "TOOGLE_ATTACHMENT" });
-				}}
-				onkeydown={(evt) => {
-					evt.stopPropagation();
-					evt.preventDefault();
-
-					machine.send({ type: "TOOGLE_ATTACHMENT" });
-				}}
-			>
-				<circle
-					cx={currentDraftValue.draftBackHandle.x}
-					cy={currentDraftValue.draftBackHandle.y}
-					r={10 * cameraScaleValue}
-					class="detach"
-					pointer-events="all"
-					class:active={currentDraftValue.isDetached}
-				/>
-				<circle
-					cx={currentDraftValue.draftBackHandle.x}
-					cy={currentDraftValue.draftBackHandle.y}
-					r={30 * cameraScaleValue}
-					class="touch-padding"
-					fill="none"
-					stroke-width="0"
-					pointer-events="all"
-				/>
-			</g>
-		{/if}
-	{/key}
+				</g>
+			{/if}
+		{/key}
+	</g>
 </g>
 
 <style>

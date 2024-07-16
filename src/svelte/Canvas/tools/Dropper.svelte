@@ -8,6 +8,7 @@
 
 	const onDragOver = (evt) => {
 		if(evt.dataTransfer.items.length < 1) {
+			dragging.value = false
 			return
 		}
 		evt.preventDefault();
@@ -32,13 +33,15 @@
 		evt.preventDefault()	
 		const position = clientToCanvas(evt.clientX, evt.clientY)
 
+		dragging.value = false
+
 		for(let item of evt.dataTransfer.items) {
 			if(item.type === 'text/plain') {
 				item.getAsString((s) => {
 					newText.value = {
 						x: position.x,
 						y: position.y,
-						fontSize: cameraScale.value,
+						fontSize: 2*cameraScale.value,
 						content: s,
 					}
 				})
@@ -52,12 +55,12 @@
 				})
 			} else if(item.kind === 'string') {
 				item.getAsString((s) => {
+					alert("dropped: "+s)
 				})
 			} else if(item.kind === 'file') {
-				
+				alert("dropped file ")
 			}
 		}
-		dragging.value = false
 	}
 </script>
 

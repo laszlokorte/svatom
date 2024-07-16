@@ -1,5 +1,6 @@
 <script>
 	import * as L from "partial.lenses";
+	import * as H from "partial.lenses.history";
 	import * as R from "ramda";
 	import * as Geo from "../geometry";
 	import * as U from "../utils";
@@ -113,34 +114,37 @@
 		current: 0,
 		tabs: [
 			{
-				document: {
-					content: {
-						axis: {
-							start: { x: 0, y: 0 },
-							size: { x: 200, y: -200 },
-							angle: 0,
+				document: H.init(
+					{},
+					{
+						content: {
+							axis: {
+								start: { x: 0, y: 0 },
+								size: { x: 200, y: -200 },
+								angle: 0,
+							},
+							nodes: [
+								{ x: 200, y: 100 },
+								{
+									x: 266,
+									y: -217,
+								},
+								{
+									x: -110,
+									y: -10,
+								},
+							],
+							textes: [
+								{
+									x: 119.35297908638951,
+									y: -70.289311950847,
+									fontSize: 0.8922579558824082,
+									content: "Hello World",
+								},
+							],
 						},
-						nodes: [
-							{ x: 200, y: 100 },
-							{
-								x: 266,
-								y: -217,
-							},
-							{
-								x: -110,
-								y: -10,
-							},
-						],
-						textes: [
-							{
-								x: 119.35297908638951,
-								y: -70.289311950847,
-								fontSize: 0.8922579558824082,
-								content: "Hello World",
-							},
-						],
 					},
-				},
+				),
 				camera: { x: 100, y: -50, z: 0, w: 20 },
 			},
 		],
@@ -433,8 +437,37 @@
 
 	const canvasDocument = view(
 		[
-			L.choose(({ current, docs }) => ["tabs", current, "document"]),
+			L.choose(({ current, docs }) => [
+				"tabs",
+				current,
+				"document",
+				H.present,
+			]),
 			L.valueOr({}),
+		],
+		allTabs,
+	);
+
+	const canvasUndoIndex = view(
+		[
+			L.choose(({ current, docs }) => [
+				"tabs",
+				current,
+				"document",
+				H.undoIndex,
+			]),
+		],
+		allTabs,
+	);
+
+	const canvasRedoIndex = view(
+		[
+			L.choose(({ current, docs }) => [
+				"tabs",
+				current,
+				"document",
+				H.redoIndex,
+			]),
 		],
 		allTabs,
 	);
@@ -1545,6 +1578,25 @@
 	</fieldset>
 
 	<fieldset>
+		<legend>History</legend>
+
+		<button
+			type="button"
+			disabled={canvasUndoIndex.value < 1}
+			onclick={(evt) => {
+				canvasUndoIndex.value--;
+			}}>Undo</button
+		>
+		<button
+			type="button"
+			disabled={canvasRedoIndex.value < 1}
+			onclick={(evt) => {
+				canvasRedoIndex.value--;
+			}}>Redo</button
+		>
+	</fieldset>
+
+	<fieldset>
 		<legend>Tools</legend>
 
 		<div class="tool-bar">
@@ -2254,7 +2306,13 @@
 	}
 
 	.drag-template {
+		touch-action: none;
 		width: 3em;
 		height: 3em;
+		cursor: grab;
+	}
+
+	.drag-template:active {
+		cursor: grabbing;
 	}
 </style>
