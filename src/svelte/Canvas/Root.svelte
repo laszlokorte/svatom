@@ -88,7 +88,6 @@
 	const svgElement = atom(undefined);
 	const bitmapCanvas = atom(undefined);
 	const cameraTow = atom(undefined);
-	const dragging = atom(false);
 	let currentToolElement = atom(undefined);
 
 	const debugFrames = atom(false);
@@ -372,6 +371,7 @@
 	};
 
 	const cameraZoom = view(["focus", "z", numberLens], camera);
+	const cameraZoomMin = atom(-5);
 	const cameraZoomFormatted = view([numberLens], cameraZoom);
 	const cameraAutoPadding = view(["frame", "autoPadding"], camera);
 
@@ -1117,14 +1117,12 @@
 			L.setter((newScroll, old) => ({
 				x:
 					(newScroll.atMinX && old.x < newScroll.x) ||
-					(newScroll.atMaxX && old.x > newScroll.x) ||
-					dragging.value
+					(newScroll.atMaxX && old.x > newScroll.x)
 						? old.x
 						: newScroll.x,
 				y:
 					(newScroll.atMinY && old.y < newScroll.y) ||
-					(newScroll.atMaxY && old.y > newScroll.y) ||
-					dragging.value
+					(newScroll.atMaxY && old.y > newScroll.y)
 						? old.y
 						: newScroll.y,
 			})),
@@ -1648,137 +1646,139 @@
 	</fieldset>
 
 	<div class="prevent-selection">
-		<Scroller
-			allowOverscroll={false}
-			alignment="center"
-			extraScrollPadding={cameraAutoPadding}
-			{scrollPosition}
-			contentSize={scrollContentSize}
-			{scrollWindowSize}
+		<Dropper
+			{frameBoxPath}
+			{newText}
+			{clientToCanvas}
+			{cameraScale}
+			{cameraOrientation}
+			{newNode}
+			{newShape}
 		>
-			<svg
-				class="canvas"
-				bind:this={svgElement.value}
-				viewBox={viewBox.value}
-				preserveAspectRatio={preserveAspectRatio.value}
+			<Scroller
+				allowOverscroll={false}
+				alignment="center"
+				extraScrollPadding={cameraAutoPadding}
+				{scrollPosition}
+				contentSize={scrollContentSize}
+				{scrollWindowSize}
 			>
-				<Navigator
-					{camera}
-					{frameBoxPath}
-					{cameraTow}
-					errorHandler={newAlert}
+				<svg
+					class="canvas"
+					bind:this={svgElement.value}
+					viewBox={viewBox.value}
+					preserveAspectRatio={preserveAspectRatio.value}
 				>
-					<g class:hidden={!debugFrames.value} pointer-events="none">
-						<path
-							d={viewBoxPath.value}
-							class="view-box"
-							stroke-opacity="0.5"
-							stroke="magenta"
-							vector-effect="non-scaling-stroke"
-							stroke-width="8px"
-							fill="#ddffee"
-						/>
-						<path
-							d={frameBoxPath.value}
-							stroke="#ff88cc"
-							fill="none"
-							vector-effect="non-scaling-stroke"
-							stroke-width="14px"
-							shape-rendering="crispEdges"
-						/>
-					</g>
-
-					<g pointer-events="none">
-						<Bounds
-							show={showBounds}
-							{extension}
-							{cameraBounds}
-							{rotationTransform}
-							{cameraScale}
-						/>
-						<Grid
-							{frameBoxPath}
-							{frameBoxObject}
-							{rotationTransform}
-							{cameraScale}
-							{gridDistance}
-						/>
-						<Edges
-							{nodes}
-							{edges}
-							{rotationTransform}
-							{cameraScale}
-						/>
-						<Nodes {nodes} {rotationTransform} {cameraScale} />
-
-						<Drawings
-							{drawings}
-							{rotationTransform}
-							{cameraScale}
-						/>
-
-						<ShowSplines
-							{splines}
-							{rotationTransform}
-							{cameraScale}
-						/>
-
-						<TextBoxes
-							{textBoxes}
-							{clientToCanvas}
-							{frameBoxPath}
-							{rotationTransform}
-							{cameraScale}
-							{cameraOrientation}
-						/>
-
-						<TextLines
-							{textes}
-							{clientToCanvas}
-							{frameBoxPath}
-							{rotationTransform}
-							{cameraScale}
-							{cameraOrientation}
-						/>
-
-						<Guides
-							{guides}
-							{frameBoxObject}
-							{rotationTransform}
-							{cameraScale}
-						/>
-						<Shapes
-							{shapes}
-							{frameBoxObject}
-							{rotationTransform}
-							{cameraScale}
-						/>
-						<ShowAxis
-							{axis}
-							{frameBoxObject}
-							{rotationTransform}
-							{cameraScale}
-						/>
-						<ShowPlots
-							{plots}
-							{frameBoxObject}
-							{rotationTransform}
-							{cameraScale}
-						/>
-
-						<Origin {rotationTransform} {cameraScale} />
-					</g>
-
-					<Dropper
+					<Navigator
+						{camera}
 						{frameBoxPath}
-						{newText}
-						{clientToCanvas}
-						{cameraScale}
-						{cameraOrientation}
-						{newNode}
-						{newShape}
-						{dragging}
+						{cameraTow}
+						errorHandler={newAlert}
 					>
+						<g
+							class:hidden={!debugFrames.value}
+							pointer-events="none"
+						>
+							<path
+								d={viewBoxPath.value}
+								class="view-box"
+								stroke-opacity="0.5"
+								stroke="magenta"
+								vector-effect="non-scaling-stroke"
+								stroke-width="8px"
+								fill="#ddffee"
+							/>
+							<path
+								d={frameBoxPath.value}
+								stroke="#ff88cc"
+								fill="none"
+								vector-effect="non-scaling-stroke"
+								stroke-width="14px"
+								shape-rendering="crispEdges"
+							/>
+						</g>
+
+						<g pointer-events="none">
+							<Bounds
+								show={showBounds}
+								{extension}
+								{cameraBounds}
+								{rotationTransform}
+								{cameraScale}
+							/>
+							<Grid
+								{frameBoxPath}
+								{frameBoxObject}
+								{rotationTransform}
+								{cameraScale}
+								{gridDistance}
+							/>
+							<Edges
+								{nodes}
+								{edges}
+								{rotationTransform}
+								{cameraScale}
+							/>
+							<Nodes {nodes} {rotationTransform} {cameraScale} />
+
+							<Drawings
+								{drawings}
+								{rotationTransform}
+								{cameraScale}
+							/>
+
+							<ShowSplines
+								{splines}
+								{rotationTransform}
+								{cameraScale}
+							/>
+
+							<TextBoxes
+								{textBoxes}
+								{clientToCanvas}
+								{frameBoxPath}
+								{rotationTransform}
+								{cameraScale}
+								{cameraOrientation}
+							/>
+
+							<TextLines
+								{textes}
+								{clientToCanvas}
+								{frameBoxPath}
+								{rotationTransform}
+								{cameraScale}
+								{cameraOrientation}
+							/>
+
+							<Guides
+								{guides}
+								{frameBoxObject}
+								{rotationTransform}
+								{cameraScale}
+							/>
+							<Shapes
+								{shapes}
+								{frameBoxObject}
+								{rotationTransform}
+								{cameraScale}
+							/>
+							<ShowAxis
+								{axis}
+								{frameBoxObject}
+								{rotationTransform}
+								{cameraScale}
+							/>
+							<ShowPlots
+								{plots}
+								{frameBoxObject}
+								{rotationTransform}
+								{cameraScale}
+							/>
+
+							<Origin {rotationTransform} {cameraScale} />
+						</g>
+
 						<svelte:component
 							this={tools[tool.value].component}
 							bind:this={currentToolElement.value}
@@ -1800,10 +1800,9 @@
 							{cameraScale}
 							{cameraFocus}
 						/>
-					</Dropper>
-				</Navigator>
-			</svg>
-			<!-- 
+					</Navigator>
+				</svg>
+				<!-- 
 		<canvas
 			bind:this={bitmapCanvas.value}
 			class="canvas bitmap-canvas"
@@ -1813,16 +1812,17 @@
 			)}
 		></canvas>
  -->
-			<div class="scroller-hud">
-				<input
-					type="range"
-					bind:value={cameraZoom.value}
-					min="-5"
-					max="5"
-					step="0.01"
-				/>
-			</div>
-		</Scroller>
+				<div class="scroller-hud">
+					<input
+						type="range"
+						bind:value={cameraZoom.value}
+						min={cameraZoomMin.value}
+						max="5"
+						step="0.01"
+					/>
+				</div>
+			</Scroller>
+		</Dropper>
 	</div>
 
 	<div class="template-bar">
@@ -1832,10 +1832,11 @@
 			draggable="true"
 			ondragstart={(evt) => {
 				evt.currentTarget.setAttribute("aria-grabbed", "true");
+				const positionInfo = evt.currentTarget.getBoundingClientRect();
 				evt.dataTransfer.setDragImage(
-					evt.currentTarget.firstChild,
-					evt.currentTarget.offsetWidth / 2,
-					evt.currentTarget.offsetHeight / 2,
+					evt.currentTarget,
+					positionInfo.width / 2,
+					positionInfo.height / 2,
 				);
 				evt.dataTransfer.items.add(JSON.stringify({}), "x-custom/node");
 				evt.dataTransfer.effectAllowed = "copy";
@@ -1861,10 +1862,11 @@
 			draggable="true"
 			ondragstart={(evt) => {
 				evt.currentTarget.setAttribute("aria-grabbed", "true");
+				const positionInfo = evt.currentTarget.getBoundingClientRect();
 				evt.dataTransfer.setDragImage(
-					evt.currentTarget.firstChild,
-					evt.currentTarget.offsetWidth / 3,
-					evt.currentTarget.offsetHeight,
+					evt.currentTarget,
+					positionInfo.width / 2,
+					positionInfo.height,
 				);
 				evt.dataTransfer.items.add("T", "text/plain");
 				evt.dataTransfer.effectAllowed = "copy";
@@ -1873,9 +1875,13 @@
 				evt.currentTarget.setAttribute("aria-grabbed", "false");
 			}}
 		>
-			<svg viewBox="-50 -50 100 100" fill="white" style="height: 100%;">
+			<svg
+				viewBox="-50 -50 100 100"
+				fill="white"
+				style="width: 100%; height: 100%;"
+			>
 				<text
-					font-size="140"
+					font-size="120"
 					x="0"
 					y="0"
 					fill="#333"
@@ -1891,10 +1897,12 @@
 			draggable="true"
 			ondragstart={(evt) => {
 				evt.currentTarget.setAttribute("aria-grabbed", "true");
+				const positionInfo = evt.currentTarget.getBoundingClientRect();
+
 				evt.dataTransfer.setDragImage(
-					evt.currentTarget.firstChild,
-					evt.currentTarget.offsetWidth / 4,
-					evt.currentTarget.offsetHeight / 2,
+					evt.currentTarget,
+					positionInfo.width / 2,
+					positionInfo.height / 2,
 				);
 				evt.dataTransfer.items.add(
 					JSON.stringify({
@@ -1914,10 +1922,17 @@
 				evt.currentTarget.setAttribute("aria-grabbed", "false");
 			}}
 		>
-			<svg viewBox="-35 -50 60 100" fill="white" style="height: 100%;">
+			<svg
+				viewBox="-35 -50 60 100"
+				fill="white"
+				width="60"
+				height="100"
+				style="width: 100%; height: 100%;"
+			>
 				<path
 					d="M-35,-50h60v20h-40v20h20v20h-20v40h-20z"
-					fill="orange"
+					fill="coral"
+					stroke="none"
 				/>
 			</svg>
 		</div>
@@ -2351,7 +2366,6 @@
 		width: 3em;
 		height: 3em;
 		cursor: grab;
-		background-color: #fff;
 		display: grid;
 		place-items: center;
 	}

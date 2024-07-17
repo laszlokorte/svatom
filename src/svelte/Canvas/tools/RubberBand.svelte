@@ -42,6 +42,11 @@
 		rubberBandStart,
 	);
 
+	const hasProgressed = view(
+		L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
+		rubberBandSize,
+	);
+
 	const rubberBandAngle = view([L.removable("angle"), "angle"], rubberBand);
 	const rubberBandAngleCos = view(
 		[L.reread((r) => Math.cos((r / 180) * Math.PI))],
@@ -66,10 +71,12 @@
 		rubberBand,
 	);
 
-	export const canCancel = read(R.identity, isActive);
+	export const canCancel = read(R.identity, hasProgressed);
 	export function cancel() {
-		isActive.value = false;
+		hasProgressed.value = false;
 	}
+
+	let captureNextClick = $state(false);
 </script>
 
 <path
@@ -79,9 +86,15 @@
 	class="rubber-band-surface"
 	role="button"
 	tabindex="-1"
+	onclick={(evt) => {
+		if (captureNextClick) {
+			captureNextClick = false;
+			evt.stopPropagation();
+		}
+	}}
 	onkeydown={(evt) => {
 		if (evt.key === "Escape" || evt.key === "Esc") {
-			isActive.value = false;
+			hasProgressed.value = false;
 		}
 	}}
 	oncontextmenu={(evt) => {
@@ -96,7 +109,6 @@
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 
 		rubberBandStart.value = clientToCanvas(evt.clientX, evt.clientY);
-		rubberBandSize.value = { x: 0, y: 0 };
 		rubberBandAngle.value = -cameraOrientation.value;
 	}}
 	onpointermove={(evt) => {
@@ -121,6 +133,10 @@
 		if (!evt.isPrimary) {
 			return;
 		}
+		if (hasProgressed.value) {
+			captureNextClick = true;
+		}
+
 		isActive.value = false;
 	}}
 	onpointercancel={(evt) => {

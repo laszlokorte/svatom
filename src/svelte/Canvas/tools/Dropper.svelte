@@ -41,7 +41,7 @@
 					newText.value = {
 						x: position.x,
 						y: position.y,
-						fontSize: 2*cameraScale.value,
+						fontSize: 4*cameraScale.value,
 						content: s,
 					}
 				})
@@ -57,11 +57,16 @@
 				item.getAsString((s) => {
 					const n = JSON.parse(s)
 					const box = n.box.split(" ")
+					const w = box[2]*cameraScale.value/2
+					const h = box[3]*cameraScale.value/2
+					const a = -cameraOrientation.value
+					const cos = Math.cos(a / 180 * Math.PI)
+					const sin = Math.sin(a / 180 * Math.PI)
 					newShape.value = {
 						placement: {
-							start: {x: position.x + box[0]*cameraScale.value/2, y: position.y + box[1]*cameraScale.value/2},
-							size: {x: box[2]*cameraScale.value/2, y: box[3]*cameraScale.value/2},
-							angle: -cameraOrientation.value,
+							start: {x: position.x - (cos*w - sin*h)/2, y: position.y - (sin*w + cos*h)/2},
+							size: {x: w, y: h},
+							angle: a,
 						},
 						content: {
 							box: n.box,
@@ -80,29 +85,28 @@
 	}
 </script>
 
-<g role="presentation" pointer-events="all" ondragover={onDragOver} ondragenter={onDragEnter} ondragleave={onDragLeave} ondrop={onDragDrop}>
-	<path class:active={dragging.value} class:active={dragging.value} class="drop-zone-background" d={frameBoxPath.value} fill="none" pointer-events="all"/>
-
+<div  class="drop-zone" role="application" pointer-events="all" ondragover={onDragOver} ondragenter={onDragEnter} ondragleave={onDragLeave} ondrop={onDragDrop} class:active={dragging.value}>
 	{@render children()}
-
-	<path class:active={dragging.value} class="drop-zone" d={frameBoxPath.value} fill="none" pointer-events="none"/>
-</g>
+</div>
 
 <style>
 	.drop-zone {
-		fill: none;
-		stroke-width: 1em;
-		vector-effect: non-scaling-stroke;
-		stroke: transparent;
+		display: block;
+		position: relative;
 	}
 
 	.drop-zone.active {
-		stroke: #22ee88;
-		fill: none;
+		outline: 0.5em solid #22ee88;
 	}
 
-	.drop-zone-background.active {
-		fill-opacity: 0.05;
-		fill: #11ff33;
+	.drop-zone.active::after {
+		content: 'Drop Here';
+		position: absolute;
+		display: grid;
+		inset: 0;
+		color: #22ee88;
+		padding: 1em;
+		font-size: 2em;
+		font-family: sans-serif;
 	}
 </style>
