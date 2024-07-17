@@ -45,7 +45,7 @@
 						x: position.x,
 						y: position.y,
 						fontSize: 4*cameraScale.value,
-						content: s,
+						content: JSON.parse(s).text,
 					}
 				})
 			} else if(item.type === 'x-custom/node') {

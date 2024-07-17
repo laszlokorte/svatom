@@ -24,6 +24,7 @@
 		<g
 			transform="rotate({shape.placement.angle}, {shape.placement.start
 				.x}, {shape.placement.start.y})"
+			vector-effect="non-scaling-stroke"
 		>
 			<svg
 				x={shape.placement.start.x +
@@ -34,6 +35,7 @@
 				height={Math.abs(shape.placement.size.y)}
 				viewBox={shape.content.box}
 				preserveAspectRatio="xMidYMid meet"
+				style="overflow: visible;"
 			>
 				<g
 					transform=" scale({Math.sign(
@@ -41,7 +43,12 @@
 					)}, {Math.sign(shape.placement.size.y)})"
 				>
 					{#each shape.content.paths as p, i (i)}
-						<path d={p.path} fill={p.fill} />
+						<path
+							d={p.path}
+							fill={p.fill}
+							stroke={p.stroke}
+							stroke-width="2px"
+						/>
 					{/each}
 				</g>
 			</svg>

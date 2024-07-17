@@ -1,121 +1,203 @@
 <script>
 	import { string } from "../../svatom.svelte";
+
+	const droppables = [
+		{
+			content: {
+				box: "-35 -50 60 100",
+				paths: [
+					{
+						fill: "coral",
+						path: "M-35,-50h60v20h-40v20h20v20h-20v40h-20z",
+					},
+				],
+			},
+			mimeType: "x-custom/shape",
+			preview: shape,
+			alignX: 0.5,
+			alignY: 0.5,
+		},
+		{
+			content: {text: "T"},
+			mimeType: "text/plain",
+			preview: text,
+			alignX: 0.5,
+			alignY: 1,
+		},
+		{
+			content: {},
+			mimeType: "x-custom/node",
+			preview: circle,
+			alignX: 0.5,
+			alignY: 0.5,
+		},
+		{
+			content: {
+				box: "-50 -50 100 100",
+				paths: [
+					{
+						fill: "#70db93",
+						stroke: "black",
+						path: "M-50,-50h100v100h-100z",
+					},
+				],
+			},
+			mimeType: "x-custom/shape",
+			preview: shape,
+			alignX: 0.5,
+			alignY: 0.5,
+		},
+		{
+			content: {
+				box: "-50 -50 100 100",
+				paths: [
+					{
+						fill: "#70db93",
+						stroke: "black",
+						path: "M-50,0 a 50 50 0 0 0 100 0 a 50 50 0 0 0 -100 0",
+					},
+				],
+			},
+			mimeType: "x-custom/shape",
+			preview: shape,
+			alignX: 0.5,
+			alignY: 0.5,
+		},
+		{
+			content: {
+				box: "-50 -25 100 50",
+				paths: [
+					{
+						fill: "#fff",
+						stroke: "black",
+						path: "M-50,-25h100v50h-100z",
+					},
+				],
+			},
+			mimeType: "x-custom/shape",
+			preview: shape,
+			alignX: 0.5,
+			alignY: 0.5,
+		},
+		{
+			content: {
+				box: "-50 -50 100 100",
+				paths: [
+					{
+						fill: "#fff",
+						stroke: "black",
+						path: "M-50,0 a 50 50 0 0 0 100 0 a 50 50 0 0 0 -100 0",
+					},
+				],
+			},
+			mimeType: "x-custom/shape",
+			preview: shape,
+			alignX: 0.5,
+			alignY: 0.5,
+		},
+		{
+			content: {
+				box: "-55 -55 110 110",
+				paths: [
+					{
+						fill: "black",
+						stroke: "none",
+						path: "M-40,-40 m-2.5,2.5 l 80 80 l 5 -5 l -80,-80z ",
+					},
+					{
+						fill: "black",
+						stroke: "none",
+						path: "M -40,40 m-2.5,-2.5 l 80,-80 l 5 5 l -80,80z",
+					},
+				],
+			},
+			mimeType: "x-custom/shape",
+			preview: shape,
+			alignX: 0.5,
+			alignY: 0.5,
+		},
+	];
 </script>
+
+{#snippet circle(content)}
+<svg viewBox="-50 -50 100 100" fill="white" style="height: 100%;">
+	<circle
+		cx="0"
+		cy="0"
+		r="40"
+		fill="#cc3300"
+		stroke="#bb2200"
+		stroke-width="7px"
+	></circle>
+</svg>
+{/snippet}
+
+{#snippet shape(content)}
+<svg
+	viewBox={content.box}
+	fill="white"
+	style="width: 100%; height: 100%; overflow: visible;"
+>	
+{#each content.paths as path}
+	<path
+		d={path.path}
+		fill={path.fill}
+		stroke={path.stroke}
+		stroke-width="2px"
+		vector-effect="non-scaling-stroke"
+		fill-rule="non-zero"
+	/>
+{/each}
+</svg>
+{/snippet}
+
+{#snippet text(content)}
+<svg
+	viewBox="-50 -50 100 100"
+	fill="white"
+	style="width: 100%; height: 100%;"
+>
+	<text
+		font-size="120"
+		x="0"
+		y="0"
+		fill="#333"
+		dominant-baseline="central"
+		text-anchor="middle"
+		font-family="sans-serif">{content.text}</text
+	>
+</svg>
+{/snippet}
 
 <fieldset>
 	<legend>Droppables</legend>
 
 	<div class="template-bar">
-		<div
-			role="application"
-			class="drag-template"
-			draggable="true"
-			ondragstart={(evt) => {
-				evt.currentTarget.setAttribute("aria-grabbed", "true");
-				const positionInfo = evt.currentTarget.getBoundingClientRect();
-				evt.dataTransfer.setDragImage(
-					evt.currentTarget,
-					positionInfo.width / 2,
-					positionInfo.height / 2,
-				);
-				evt.dataTransfer.items.add(JSON.stringify({}), "x-custom/node");
-				evt.dataTransfer.effectAllowed = "copy";
-			}}
-			ondragend={(evt) => {
-				evt.currentTarget.setAttribute("aria-grabbed", "false");
-			}}
-		>
-			<svg viewBox="-50 -50 100 100" fill="white" style="height: 100%;">
-				<circle
-					cx="0"
-					cy="0"
-					r="40"
-					fill="#cc3300"
-					stroke="#bb2200"
-					stroke-width="7px"
-				></circle>
-			</svg>
-		</div>
-		<div
-			role="application"
-			class="drag-template"
-			draggable="true"
-			ondragstart={(evt) => {
-				evt.currentTarget.setAttribute("aria-grabbed", "true");
-				const positionInfo = evt.currentTarget.getBoundingClientRect();
-				evt.dataTransfer.setDragImage(
-					evt.currentTarget,
-					positionInfo.width / 2,
-					positionInfo.height,
-				);
-				evt.dataTransfer.items.add("T", "text/plain");
-				evt.dataTransfer.effectAllowed = "copy";
-			}}
-			ondragend={(evt) => {
-				evt.currentTarget.setAttribute("aria-grabbed", "false");
-			}}
-		>
-			<svg
-				viewBox="-50 -50 100 100"
-				fill="white"
-				style="width: 100%; height: 100%;"
-			>
-				<text
-					font-size="120"
-					x="0"
-					y="0"
-					fill="#333"
-					dominant-baseline="central"
-					text-anchor="middle"
-					font-family="sans-serif">T</text
-				>
-			</svg>
-		</div>
-		<div
-			role="application"
-			class="drag-template"
-			draggable="true"
-			ondragstart={(evt) => {
-				evt.currentTarget.setAttribute("aria-grabbed", "true");
-				const positionInfo = evt.currentTarget.getBoundingClientRect();
+		{#each droppables as d}
 
+		<div
+			role="application"
+			class="drag-template"
+			draggable="true"
+			ondragstart={(evt) => {
+				evt.currentTarget.setAttribute("aria-grabbed", "true");
+				const positionInfo = evt.currentTarget.getBoundingClientRect();
 				evt.dataTransfer.setDragImage(
 					evt.currentTarget,
-					positionInfo.width / 2,
-					positionInfo.height / 2,
+					positionInfo.width * d.alignX,
+					positionInfo.height * d.alignY,
 				);
-				evt.dataTransfer.items.add(
-					JSON.stringify({
-						box: "-35 -50 60 100",
-						paths: [
-							{
-								fill: "coral",
-								path: "M-35,-50h60v20h-40v20h20v20h-20v40h-20z",
-							},
-						],
-					}),
-					"x-custom/shape",
-				);
+				evt.dataTransfer.items.add(JSON.stringify(d.content), d.mimeType);
 				evt.dataTransfer.effectAllowed = "copy";
 			}}
 			ondragend={(evt) => {
 				evt.currentTarget.setAttribute("aria-grabbed", "false");
 			}}
 		>
-			<svg
-				viewBox="-35 -50 60 100"
-				fill="white"
-				width="60"
-				height="100"
-				style="width: 100%; height: 100%;"
-			>
-				<path
-					d="M-35,-50h60v20h-40v20h20v20h-20v40h-20z"
-					fill="coral"
-					stroke="none"
-				/>
-			</svg>
+			{@render d.preview(d.content)}
 		</div>
+
+		{/each}
 	</div>
 
 	<style>
@@ -123,6 +205,7 @@
 			display: flex;
 			gap: 0.5em;
 			padding: 0.3em;
+			flex-wrap: wrap;
 		}
 
 		.drag-template {
