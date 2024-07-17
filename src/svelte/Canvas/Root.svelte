@@ -435,42 +435,23 @@
 		}),
 	];
 
-	const canvasDocument = view(
+	const canvasDocumentHistory = view(
 		[
 			L.choose(({ current, docs }) => [
 				"tabs",
 				current,
 				"document",
-				H.present,
-			]),
-			L.valueOr({}),
-		],
-		allTabs,
-	);
-
-	const canvasUndoIndex = view(
-		[
-			L.choose(({ current, docs }) => [
-				"tabs",
-				current,
-				"document",
-				H.undoIndex,
+				L.defaults(H.init({}, {})),
 			]),
 		],
 		allTabs,
 	);
 
-	const canvasRedoIndex = view(
-		[
-			L.choose(({ current, docs }) => [
-				"tabs",
-				current,
-				"document",
-				H.redoIndex,
-			]),
-		],
-		allTabs,
-	);
+	const canvasDocument = view(H.present, canvasDocumentHistory);
+
+	const canvasUndoIndex = view(H.undoIndex, canvasDocumentHistory);
+
+	const canvasRedoIndex = view(H.redoIndex, canvasDocumentHistory);
 
 	const newTab = view(
 		L.setter((n, prev) => ({
