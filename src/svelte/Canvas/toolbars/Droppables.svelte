@@ -1,3 +1,7 @@
+<script>
+	import { string } from "../../svatom.svelte";
+</script>
+
 <fieldset>
 	<legend>Droppables</legend>
 
@@ -127,7 +131,9 @@
 			height: 3em;
 			cursor: grab;
 			display: grid;
-			place-items: center;
+			place-items: stretch;
+			place-content: stretch;
+			border: 1px solid transparent;
 		}
 
 		.drag-template > svg {

@@ -4,16 +4,15 @@
 	import * as U from "../../utils";
 	import * as C from "../../combinators";
 	import { atom, view, read } from "../../svatom.svelte.js";
-	const {children, frameBoxPath, newText, clientToCanvas, cameraScale, cameraOrientation, newNode, newShape, dragging = atom(false)} = $props()
+	const {children, frameBoxPath, newText, clientToCanvas, cameraScale, cameraOrientation, newNode, newShape, dragging = atom(0)} = $props()
 
 	const onDragOver = (evt) => {
 		if(evt.dataTransfer.items.length < 1) {
-			dragging.value = false
+			dragging.value = 0
 			return
 		}
 		evt.preventDefault();
 		evt.dataTransfer.dropEffect= "copy"
-		dragging.value = true
 	}
 
 	const onDragEnter = (evt) => {
@@ -21,19 +20,23 @@
 			return
 		}
 		evt.preventDefault();
-		dragging.value = true
+		dragging.value++
 	}
 
 	const onDragLeave = (evt) => {
+		if(evt.dataTransfer.items.length < 1) {
+			dragging.value = 0
+			return
+		}
 		evt.preventDefault();
-		dragging.value = false
+		dragging.value--
 	}
 
 	const onDragDrop = (evt) => {
 		evt.preventDefault()	
 		const position = clientToCanvas(evt.clientX, evt.clientY)
 
-		dragging.value = false
+		dragging.value = 0
 
 		for(let item of evt.dataTransfer.items) {
 			if(item.type === 'text/plain') {
@@ -85,8 +88,9 @@
 	}
 </script>
 
-<div  class="drop-zone" role="application" pointer-events="all" ondragover={onDragOver} ondragenter={onDragEnter} ondragleave={onDragLeave} ondrop={onDragDrop} class:active={dragging.value}>
+<div  class="drop-zone" role="application" pointer-events="all" ondragover={onDragOver} ondragenter={onDragEnter} ondragleave={onDragLeave} ondrop={onDragDrop} class:active={dragging.value> 0}>
 	{@render children()}
+	<div class="blocker" class:active={dragging.value> 0} ondragenter={onDragEnter} ondragleave={onDragLeave} role="application"></div>
 </div>
 
 <style>
@@ -99,14 +103,20 @@
 		outline: 0.5em solid #22ee88;
 	}
 
-	.drop-zone.active::after {
-		content: 'Drop Here';
+	.blocker {
 		position: absolute;
-		display: grid;
 		inset: 0;
 		color: #22ee88;
 		padding: 1em;
 		font-size: 2em;
+		display: none;
 		font-family: sans-serif;
+		pointer-events: none;
+	}
+
+	.blocker.active {
+		display: grid;
+		pointer-events: all;
+		touch-action: none;
 	}
 </style>
