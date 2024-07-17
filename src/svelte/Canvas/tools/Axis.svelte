@@ -67,6 +67,9 @@
 	class="axis-surface"
 	role="button"
 	tabindex="-1"
+	onclick={(evt) => {
+		evt.stopPropagation();
+	}}
 	onkeydown={(evt) => {
 		if (evt.key === "Escape" || evt.key === "Esc") {
 			isActive.value = false;

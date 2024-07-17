@@ -28,6 +28,12 @@
 	fill="none"
 	role="button"
 	tabindex="-1"
+	onclick={(evt) => {
+		evt.stopPropagation();
+	}}
+	onkeydown={(evt) => {
+		evt.stopPropagation();
+	}}
 	oncontextmenu={(evt) => {
 		evt.preventDefault();
 		isActive.value = false;

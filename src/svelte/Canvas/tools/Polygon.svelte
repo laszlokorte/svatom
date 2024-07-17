@@ -158,6 +158,9 @@
 	fill="none"
 	role="button"
 	tabindex="-1"
+	onclick={(evt) => {
+		evt.stopPropagation();
+	}}
 	class:dragging={dragging.value}
 	onkeydown={(evt) => {
 		if (evt.key === "Escape" || evt.key === "Esc") {

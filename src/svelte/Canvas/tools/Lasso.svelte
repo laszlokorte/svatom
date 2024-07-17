@@ -77,6 +77,9 @@
 	role="button"
 	tabindex="-1"
 	class="lasso-surface"
+	onclick={(evt) => {
+		evt.stopPropagation();
+	}}
 	onkeydown={(evt) => {
 		if (evt.key === "Escape" || evt.key === "Esc") {
 			currentLasso.value = undefined;

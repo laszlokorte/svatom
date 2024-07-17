@@ -133,6 +133,9 @@
 	class="guideliner-surface"
 	role="button"
 	tabindex="-1"
+	onclick={(evt) => {
+		evt.stopPropagation();
+	}}
 	onkeydown={(evt) => {
 		if (evt.key === "Escape" || evt.key === "Esc") {
 			guideEnd.value = undefined;

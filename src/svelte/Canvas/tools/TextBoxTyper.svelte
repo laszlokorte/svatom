@@ -113,192 +113,201 @@
 	}
 </script>
 
-<path
-	d={frameBoxPath.value}
-	pointer-events="all"
-	fill="none"
-	class="text-box-surface"
-	class:dim={isActive.value && !isDragging.value}
-	class:dim-empty={textEmpty.value}
+<g
 	role="button"
 	tabindex="-1"
-	onkeydown={(evt) => {
-		if (evt.key === "Escape" || evt.key === "Esc") {
-			isActive.value = false;
-		}
+	onclick={(evt) => {
+		evt.stopPropagation();
 	}}
-	onpointerdown={(evt) => {
-		if (!evt.isPrimary || !U.isLeftButton(evt)) {
-			isActive.value = false;
-			return;
-		}
+	onkeydown={(evt) => {}}
+>
+	<path
+		d={frameBoxPath.value}
+		pointer-events="all"
+		fill="none"
+		class="text-box-surface"
+		class:dim={isActive.value && !isDragging.value}
+		class:dim-empty={textEmpty.value}
+		role="button"
+		tabindex="-1"
+		onkeydown={(evt) => {
+			if (evt.key === "Escape" || evt.key === "Esc") {
+				isActive.value = false;
+			}
+		}}
+		onpointerdown={(evt) => {
+			if (!evt.isPrimary || !U.isLeftButton(evt)) {
+				isActive.value = false;
+				return;
+			}
 
-		if (text.value) {
-			newTextBox.value = {
-				start: {
-					x: textBoxStart.value.x,
-					y: textBoxStart.value.y,
-				},
-				size: {
-					x: textBoxSize.value.x,
-					y: textBoxSize.value.y,
-				},
-				content: text.value,
-				angle: textBoxAngle.value,
-				fontSize: textBoxFontSize.value,
-			};
+			if (text.value) {
+				newTextBox.value = {
+					start: {
+						x: textBoxStart.value.x,
+						y: textBoxStart.value.y,
+					},
+					size: {
+						x: textBoxSize.value.x,
+						y: textBoxSize.value.y,
+					},
+					content: text.value,
+					angle: textBoxAngle.value,
+					fontSize: textBoxFontSize.value,
+				};
 
+				text.value = undefined;
+				return;
+			}
+
+			evt.currentTarget.setPointerCapture(evt.pointerId);
+			textBoxStart.value = clientToCanvas(evt.clientX, evt.clientY);
+			isDragging.value = true;
+			textBoxFontSize.value = cameraScale.value;
+			textBoxSize.value = { x: 0, y: 0 };
+			textBoxAngle.value = -cameraOrientation.value;
 			text.value = undefined;
-			return;
-		}
+		}}
+		onpointermove={(evt) => {
+			if (!evt.isPrimary) {
+				return;
+			}
+			if (!isActive.value) {
+				return;
+			}
+			if (!isDragging.value) {
+				return;
+			}
 
-		evt.currentTarget.setPointerCapture(evt.pointerId);
-		textBoxStart.value = clientToCanvas(evt.clientX, evt.clientY);
-		isDragging.value = true;
-		textBoxFontSize.value = cameraScale.value;
-		textBoxSize.value = { x: 0, y: 0 };
-		textBoxAngle.value = -cameraOrientation.value;
-		text.value = undefined;
-	}}
-	onpointermove={(evt) => {
-		if (!evt.isPrimary) {
-			return;
-		}
-		if (!isActive.value) {
-			return;
-		}
-		if (!isDragging.value) {
-			return;
-		}
+			const worldPos = clientToCanvas(evt.clientX, evt.clientY);
 
-		const worldPos = clientToCanvas(evt.clientX, evt.clientY);
+			const dx = worldPos.x - textBoxStart.value.x;
+			const dy = worldPos.y - textBoxStart.value.y;
+			textBoxSize.value = {
+				x: textBoxAngleCos.value * dx + textBoxAngleSin.value * dy,
+				y: -textBoxAngleSin.value * dx + textBoxAngleCos.value * dy,
+			};
+		}}
+		onpointerup={(evt) => {
+			if (!evt.isPrimary) {
+				return;
+			}
+			if (!isActive.value) {
+				return;
+			}
+			if (!isDragging.value) {
+				return;
+			}
 
-		const dx = worldPos.x - textBoxStart.value.x;
-		const dy = worldPos.y - textBoxStart.value.y;
-		textBoxSize.value = {
-			x: textBoxAngleCos.value * dx + textBoxAngleSin.value * dy,
-			y: -textBoxAngleSin.value * dx + textBoxAngleCos.value * dy,
-		};
-	}}
-	onpointerup={(evt) => {
-		if (!evt.isPrimary) {
-			return;
-		}
-		if (!isActive.value) {
-			return;
-		}
-		if (!isDragging.value) {
-			return;
-		}
-
-		isDragging.value = false;
-		if (!textBoxValid.value) {
+			isDragging.value = false;
+			if (!textBoxValid.value) {
+				textBoxStart.value = undefined;
+			}
+		}}
+		onpointercancel={(evt) => {
+			isDragging.value = false;
+		}}
+		onlostpointercapture={(evt) => {
+			if (!evt.isPrimary) {
+				return;
+			}
+			if (!isDragging.value) {
+				return;
+			}
+			isActive.value = undefined;
+		}}
+		onfocus={(evt) => {
+			if (isDragging.value) {
+				return;
+			}
+			if (text.value) {
+				evt.currentTarget.form.dispatchEvent(
+					new CustomEvent("submit", {
+						cancelable: true,
+					}),
+				);
+			}
 			textBoxStart.value = undefined;
-		}
-	}}
-	onpointercancel={(evt) => {
-		isDragging.value = false;
-	}}
-	onlostpointercapture={(evt) => {
-		if (!evt.isPrimary) {
-			return;
-		}
-		if (!isDragging.value) {
-			return;
-		}
-		isActive.value = undefined;
-	}}
-	onfocus={(evt) => {
-		if (isDragging.value) {
-			return;
-		}
-		if (text.value) {
-			evt.currentTarget.form.dispatchEvent(
-				new CustomEvent("submit", {
-					cancelable: true,
-				}),
-			);
-		}
-		textBoxStart.value = undefined;
-	}}
-/>
+		}}
+	/>
 
-<g transform={rotationTransform.value}>
-	{#if isActive.value && !isDragging.value}
-		<g
-			shape-rendering="geometricPrecision"
-			text-rendering="optimizeLegibility"
-			transform="translate({textBoxStart.value.x}, {textBoxStart.value
-				.y}) rotate({textBoxAngle.value}) translate({-textBoxStart.value
-				.x}, {-textBoxStart.value.y})"
-		>
-			<foreignObject
+	<g transform={rotationTransform.value}>
+		{#if isActive.value && !isDragging.value}
+			<g
 				shape-rendering="geometricPrecision"
 				text-rendering="optimizeLegibility"
-				width={Math.max(1, Math.abs(textBoxSize.value.x))}
-				height={Math.max(1, Math.abs(textBoxSize.value.y))}
-				x={textBoxStart.value.x + Math.min(0, textBoxSize.value.x)}
-				y={textBoxStart.value.y + Math.min(0, textBoxSize.value.y)}
-				style:overflow="visible"
+				transform="translate({textBoxStart.value.x}, {textBoxStart.value
+					.y}) rotate({textBoxAngle.value}) translate({-textBoxStart
+					.value.x}, {-textBoxStart.value.y})"
 			>
-				<form
-					xmlns="http://www.w3.org/1999/xhtml"
-					onsubmit={(evt) => {
-						evt.preventDefault();
-						if (text.value) {
-							newTextBox.value = {
-								start: {
-									x: textBoxStart.value.x,
-									y: textBoxStart.value.y,
-								},
-								size: {
-									x: textBoxSize.value.x,
-									y: textBoxSize.value.y,
-								},
-								content: text.value,
-								angle: textBoxAngle.value,
-								fontSize: textBoxFontSize.value,
-							};
-						}
-						textBoxStart.value = undefined;
-					}}
+				<foreignObject
+					shape-rendering="geometricPrecision"
+					text-rendering="optimizeLegibility"
+					width={Math.max(1, Math.abs(textBoxSize.value.x))}
+					height={Math.max(1, Math.abs(textBoxSize.value.y))}
+					x={textBoxStart.value.x + Math.min(0, textBoxSize.value.x)}
+					y={textBoxStart.value.y + Math.min(0, textBoxSize.value.y)}
+					style:overflow="visible"
 				>
-					<textarea
-						style:font-size="{textBoxFontSize.value}em"
-						use:autofocusIf={textBoxStart.value.x *
-							textBoxStart.value.x +
-							textBoxStart.value.y * textBoxStart.value.y}
-						type="text"
-						bind:value={text.value}
-						use:readTextreaScrollSize={view(
-							keepOrientationlens,
-							textBoxSize,
-						)}
-						onkeydown={(evt) => {
-							if (evt.key === "Escape" || evt.key === "Esc") {
-								isActive.value = false;
-							} else if (
-								evt.key === "Enter" &&
-								evt.shiftKey &&
-								text.value
-							) {
-								evt.currentTarget.blur();
+					<form
+						xmlns="http://www.w3.org/1999/xhtml"
+						onsubmit={(evt) => {
+							evt.preventDefault();
+							if (text.value) {
+								newTextBox.value = {
+									start: {
+										x: textBoxStart.value.x,
+										y: textBoxStart.value.y,
+									},
+									size: {
+										x: textBoxSize.value.x,
+										y: textBoxSize.value.y,
+									},
+									content: text.value,
+									angle: textBoxAngle.value,
+									fontSize: textBoxFontSize.value,
+								};
 							}
+							textBoxStart.value = undefined;
 						}}
-					></textarea>
-				</form>
-			</foreignObject>
-		</g>
-	{/if}
-	<path
-		d={textBoxPath.value}
-		transform={textBoxTransform.value}
-		fill="none"
-		class="text-box"
-		pointer-events="none"
-		class:ready={!isDragging.value}
-		class:valid={textBoxValid.value}
-	/>
+					>
+						<textarea
+							style:font-size="{textBoxFontSize.value}em"
+							use:autofocusIf={textBoxStart.value.x *
+								textBoxStart.value.x +
+								textBoxStart.value.y * textBoxStart.value.y}
+							type="text"
+							bind:value={text.value}
+							use:readTextreaScrollSize={view(
+								keepOrientationlens,
+								textBoxSize,
+							)}
+							onkeydown={(evt) => {
+								if (evt.key === "Escape" || evt.key === "Esc") {
+									isActive.value = false;
+								} else if (
+									evt.key === "Enter" &&
+									evt.shiftKey &&
+									text.value
+								) {
+									evt.currentTarget.blur();
+								}
+							}}
+						></textarea>
+					</form>
+				</foreignObject>
+			</g>
+		{/if}
+		<path
+			d={textBoxPath.value}
+			transform={textBoxTransform.value}
+			fill="none"
+			class="text-box"
+			pointer-events="none"
+			class:ready={!isDragging.value}
+			class:valid={textBoxValid.value}
+		/>
+	</g>
 </g>
 
 <style>

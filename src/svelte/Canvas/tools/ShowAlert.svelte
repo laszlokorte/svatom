@@ -49,6 +49,7 @@
 					x: p.x,
 					y: p.y,
 					msg: p.msg,
+					color: p.color,
 				};
 			}, alerts);
 		},
@@ -57,11 +58,21 @@
 
 	const cameraCenter = view(L.props("x", "y"), cameraFocus);
 
-	function scrollTo(evt) {
+	function scrollToClick(evt) {
 		const x = parseFloat(evt.currentTarget.getAttribute("data-pos-x"));
 		const y = parseFloat(evt.currentTarget.getAttribute("data-pos-y"));
 
 		cameraCenter.value = { x, y };
+	}
+
+	function scrollToKey(evt) {
+		if (evt.key == "Enter" || evt.key == " ") {
+			evt.preventDefault();
+			const x = parseFloat(evt.currentTarget.getAttribute("data-pos-x"));
+			const y = parseFloat(evt.currentTarget.getAttribute("data-pos-y"));
+
+			cameraCenter.value = { x, y };
+		}
 	}
 
 	const basePath = view(
@@ -81,6 +92,7 @@
 					y: pos.y,
 					screenPos: pos.screenPos,
 					msg: pos.msg,
+					color: pos.color,
 				}),
 				positions,
 			),
@@ -89,57 +101,74 @@
 	);
 </script>
 
-{#each paths.value as p, i (i)}
-	<g>
-		<path
-			tabindex="-1"
-			role="button"
-			onfocus={scrollTo}
-			class="alert-badge"
-			data-pos-x={p.x}
-			data-pos-y={p.y}
-			d={p.path}
-		></path>
-		<text
-			x={p.screenPos.x + 18 * cameraScale.value}
-			y={p.screenPos.y}
-			class="alert-text"
-			dominant-baseline="middle"
-			font-size="{cameraScale.value}em"
-			><tspan class="error-titel">Error:</tspan>
-			<tspan>{p.msg}</tspan></text
-		>
-	</g>
-{/each}
+<g
+	tabindex="-1"
+	role="button"
+	onclick={(evt) => {
+		evt.stopPropagation();
+	}}
+	onkeydown={(evt) => {
+		evt.stopPropagation();
+	}}
+>
+	{#each paths.value as p, i (i)}
+		<g>
+			<path
+				tabindex="-1"
+				role="button"
+				onclick={scrollToClick}
+				onkeydown={scrollToKey}
+				class="alert-badge"
+				data-pos-x={p.x}
+				data-pos-y={p.y}
+				d={p.path}
+				color={p.color || "darkred"}
+			></path>
+			<text
+				color={p.color || "darkred"}
+				x={p.screenPos.x + 18 * cameraScale.value}
+				y={p.screenPos.y}
+				class="alert-text"
+				dominant-baseline="middle"
+				font-size="{cameraScale.value}em"
+				><tspan class="error-titel">Error:</tspan>
+				<tspan>{p.msg}</tspan></text
+			>
+		</g>
+	{/each}
+</g>
 
 <style>
 	.alert-badge {
 		outline: none;
 		cursor: pointer;
-		fill: pink;
-		stroke: darkred;
+		fill: currentColor;
+		fill-opacity: 0.4;
+		stroke: currentColor;
 		stroke-width: 3px;
 		vector-effect: non-scaling-stroke;
 		stroke-linejoin: round;
 	}
 
 	.alert-badge:hover {
-		fill: #dd5555;
+		fill-opacity: 0.6;
 	}
 
 	.alert-text {
-		fill: darkred;
+		fill: currentColor;
 		display: none;
 		paint-order: stroke;
 		stroke: white;
 		stroke-width: 0.3em;
 	}
 
-	.alert-badge:focus {
-		fill: darkred;
+	.alert-badge:focus,
+	.alert-badge:active {
+		fill-opacity: 1;
 	}
 
-	.alert-badge:focus + .alert-text {
+	.alert-badge:focus + .alert-text,
+	.alert-badge:active + .alert-text {
 		display: initial;
 	}
 

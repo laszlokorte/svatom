@@ -85,6 +85,11 @@
 	import Zoom from "./tools/Zoom.svelte";
 	import Dropper from "./tools/Dropper.svelte";
 
+	import Droppables from "./toolbars/Droppables.svelte";
+	import History from "./toolbars/History.svelte";
+	import Tabs from "./toolbars/Tabs.svelte";
+	import Properties from "./toolbars/Properties.svelte";
+
 	const svgElement = atom(undefined);
 	const bitmapCanvas = atom(undefined);
 	const cameraTow = atom(undefined);
@@ -1466,114 +1471,9 @@
 		</fieldset>
 	</div>
 
-	<fieldset>
-		<legend>Documents</legend>
+	<Tabs {newTab} {tabIds} {closeTab} {currentTabId} {allTabs} />
 
-		<div class="tool-bar">
-			<button
-				class="doc-tab-action"
-				type="button"
-				onclick={() => (newTab.value = {})}
-				><svg width="32" height="32" viewBox="-16 -16 32 32">
-					<title>New</title>
-					<path
-						d="M-12,0L12,0M0,12L0,-12"
-						stroke="currentColor"
-						stroke-width="2px"
-						vector-effect="non-scaling-stroke"
-						stroke-linecap="round"
-						shape-rendering="crispEdges"
-					/>
-				</svg></button
-			>
-			<hr class="tool-bar-sep" />
-			{#each tabIds.value as d}
-				{@const docName = view(
-					["tabs", d, "document", "title", L.defaults("")],
-					allTabs,
-				)}
-				{@const fallbackName = view(
-					[
-						"tabs",
-						d,
-						"document",
-						"content",
-						L.choices(
-							["textes", L.first, "content"],
-							["textBoxes", L.first, "content"],
-						),
-						L.valueOr(""),
-						L.ifElse(
-							R.isEmpty,
-							L.inverse(L.dropPrefix("untitled")),
-							L.inverse(L.dropPrefix("untitled - ")),
-						),
-					],
-					allTabs,
-				)}
-				<span
-					class="doc-tab-group"
-					class:active={d === currentTabId.value}
-				>
-					{#if d === currentTabId.value}
-						<input
-							placeholder={fallbackName.value}
-							class="doc-tab-titel"
-							class:untitled={!docName.value}
-							bind:value={docName.value}
-							class:active={true}
-						/>
-					{:else}
-						<button
-							class="doc-tab-titel"
-							class:active={false}
-							class:untitled={!docName.value}
-							onclick={() => (currentTabId.value = d)}
-							>{docName.value || fallbackName.value}</button
-						>
-					{/if}
-					<button
-						type="button"
-						class="doc-tab-del"
-						onclick={() => {
-							closeTab.value = d;
-						}}
-						class:active={d === currentTabId.value}
-						title="Close"
-					>
-						<svg width="10" height="10" viewBox="-16 -16 32 32">
-							<title>Delete</title>
-							<path
-								d="M-8,-8L8,8M-8,8L8,-8"
-								stroke="currentColor"
-								stroke-width="4px"
-								stroke-linecap="round"
-							/>
-						</svg>
-					</button>
-				</span>
-			{/each}
-		</div>
-	</fieldset>
-
-	<fieldset>
-		<legend>History</legend>
-
-		<button
-			type="button"
-			disabled={canvasUndoIndex.value < 1}
-			onclick={(evt) => {
-				canvasUndoIndex.value--;
-			}}>Undo</button
-		>
-		<button
-			type="button"
-			disabled={canvasRedoIndex.value < 1}
-			onclick={(evt) => {
-				canvasRedoIndex.value--;
-			}}>Redo</button
-		>
-	</fieldset>
+	<History {canvasUndoIndex} {canvasRedoIndex} />
 
 	<fieldset>
 		<legend>Tools</legend>
@@ -1645,100 +1545,6 @@
 		</div>
 	</fieldset>
 
-	<fieldset>
-		<legend>Properties</legend>
-
-		<div>
-			<label>Fill Color<input type="color" value="#00aaff" /></label>
-			<label>Stroke Color<input type="color" value="#0044aa" /></label>
-			<label>Text Color<input type="color" value="#003355" /></label>
-		</div>
-		<div>
-			<label
-				>Font size
-				<select>
-					<option>6</option>
-					<option>8</option>
-					<option>10</option>
-					<option>12</option>
-					<option>14</option>
-					<option>16</option>
-					<option>18</option>
-					<option>20</option>
-					<option>22</option>
-				</select>
-			</label>
-			<label
-				>Font Family
-				<select>
-					<option>Arial</option>
-					<option>Consolas</option>
-					<option>Times New Roman</option>
-				</select>
-			</label>
-
-			<label
-				>Stroke Width
-				<input
-					type="number"
-					value="1"
-					min="0"
-					step="1"
-					style="width: 4em"
-				/>
-			</label>
-
-			<label
-				>Opacity
-				<input
-					type="range"
-					min="0"
-					max="1"
-					value="1"
-					step="0.01"
-					style="width: 6em"
-				/>
-			</label>
-
-			<label
-				>Function
-				<input type="text" style="width: 6em" />
-			</label>
-
-			<div>
-				Alignment:
-				<label
-					><input type="radio" name="alignment" checked /> Left</label
-				>
-				<label><input type="radio" name="alignment" /> Center</label>
-				<label><input type="radio" name="alignment" /> Right</label>
-			</div>
-
-			<div>
-				Text Style:
-				<label><input type="checkbox" /> Bold</label>
-				<label><input type="checkbox" /> Italic</label>
-				<label><input type="checkbox" /> Underline</label>
-				<label><input type="checkbox" /> Strike</label>
-			</div>
-			<label
-				>Dashes
-				<select>
-					<option>Solid</option>
-					<option>Dotted</option>
-					<option>Dashed</option>
-					<option>Dashed Long</option>
-					<option>Dash-Dotted</option>
-				</select>
-			</label>
-			<div>
-				Arrows:
-				<label><input type="checkbox" /> Start</label>
-				<label><input type="checkbox" /> End</label>
-			</div>
-		</div>
-	</fieldset>
-
 	<div class="prevent-selection">
 		<Dropper
 			{frameBoxPath}
@@ -1762,6 +1568,16 @@
 					bind:this={svgElement.value}
 					viewBox={viewBox.value}
 					preserveAspectRatio={preserveAspectRatio.value}
+					onclick={(evt) => {
+						newAlert.value = {
+							msg: "hello",
+							color: "green",
+							...clientToCanvas(evt.clientX, evt.clientY),
+						};
+					}}
+					onkeydown={(evt) => {}}
+					role="button"
+					tabindex="-1"
 				>
 					<Navigator
 						{camera}
@@ -1919,118 +1735,7 @@
 		</Dropper>
 	</div>
 
-	<div class="template-bar">
-		<div
-			role="application"
-			class="drag-template"
-			draggable="true"
-			ondragstart={(evt) => {
-				evt.currentTarget.setAttribute("aria-grabbed", "true");
-				const positionInfo = evt.currentTarget.getBoundingClientRect();
-				evt.dataTransfer.setDragImage(
-					evt.currentTarget,
-					positionInfo.width / 2,
-					positionInfo.height / 2,
-				);
-				evt.dataTransfer.items.add(JSON.stringify({}), "x-custom/node");
-				evt.dataTransfer.effectAllowed = "copy";
-			}}
-			ondragend={(evt) => {
-				evt.currentTarget.setAttribute("aria-grabbed", "false");
-			}}
-		>
-			<svg viewBox="-50 -50 100 100" fill="white" style="height: 100%;">
-				<circle
-					cx="0"
-					cy="0"
-					r="40"
-					fill="#cc3300"
-					stroke="#bb2200"
-					stroke-width="7px"
-				></circle>
-			</svg>
-		</div>
-		<div
-			role="application"
-			class="drag-template"
-			draggable="true"
-			ondragstart={(evt) => {
-				evt.currentTarget.setAttribute("aria-grabbed", "true");
-				const positionInfo = evt.currentTarget.getBoundingClientRect();
-				evt.dataTransfer.setDragImage(
-					evt.currentTarget,
-					positionInfo.width / 2,
-					positionInfo.height,
-				);
-				evt.dataTransfer.items.add("T", "text/plain");
-				evt.dataTransfer.effectAllowed = "copy";
-			}}
-			ondragend={(evt) => {
-				evt.currentTarget.setAttribute("aria-grabbed", "false");
-			}}
-		>
-			<svg
-				viewBox="-50 -50 100 100"
-				fill="white"
-				style="width: 100%; height: 100%;"
-			>
-				<text
-					font-size="120"
-					x="0"
-					y="0"
-					fill="#333"
-					dominant-baseline="central"
-					text-anchor="middle"
-					font-family="sans-serif">T</text
-				>
-			</svg>
-		</div>
-		<div
-			role="application"
-			class="drag-template"
-			draggable="true"
-			ondragstart={(evt) => {
-				evt.currentTarget.setAttribute("aria-grabbed", "true");
-				const positionInfo = evt.currentTarget.getBoundingClientRect();
-
-				evt.dataTransfer.setDragImage(
-					evt.currentTarget,
-					positionInfo.width / 2,
-					positionInfo.height / 2,
-				);
-				evt.dataTransfer.items.add(
-					JSON.stringify({
-						box: "-35 -50 60 100",
-						paths: [
-							{
-								fill: "coral",
-								path: "M-35,-50h60v20h-40v20h20v20h-20v40h-20z",
-							},
-						],
-					}),
-					"x-custom/shape",
-				);
-				evt.dataTransfer.effectAllowed = "copy";
-			}}
-			ondragend={(evt) => {
-				evt.currentTarget.setAttribute("aria-grabbed", "false");
-			}}
-		>
-			<svg
-				viewBox="-35 -50 60 100"
-				fill="white"
-				width="60"
-				height="100"
-				style="width: 100%; height: 100%;"
-			>
-				<path
-					d="M-35,-50h60v20h-40v20h20v20h-20v40h-20z"
-					fill="coral"
-					stroke="none"
-				/>
-			</svg>
-		</div>
-	</div>
+	<Droppables />
 
 	{#if debugFrames.value}
 		<div
@@ -2301,174 +2006,9 @@
 		background: magenta;
 		border: 1px solid white;
 	}
-
-	.doc-tab-action {
-		display: grid;
-		place-content: stretch;
-		place-items: stretch;
-		text-align: left;
-		height: 2.4em;
-		width: 2.4em;
-		padding: 0.5em;
-		box-sizing: border-box;
-	}
-
-	.doc-tab-action > svg {
-		width: 100%;
-		height: 100%;
-		display: block;
-	}
-
-	.doc-tab-group {
-		display: flex;
-		flex-basis: 15em;
-		justify-items: stretch;
-		background: #eee;
-		border-bottom: 2px solid #333;
-		flex-shrink: 0;
-		flex-grow: 0;
-	}
-
-	.doc-tab-group.active {
-		border-bottom-color: #cd3e30;
-	}
-
-	.doc-tab-titel {
-		display: block;
-		font: inherit;
-		border: none;
-		font-family: monospace;
-		text-align: left;
-		border: 2px solid white;
-		background: none;
-		border: none;
-		color: #333;
-		flex-grow: 1;
-		flex-shrink: 0;
-		padding: 0.5em;
-		width: 12em;
-		outline: none;
-		white-space: pre;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		cursor: default;
-		-webkit-appearance: none;
-		appearance: none;
-		-webkit-border-radius: 0px;
-		border-radius: none;
-		box-sizing: border-box;
-		border: 2px solid transparent;
-		border-bottom-width: 0;
-	}
-
-	input.doc-tab-titel:focus {
-		cursor: text;
-		background: white;
-		color: #cd3e30;
-		border-color: #cd3e30;
-		text-overflow: initial;
-	}
-
-	@media (hover) {
-		.doc-tab-titel:hover {
-			background: none;
-			color: #cd3e30;
-		}
-	}
-
-	.doc-tab-titel:focus-visible {
-		color: #cd3e30;
-	}
-	.doc-tab-titel.active {
-		background: #cd3e30;
-		color: white;
-	}
-	.untitled {
-		font-style: italic;
-		color: #333a;
-	}
-
-	.untitled.active::placeholder {
-		font-style: italic;
-		color: #fffa;
-	}
-
-	.doc-tab-del {
-		flex-grow: 0;
-		flex-shrink: 0;
-		display: grid;
-		width: 2em;
-		place-items: center;
-		place-content: center;
-		text-align: center;
-		box-sizing: border-box;
-		color: #333;
-		background: none;
-		padding: 0.5em;
-		overflow: hidden;
-		align-self: stretch;
-		font-weight: bold;
-		visibility: hidden;
-		border-radius: none;
-	}
-
-	.doc-tab-del > svg {
-		width: 100%;
-		height: 100%;
-	}
-
-	.doc-tab-del.active {
-		color: #444;
-		visibility: visible;
-	}
-
-	.doc-tab-del:hover {
-		color: white;
-		background: #aa3333;
-	}
-
-	.doc-tab-del.active:hover,
-	.doc-tab-del.active:focus-visible {
-		background: #aa3333;
-		color: white;
-	}
-	.doc-tab-del:active {
-		background: #773333;
-	}
-
-	@media (hover) {
-		.doc-tab-group:hover > .doc-tab-del {
-			display: grid;
-			visibility: visible;
-		}
-	}
-
 	.container {
 		user-select: none;
 		-webkit-user-select: none;
 		touch-action: pan-x pan-y;
-	}
-
-	.template-bar {
-		display: flex;
-		gap: 0.5em;
-		padding: 0.3em;
-	}
-
-	.drag-template {
-		touch-action: none;
-		width: 3em;
-		height: 3em;
-		cursor: grab;
-		display: grid;
-		place-items: center;
-	}
-
-	.drag-template > svg {
-		display: block;
-	}
-
-	.drag-template:global([aria-grabbed="true"]) {
-		cursor: grabbing;
 	}
 </style>

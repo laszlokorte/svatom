@@ -44,155 +44,164 @@
 	}
 </script>
 
-<path
-	d={frameBoxPath.value}
-	class:dim={isEditing.value}
-	class:dim-empty={textEmpty.value}
-	pointer-events="all"
-	fill="none"
-	class="typer-surface"
+<g
 	role="button"
 	tabindex="-1"
-	onkeydown={(evt) => {
-		if (evt.key === "Escape" || evt.key === "Esc") {
-			position.value = undefined;
-		}
+	onclick={(evt) => {
+		evt.stopPropagation();
 	}}
-	onpointerdown={(evt) => {
-		if (!evt.isPrimary || !U.isLeftButton(evt)) {
-			isActive.value = false;
-			return;
-		}
+	onkeydown={(evt) => {}}
+>
+	<path
+		d={frameBoxPath.value}
+		class:dim={isEditing.value}
+		class:dim-empty={textEmpty.value}
+		pointer-events="all"
+		fill="none"
+		class="typer-surface"
+		role="button"
+		tabindex="-1"
+		onkeydown={(evt) => {
+			if (evt.key === "Escape" || evt.key === "Esc") {
+				position.value = undefined;
+			}
+		}}
+		onpointerdown={(evt) => {
+			if (!evt.isPrimary || !U.isLeftButton(evt)) {
+				isActive.value = false;
+				return;
+			}
 
-		evt.currentTarget.setPointerCapture(evt.pointerId);
+			evt.currentTarget.setPointerCapture(evt.pointerId);
 
-		if (isEditing.value) {
+			if (isEditing.value) {
+				if (text.value) {
+					evt.preventDefault();
+					newText.value = {
+						x: position.value.x,
+						y: position.value.y,
+						fontSize: fontSize.value,
+						content: text.value,
+					};
+					isActive.value = false;
+
+					return;
+				}
+			} else {
+				fontSize.value = cameraScale.value;
+			}
+
+			isDragging.value = true;
+			position.value = clientToCanvas(evt.clientX, evt.clientY);
+		}}
+		onpointermove={(evt) => {
+			if (!evt.isPrimary) {
+				return;
+			}
+			if (!isDragging.value) {
+				return;
+			}
+
+			position.value = clientToCanvas(evt.clientX, evt.clientY);
+		}}
+		onpointerup={(evt) => {
+			if (!evt.isPrimary) {
+				return;
+			}
+
+			isDragging.value = false;
+		}}
+		onpointercancel={(evt) => {
+			if (!evt.isPrimary) {
+				return;
+			}
+
+			isDragging.value = false;
+		}}
+		onlostpointercapture={(evt) => {
+			if (!evt.isPrimary) {
+				return;
+			}
+			if (!isDragging.value) {
+				return;
+			}
+			position.value = undefined;
+		}}
+		onfocus={(evt) => {
+			evt.preventDefault();
 			if (text.value) {
-				evt.preventDefault();
 				newText.value = {
 					x: position.value.x,
 					y: position.value.y,
-					fontSize: fontSize.value,
 					content: text.value,
+					fontSize: fontSize.value,
 				};
-				isActive.value = false;
-
-				return;
+				position.value = undefined;
 			}
-		} else {
-			fontSize.value = cameraScale.value;
-		}
+		}}
+	/>
 
-		isDragging.value = true;
-		position.value = clientToCanvas(evt.clientX, evt.clientY);
-	}}
-	onpointermove={(evt) => {
-		if (!evt.isPrimary) {
-			return;
-		}
-		if (!isDragging.value) {
-			return;
-		}
-
-		position.value = clientToCanvas(evt.clientX, evt.clientY);
-	}}
-	onpointerup={(evt) => {
-		if (!evt.isPrimary) {
-			return;
-		}
-
-		isDragging.value = false;
-	}}
-	onpointercancel={(evt) => {
-		if (!evt.isPrimary) {
-			return;
-		}
-
-		isDragging.value = false;
-	}}
-	onlostpointercapture={(evt) => {
-		if (!evt.isPrimary) {
-			return;
-		}
-		if (!isDragging.value) {
-			return;
-		}
-		position.value = undefined;
-	}}
-	onfocus={(evt) => {
-		evt.preventDefault();
-		if (text.value) {
-			newText.value = {
-				x: position.value.x,
-				y: position.value.y,
-				content: text.value,
-				fontSize: fontSize.value,
-			};
-			position.value = undefined;
-		}
-	}}
-/>
-
-{#if position.value}
-	<g transform={rotationTransform.value} vector-effect="non-rotation">
-		<g
-			transform="translate({position.value.x}, {position.value
-				.y}) rotate({-cameraOrientation.value}) scale({fontSize.value}) translate({-position
-				.value.x}, {-position.value.y})"
-		>
-			<foreignObject
-				width="200"
-				height="50"
-				x={position.value.x - 100}
-				y={position.value.y}
-				style:transform="translate(0,-25px) translate(0,-.25em)"
-				style:overflow="visible"
+	{#if position.value}
+		<g transform={rotationTransform.value} vector-effect="non-rotation">
+			<g
+				transform="translate({position.value.x}, {position.value
+					.y}) rotate({-cameraOrientation.value}) scale({fontSize.value}) translate({-position
+					.value.x}, {-position.value.y})"
 			>
-				<form
-					xmlns="http://www.w3.org/1999/xhtml"
-					onsubmit={(evt) => {
-						evt.preventDefault();
-						if (text.value) {
-							newText.value = {
-								x: position.value.x,
-								y: position.value.y,
-								content: text.value,
-								fontSize: fontSize.value,
-							};
-						}
-						position.value = undefined;
-					}}
+				<foreignObject
+					width="200"
+					height="50"
+					x={position.value.x - 100}
+					y={position.value.y}
+					style:transform="translate(0,-25px) translate(0,-.25em)"
+					style:overflow="visible"
 				>
-					<input
-						use:autofocusIf={!isDragging.value}
-						type="text"
-						bind:value={text.value}
-						onkeydown={(evt) => {
-							if (evt.key === "Escape" || evt.key === "Esc") {
-								position.value = undefined;
+					<form
+						xmlns="http://www.w3.org/1999/xhtml"
+						onsubmit={(evt) => {
+							evt.preventDefault();
+							if (text.value) {
+								newText.value = {
+									x: position.value.x,
+									y: position.value.y,
+									content: text.value,
+									fontSize: fontSize.value,
+								};
 							}
+							position.value = undefined;
 						}}
-					/>
-				</form>
-			</foreignObject>
-			<rect
-				shape-rendering="crispEdges"
-				text-rendering="crispEdges"
-				width="200"
-				height="50"
-				x={position.value.x - 100}
-				y={position.value.y}
-				style:overflow="visible"
-				style:transform="translate(0,-25px) translate(0,-.25em)"
-				stroke="#00aaff"
-				stroke-width="2px"
-				pointer-events="none"
-				fill="none"
-				vector-effect="non-scaling-stroke"
-			></rect>
+					>
+						<input
+							use:autofocusIf={!isDragging.value}
+							type="text"
+							bind:value={text.value}
+							onkeydown={(evt) => {
+								if (evt.key === "Escape" || evt.key === "Esc") {
+									position.value = undefined;
+								}
+							}}
+						/>
+					</form>
+				</foreignObject>
+				<rect
+					shape-rendering="crispEdges"
+					text-rendering="crispEdges"
+					width="200"
+					height="50"
+					x={position.value.x - 100}
+					y={position.value.y}
+					style:overflow="visible"
+					style:transform="translate(0,-25px) translate(0,-.25em)"
+					stroke="#00aaff"
+					stroke-width="2px"
+					pointer-events="none"
+					fill="none"
+					vector-effect="non-scaling-stroke"
+				></rect>
+			</g>
 		</g>
-	</g>
-{/if}
+	{/if}
+</g>
 
 <style>
 	.typer-surface {

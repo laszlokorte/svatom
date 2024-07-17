@@ -155,6 +155,12 @@
 	fill="none"
 	role="button"
 	tabindex="-1"
+	onkeydown={(evt) => {
+		evt.stopPropagation();
+	}}
+	onclick={(evt) => {
+		evt.stopPropagation();
+	}}
 	oncontextmenu={(evt) => {
 		evt.preventDefault();
 		isActive.value = false;

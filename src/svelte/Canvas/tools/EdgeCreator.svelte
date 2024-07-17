@@ -111,6 +111,9 @@
 	class:active={isActive.value}
 	role="button"
 	tabindex="-1"
+	onclick={(evt) => {
+		evt.stopPropagation();
+	}}
 	oncontextmenu={(evt) => {
 		evt.preventDefault();
 		isActive.value = false;
