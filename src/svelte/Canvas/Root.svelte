@@ -1545,6 +1545,8 @@
 		</div>
 	</fieldset>
 
+	<Properties />
+
 	<div class="prevent-selection">
 		<Dropper
 			{frameBoxPath}

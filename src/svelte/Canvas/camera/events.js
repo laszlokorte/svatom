@@ -136,6 +136,7 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 				pointerId: evt.pointerId,
 				x: evt.clientX,
 				y: evt.clientY,
+				world: L.get(eventWorld, evt),
 			}
 		}
 
@@ -158,15 +159,30 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 			const dx = mouseGrab.x - evt.clientX
 			const dy = mouseGrab.y - evt.clientY
 
-			panScreenDelta.value = {
-				dx,
-				dy,
+			
+			if(evt.ctrlKey) {
+				const sign = Math.sign(dx)
+				zoomDelta.value = {
+					px: mouseGrab.world.x,
+					py: mouseGrab.world.y,
+					dz: -sign*Math.hypot(dx,dy)/128,
+				}
+			} else if(evt.altKey) {
+				const sign = Math.sign(dx)
+					rotationDelta.value = {
+						px: mouseGrab.world.x,
+						py: mouseGrab.world.y,
+						dw: -sign*Math.hypot(dx,dy),
+					}
+			} else {
+				panScreenDelta.value = {
+					dx,
+					dy,
+				}
 			}
-			mouseGrab = {
-				pointerId: evt.pointerId,
-				x: evt.clientX,
-				y: evt.clientY,
-			}
+
+			mouseGrab.x = evt.clientX
+			mouseGrab.y = evt.clientY
 		}
 	}
 
