@@ -57,11 +57,13 @@
 	import Polygon from "./tools/Polygon.svelte";
 	import Spline from "./tools/Spline.svelte";
 	import Shape from "./tools/Shape.svelte";
-	import Shapes from "./tools/Shapes.svelte";
+	import ShapesDef from "./tools/ShapesDef.svelte";
+	//import ShapesUse from "./tools/ShapesUse.svelte";
+	import LayeredUse from "./tools/LayeredUse.svelte";
 
 	import RubberBand from "./tools/RubberBand.svelte";
 	import NodesDef from "./tools/NodesDef.svelte";
-	import NodesUse from "./tools/NodesUse.svelte";
+	//import NodesUse from "./tools/NodesUse.svelte";
 	import Edges from "./tools/Edges.svelte";
 	import Drawings from "./tools/Drawings.svelte";
 	import ShowSplines from "./tools/ShowSplines.svelte";
@@ -512,6 +514,33 @@
 			n: [...n, newTarget],
 		})),
 		combine({ e: edges, n: nodes }),
+	);
+
+	const zLayers = view(
+		[
+			L.partsOf(
+				L.branch({
+					shapes: [
+						L.defaults([]),
+						L.elems,
+						L.reread((s, i) => ({
+							id: "shape-" + i,
+							zIndex: s.zIndex || 0,
+						})),
+					],
+					nodes: [
+						L.defaults([]),
+						L.elems,
+						L.reread((s, i) => ({
+							id: "node-" + i,
+							zIndex: s.zIndex || 0,
+						})),
+					],
+				}),
+			),
+			L.reread(R.sortBy(R.prop("zIndex"))),
+		],
+		currentDocumentContent,
 	);
 
 	const newDrawing = view(
@@ -1670,7 +1699,7 @@
 								{rotationTransform}
 								{cameraScale}
 							/>
-							<Shapes
+							<ShapesDef
 								{shapes}
 								{frameBoxObject}
 								{rotationTransform}
@@ -1689,7 +1718,9 @@
 								{cameraScale}
 							/>
 
-							<NodesUse {nodes} {rotationTransform} />
+							<!-- <NodesUse {nodes} {rotationTransform} />
+							<ShapesUse {shapes} {rotationTransform} /> -->
+							<LayeredUse {zLayers} {rotationTransform} />
 
 							<Origin {rotationTransform} {cameraScale} />
 						</g>

@@ -19,9 +19,10 @@
 	} = $props();
 </script>
 
-<g pointer-events="none" transform={rotationTransform.value}>
-	{#each shapes.value as shape}
+<defs>
+	{#each shapes.value as shape, s (s)}
 		<g
+			id="shape-{s}"
 			transform="rotate({shape.placement.angle}, {shape.placement.start
 				.x}, {shape.placement.start.y})"
 			vector-effect="non-scaling-stroke"
@@ -54,4 +55,4 @@
 			</svg>
 		</g>
 	{/each}
-</g>
+</defs>
