@@ -22,7 +22,7 @@
 			mimeType: "text/plain",
 			preview: text,
 			alignX: 0.5,
-			alignY: 1,
+			alignY: 0.9,
 		},
 		{
 			content: {},
@@ -33,7 +33,7 @@
 		},
 		{
 			content: {
-				box: "-50 -50 100 100",
+				box: "-52 -52 104 104",
 				paths: [
 					{
 						fill: "#70db93",
@@ -49,7 +49,7 @@
 		},
 		{
 			content: {
-				box: "-50 -50 100 100",
+				box: "-52 -52 104 104",
 				paths: [
 					{
 						fill: "#70db93",
@@ -81,7 +81,7 @@
 		},
 		{
 			content: {
-				box: "-50 -50 100 100",
+				box: "-52 -52 104 104",
 				paths: [
 					{
 						fill: "#fff",
@@ -97,7 +97,7 @@
 		},
 		{
 			content: {
-				box: "-55 -55 110 110",
+				box: "-52 -52 104 104",
 				paths: [
 					{
 						fill: "black",
@@ -120,7 +120,8 @@
 </script>
 
 {#snippet circle(content)}
-<svg viewBox="-50 -50 100 100" fill="white" style="height: 100%;">
+<svg
+	preserveAspectRatio="xMidYMid meet" viewBox="-52 -52 104 104" fill="white" style="width: 100%; height: 100%; overflow: hidden;">
 	<circle
 		cx="0"
 		cy="0"
@@ -134,9 +135,10 @@
 
 {#snippet shape(content)}
 <svg
+	preserveAspectRatio="xMidYMid meet"
 	viewBox={content.box}
 	fill="white"
-	style="width: 100%; height: 100%; overflow: visible;"
+	style="width: 100%; height: 100%; overflow: hidden;"
 >	
 {#each content.paths as path}
 	<path
@@ -153,9 +155,10 @@
 
 {#snippet text(content)}
 <svg
-	viewBox="-50 -50 100 100"
+	preserveAspectRatio="xMidYMid meet"
+	viewBox="-52 -52 104 104"
 	fill="white"
-	style="width: 100%; height: 100%;"
+	style="width: 100%; height: 100%; overflow: hidden;"
 >
 	<text
 		font-size="120"

@@ -19,3 +19,6 @@
 
 	* refactor local tool states into FSMs
 	
+	* layers and groups
+		* implement draw order via svg use:href
+		* implement grouping

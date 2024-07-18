@@ -60,7 +60,8 @@
 	import Shapes from "./tools/Shapes.svelte";
 
 	import RubberBand from "./tools/RubberBand.svelte";
-	import Nodes from "./tools/Nodes.svelte";
+	import NodesDef from "./tools/NodesDef.svelte";
+	import NodesUse from "./tools/NodesUse.svelte";
 	import Edges from "./tools/Edges.svelte";
 	import Drawings from "./tools/Drawings.svelte";
 	import ShowSplines from "./tools/ShowSplines.svelte";
@@ -1631,7 +1632,7 @@
 								{rotationTransform}
 								{cameraScale}
 							/>
-							<Nodes {nodes} {rotationTransform} {cameraScale} />
+							<NodesDef {nodes} {cameraScale} />
 
 							<Drawings
 								{drawings}
@@ -1687,6 +1688,8 @@
 								{rotationTransform}
 								{cameraScale}
 							/>
+
+							<NodesUse {nodes} {rotationTransform} />
 
 							<Origin {rotationTransform} {cameraScale} />
 						</g>
