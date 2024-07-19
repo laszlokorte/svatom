@@ -103,6 +103,8 @@
 	const debugFrames = atom(false);
 	const showBounds = atom(false);
 
+	const defaultProperties = atom({});
+
 	animateWith(
 		read(
 			L.reread((el) =>
@@ -1644,7 +1646,7 @@
 		</div>
 	</fieldset>
 
-	<Properties />
+	<Properties properties={defaultProperties} />
 
 	<div class="prevent-selection">
 		<Dropper
@@ -1854,7 +1856,7 @@
 		</Dropper>
 	</div>
 
-	<Droppables />
+	<Droppables properties={defaultProperties} />
 
 	{#if debugFrames.value}
 		<div

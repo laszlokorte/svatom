@@ -2,6 +2,7 @@
 	import * as L from "partial.lenses";
 	import * as R from "ramda";
 	import { atom, view, read, combine } from "../../svatom.svelte.js";
+	import * as U from "../../utils.js";
 
 	const { children, extension, frameBoxPath, rotationInverseTransform, rotationTransform, cameraFocus } =
 		$props();
@@ -40,7 +41,7 @@
 		isActive.value = false;
 	}}
 	onpointerdown={(evt) => {
-		if (!evt.isPrimary) {
+		if (!evt.isPrimary || !U.isLeftButton(evt)) {
 			return;
 		}
 		evt.currentTarget.setPointerCapture(evt.pointerId);

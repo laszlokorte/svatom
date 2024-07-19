@@ -1,17 +1,24 @@
 <script>
-	import { string } from "../../svatom.svelte";
+	import * as L from "partial.lenses";
+	import * as R from "ramda";
+	import { string, view, read } from "../../svatom.svelte";
+
+	const {properties} = $props()
+
+	const fillColorLens = ["fillColor", L.valueOr("#00aaff")];
+
 
 	const droppables = [
 		{
-			content: {
+			dynamicContent: (props) => ({
 				box: "-35 -50 60 100",
 				paths: [
 					{
-						fill: "coral",
+						fill: L.get(fillColorLens, props),
 						path: "M-35,-50h60v20h-40v20h20v20h-20v40h-20z",
 					},
 				],
-			},
+			}),
 			mimeType: "x-custom/shape",
 			preview: shape,
 			alignX: 0.5,
@@ -177,6 +184,7 @@
 
 	<div class="template-bar">
 		{#each droppables as d}
+		{@const content = d.dynamicContent ?  d.dynamicContent(properties.value) : d.content}
 
 		<div
 			role="application"
@@ -190,14 +198,14 @@
 					positionInfo.width * d.alignX,
 					positionInfo.height * d.alignY,
 				);
-				evt.dataTransfer.items.add(JSON.stringify(d.content), d.mimeType);
+				evt.dataTransfer.items.add(JSON.stringify(d.dynamicContent ?  d.dynamicContent(properties.value) : d.content), d.mimeType);
 				evt.dataTransfer.effectAllowed = "copy";
 			}}
 			ondragend={(evt) => {
 				evt.currentTarget.setAttribute("aria-grabbed", "false");
 			}}
 		>
-			{@render d.preview(d.content)}
+			{@render d.preview(content)}
 		</div>
 
 		{/each}
