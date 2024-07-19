@@ -1633,7 +1633,7 @@
 					type="button"
 					class="tool-action"
 					disabled={!currentToolElement.value.canCancel.value}
-					onpointerup={(evt) => {
+					onpointerdown={(evt) => {
 						if (!evt.isPrimary) {
 							evt.currentTarget.click();
 						}
@@ -2090,6 +2090,7 @@
 		background: #555;
 		user-select: none;
 		touch-action: none;
+		-webkit-tap-highlight-color: transparent;
 	}
 
 	.tool-button:has(:checked):not(:disabled),
@@ -2131,6 +2132,8 @@
 		touch-action: none;
 		background: #333;
 		color: #fff;
+		-webkit-tap-highlight-color: transparent;
+		touch-action: none;
 	}
 
 	.debug-dot {

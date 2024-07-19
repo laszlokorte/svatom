@@ -370,6 +370,7 @@
 
 	label {
 		cursor: pointer;
+		-webkit-tap-highlight-color: transparent;
 	}
 
 	.icon-label {
