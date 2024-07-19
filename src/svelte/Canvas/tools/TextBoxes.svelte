@@ -38,7 +38,7 @@
 	vector-effect="non-rotation"
 	pointer-events="none"
 >
-	{#each textBoxes.value as t}
+	{#each textBoxes.value as t, i (i)}
 		<g
 			transform="translate({t.start.x}, {t.start
 				.y}) rotate({t.angle}) translate({-t.start.x}, {-t.start.y})"

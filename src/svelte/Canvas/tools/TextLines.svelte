@@ -21,7 +21,7 @@
 </script>
 
 <g transform={rotationTransform.value} vector-effect="non-rotation">
-	{#each textes.value as t}
+	{#each textes.value as t, i (i)}
 		<g transform="rotate({-cameraOrientation.value}, {t.x}, {t.y})">
 			<circle
 				cx={t.x}

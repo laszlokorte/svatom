@@ -3,7 +3,7 @@
 	import * as R from "ramda";
 	import { atom, view, read, combine } from "../../svatom.svelte.js";
 
-	const { children, extension, frameBoxPath, rotationInverseTransform, cameraFocus } =
+	const { children, extension, frameBoxPath, rotationInverseTransform, rotationTransform, cameraFocus } =
 		$props();
 
 	const viewBox = read(
@@ -23,6 +23,11 @@
 	preserveAspectRatio="xMidYMid meet"
 	onclick={(evt) => {
 		evt.stopPropagation();
+	}}
+	ondblclick={(evt) => {
+		evt.stopPropagation();
+
+		cameraFocus.value = L.set('w', 0, cameraFocus.value)
 	}}
 	onkeydown={(evt) => {
 		evt.stopPropagation();
@@ -81,7 +86,7 @@
 		}
 		isActive.value = false;
 	}}>
-	<g pointer-events="none">
+	<g pointer-events="none" >
 		{@render children()}
 			<path
 			class="focus"
@@ -128,7 +133,7 @@
 
 	@media (hover) {
 		svg {	
-			opacity: 0.3;
+			opacity: 0.5;
 			pointer-events: all;
 			transition: opacity 0.05s linear;
 		}

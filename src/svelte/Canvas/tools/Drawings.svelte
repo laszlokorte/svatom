@@ -1,19 +1,29 @@
 <script>
 	import * as R from "ramda";
 
+	import { atom, view, read } from "../../svatom.svelte.js";
 	const { drawings, rotationTransform } = $props();
-</script>
 
-<g transform={rotationTransform.value} pointer-events="none">
-	{#each drawings.value as d}
-		<path
-			fill="none"
-			stroke="black"
-			d={R.compose(
+	const paths = view(
+		R.map(
+			R.compose(
 				R.concat("M"),
 				R.join("L"),
 				R.map(({ x, y }) => `${x},${y}`),
-			)(d)}
+			),
+		),
+		drawings,
+	);
+
+	const pathsValue = $derived(paths.value);
+</script>
+
+<g transform={rotationTransform.value} pointer-events="none">
+	{#each pathsValue as d, i (i)}
+		<path
+			fill="none"
+			stroke="black"
+			{d}
 			class="drawing-line"
 			pointer-events="none"
 		/>

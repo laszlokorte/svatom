@@ -1845,6 +1845,7 @@
 						{frameBoxPath}
 						{cameraFocus}
 						{rotationInverseTransform}
+						{rotationTransform}
 					>
 						<LayeredUse {zLayers} {rotationTransform} />
 					</Minimap>

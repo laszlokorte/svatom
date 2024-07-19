@@ -53,7 +53,7 @@
 </g>
 
 <g transform="{rotationTransform.value}" pointer-events="none">
-{#each hitAreasValue as ha}
+{#each hitAreasValue as ha (ha.id)}
 {#if ha.type === 'circle'}
 <circle class="hit-area" cx={ha.cx} cy={ha.cy}  r={ha.r}  data-area-id={ha.id} class:active={selectionValue.indexOf(ha.id) > -1} />
 {:else if ha.type === 'polygon'}
