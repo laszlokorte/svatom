@@ -1843,8 +1843,8 @@
 		z-index: 100;
 		background: none;
 		font-size: 0.7em;
-		margin: 0.5em 1em;
-		margin-top: 2.5em;
+		margin: 0.5em;
+		margin-top: 2em;
 		user-select: none;
 		-webkit-user-select: none;
 		touch-action: none;

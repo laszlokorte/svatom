@@ -1,4 +1,6 @@
 <script>
+	import * as L from "partial.lenses";
+	import * as R from "ramda";
 	import { atom, view, read, combine } from "../../svatom.svelte.js";
 
 	const { children, extension, frameBoxPath, rotationInverseTransform, cameraFocus } =
@@ -9,38 +11,142 @@
 			`${minX} ${minY} ${maxX - minX} ${maxY - minY}`,
 		extension,
 	);
+
+	const isActive = atom(false)
 </script>
 
-<svg viewBox={viewBox.value}>
-	<path
-		class="focus"
-		fill="#fffa"
-		d={frameBoxPath.value}
-		transform={rotationInverseTransform.value}
-	/>
-	<path
-		transform={rotationInverseTransform.value}
-		d="M{cameraFocus.value.x} {cameraFocus.value
-			.y} m0,25 h20 l-20,-50 l-20,50z"
-		class="orientation"
-	/>
+<svg 
+	tabindex="-1"
+	role="button"
+	class:active={isActive.value}
+	viewBox={viewBox.value} 
+	preserveAspectRatio="xMidYMid meet"
+	onclick={(evt) => {
+		evt.stopPropagation();
+	}}
+	onkeydown={(evt) => {
+		evt.stopPropagation();
+		if (evt.key === "Escape" || evt.key === "Esc") {
+			isActive.value = false;
+		}
+	}}
+	oncontextmenu={(evt) => {
+		evt.preventDefault();
+		isActive.value = false;
+	}}
+	onpointerdown={(evt) => {
+		if (!evt.isPrimary) {
+			return;
+		}
+		evt.currentTarget.setPointerCapture(evt.pointerId);
+		isActive.value = true
 
-	{@render children()}
+	}}
+	onpointermove={(evt) => {
+		if (!evt.isPrimary) {
+			isActive.value = false;
+			return;
+		}
+		if (!isActive.value) {
+			return;
+		}
+		if(!evt.movementX && !evt.movementY) {
+			return
+		} 
+
+		const ex = extension.value
+		const minClient = Math.min(evt.currentTarget.clientWidth, evt.currentTarget.clientHeight)
+		const minEx = Math.min((ex.maxX - ex.minX), (ex.maxY - ex.minY))
+		const relX = evt.movementX / minClient
+		const relY = evt.movementY / minClient
+		const normedX = relX * minEx
+		const normedY = relY * minEx
+		cameraFocus.value = L.modify(L.props('x','y'), ({x,y}) => ({x:x+normedX,y:y+normedY}), cameraFocus.value)
+	}}
+	onpointerup={(evt) => {
+		if (!evt.isPrimary) {
+			return;
+		}
+		isActive.value = false;
+	}}
+	onpointercancel={(evt) => {
+		if (!evt.isPrimary) {
+			return;
+		}
+		isActive.value = false;
+	}}
+	onlostpointercapture={(evt) => {
+		if (!evt.isPrimary) {
+			return;
+		}
+		isActive.value = false;
+	}}>
+	<g pointer-events="none">
+		{@render children()}
+			<path
+			class="focus"
+			fill="#fffa"
+			d={frameBoxPath.value}
+			transform={rotationInverseTransform.value}
+		/>
+		<path
+			transform={rotationInverseTransform.value}
+			d="M{cameraFocus.value.x} {cameraFocus.value
+				.y} m0,25 h20 l-20,-50 l-20,50z"
+			class="orientation"
+		/>
+
+	</g>
 </svg>
 
 <style>
 	svg {
-		pointer-events: none;
 		width: 100%;
 		height: 100%;
 		display: block;
 		background: #fffa;
 		border: 1px solid white;
+		cursor: grab;
+		overflow: hidden;
+
+		user-select: none;
+		-webkit-user-select: none;
+		touch-action: none;
+		outline: none;
+
+		-webkit-touch-callout: none;
+		-webkit-user-callout: none;
+		-webkit-user-select: none;
+		-webkit-user-drag: none;
+		-webkit-user-modify: none;
+		-webkit-highlight: none;
+		-webkit-appearance: none;
+		appearance: none;
+		-webkit-tap-highlight-color: transparent;
+		pointer-events: none;
 	}
+
+	@media (hover) {
+		svg {	
+			opacity: 0.3;
+			pointer-events: all;
+			transition: opacity 0.05s linear;
+		}
+		svg:hover {
+			opacity: 1;
+		}
+
+
+		svg.active {
+			cursor: grabbing;
+			opacity: 1;
+		}
+	}
+
 
 	.focus {
 		fill: #aaa1;
-		stroke: coral;
+		stroke: #fff;
 		stroke-opacity: 0.2;
 		vector-effect: non-scaling-stroke;
 		stroke-width: 1px;

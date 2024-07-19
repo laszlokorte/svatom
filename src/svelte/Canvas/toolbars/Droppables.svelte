@@ -209,6 +209,7 @@
 			gap: 0.5em;
 			padding: 0.3em;
 			flex-wrap: wrap;
+			-webkit-tap-highlight-color: transparent;
 		}
 
 		.drag-template {
@@ -220,10 +221,12 @@
 			place-items: stretch;
 			place-content: stretch;
 			border: 1px solid transparent;
+			-webkit-tap-highlight-color: transparent;
 		}
 
 		.drag-template > svg {
 			display: block;
+			-webkit-tap-highlight-color: transparent;
 		}
 
 		.drag-template:global([aria-grabbed="true"]) {
