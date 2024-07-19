@@ -499,21 +499,24 @@ export function bindScroll(node, someAtom) {
 	 const onScrollThrottled = throttled(function onscroll(e) {
 	
 	 	const newValue = someAtom.value
-	 	if((!$state.is(newValue.x, node.scrollLeft) || !$state.is(newValue.y, node.scrollTop))) {
+		const nodeScrollLeft = node.scrollLeft
+		const nodeScrollTop = node.scrollTop
 
-			const scrollMaxX = Math.max(0, node.scrollLeftMax  ? node.scrollLeftMax : node.scrollWidth - node.offsetWidth)
-			const scrollMaxY = Math.max(0, node.scrollTopMax  ? node.scrollTopMax : node.scrollHeight - node.offsetHeight)
+	 	if((!$state.is(newValue.x, nodeScrollLeft) || !$state.is(newValue.y, nodeScrollTop))) {
 
-			const newX = node.scrollLeft
-			const newY = node.scrollTop
+	 		const leftMax = node.scrollLeftMax ?? (node.scrollWidth - node.offsetWidth)
+	 		const topMax =  node.scrollTopMax ?? (node.scrollHeight - node.offsetHeight)
+
+			const scrollMaxX = Math.max(0, leftMax)
+			const scrollMaxY = Math.max(0, topMax)
 
 			someAtom.value = {
-				x: newX,
-				y: newY,
-				atMaxX: newX >= scrollMaxX,
-				atMinX: newX <= 0,
-				atMaxY: newY >= scrollMaxY,
-				atMinY: newY <= 0,
+				x: nodeScrollLeft,
+				y: nodeScrollTop,
+				atMaxX: nodeScrollLeft >= scrollMaxX,
+				atMinX: nodeScrollLeft <= 0,
+				atMaxY: nodeScrollTop >= scrollMaxY,
+				atMinY: nodeScrollTop <= 0,
 			}
 	 	}
 	})
@@ -522,8 +525,8 @@ export function bindScroll(node, someAtom) {
 	$effect.pre(() => {
 		const newPos = someAtom.value
 		tick().then(() => {
-			const scrollMaxX = Math.max(0, node.scrollLeftMax  ? node.scrollLeftMax : node.scrollWidth - node.offsetWidth)
-			const scrollMaxY = Math.max(0, node.scrollTopMax  ? node.scrollTopMax : node.scrollHeight - node.offsetHeight)
+			const scrollMaxX = Math.max(0, node.scrollLeftMax  ?? node.scrollWidth - node.offsetWidth)
+			const scrollMaxY = Math.max(0, node.scrollTopMax  ?? node.scrollHeight - node.offsetHeight)
 			const newX =  R.clamp(0, scrollMaxX, newPos.x)
 			const newY =  R.clamp(0, scrollMaxY, newPos.y)
 			const oldX = R.clamp(0, scrollMaxX, node.scrollLeft)
@@ -549,10 +552,12 @@ export function bindScroll(node, someAtom) {
 export function readScroll(node, someAtom) {
 	 const onScrollThrottled = throttled(function onscroll(e) {
 	 	const newValue = someAtom.value
-	 	if((!$state.is(newValue.x, node.scrollLeft) || !$state.is(newValue.y, node.scrollTop))) {
+		const nodeScrollLeft = node.scrollLeft
+		const nodeScrollTop = node.scrollTop
+	 	if((!$state.is(newValue.x, nodeScrollLeft) || !$state.is(newValue.y, nodeScrollTop))) {
 			someAtom.value = {
-				x: node.scrollLeft,
-				y: node.scrollTop,
+				x: nodeScrollLeft,
+				y: nodeScrollTop,
 			}
 	 	}
 	})
