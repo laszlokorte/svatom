@@ -87,6 +87,7 @@
 	import Rotate from "./tools/Rotate.svelte";
 	import Zoom from "./tools/Zoom.svelte";
 	import Dropper from "./tools/Dropper.svelte";
+	import Minimap from "./tools/Minimap.svelte";
 
 	import Droppables from "./toolbars/Droppables.svelte";
 	import History from "./toolbars/History.svelte";
@@ -290,7 +291,15 @@
 		(c) => `rotate(${c.focus.w}, ${c.focus.x}, ${c.focus.y})`,
 	);
 
+	const cameraRotationInverseTransformLens = L.reread(
+		(c) => `rotate(${-c.focus.w}, ${c.focus.x}, ${c.focus.y})`,
+	);
+
 	const rotationTransform = read(cameraRotationTransformLens, camera);
+	const rotationInverseTransform = read(
+		cameraRotationInverseTransformLens,
+		camera,
+	);
 	const cameraRotationLens = L.iso(
 		({ x, y }) => {
 			const c = camera.value;
@@ -1720,7 +1729,12 @@
 
 							<!-- <NodesUse {nodes} {rotationTransform} />
 							<ShapesUse {shapes} {rotationTransform} /> -->
-							<LayeredUse {zLayers} {rotationTransform} />
+							<g
+								pointer-events="none"
+								transform={rotationTransform.value}
+							>
+								<LayeredUse {zLayers} {rotationTransform} />
+							</g>
 
 							<Origin {rotationTransform} {cameraScale} />
 						</g>
@@ -1767,6 +1781,17 @@
 						step="0.01"
 					/>
 				</div>
+
+				<div class="scroller-hud-minimap">
+					<Minimap
+						{extension}
+						{frameBoxPath}
+						{cameraFocus}
+						{rotationInverseTransform}
+					>
+						<LayeredUse {zLayers} {rotationTransform} />
+					</Minimap>
+				</div>
 			</Scroller>
 		</Dropper>
 	</div>
@@ -1807,6 +1832,23 @@
 		user-select: none;
 		-webkit-user-select: none;
 		touch-action: none;
+	}
+
+	.scroller-hud-minimap {
+		grid-area: 1/1/1/1;
+		align-self: start;
+		justify-self: end;
+		width: 30%;
+		height: 30%;
+		z-index: 100;
+		background: none;
+		font-size: 0.7em;
+		margin: 0.5em 1em;
+		margin-top: 2.5em;
+		user-select: none;
+		-webkit-user-select: none;
+		touch-action: none;
+		pointer-events: none;
 	}
 
 	.prevent-selection {

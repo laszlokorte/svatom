@@ -97,6 +97,8 @@
 	.drop-zone {
 		display: block;
 		position: relative;
+		min-width: max-content;
+		min-height: max-content;
 	}
 
 	.drop-zone.active {

@@ -22,3 +22,5 @@
 	* layers and groups
 		* implement draw order via svg use:href
 		* implement grouping
+			* try to implement groups as a combination of a node with special kind of ownership edge to other objects
+			* try to use the same concept to construct child/parent relationships between other
