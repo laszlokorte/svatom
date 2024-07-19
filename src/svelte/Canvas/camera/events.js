@@ -198,22 +198,122 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 	//let c = 0
 	//const colors = ['#fff','#ddd','#eee','#f0f0f0','#d0d0d0','#e0e0e0'];
 	let localTouches = []
+	let touchBaseRot
+	let touchBaseScale
+	let touchBasePivot = null
+
+	function touchesCenter(touches) {
+		let sumX = 0;
+		let sumY = 0;
+
+		for(let t=touches.length-1;t>=0;t--) {
+			sumX += touches[t].clientX
+			sumY += touches[t].clientY
+		}
+
+		return {
+			x: sumX / touches.length,
+			y: sumY / touches.length
+		}
+	}
+
+	function touchesAngle(center, touches) {
+		let sum = 0;
+
+		for(let t=touches.length-1;t>=0;t--) {
+			const d = Math.atan2(touches[t].clientY - center.y, touches[t].clientX - center.x)
+			sum += d
+		}
+
+		return sum
+	}
+
+	function touchesDistance(center, touches) {
+		let sum = 0;
+
+		for(let t=touches.length-1;t>=0;t--) {
+			const d = Math.hypot(touches[t].clientX - center.x, touches[t].clientY - center.y)
+			sum += d
+		}
+
+		return (sum / touches.length)
+	}
+
 	function onTouchStart(evt) {
-			evt.preventDefault()
+		evt.preventDefault()
 		localTouches = evt.targetTouches
+
+		touchBasePivot = touchesCenter(evt.touches)
+		touchBaseScale = touchesDistance(touchBasePivot, evt.touches)
+		touchBaseRot = touchesAngle(touchBasePivot, evt.touches)
 	}
 
 	function onTouchStop(evt) {
-			evt.preventDefault()
+		evt.preventDefault()
 		localTouches = evt.targetTouches
+
+		if(evt.touches.length > 1 && localTouches.length > 0) {
+			touchBasePivot = null
+		}
+	}
+
+	function onTouchStartGlobal(evt) {
+		if(evt.touches.length > 1 && localTouches.length > 0) {
+			evt.preventDefault()
+			touchBasePivot = touchesCenter(evt.touches)
+			touchBaseScale = touchesDistance(touchBasePivot, evt.touches)
+			touchBaseRot = touchesAngle(touchBasePivot, evt.touches)
+		}
+	}
+
+	function onTouchStopGlobal(evt) {
+		if(evt.touches.length > 1 && localTouches.length > 0) {
+			evt.preventDefault()
+			touchBasePivot = touchesCenter(evt.touches)
+			touchBaseScale = touchesDistance(touchBasePivot, evt.touches)
+			touchBaseRot = touchesAngle(touchBasePivot, evt.touches)
+		}
+	}
+
+	function onTouchMoveLocal(evt) {
+
+		if(evt.touches.length > 1 && localTouches.length > 0) {
+			evt.preventDefault()
+		}
 	}
 
 	function onTouchMoveGlobal(evt) {
 		if(evt.touches.length > 1 && localTouches.length > 0) {
 			evt.preventDefault()
-			// TODO implement gesture detection
-			
-			//document.body.style.backgroundColor = colors[c++%colors.length]
+			const newPivot = touchesCenter(evt.touches)
+			const newScale = touchesDistance(newPivot, evt.touches)
+			const newAngle = touchesAngle(newPivot, evt.touches)
+
+			const dx = touchBasePivot.x - newPivot.x
+			const dy = touchBasePivot.y - newPivot.y
+			const dz = Math.log(newScale / touchBaseScale)
+			const dw = Math.atan2(Math.sin((newAngle - touchBaseRot)), Math.cos((newAngle - touchBaseRot)))*180/Math.PI
+
+			const worldPos = L.get(eventWorld, {clientX: newPivot.x, clientY: newPivot.y})
+
+			rotationDelta.value = {
+				px: worldPos.x,
+				py: worldPos.y,
+				dw: dw / evt.touches.length,
+			}
+			zoomDelta.value = {
+				px: worldPos.x,
+				py: worldPos.y,
+				dz: dz,
+			}
+			panScreenDelta.value = {
+				dx,
+				dy,
+			}
+
+			touchBasePivot = newPivot
+			touchBaseScale = newScale
+			touchBaseRot = newAngle
 		}
 	}
 
@@ -221,34 +321,53 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 
 
 	node.addEventListener('wheel', onWheel, { passive:false, capture: false })
-	node.addEventListener('gesturestart', onGestureStart, false)
-	node.addEventListener('gestureend', onGestureEnd, false)
-	node.addEventListener('gesturechange', onGestureChange, false)
 	node.addEventListener('pointerdown', onPointerStart, true)
 	node.addEventListener('pointermove', onPointerMove, true)
 	node.addEventListener('pointercancel', onPointerEnd, true)
 	node.addEventListener('lostpointercapture', onPointerLostCapture, true)
 	node.addEventListener('getpointercapture', onPointerGotCapture, true)
 	node.addEventListener('pointerup', onPointerEnd, true)
-	node.addEventListener('touchstart', onTouchStart, true)
-	node.addEventListener('touchend', onTouchStop, true)
-	node.addEventListener('touchcancel', onTouchStop, true)
-	window.addEventListener('touchmove', onTouchMoveGlobal, true)
+
+	const nativeGestures = (typeof window.GestureEvent) !== "undefined"
+
+	if(nativeGestures) {
+		node.addEventListener('gesturestart', onGestureStart, false)
+		node.addEventListener('gestureend', onGestureEnd, false)
+		node.addEventListener('gesturechange', onGestureChange, false)
+	} else {
+		node.addEventListener('touchstart', onTouchStart, true)
+		node.addEventListener('touchmove', onTouchMoveLocal, true)
+		node.addEventListener('touchend', onTouchStop, true)
+		node.addEventListener('touchcancel', onTouchStop, true)
+		window.addEventListener('touchmove', onTouchMoveGlobal, true)
+		window.addEventListener('touchstart', onTouchStartGlobal, true)
+		window.addEventListener('touchend', onTouchStopGlobal, true)
+		window.addEventListener('touchcancel', onTouchStopGlobal, true)
+	}
+
 
 	return () => {
-		window.removeEventListener('touchmove', onTouchMoveGlobal, true)
-		node.removeEventListener('touchcancel', onTouchStop, true)
-		node.removeEventListener('touchend', onTouchStop, true)
-		node.removeEventListener('touchstart', onTouchStart, true)
+		if(nativeGestures) {
+			node.removeEventListener('gesturechange', onGestureStart, false)
+			node.removeEventListener('gesturestart', onGestureChange, false)
+			node.removeEventListener('gestureend', onGestureEnd, false)
+		} else {
+			window.removeEventListener('touchcancel', onTouchStopGlobal, true)
+			window.removeEventListener('touchend', onTouchStopGlobal, true)
+			window.removeEventListener('touchstart', onTouchStartGlobal, true)
+			window.removeEventListener('touchmove', onTouchMoveGlobal, true)
+			node.removeEventListener('touchcancel', onTouchStop, true)
+			node.removeEventListener('touchend', onTouchStop, true)
+			node.removeEventListener('touchmove', onTouchMoveLocal, true)
+			node.removeEventListener('touchstart', onTouchStart, true)
+		}
+		
 		node.removeEventListener('pointerup', onPointerEnd, true)
 		node.removeEventListener('pointermove', onPointerMove, true)
 		node.removeEventListener('lostpointercapture', onPointerLostCapture, true)
 		node.removeEventListener('getpointercapture', onPointerGotCapture, true)
 		node.removeEventListener('pointercancel', onPointerEnd, true)
 		node.removeEventListener('pointerdown', onPointerStart, true)
-		node.removeEventListener('gesturechange', onGestureStart, false)
-		node.removeEventListener('gesturestart', onGestureChange, false)
-		node.removeEventListener('gestureend', onGestureEnd, false)
 		node.removeEventListener('wheel', onWheel, { passive:false, capture: false })
 
 		window.addEventListener('error', onError)
