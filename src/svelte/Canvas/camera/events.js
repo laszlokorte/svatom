@@ -195,6 +195,28 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 		}
 	};
 
+	//let c = 0
+	//const colors = ['#fff','#ddd','#eee','#f0f0f0','#d0d0d0','#e0e0e0'];
+	let localTouches = []
+	function onTouchStart(evt) {
+			evt.preventDefault()
+		localTouches = evt.targetTouches
+	}
+
+	function onTouchStop(evt) {
+			evt.preventDefault()
+		localTouches = evt.targetTouches
+	}
+
+	function onTouchMoveGlobal(evt) {
+		if(evt.touches.length > 1 && localTouches.length > 0) {
+			evt.preventDefault()
+			// TODO implement gesture detection
+			
+			//document.body.style.backgroundColor = colors[c++%colors.length]
+		}
+	}
+
 	window.addEventListener('error', onError)
 
 
@@ -208,8 +230,16 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 	node.addEventListener('lostpointercapture', onPointerLostCapture, true)
 	node.addEventListener('getpointercapture', onPointerGotCapture, true)
 	node.addEventListener('pointerup', onPointerEnd, true)
+	node.addEventListener('touchstart', onTouchStart, true)
+	node.addEventListener('touchend', onTouchStop, true)
+	node.addEventListener('touchcancel', onTouchStop, true)
+	window.addEventListener('touchmove', onTouchMoveGlobal, true)
 
 	return () => {
+		window.removeEventListener('touchmove', onTouchMoveGlobal, true)
+		node.removeEventListener('touchcancel', onTouchStop, true)
+		node.removeEventListener('touchend', onTouchStop, true)
+		node.removeEventListener('touchstart', onTouchStart, true)
 		node.removeEventListener('pointerup', onPointerEnd, true)
 		node.removeEventListener('pointermove', onPointerMove, true)
 		node.removeEventListener('lostpointercapture', onPointerLostCapture, true)
