@@ -329,12 +329,13 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 	node.addEventListener('pointerup', onPointerEnd, true)
 
 	const nativeGestures = (typeof window.GestureEvent) !== "undefined"
+	const touchEvents = (typeof window.TouchEvent) !== "undefined"
 
 	if(nativeGestures) {
 		node.addEventListener('gesturestart', onGestureStart, false)
 		node.addEventListener('gestureend', onGestureEnd, false)
 		node.addEventListener('gesturechange', onGestureChange, false)
-	} else {
+	} else if(touchEvents) {
 		node.addEventListener('touchstart', onTouchStart, true)
 		node.addEventListener('touchmove', onTouchMoveLocal, true)
 		node.addEventListener('touchend', onTouchStop, true)
@@ -351,7 +352,7 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 			node.removeEventListener('gesturechange', onGestureStart, false)
 			node.removeEventListener('gesturestart', onGestureChange, false)
 			node.removeEventListener('gestureend', onGestureEnd, false)
-		} else {
+		} else if(touchEvents) {
 			window.removeEventListener('touchcancel', onTouchStopGlobal, true)
 			window.removeEventListener('touchend', onTouchStopGlobal, true)
 			window.removeEventListener('touchstart', onTouchStartGlobal, true)
