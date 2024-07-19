@@ -1892,6 +1892,13 @@
 		user-select: none;
 		-webkit-user-select: none;
 		touch-action: none;
+
+		-webkit-touch-callout: none;
+		-webkit-user-callout: none;
+		-webkit-user-select: none;
+		-webkit-user-drag: none;
+		-webkit-user-modify: none;
+		-webkit-highlight: none;
 	}
 
 	.scroller-hud-minimap {
@@ -1909,6 +1916,13 @@
 		-webkit-user-select: none;
 		touch-action: none;
 		pointer-events: none;
+
+		-webkit-touch-callout: none;
+		-webkit-user-callout: none;
+		-webkit-user-select: none;
+		-webkit-user-drag: none;
+		-webkit-user-modify: none;
+		-webkit-highlight: none;
 	}
 
 	.prevent-selection {
