@@ -33,7 +33,7 @@
 		},
 		{
 			content: {
-				box: "-52 -52 104 104",
+				box: "-54 -54 108 108",
 				paths: [
 					{
 						fill: "#70db93",
@@ -49,7 +49,7 @@
 		},
 		{
 			content: {
-				box: "-52 -52 104 104",
+				box: "-54 -54 108 108",
 				paths: [
 					{
 						fill: "#70db93",
@@ -81,7 +81,7 @@
 		},
 		{
 			content: {
-				box: "-52 -52 104 104",
+				box: "-54 -54 108 108",
 				paths: [
 					{
 						fill: "#fff",
@@ -97,7 +97,7 @@
 		},
 		{
 			content: {
-				box: "-52 -52 104 104",
+				box: "-54 -54 108 108",
 				paths: [
 					{
 						fill: "black",
@@ -121,7 +121,7 @@
 
 {#snippet circle(content)}
 <svg
-	preserveAspectRatio="xMidYMid meet" viewBox="-52 -52 104 104" fill="white" style="width: 100%; height: 100%; overflow: hidden;">
+	preserveAspectRatio="xMidYMid meet" viewBox="-54 -54 108 108" fill="white" style="width: 100%; height: 100%; overflow: hidden;">
 	<circle
 		cx="0"
 		cy="0"
@@ -156,7 +156,7 @@
 {#snippet text(content)}
 <svg
 	preserveAspectRatio="xMidYMid meet"
-	viewBox="-52 -52 104 104"
+	viewBox="-54 -54 108 108"
 	fill="white"
 	style="width: 100%; height: 100%; overflow: hidden;"
 >

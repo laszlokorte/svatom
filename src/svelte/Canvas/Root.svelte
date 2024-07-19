@@ -5,6 +5,7 @@
 	import * as Geo from "../geometry";
 	import * as U from "../utils";
 	import Navigator from "./camera/Navigator.svelte";
+	import ClickPicker from "./tools/ClickPicker.svelte";
 	import * as CamNavigation from "./camera/navigation";
 	import { cameraAsViewbox } from "./camera/functions";
 	import {
@@ -550,6 +551,65 @@
 			L.reread(R.sortBy(R.prop("zIndex"))),
 		],
 		currentDocumentContent,
+	);
+
+	const selectionInternal = atom(["xxx"]);
+	const selection = view(L.normalize(R.uniq), selectionInternal);
+
+	const hitAreas = view(
+		({ ns, s, shps }) => {
+			return [
+				...ns.map((n, i) => ({
+					type: "circle",
+					cx: n.x,
+					cy: n.y,
+					r: 25 * Math.min(1, s),
+					id: "node-" + i,
+				})),
+				...shps.map((sp, i) => {
+					const cos = Math.cos((-sp.placement.angle / 180) * Math.PI);
+					const sin = Math.sin((-sp.placement.angle / 180) * Math.PI);
+
+					return {
+						type: "polygon",
+						points: [
+							{
+								x: sp.placement.start.x,
+								y: sp.placement.start.y,
+							},
+							{
+								x:
+									sp.placement.start.x +
+									cos * sp.placement.size.x,
+								y:
+									sp.placement.start.y +
+									-sin * sp.placement.size.x,
+							},
+							{
+								x:
+									sp.placement.start.x +
+									cos * sp.placement.size.x +
+									sin * sp.placement.size.y,
+								y:
+									sp.placement.start.y +
+									-sin * sp.placement.size.x +
+									cos * sp.placement.size.y,
+							},
+							{
+								x:
+									sp.placement.start.x +
+									sin * sp.placement.size.y,
+								y:
+									sp.placement.start.y +
+									cos * sp.placement.size.y,
+							},
+						],
+						id: "shape-" + i,
+					};
+				}),
+			];
+		},
+		combine({ ns: nodes, s: cameraScale, shps: shapes }),
 	);
 
 	const newDrawing = view(
@@ -1609,16 +1669,6 @@
 					bind:this={svgElement.value}
 					viewBox={viewBox.value}
 					preserveAspectRatio={preserveAspectRatio.value}
-					onclick={(evt) => {
-						newAlert.value = {
-							msg: "hello",
-							color: "green",
-							...clientToCanvas(evt.clientX, evt.clientY),
-						};
-					}}
-					onkeydown={(evt) => {}}
-					role="button"
-					tabindex="-1"
 				>
 					<Navigator
 						{camera}
@@ -1626,140 +1676,142 @@
 						{cameraTow}
 						errorHandler={newAlert}
 					>
-						<g
-							class:hidden={!debugFrames.value}
-							pointer-events="none"
-						>
-							<path
-								d={viewBoxPath.value}
-								class="view-box"
-								stroke-opacity="0.5"
-								stroke="magenta"
-								vector-effect="non-scaling-stroke"
-								stroke-width="8px"
-								fill="#ddffee"
-							/>
-							<path
-								d={frameBoxPath.value}
-								stroke="#ff88cc"
-								fill="none"
-								vector-effect="non-scaling-stroke"
-								stroke-width="14px"
-								shape-rendering="crispEdges"
-							/>
-						</g>
-
-						<g pointer-events="none">
-							<Bounds
-								show={showBounds}
-								{extension}
-								{cameraBounds}
-								{rotationTransform}
-								{cameraScale}
-							/>
-							<Grid
-								{frameBoxPath}
-								{frameBoxObject}
-								{rotationTransform}
-								{cameraScale}
-								{gridDistance}
-							/>
-							<Edges
-								{nodes}
-								{edges}
-								{rotationTransform}
-								{cameraScale}
-							/>
-							<NodesDef {nodes} {cameraScale} />
-
-							<Drawings
-								{drawings}
-								{rotationTransform}
-								{cameraScale}
-							/>
-
-							<ShowSplines
-								{splines}
-								{rotationTransform}
-								{cameraScale}
-							/>
-
-							<TextBoxes
-								{textBoxes}
-								{clientToCanvas}
-								{frameBoxPath}
-								{rotationTransform}
-								{cameraScale}
-								{cameraOrientation}
-							/>
-
-							<TextLines
-								{textes}
-								{clientToCanvas}
-								{frameBoxPath}
-								{rotationTransform}
-								{cameraScale}
-								{cameraOrientation}
-							/>
-
-							<Guides
-								{guides}
-								{frameBoxObject}
-								{rotationTransform}
-								{cameraScale}
-							/>
-							<ShapesDef
-								{shapes}
-								{frameBoxObject}
-								{rotationTransform}
-								{cameraScale}
-							/>
-							<ShowAxis
-								{axis}
-								{frameBoxObject}
-								{rotationTransform}
-								{cameraScale}
-							/>
-							<ShowPlots
-								{plots}
-								{frameBoxObject}
-								{rotationTransform}
-								{cameraScale}
-							/>
-
-							<!-- <NodesUse {nodes} {rotationTransform} />
-							<ShapesUse {shapes} {rotationTransform} /> -->
+						<ClickPicker {hitAreas} {selection} {rotationTransform}>
 							<g
+								class:hidden={!debugFrames.value}
 								pointer-events="none"
-								transform={rotationTransform.value}
 							>
-								<LayeredUse {zLayers} {rotationTransform} />
+								<path
+									d={viewBoxPath.value}
+									class="view-box"
+									stroke-opacity="0.5"
+									stroke="magenta"
+									vector-effect="non-scaling-stroke"
+									stroke-width="8px"
+									fill="#ddffee"
+								/>
+								<path
+									d={frameBoxPath.value}
+									stroke="#ff88cc"
+									fill="none"
+									vector-effect="non-scaling-stroke"
+									stroke-width="14px"
+									shape-rendering="crispEdges"
+								/>
 							</g>
 
-							<Origin {rotationTransform} {cameraScale} />
-						</g>
+							<g pointer-events="none">
+								<Bounds
+									show={showBounds}
+									{extension}
+									{cameraBounds}
+									{rotationTransform}
+									{cameraScale}
+								/>
+								<Grid
+									{frameBoxPath}
+									{frameBoxObject}
+									{rotationTransform}
+									{cameraScale}
+									{gridDistance}
+								/>
+								<Edges
+									{nodes}
+									{edges}
+									{rotationTransform}
+									{cameraScale}
+								/>
+								<NodesDef {nodes} {cameraScale} />
 
-						<svelte:component
-							this={tools[tool.value].component}
-							bind:this={currentToolElement.value}
-							{...tools[tool.value].parameters}
-						></svelte:component>
+								<Drawings
+									{drawings}
+									{rotationTransform}
+									{cameraScale}
+								/>
 
-						<Ruler
-							{frameBoxPath}
-							{frameBoxObject}
-							{rotationTransform}
-							{cameraScale}
-						/>
+								<ShowSplines
+									{splines}
+									{rotationTransform}
+									{cameraScale}
+								/>
 
-						<ShowAlert
-							{alerts}
-							{frameBoxObject}
-							{rotationTransform}
-							{cameraOrientation}
-							{cameraScale}
-							{cameraFocus}
-						/>
+								<TextBoxes
+									{textBoxes}
+									{clientToCanvas}
+									{frameBoxPath}
+									{rotationTransform}
+									{cameraScale}
+									{cameraOrientation}
+								/>
+
+								<TextLines
+									{textes}
+									{clientToCanvas}
+									{frameBoxPath}
+									{rotationTransform}
+									{cameraScale}
+									{cameraOrientation}
+								/>
+
+								<Guides
+									{guides}
+									{frameBoxObject}
+									{rotationTransform}
+									{cameraScale}
+								/>
+								<ShapesDef
+									{shapes}
+									{frameBoxObject}
+									{rotationTransform}
+									{cameraScale}
+								/>
+								<ShowAxis
+									{axis}
+									{frameBoxObject}
+									{rotationTransform}
+									{cameraScale}
+								/>
+								<ShowPlots
+									{plots}
+									{frameBoxObject}
+									{rotationTransform}
+									{cameraScale}
+								/>
+
+								<!-- <NodesUse {nodes} {rotationTransform} />
+							<ShapesUse {shapes} {rotationTransform} /> -->
+								<g
+									pointer-events="none"
+									transform={rotationTransform.value}
+								>
+									<LayeredUse {zLayers} {rotationTransform} />
+								</g>
+
+								<Origin {rotationTransform} {cameraScale} />
+							</g>
+
+							<svelte:component
+								this={tools[tool.value].component}
+								bind:this={currentToolElement.value}
+								{...tools[tool.value].parameters}
+							></svelte:component>
+
+							<Ruler
+								{frameBoxPath}
+								{frameBoxObject}
+								{rotationTransform}
+								{cameraScale}
+							/>
+
+							<ShowAlert
+								{alerts}
+								{frameBoxObject}
+								{rotationTransform}
+								{cameraOrientation}
+								{cameraScale}
+								{cameraFocus}
+							/>
+						</ClickPicker>
 					</Navigator>
 				</svg>
 				<!-- 

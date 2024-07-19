@@ -695,8 +695,7 @@ export function disableTouchEventsIf(node, atom) {
 
 export function disableEventIf(node, {eventType, cond}) {
 	return activeEvent(node, {eventType, fn: (evt) => {
-		if (cond.value) {
-			console.log("x")
+		if (cond === true || (cond !== false && cond.value)) {
 			evt.preventDefault();
 		}
 	}})

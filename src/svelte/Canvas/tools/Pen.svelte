@@ -72,6 +72,8 @@
 		),
 		path,
 	);
+
+	let preventNextClick = $state(false);
 </script>
 
 <path
@@ -83,7 +85,10 @@
 	role="button"
 	tabindex="-1"
 	onclick={(evt) => {
-		evt.stopPropagation();
+		if (preventNextClick) {
+			preventNextClick = false;
+			evt.stopPropagation();
+		}
 	}}
 	onkeydown={(evt) => {
 		if (evt.key === "Escape" || evt.key === "Esc") {
@@ -123,6 +128,9 @@
 		}
 		if (newDrawing) {
 			newDrawing.value = path.value;
+			if (path.value.length > 1) {
+				preventNextClick = true;
+			}
 		}
 		isActive.value = false;
 	}}
