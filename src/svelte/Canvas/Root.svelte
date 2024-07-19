@@ -1676,7 +1676,12 @@
 						{cameraTow}
 						errorHandler={newAlert}
 					>
-						<ClickPicker {hitAreas} {selection} {rotationTransform}>
+						<ClickPicker
+							{hitAreas}
+							{selection}
+							{rotationTransform}
+							{clientToCanvas}
+						>
 							<g
 								class:hidden={!debugFrames.value}
 								pointer-events="none"
