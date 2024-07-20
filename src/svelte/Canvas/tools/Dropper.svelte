@@ -38,45 +38,52 @@
 
 		dragging.value = 0
 
+
+		// Work-around for
+		// https://bugs.chromium.org/p/chromium/issues/detail?id=1293803&no_tracker_redirect=1
+		// chrome on android supports only text/plain mimeTypes in drag drop data transfer
+		let useWorkaround = true
+
 		for(let item of evt.dataTransfer.items) {
-			if(item.type === 'text/plain') {
+			if(useWorkaround !== true && item.type === 'x-custom/text') {
+				useWorkaround = false
 				item.getAsString((s) => {
-					newText.value = {
-						x: position.x,
-						y: position.y,
-						fontSize: 4*cameraScale.value,
-						content: JSON.parse(s).text,
-					}
+					dropText(JSON.parse(s), position)
 				})
-			} else if(item.type === 'x-custom/node') {
+			} else if(useWorkaround !== true && item.type === 'x-custom/node') {
+				useWorkaround = false
+				item.getAsString((s) => {					
+					dropNode(JSON.parse(s), position)
+				})
+			} else if(useWorkaround !== true && item.type === 'x-custom/shape') {
+				useWorkaround = false
 				item.getAsString((s) => {
-					const n = JSON.parse(s)
-					newNode.value = {
-						x: position.x,
-						y: position.y,
-					}
+					dropShape(JSON.parse(s), position)
 				})
-			} else if(item.type === 'x-custom/shape') {
-				item.getAsString((s) => {
-					const n = JSON.parse(s)
-					const box = n.box.split(" ")
-					const w = box[2]*cameraScale.value/2
-					const h = box[3]*cameraScale.value/2
-					const a = -cameraOrientation.value
-					const cos = Math.cos(a / 180 * Math.PI)
-					const sin = Math.sin(a / 180 * Math.PI)
-					newShape.value = {
-						placement: {
-							start: {x: position.x - (cos*w - sin*h)/2, y: position.y - (sin*w + cos*h)/2},
-							size: {x: w, y: h},
-							angle: a,
-						},
-						content: {
-							box: n.box,
-							paths: n.paths,
-						},
-					};
-				})
+			} else if(item.type === 'text/plain') {
+				if(useWorkaround !== false) {
+					useWorkaround = true
+
+
+					item.getAsString((s) => {
+						const n = JSON.parse(s)
+						
+						const mime = n.mime;
+						const data = n.data;
+
+						switch (mime) {
+						case 'x-custom/text':
+							dropText(data, position)
+							break;
+						case'x-custom/node':
+							dropNode(data, position)
+							break;
+						case'x-custom/shape':
+							dropShape(data, position)
+							break;
+						}
+					})
+				}
 			} else if(item.kind === 'string') {
 				item.getAsString((s) => {
 					alert("dropped: "+s)
@@ -84,6 +91,42 @@
 			} else if(item.kind === 'file') {
 				alert("dropped file ")
 			}
+		}
+	}
+
+	const dropShape = (n, position) => {
+		const box = n.box.split(" ")
+		const w = box[2]*cameraScale.value/2
+		const h = box[3]*cameraScale.value/2
+		const a = -cameraOrientation.value
+		const cos = Math.cos(a / 180 * Math.PI)
+		const sin = Math.sin(a / 180 * Math.PI)
+		newShape.value = {
+			placement: {
+				start: {x: position.x - (cos*w - sin*h)/2, y: position.y - (sin*w + cos*h)/2},
+				size: {x: w, y: h},
+				angle: a,
+			},
+			content: {
+				box: n.box,
+				paths: n.paths,
+			},
+		};
+	}
+
+	const dropNode = (n, position) => {
+		newNode.value = {
+			x: position.x,
+			y: position.y,
+		}
+	}
+
+	const dropText = (n, position) => {
+		newText.value = {
+			x: position.x,
+			y: position.y,
+			fontSize: 4*cameraScale.value,
+			content: n.text,
 		}
 	}
 </script>

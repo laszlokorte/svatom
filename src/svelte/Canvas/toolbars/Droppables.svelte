@@ -26,7 +26,7 @@
 		},
 		{
 			content: {text: "T"},
-			mimeType: "text/plain",
+			mimeType: "x-custom/text",
 			preview: text,
 			alignX: 0.5,
 			alignY: 0.9,
@@ -191,6 +191,8 @@
 			class="drag-template"
 			draggable="true"
 			ondragstart={(evt) => {
+				evt.stopPropagation()
+				evt.dataTransfer.effectAllowed = "copy";
 				evt.currentTarget.setAttribute("aria-grabbed", "true");
 				const positionInfo = evt.currentTarget.getBoundingClientRect();
 				evt.dataTransfer.setDragImage(
@@ -198,10 +200,19 @@
 					positionInfo.width * d.alignX,
 					positionInfo.height * d.alignY,
 				);
-				evt.dataTransfer.items.add(JSON.stringify(d.dynamicContent ?  d.dynamicContent(properties.value) : d.content), d.mimeType);
-				evt.dataTransfer.effectAllowed = "copy";
+				const data = d.dynamicContent ?  d.dynamicContent(properties.value) : d.content;
+				evt.dataTransfer.setData(d.mimeType, JSON.stringify(data));
+
+				// Work-around for
+				// https://bugs.chromium.org/p/chromium/issues/detail?id=1293803&no_tracker_redirect=1
+				evt.dataTransfer.setData('text/plain', JSON.stringify({
+					mime: d.mimeType,
+					data: data
+				}));
+
 			}}
 			ondragend={(evt) => {
+				evt.stopPropagation()
 				evt.currentTarget.setAttribute("aria-grabbed", "false");
 			}}
 		>
@@ -218,10 +229,11 @@
 			padding: 0.3em;
 			flex-wrap: wrap;
 			-webkit-tap-highlight-color: transparent;
+			touch-action: manipulation;
 		}
 
 		.drag-template {
-			touch-action: manipulation;
+			touch-action: none;
 			width: 3em;
 			height: 3em;
 			cursor: grab;
@@ -235,6 +247,7 @@
 		.drag-template > svg {
 			display: block;
 			-webkit-tap-highlight-color: transparent;
+			pointer-events: none;
 		}
 
 		.drag-template:global([aria-grabbed="true"]) {

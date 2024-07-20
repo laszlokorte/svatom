@@ -10,6 +10,13 @@
 		bindSize,
 	} from "./svatom.svelte.js";
 
+
+	const numberFormat = new Intl.NumberFormat("en-US", {
+	    minimumFractionDigits: 2,
+	    maximumFractionDigits: 2,
+	    useGrouping: false,
+	});
+
 	const {
 		children, 
 		debug = false,
@@ -88,20 +95,20 @@
 		{#if !children || debug}
 		<div class="debug">
 			<div>
-				Logical Scroll Pos.: {scrollPositionValue.x} / {scrollPositionValue.y}<br>
-				Physical Scroll Pos.: {adjustedScrollPositionValue.x} / {adjustedScrollPositionValue.y}
+				Logical Scroll Pos.: {numberFormat.format(scrollPositionValue.x)} / {numberFormat.format(scrollPositionValue.y)}<br>
+				Physical Scroll Pos.: {numberFormat.format(adjustedScrollPositionValue.x)} / {numberFormat.format(adjustedScrollPositionValue.y)}
 			</div>
 			<div>
-				Content Size: {contentSizeValue.x} / {contentSizeValue.y}
+				Content Size: {numberFormat.format(contentSizeValue.x)} / {numberFormat.format(contentSizeValue.y)}
 			</div>
 			<div>
-				Padded Size: {paddedContentSizeValue.x} / {paddedContentSizeValue.y}
+				Padded Size: {numberFormat.format(paddedContentSizeValue.x)} / {numberFormat.format(paddedContentSizeValue.y)}
 			</div>
 			<div>
-				Window Size: {scrollWindowSizeValue.x} / {scrollWindowSizeValue.y}
+				Window Size: {numberFormat.format(scrollWindowSizeValue.x)} / {numberFormat.format(scrollWindowSizeValue.y)}
 			</div>
 			<div>
-				Overscroll: {browserChromeOverscrollValue.x} / {browserChromeOverscrollValue.y}
+				Overscroll: {numberFormat.format(browserChromeOverscrollValue.x)} / {numberFormat.format(browserChromeOverscrollValue.y)}
 			</div>
 		</div>
 		{/if}

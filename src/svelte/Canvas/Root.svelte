@@ -1891,7 +1891,7 @@
 		--accent-color-light: #cc4466;
 		user-select: none;
 		-webkit-user-select: none;
-		touch-action: none;
+		touch-action: manipulation;
 
 		-webkit-touch-callout: none;
 		-webkit-user-callout: none;
@@ -1914,7 +1914,7 @@
 		margin-top: 2em;
 		user-select: none;
 		-webkit-user-select: none;
-		touch-action: none;
+		touch-action: manipulation;
 		pointer-events: none;
 
 		-webkit-touch-callout: none;
@@ -1928,13 +1928,13 @@
 	.prevent-selection {
 		user-select: none;
 		-webkit-user-select: none;
-		touch-action: none;
+		touch-action: manipulation;
 	}
 
 	legend {
 		user-select: none;
 		-webkit-user-select: none;
-		touch-action: none;
+		touch-action: manipulation;
 	}
 
 	.canvas {
@@ -2103,7 +2103,7 @@
 	.tool-button {
 		background: #555;
 		user-select: none;
-		touch-action: none;
+		touch-action: manipulation;
 		-webkit-tap-highlight-color: transparent;
 	}
 
@@ -2143,11 +2143,10 @@
 	.tool-action:focus-visible,
 	.tool-action:focus {
 		user-select: none;
-		touch-action: none;
+		touch-action: manipulation;
 		background: #333;
 		color: #fff;
 		-webkit-tap-highlight-color: transparent;
-		touch-action: none;
 	}
 
 	.debug-dot {
