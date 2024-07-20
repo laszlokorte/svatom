@@ -239,8 +239,7 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 		return (sum / touches.length)
 	}
 
-	function onTouchStart(evt) {
-		evt.preventDefault()
+	function onTouchStartLocal(evt) {
 		localTouches = evt.targetTouches
 
 		touchBasePivot = touchesCenter(evt.touches)
@@ -248,8 +247,7 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 		touchBaseRot = touchesAngle(touchBasePivot, evt.touches)
 	}
 
-	function onTouchStop(evt) {
-		evt.preventDefault()
+	function onTouchStopLocal(evt) {
 		localTouches = evt.targetTouches
 
 		if(evt.touches.length > 1 && localTouches.length > 0) {
@@ -328,18 +326,18 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 	node.addEventListener('getpointercapture', onPointerGotCapture, true)
 	node.addEventListener('pointerup', onPointerEnd, true)
 
-	const nativeGestures = (typeof window.GestureEvent) !== "undefined"
-	const touchEvents = (typeof window.TouchEvent) !== "undefined"
+	const nativeGestureEvents = false && (typeof window.GestureEvent) !== "undefined"
+	const nativeTouchEvents = (typeof window.TouchEvent) !== "undefined"
 
-	if(nativeGestures) {
+	if(nativeGestureEvents) {
 		node.addEventListener('gesturestart', onGestureStart, false)
 		node.addEventListener('gestureend', onGestureEnd, false)
 		node.addEventListener('gesturechange', onGestureChange, false)
-	} else if(touchEvents) {
-		node.addEventListener('touchstart', onTouchStart, true)
+	} else if(nativeTouchEvents) {
+		node.addEventListener('touchstart', onTouchStartLocal, true)
 		node.addEventListener('touchmove', onTouchMoveLocal, true)
-		node.addEventListener('touchend', onTouchStop, true)
-		node.addEventListener('touchcancel', onTouchStop, true)
+		node.addEventListener('touchend', onTouchStopLocal, true)
+		node.addEventListener('touchcancel', onTouchStopLocal, true)
 		window.addEventListener('touchmove', onTouchMoveGlobal, true)
 		window.addEventListener('touchstart', onTouchStartGlobal, true)
 		window.addEventListener('touchend', onTouchStopGlobal, true)
@@ -348,19 +346,19 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 
 
 	return () => {
-		if(nativeGestures) {
+		if(nativeGestureEvents) {
 			node.removeEventListener('gesturechange', onGestureStart, false)
 			node.removeEventListener('gesturestart', onGestureChange, false)
 			node.removeEventListener('gestureend', onGestureEnd, false)
-		} else if(touchEvents) {
+		} else if(nativeTouchEvents) {
 			window.removeEventListener('touchcancel', onTouchStopGlobal, true)
 			window.removeEventListener('touchend', onTouchStopGlobal, true)
 			window.removeEventListener('touchstart', onTouchStartGlobal, true)
 			window.removeEventListener('touchmove', onTouchMoveGlobal, true)
-			node.removeEventListener('touchcancel', onTouchStop, true)
-			node.removeEventListener('touchend', onTouchStop, true)
+			node.removeEventListener('touchcancel', onTouchStopLocal, true)
+			node.removeEventListener('touchend', onTouchStopLocal, true)
 			node.removeEventListener('touchmove', onTouchMoveLocal, true)
-			node.removeEventListener('touchstart', onTouchStart, true)
+			node.removeEventListener('touchstart', onTouchStartLocal, true)
 		}
 		
 		node.removeEventListener('pointerup', onPointerEnd, true)
