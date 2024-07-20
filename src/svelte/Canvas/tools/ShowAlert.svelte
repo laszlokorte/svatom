@@ -125,6 +125,20 @@
 				color={p.color || "darkred"}
 			></path>
 			<text
+				x={p.screenPos.x + 18 * cameraScale.value}
+				y={p.screenPos.y}
+				class="alert-text-stroke"
+				dominant-baseline="middle"
+				font-size="{cameraScale.value}em"
+				><tspan class="error-titel">Error:</tspan>
+				<tspan>{p.msg}</tspan></text
+			>
+			<text
+				tabindex="-1"
+				role="button"
+				onpointerdown={(evt) => {
+					alert(p.msg);
+				}}
 				color={p.color || "darkred"}
 				x={p.screenPos.x + 18 * cameraScale.value}
 				y={p.screenPos.y}
@@ -154,12 +168,18 @@
 		fill-opacity: 0.6;
 	}
 
+	.alert-text-stroke {
+		fill: white;
+		display: none;
+		stroke: white;
+		stroke-width: 0.3em;
+	}
+
 	.alert-text {
 		fill: currentColor;
 		display: none;
-		paint-order: stroke;
-		stroke: white;
-		stroke-width: 0.3em;
+		stroke: none;
+		stroke-width: 0;
 	}
 
 	.alert-badge:focus,
@@ -167,12 +187,15 @@
 		fill-opacity: 1;
 	}
 
-	.alert-badge:focus + .alert-text,
-	.alert-badge:active + .alert-text {
+	.alert-badge:focus ~ .alert-text,
+	.alert-badge:active ~ .alert-text,
+	.alert-badge:focus ~ .alert-text-stroke,
+	.alert-badge:active ~ .alert-text-stroke {
 		display: initial;
 	}
 
-	.alert-badge:hover + .alert-text {
+	.alert-badge:hover ~ .alert-text,
+	.alert-badge:hover ~ .alert-text-stroke {
 		display: initial;
 	}
 

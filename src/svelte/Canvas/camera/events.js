@@ -195,6 +195,11 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 		}
 	};
 
+	if(typeof window.DragEvent === "undefined") {
+		const pos = L.get(eventWorld, {clientX: window.innerWidth / 2, clientY: window.innerHeight / 2})
+		errorHandler.value = { msg: "DragEvent not supported", ...pos }
+	}
+
 	//let c = 0
 	//const colors = ['#fff','#ddd','#eee','#f0f0f0','#d0d0d0','#e0e0e0'];
 	let localTouches = []
@@ -250,8 +255,10 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 	function onTouchStopLocal(evt) {
 		localTouches = evt.targetTouches
 
-		if(evt.touches.length > 1 && localTouches.length > 0) {
+		if(evt.touches.length < 2 || localTouches.length < 1) {
 			touchBasePivot = null
+			touchBaseScale = null
+			touchBaseRot = null
 		}
 	}
 
@@ -326,7 +333,7 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 	node.addEventListener('getpointercapture', onPointerGotCapture, true)
 	node.addEventListener('pointerup', onPointerEnd, true)
 
-	const nativeGestureEvents = false && (typeof window.GestureEvent) !== "undefined"
+	const nativeGestureEvents = (typeof window.GestureEvent) !== "undefined"
 	const nativeTouchEvents = (typeof window.TouchEvent) !== "undefined"
 
 	if(nativeGestureEvents) {

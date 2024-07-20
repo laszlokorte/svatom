@@ -221,7 +221,7 @@
 		}
 
 		.drag-template {
-			touch-action: none;
+			touch-action: manipulation;
 			width: 3em;
 			height: 3em;
 			cursor: grab;
