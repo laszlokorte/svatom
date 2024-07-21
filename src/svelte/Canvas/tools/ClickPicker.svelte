@@ -7,7 +7,7 @@
 	} from "../../svatom.svelte.js";
 	import * as Geo from "../../geometry.js";
 
-	const {children, hitAreas, selection, rotationTransform, clientToCanvas} = $props()
+	const {children, hitAreas, selection, rotationTransform, clientToCanvas, cameraScale} = $props()
 
 	const hitAreasValue = $derived(hitAreas.value)
 	const selectionValue = $derived(selection.value)
@@ -29,7 +29,7 @@
 				}
 			case 'polyline':
 				return R.any(([from, to]) => {
-					return Geo.pointToLineDistance(pos, {from, to}) < 10
+					return Geo.pointToLineDistance(pos, {from, to}) < cameraScale.value * 4
 				}, R.aperture(2, ha.points))
 			default: 
 				return false

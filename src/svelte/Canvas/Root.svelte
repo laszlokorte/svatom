@@ -1688,6 +1688,7 @@
 							{selection}
 							{rotationTransform}
 							{clientToCanvas}
+							{cameraScale}
 						>
 							<g
 								class:hidden={!debugFrames.value}
