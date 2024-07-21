@@ -239,3 +239,32 @@ export function clamp2DBox({minX, minY, width, height, padding = 0}, v) {
 		y: R.clamp(minY+padding, minY+height-padding, v.y)
 	}
 }
+
+export function pointToLineDistance(p, {from, to} = line) {
+	const A = p.x - from.x;
+	const B = p.y - from.y;
+	const C = to.x - from.x;
+	const D = to.y - from.y;
+
+	const dot = A * C + B * D;
+	const len_sq = C * C + D * D;
+	const param = len_sq != 0 ? dot / len_sq : -1;
+	
+	let xx, yy;
+
+	if (param < 0) {
+		xx = from.x;
+		yy = from.y;
+	} else if (param > 1) {
+		xx = to.x;
+		yy = to.y;
+	} else {
+		xx = from.x + param * C;
+		yy = from.y + param * D;
+	}
+
+	const dx = p.x - xx;
+	const dy = p.y - yy;
+
+	return Math.sqrt(dx * dx + dy * dy);
+}

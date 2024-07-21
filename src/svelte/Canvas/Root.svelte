@@ -559,7 +559,7 @@
 	const selection = view(L.normalize(R.uniq), selectionInternal);
 
 	const hitAreas = view(
-		({ ns, s, shps }) => {
+		({ ns, s, shps, drws }) => {
 			return [
 				...ns.map((n, i) => ({
 					type: "circle",
@@ -609,9 +609,14 @@
 						id: "shape-" + i,
 					};
 				}),
+				...drws.map((points, i) => ({
+					type: "polyline",
+					id: "drawing-" + i,
+					points: points,
+				})),
 			];
 		},
-		combine({ ns: nodes, s: cameraScale, shps: shapes }),
+		combine({ ns: nodes, s: cameraScale, drws: drawings, shps: shapes }),
 	);
 
 	const newDrawing = view(

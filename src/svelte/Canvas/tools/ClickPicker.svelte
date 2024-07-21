@@ -20,12 +20,19 @@
 	onclick={(evt) => {
 		const pos = clientToCanvas(evt.clientX, evt.clientY)
 		const hitIndex = R.findIndex((ha) => {
-			if(ha.type === 'circle') {
-				if(Math.hypot(ha.cx - pos.x, ha.cy - pos.y) < ha.r) {
-					return true
+			switch (ha.type) {
+			case 'circle':
+				return Math.hypot(ha.cx - pos.x, ha.cy - pos.y) < ha.r
+			case 'polygon':
+				if(ha.points.length === 4) {
+					return Geo.quadContainsPoint({a: ha.points[0], b: ha.points[1], c: ha.points[2], d: ha.points[3]}, pos)
 				}
-			} else if(ha.type === 'polygon' && ha.points.length === 4) {
-				return Geo.quadContainsPoint({a: ha.points[0], b: ha.points[1], c: ha.points[2], d: ha.points[3]}, pos)
+			case 'polyline':
+				return R.any(([from, to]) => {
+					return Geo.pointToLineDistance(pos, {from, to}) < 10
+				}, R.aperture(2, ha.points))
+			default: 
+				return false
 			}
 
 		}, hitAreasValue)
@@ -55,9 +62,11 @@
 <g transform="{rotationTransform.value}" pointer-events="none">
 {#each hitAreasValue as ha (ha.id)}
 {#if ha.type === 'circle'}
-<circle class="hit-area" cx={ha.cx} cy={ha.cy}  r={ha.r}  data-area-id={ha.id} class:active={selectionValue.indexOf(ha.id) > -1} />
+<circle fill="none" stroke="none" class="hit-area" cx={ha.cx} cy={ha.cy}  r={ha.r}  data-area-id={ha.id} class:active={selectionValue.indexOf(ha.id) > -1} />
 {:else if ha.type === 'polygon'}
-<polygon class="hit-area" points={ha.points.map(({x,y}) => `${x} ${y}`).join(" ")} data-area-id={ha.id} class:active={selectionValue.indexOf(ha.id) > -1}/>
+<polygon fill="none" stroke="none" class="hit-area" points={ha.points.map(({x,y}) => `${x} ${y}`).join(" ")} data-area-id={ha.id} class:active={selectionValue.indexOf(ha.id) > -1}/>
+{:else if ha.type === 'polyline'}
+<polyline fill="none" stroke="none" class="hit-path" points={ha.points.map(({x,y}) => `${x} ${y}`).join(" ")} data-area-id={ha.id} class:active={selectionValue.indexOf(ha.id) > -1}/>
 {/if}
 {/each}
 </g>
@@ -74,6 +83,20 @@
 	.hit-area.active {
 		fill: #3298FD;
 		fill-opacity: 0.3 ;
+		stroke: #3298FD;
+	}
+
+	.hit-path {
+		fill: none;
+		stroke: none;
+		stroke-width: 12px;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+		vector-effect: non-scaling-stroke;
+	}
+
+	.hit-path.active {
+		stroke-opacity: 0.5;
 		stroke: #3298FD;
 	}
 </style>

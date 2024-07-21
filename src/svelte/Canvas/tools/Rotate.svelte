@@ -204,18 +204,20 @@
 			r={cameraScale.value * 3}
 			class="ref"
 			stroke="#444"
+			class:active
 		/>
 
 		<line
 			stroke-opacity="0.8"
 			stroke-width="1px"
-			class="ref"
+			class="ref-line"
 			stroke="#444"
 			vector-effect="non-scaling-stroke"
 			x1={rotPivot.x}
 			y1={rotPivot.y}
 			x2={clampedRefValue.x}
 			y2={clampedRefValue.y}
+			class:active
 		/>
 
 		<circle
@@ -234,9 +236,25 @@
 		stroke-width: 0;
 		outline: none;
 	}
+
+	.ref {
+		stroke-width: 0;
+		stroke: none;
+	}
+
+	.ref-line {
+		stroke-opacity: 0.8;
+		stroke-width: 1px;
+		stroke: #444;
+		vector-effect: non-scaling-stroke;
+	}
+
+	.ref-line.active {
+		stroke: darkgreen;
+	}
+
 	.ref.active {
 		fill: darkgreen;
-		stroke: darkgreen;
 	}
 
 	.ring.active {

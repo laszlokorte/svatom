@@ -84,7 +84,8 @@
 						}
 					})
 				}
-			} else if(item.kind === 'string') {
+			} else if(useWorkaround !== true && item.kind === 'string') {
+				alert(item.type)
 				item.getAsString((s) => {
 					alert("dropped: "+s)
 				})

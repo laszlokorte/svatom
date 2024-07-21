@@ -14,6 +14,12 @@
 	} from "./svatom.svelte.js";
 	import Scroller from "./Scroller.svelte";
 
+	const numberFormat = new Intl.NumberFormat("en-US", {
+		minimumFractionDigits: 0,
+		maximumFractionDigits: 2,
+		useGrouping: false,
+	});
+
 	const extractIndices = (pred = R.identity) =>
 		R.compose(
 			R.map(R.prop("i")),
@@ -245,9 +251,9 @@
 		style:--row-height={rowHeadHeightSum}
 		style:--column-width={columnHeadWidthSum}
 	>
-		<span>x: {scrollPosition.value.x}</span>
+		<span>x: {numberFormat.format(scrollPosition.value.x)}</span>
 		<br />
-		<span>y: {scrollPosition.value.y}</span>
+		<span>y: {numberFormat.format(scrollPosition.value.y)}</span>
 	</div>
 	<div key="head-rows">
 		{#each visibleHeadRows() as y, i (i)}
