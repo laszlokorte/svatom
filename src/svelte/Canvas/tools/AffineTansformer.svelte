@@ -1,6 +1,6 @@
 <script>
 
-	const {children, cameraScale} = $props()
+	const {children, cameraScale, selection} = $props()
 
 
 	const rotationCursor = window.URL.createObjectURL(
@@ -18,11 +18,9 @@
 	const cameraScaleValue = $derived(cameraScale.value)
 </script>
 
-
+{#if selection.value.length}
 <rect x="30" y="120" width="300" height="200" class="box" pointer-events="all" fill="none" />
 <line x1="180" y1="120" x2="180" y2="{120 - 40*Math.min(cameraScaleValue, 2)}" stroke="RoyalBlue" vector-effect="non-scaling-stroke" />
-
-
 
 <g>
 	<circle cx="180" cy="120" r="{3 *cameraScaleValue}" class="handle-background" cursor="n-resize"  />
@@ -63,7 +61,7 @@
 	<circle cx="180" cy="{120 - 40*Math.min(cameraScaleValue, 2)}" r="{5 *cameraScaleValue}" pointer-events="all" class="handle-background" />
 	<circle cx="180" cy="{120 - 40*Math.min(cameraScaleValue, 2)}" r="{5 *cameraScaleValue}" pointer-events="all" class="handle rotator-handle" style:--cursor-url="url({rotationCursor}) " />
 </g>
-
+{/if}
 
 
 

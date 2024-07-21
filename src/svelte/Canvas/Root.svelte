@@ -556,7 +556,7 @@
 		currentDocumentContent,
 	);
 
-	const selectionInternal = atom(["xxx"]);
+	const selectionInternal = atom([]);
 	const selection = view(L.normalize(R.uniq), selectionInternal);
 
 	const hitAreas = view(
@@ -1834,7 +1834,7 @@
 								pointer-events="none"
 								transform={rotationTransform.value}
 							>
-								<AffineTansformer {cameraScale} />
+								<AffineTansformer {cameraScale} {selection} />
 							</g>
 
 							<Ruler
