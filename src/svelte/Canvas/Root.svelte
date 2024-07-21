@@ -560,64 +560,84 @@
 	const selection = view(L.normalize(R.uniq), selectionInternal);
 
 	const hitAreas = view(
-		({ ns, s, shps, drws }) => {
-			return [
-				...ns.map((n, i) => ({
-					type: "circle",
-					cx: n.x,
-					cy: n.y,
-					r: 25 * Math.min(1, s),
-					id: "node-" + i,
-				})),
-				...shps.map((sp, i) => {
-					const cos = Math.cos((-sp.placement.angle / 180) * Math.PI);
-					const sin = Math.sin((-sp.placement.angle / 180) * Math.PI);
+		({ scale, doc }) => {
+			return L.get(
+				[
+					L.partsOf(
+						L.branch({
+							nodes: [
+								L.elems,
+								L.reread((n, i) => ({
+									type: "circle",
+									cx: n.x,
+									cy: n.y,
+									r: 25 * Math.min(1, scale),
+									id: "node-" + i,
+								})),
+							],
+							shapes: [
+								L.elems,
+								L.reread((sp, i) => {
+									const cos = Math.cos(
+										(-sp.placement.angle / 180) * Math.PI,
+									);
+									const sin = Math.sin(
+										(-sp.placement.angle / 180) * Math.PI,
+									);
 
-					return {
-						type: "polygon",
-						points: [
-							{
-								x: sp.placement.start.x,
-								y: sp.placement.start.y,
-							},
-							{
-								x:
-									sp.placement.start.x +
-									cos * sp.placement.size.x,
-								y:
-									sp.placement.start.y +
-									-sin * sp.placement.size.x,
-							},
-							{
-								x:
-									sp.placement.start.x +
-									cos * sp.placement.size.x +
-									sin * sp.placement.size.y,
-								y:
-									sp.placement.start.y +
-									-sin * sp.placement.size.x +
-									cos * sp.placement.size.y,
-							},
-							{
-								x:
-									sp.placement.start.x +
-									sin * sp.placement.size.y,
-								y:
-									sp.placement.start.y +
-									cos * sp.placement.size.y,
-							},
-						],
-						id: "shape-" + i,
-					};
-				}),
-				...drws.map((points, i) => ({
-					type: "polyline",
-					id: "drawing-" + i,
-					points: points,
-				})),
-			];
+									return {
+										type: "polygon",
+										points: [
+											{
+												x: sp.placement.start.x,
+												y: sp.placement.start.y,
+											},
+											{
+												x:
+													sp.placement.start.x +
+													cos * sp.placement.size.x,
+												y:
+													sp.placement.start.y +
+													-sin * sp.placement.size.x,
+											},
+											{
+												x:
+													sp.placement.start.x +
+													cos * sp.placement.size.x +
+													sin * sp.placement.size.y,
+												y:
+													sp.placement.start.y +
+													-sin * sp.placement.size.x +
+													cos * sp.placement.size.y,
+											},
+											{
+												x:
+													sp.placement.start.x +
+													sin * sp.placement.size.y,
+												y:
+													sp.placement.start.y +
+													cos * sp.placement.size.y,
+											},
+										],
+										id: "shape-" + i,
+									};
+								}),
+							],
+							drawings: [
+								L.elems,
+								L.reread((points, i) => ({
+									type: "polyline",
+									id: "drawing-" + i,
+									points: points,
+								})),
+							],
+						}),
+					),
+				],
+				doc,
+			);
 		},
-		combine({ ns: nodes, s: cameraScale, drws: drawings, shps: shapes }),
+		combine({ scale: cameraScale, doc: currentDocumentContent }),
 	);
 
 	const newDrawing = view(
@@ -1814,7 +1834,7 @@
 								pointer-events="none"
 								transform={rotationTransform.value}
 							>
-								<AffineTansformer />
+								<AffineTansformer {cameraScale} />
 							</g>
 
 							<Ruler
