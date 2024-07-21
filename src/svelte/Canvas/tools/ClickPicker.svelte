@@ -11,25 +11,30 @@
 
 	const hitAreasValue = $derived(hitAreas.value)
 	const selectionValue = $derived(selection.value)
+
+	let pointerSize = $state(1)
 </script>
 
 <g 
 	onkeydown={(evt) => {}}
 	role="button"
 	tabindex="-1"
+	onpointerdown={(evt) => {
+		pointerSize = Math.hypot(evt.width, evt.height)
+	}}
 	onclick={(evt) => {
 		const pos = clientToCanvas(evt.clientX, evt.clientY)
 		const hitIndex = R.findIndex((ha) => {
 			switch (ha.type) {
 			case 'circle':
-				return Math.hypot(ha.cx - pos.x, ha.cy - pos.y) < ha.r
+				return Math.hypot(ha.cx - pos.x, ha.cy - pos.y) < ha.r + pointerSize/2 * cameraScale.value
 			case 'polygon':
 				if(ha.points.length === 4) {
 					return Geo.quadContainsPoint({a: ha.points[0], b: ha.points[1], c: ha.points[2], d: ha.points[3]}, pos)
 				}
 			case 'polyline':
 				return R.any(([from, to]) => {
-					return Geo.pointToLineDistance(pos, {from, to}) < cameraScale.value * 4
+					return Geo.pointToLineDistance(pos, {from, to}) < cameraScale.value * (2 + pointerSize/2)
 				}, R.aperture(2, ha.points))
 			default: 
 				return false

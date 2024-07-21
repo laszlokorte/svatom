@@ -6,6 +6,7 @@
 	import * as U from "../utils";
 	import Navigator from "./camera/Navigator.svelte";
 	import ClickPicker from "./tools/ClickPicker.svelte";
+	import AffineTansformer from "./tools/AffineTansformer.svelte";
 	import * as CamNavigation from "./camera/navigation";
 	import { cameraAsViewbox } from "./camera/functions";
 	import {
@@ -1808,6 +1809,13 @@
 								bind:this={currentToolElement.value}
 								{...tools[tool.value].parameters}
 							></svelte:component>
+
+							<g
+								pointer-events="none"
+								transform={rotationTransform.value}
+							>
+								<AffineTansformer />
+							</g>
 
 							<Ruler
 								{frameBoxPath}
