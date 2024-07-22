@@ -640,6 +640,56 @@
 		combine({ scale: cameraScale, doc: currentDocumentContent }),
 	);
 
+	const selectionExtension = view(
+		({ hit, sel }) => {
+			let minX = +Infinity;
+			let maxX = -Infinity;
+			let minY = +Infinity;
+			let maxY = -Infinity;
+
+			for (let h = 0; h < hit.length; h++) {
+				const ha = hit[h];
+				if (sel.indexOf(ha.id) < 0) {
+					continue;
+				}
+
+				switch (ha.type) {
+					case "circle":
+						minX = Math.min(minX, ha.cx - ha.r);
+						maxX = Math.max(maxX, ha.cx + ha.r);
+						minY = Math.min(minY, ha.cy - ha.r);
+						maxY = Math.max(maxY, ha.cy + ha.r);
+						break;
+					case "polygon":
+						for (let p = 0; p < ha.points.length; p++) {
+							minX = Math.min(minX, ha.points[p].x);
+							maxX = Math.max(maxX, ha.points[p].x);
+							minY = Math.min(minY, ha.points[p].y);
+							maxY = Math.max(maxY, ha.points[p].y);
+						}
+						break;
+					case "polyline":
+						for (let p = 0; p < ha.points.length; p++) {
+							minX = Math.min(minX, ha.points[p].x);
+							maxX = Math.max(maxX, ha.points[p].x);
+							minY = Math.min(minY, ha.points[p].y);
+							maxY = Math.max(maxY, ha.points[p].y);
+						}
+						break;
+					default:
+						return false;
+				}
+			}
+
+			if (isFinite(minX)) {
+				return { minX, maxX, minY, maxY };
+			} else {
+				return null;
+			}
+		},
+		combine({ hit: hitAreas, sel: selection }),
+	);
+
 	const newDrawing = view(
 		[L.appendTo, L.setter((n, o) => (n.length > 1 ? n : o))],
 		drawings,
@@ -949,6 +999,11 @@
 				rotationTransform,
 			},
 		},
+		affineTansformer: {
+			name: "Transform",
+			component: AffineTansformer,
+			parameters: { cameraScale, selectionExtension, rotationTransform },
+		},
 		pen: {
 			name: "Pen",
 			component: Pen,
@@ -1079,7 +1134,7 @@
 	};
 
 	const toolGroups = [
-		["select", "lasso"],
+		["select", "lasso", "affineTansformer"],
 		["magnifier", "pan", "rotate", "zoom"],
 		["pen", "polygon", "spline"],
 		["createNode", "createEdge"],
@@ -1676,7 +1731,6 @@
 
 	<div class="prevent-selection">
 		<Dropper
-			{frameBoxPath}
 			{newText}
 			{clientToCanvas}
 			{cameraScale}
@@ -1697,6 +1751,13 @@
 					bind:this={svgElement.value}
 					viewBox={viewBox.value}
 					preserveAspectRatio={preserveAspectRatio.value}
+					tabindex="-1"
+					role="button"
+					onkeydown={(evt) => {
+						if (evt.key === "Escape") {
+							selection.value = [];
+						}
+					}}
 				>
 					<Navigator
 						{camera}
@@ -1710,6 +1771,7 @@
 							{rotationTransform}
 							{clientToCanvas}
 							{cameraScale}
+							{frameBoxPath}
 						>
 							<g
 								class:hidden={!debugFrames.value}
@@ -1830,12 +1892,13 @@
 								{...tools[tool.value].parameters}
 							></svelte:component>
 
-							<g
-								pointer-events="none"
-								transform={rotationTransform.value}
-							>
-								<AffineTansformer {cameraScale} {selection} />
-							</g>
+							{#if currentToolElement.value?.allowAffineTransform}
+								<AffineTansformer
+									{cameraScale}
+									{selectionExtension}
+									{rotationTransform}
+								/>
+							{/if}
 
 							<Ruler
 								{frameBoxPath}

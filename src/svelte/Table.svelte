@@ -15,8 +15,8 @@
 	import Scroller from "./Scroller.svelte";
 
 	const numberFormat = new Intl.NumberFormat("en-US", {
-		minimumFractionDigits: 0,
-		maximumFractionDigits: 2,
+		minimumFractionDigits: 1,
+		maximumFractionDigits: 1,
 		useGrouping: false,
 	});
 
@@ -252,7 +252,6 @@
 		style:--column-width={columnHeadWidthSum}
 	>
 		<span>x: {numberFormat.format(scrollPosition.value.x)}</span>
-		<br />
 		<span>y: {numberFormat.format(scrollPosition.value.y)}</span>
 	</div>
 	<div key="head-rows">
@@ -560,6 +559,8 @@
 		font-family: monospace;
 		-webkit-user-select: none;
 		user-select: none;
+		white-space: pre;
+		font-size: 0.9em;
 	}
 
 	.grid-row {

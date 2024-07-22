@@ -77,6 +77,7 @@
 	}
 
 	let captureNextClick = $state(false);
+	export const allowAffineTransform = true;
 </script>
 
 <path

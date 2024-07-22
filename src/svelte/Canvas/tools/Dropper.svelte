@@ -4,7 +4,7 @@
 	import * as U from "../../utils";
 	import * as C from "../../combinators";
 	import { atom, view, read } from "../../svatom.svelte.js";
-	const {children, frameBoxPath, newText, clientToCanvas, cameraScale, cameraOrientation, newNode, newShape, dragging = atom(0)} = $props()
+	const {children, newText, clientToCanvas, cameraScale, cameraOrientation, newNode, newShape, dragging = atom(0)} = $props()
 
 	const onDragOver = (evt) => {
 		if(evt.dataTransfer.items.length < 1) {

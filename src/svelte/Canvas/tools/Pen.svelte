@@ -92,7 +92,10 @@
 	}}
 	onkeydown={(evt) => {
 		if (evt.key === "Escape" || evt.key === "Esc") {
-			isActive.value = false;
+			if (isActive.value) {
+				evt.stopPropagation();
+				isActive.value = false;
+			}
 		}
 	}}
 	oncontextmenu={(evt) => {

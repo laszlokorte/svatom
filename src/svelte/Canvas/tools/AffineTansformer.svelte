@@ -1,6 +1,7 @@
 <script>
+	import * as U from '../../utils'
 
-	const {children, cameraScale, selection} = $props()
+	const {children, cameraScale, selectionExtension, rotationTransform} = $props()
 
 
 	const rotationCursor = window.URL.createObjectURL(
@@ -16,54 +17,85 @@
 	);
 
 	const cameraScaleValue = $derived(cameraScale.value)
+	const padding = $derived(cameraScaleValue * 4)
+	const selectionExtensionValue = $derived(selectionExtension.value)
+
+	const handles = [
+		{wx: 0, wy:0, cursor: 'nw-resize',r:5},
+		{wx: 0, wy:1, cursor: 'nw-resize',r:5},
+		{wx: 1, wy:1, cursor: 'nw-resize',r:5},
+		{wx: 1, wy:0, cursor: 'nw-resize',r:5},
+
+
+		{wx: 0, wy:0.5, cursor: 'nw-resize',r:3},
+		{wx: 0.5, wy:1, cursor: 'nw-resize',r:3},
+		{wx: 0.5, wy:0, cursor: 'nw-resize',r:3},
+		{wx: 1, wy:0.5, cursor: 'nw-resize',r:3},
+	]
 </script>
+<g
+	transform={rotationTransform.value}
+>
+{#if selectionExtensionValue !== null}
+<g pointer-events="all"
+tabindex="-1"
+role="button"
+onpointerdown={evt => {
+}}
+onpointermove={evt => {
+}}
+onpointerup={evt => {
+}}
+onpointercancel={evt => {
+}}
+onclick={evt => {
+	evt.preventDefault()
+}}
+onkeypress={evt => {
+	evt.preventDefault()
+}}
+>
+<line x1={(selectionExtensionValue.minX-padding + selectionExtensionValue.maxX+padding)/2} y1={selectionExtensionValue.minY-padding} x2={(selectionExtensionValue.minX-padding + selectionExtensionValue.maxX+padding)/2} y2="{selectionExtensionValue.minY-padding - 40*Math.min(cameraScaleValue, 2)}" stroke="RoyalBlue" vector-effect="non-scaling-stroke" />
 
-{#if selection.value.length}
-<rect x="30" y="120" width="300" height="200" class="box" pointer-events="all" fill="none" />
-<line x1="180" y1="120" x2="180" y2="{120 - 40*Math.min(cameraScaleValue, 2)}" stroke="RoyalBlue" vector-effect="non-scaling-stroke" />
+<rect x={selectionExtensionValue.minX-padding} y="{selectionExtensionValue.minY-padding}" width={selectionExtensionValue.maxX+padding - (selectionExtensionValue.minX-padding)} height="{(selectionExtensionValue.maxY+padding) - (selectionExtensionValue.minY-padding)}" class="box" pointer-events="all" fill="none"
+tabindex="-1"
+role="button"
+onpointerdown={evt => {
+}}
+onpointermove={evt => {
+}}
+onpointerup={evt => {
+}}
+onpointercancel={evt => {
+}}
+onclick={evt => {
+	evt.preventDefault()
+}}
+onkeypress={evt => {
+	evt.preventDefault()
+}}
 
-<g>
-	<circle cx="180" cy="120" r="{3 *cameraScaleValue}" class="handle-background" cursor="n-resize"  />
-	<circle cx="180" cy="120" r="{3 *cameraScaleValue}" class="handle" cursor="n-resize"  />
-</g>
-<g>
-	<circle cx="330" cy="220" r="{3 *cameraScaleValue}" class="handle-background" cursor="e-resize"  />
-	<circle cx="330" cy="220" r="{3 *cameraScaleValue}" class="handle" cursor="e-resize"  />
-</g>
-<g>
-	<circle cx="180" cy="320" r="{3 *cameraScaleValue}" class="handle-background" cursor="s-resize" />
-	<circle cx="180" cy="320" r="{3 *cameraScaleValue}" class="handle" cursor="s-resize" />
-</g>
-<g>
-	<circle cx="30" cy="220" r="{3 *cameraScaleValue}" class="handle-background" cursor="w-resize"   />
-	<circle cx="30" cy="220" r="{3 *cameraScaleValue}" class="handle" cursor="w-resize"   />
-</g>
-
-<g>
-	<circle cx="30" cy="120" r="{5 *cameraScaleValue}" class="handle-background"  cursor="nw-resize" />
-	<circle cx="30" cy="120" r="{5 *cameraScaleValue}" class="handle"  cursor="nw-resize" />
-</g>
-<g>
-	<circle cx="330" cy="120" r="{5 *cameraScaleValue}" class="handle-background" cursor="ne-resize" />
-	<circle cx="330" cy="120" r="{5 *cameraScaleValue}" class="handle" cursor="ne-resize" />
-</g>
-<g>
-	<circle cx="330" cy="320" r="{5 *cameraScaleValue}" class="handle-background" cursor="se-resize" />
-	<circle cx="330" cy="320" r="{5 *cameraScaleValue}" class="handle" cursor="se-resize" />
-</g>
-<g>
-	<circle cx="30" cy="320" r="{5 *cameraScaleValue}" class="handle-background" cursor="sw-resize" />
-	<circle cx="30" cy="320" r="{5 *cameraScaleValue}" class="handle" cursor="sw-resize" />
-</g>
+/>
 
 
-<g>
-	<circle cx="180" cy="{120 - 40*Math.min(cameraScaleValue, 2)}" r="{5 *cameraScaleValue}" pointer-events="all" class="handle-background" />
-	<circle cx="180" cy="{120 - 40*Math.min(cameraScaleValue, 2)}" r="{5 *cameraScaleValue}" pointer-events="all" class="handle rotator-handle" style:--cursor-url="url({rotationCursor}) " />
+{#each handles as handle,i (i)}
+{@const cx = U.lerp((selectionExtensionValue.minX-padding), (selectionExtensionValue.maxX+padding), handle.wx)}
+{@const cy = U.lerp((selectionExtensionValue.minY-padding), (selectionExtensionValue.maxY+padding), handle.wy)}
+<g>	
+	
+	<circle cx={cx} cy={cy} r="{handle.r * cameraScaleValue}" class="handle-background" cursor={handle.cursor}  />
+	<circle cx={cx} cy={cy} r="{handle.r * cameraScaleValue}" class="handle" cursor={handle.cursor}  />
+</g>
+{/each}
+</g>
+
+<g style:--cursor-url="url({rotationCursor})" class="rotator-handle">
+	<circle cx={(selectionExtensionValue.minX-padding + selectionExtensionValue.maxX+padding)/2} cy="{selectionExtensionValue.minY-padding - 40*Math.min(cameraScaleValue, 2)}" r="{5 *cameraScaleValue}" pointer-events="all" class="handle-background" />
+	<circle cx={(selectionExtensionValue.minX-padding + selectionExtensionValue.maxX+padding)/2} cy="{selectionExtensionValue.minY-padding - 40*Math.min(cameraScaleValue, 2)}" r="{5 *cameraScaleValue}" pointer-events="all" class="handle"  />
 </g>
 {/if}
 
-
+</g>
 
 {@render children()}
 
@@ -99,5 +131,9 @@
 
 	g:hover > .handle {
 		stroke-width: 3px;
+	}
+	g:active > .handle {
+		stroke-width: 3px;
+		fill: RoyalBlue;
 	}
 </style>

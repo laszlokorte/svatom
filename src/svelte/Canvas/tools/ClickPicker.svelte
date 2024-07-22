@@ -7,12 +7,24 @@
 	} from "../../svatom.svelte.js";
 	import * as Geo from "../../geometry.js";
 
-	const {children, hitAreas, selection, rotationTransform, clientToCanvas, cameraScale} = $props()
+	const {children, hitAreas, selection, rotationTransform, clientToCanvas, cameraScale, frameBoxPath } = $props()
 
 	const hitAreasValue = $derived(hitAreas.value)
 	const selectionValue = $derived(selection.value)
 
 	let pointerSize = $state(1)
+
+	function toggle(item) {
+		return function (list) {
+			let index = list.indexOf(item);
+
+			if(index > -1) {
+				return [...list.slice(0,index), ...list.slice(index+1)]
+			} else {
+				return [...list, item]
+			}
+		}
+	}
 </script>
 
 <g 
@@ -45,20 +57,22 @@
 		const id = hitIndex<0 ? null : hitAreasValue[hitIndex].id
 
 		if(id) {
-			if(evt.shiftKey) {
-				update(R.append(id), selection)
-			} else {
+			if(evt.shiftKey || evt.ctrlKey) {
+				update(toggle(id), selection)
+			} else if(!evt.defaultPrevented) {
 				update(R.always([id]), selection)
 			}
 			evt.stopPropagation()
 		} else {
-			if(evt.shiftKey) {
-			} else {
+			if(evt.shiftKey || evt.ctrlKey) {
+			} else if(!evt.defaultPrevented) {
 				update(R.always([]), selection)
 			}
 		}
 	}}
 >
+
+<path stroke-width="0" fill="none" stroke="none" pointer-events="all" d={frameBoxPath.value} />
 
 <g>
 	{@render children()}

@@ -68,6 +68,8 @@
 	export function cancel() {
 		isActive.value = false;
 	}
+
+	export const allowAffineTransform = true;
 </script>
 
 <path
