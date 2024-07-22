@@ -7,7 +7,7 @@
 
 	const beziers = read(
 		L.reread(
-			R.map((p) => {
+			R.map(({ path: p }) => {
 				if (p.length >= 2) {
 					return (
 						`M${p[0].point.x} ${p[0].point.y}` +
@@ -41,7 +41,7 @@
 </script>
 
 <defs>
-	{#each beziers.value as path, i (path)}
+	{#each beziers.value as path, i (i)}
 		<path
 			fill="none"
 			stroke="black"

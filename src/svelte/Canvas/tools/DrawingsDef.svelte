@@ -10,6 +10,7 @@
 				R.concat("M"),
 				R.join("L"),
 				R.map(({ x, y }) => `${x},${y}`),
+				R.prop("path"),
 			),
 		),
 		drawings,

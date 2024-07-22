@@ -155,6 +155,228 @@
 								content: "Hello World",
 							},
 						],
+						drawings: [
+							{
+								path: [
+									{
+										x: -132.61747643672365,
+										y: 109.08733736410684,
+									},
+									{
+										x: -140.48048863977536,
+										y: 99.17910648797863,
+									},
+									{
+										x: -148.00148069950131,
+										y: 90.21056823263632,
+									},
+									{
+										x: -156.1201452366876,
+										y: 82.52374274140558,
+									},
+									{
+										x: -165.77617487211992,
+										y: 76.46065015761206,
+									},
+									{
+										x: -175.68785684168685,
+										y: 72.61896295871607,
+									},
+									{
+										x: -187.39255624363452,
+										y: 72.62241405215482,
+									},
+									{
+										x: -198.66886769306544,
+										y: 76.72665577206284,
+									},
+									{
+										x: -207.03973347094748,
+										y: 82.96593506767724,
+									},
+									{
+										x: -213.7868663413923,
+										y: 90.74257946153779,
+									},
+									{
+										x: -218.48187835188318,
+										y: 104.1573795801138,
+									},
+									{
+										x: -220.27144469082518,
+										y: 119.70721727439619,
+									},
+									{
+										x: -218.7306284991403,
+										y: 129.7881837689066,
+									},
+									{
+										x: -215.22405925669253,
+										y: 142.3462079824491,
+									},
+									{
+										x: -210.52214505932423,
+										y: 152.34080666776842,
+									},
+									{
+										x: -203.5988254770585,
+										y: 162.59105768722233,
+									},
+									{
+										x: -196.07783341733247,
+										y: 171.55959594256464,
+									},
+									{
+										x: -187.27512859349494,
+										y: 181.1258066753672,
+									},
+									{
+										x: -178.81444391298302,
+										y: 189.75232478738386,
+									},
+									{
+										x: -168.81639413422502,
+										y: 196.75510999196325,
+									},
+									{
+										x: -159.5023846421183,
+										y: 201.87850995497084,
+									},
+									{
+										x: -148.90666238590003,
+										y: 207.59958239543866,
+									},
+									{
+										x: -137.7132676522215,
+										y: 212.03894207179493,
+									},
+									{
+										x: -125.23816015443137,
+										y: 217.07597422561142,
+									},
+									{
+										x: -115.58213051899898,
+										y: 223.1390668094049,
+									},
+									{
+										x: -104.38873578532045,
+										y: 227.57842648576113,
+									},
+									{
+										x: -92.59766857418171,
+										y: 230.7360733980058,
+									},
+									{
+										x: -94.1384847658666,
+										y: 220.6551069034954,
+									},
+									{
+										x: -87.7333720387474,
+										y: 211.93876988884895,
+									},
+									{
+										x: -78.85120159259623,
+										y: 201.25667982343955,
+									},
+									{
+										x: -72.44608886547707,
+										y: 192.54034280879307,
+									},
+									{
+										x: -65.78532380422334,
+										y: 181.6026004092491,
+									},
+									{
+										x: -61.003943984541394,
+										y: 171.3488982963565,
+									},
+									{
+										x: -56.222564164859506,
+										y: 161.09519618346386,
+									},
+									{
+										x: -52.380876965963466,
+										y: 151.18351421389696,
+									},
+									{
+										x: -47.68586495547265,
+										y: 137.76871409532092,
+									},
+									{
+										x: -43.33287308830751,
+										y: 123.414221355959,
+									},
+									{
+										x: -41.712591274309005,
+										y: 113.2468870522575,
+									},
+									{
+										x: -40.17867726950155,
+										y: 99.91845474287257,
+									},
+									{
+										x: -41.463841127051865,
+										y: 87.61608286346467,
+									},
+									{
+										x: -44.28637008284832,
+										y: 76.93744389149401,
+									},
+									{
+										x: -48.390611802756354,
+										y: 65.6611324420631,
+									},
+									{
+										x: -51.81081323601302,
+										y: 56.26420623420401,
+									},
+									{
+										x: -59.58745762987357,
+										y: 49.51707336375918,
+									},
+									{
+										x: -68.90146712198029,
+										y: 44.393673400751595,
+									},
+									{
+										x: -80.60616652392795,
+										y: 44.39712449419032,
+									},
+									{
+										x: -92.56651826001016,
+										y: 46.62198097252653,
+									},
+									{
+										x: -101.9634444678693,
+										y: 50.04218240578324,
+									},
+									{
+										x: -112.21369548732318,
+										y: 56.96550198804897,
+									},
+									{
+										x: -121.77990622012572,
+										y: 65.76820681188653,
+									},
+									{
+										x: -127.84299880391919,
+										y: 75.4242364473189,
+									},
+									{
+										x: -132.6243786236011,
+										y: 85.67793856021152,
+									},
+									{
+										x: -135.18435305838554,
+										y: 96.18729300723871,
+									},
+									{
+										x: -133.64353686670066,
+										y: 106.26825950174913,
+									},
+								],
+							},
+						],
 					},
 				}),
 				camera: { x: 100, y: -50, z: 0, w: 20 },
@@ -763,10 +985,10 @@
 							],
 							drawings: [
 								L.elems,
-								L.reread((points, i) => ({
+								L.reread((drawing, i) => ({
 									type: "polyline",
 									id: "drawing-" + i,
-									points: points,
+									points: drawing.path,
 								})),
 							],
 						}),
@@ -829,10 +1051,9 @@
 		combine({ hit: hitAreas, sel: selection }),
 	);
 
-	function translateSelected({ dx, dy }) {
-		const sel = selection.value;
-		update((ns) => {
-			return ns.map((n, i) =>
+	const translators = {
+		nodes: ({ dx, dy }, nodes, sel) =>
+			nodes.map((n, i) =>
 				sel.indexOf(`node-${i}`) < 0
 					? n
 					: {
@@ -840,30 +1061,77 @@
 							x: n.x + dx,
 							y: n.y + dy,
 						},
-			);
-		}, nodes);
+			),
+		drawings: ({ dx, dy }, drawings, sel) =>
+			drawings.map((d, i) =>
+				sel.indexOf(`drawing-${i}`) < 0
+					? d
+					: {
+							...d,
+							path: d.path.map(({ x, y }) => ({
+								x: x + dx,
+								y: y + dy,
+							})),
+						},
+			),
+	};
+
+	function translateSelected(delta) {
+		const sel = selection.value;
+		update((doc) => {
+			return R.mapObjIndexed((entries, key) => {
+				if (translators[key]) {
+					return translators[key](delta, entries, sel);
+				} else {
+					return entries;
+				}
+			}, doc);
+		}, currentDocumentContent);
 	}
 
-	function scaleSelected({ x, y }, { x: px, y: py }) {
-		const sel = selection.value;
-		update((ns) => {
-			return ns.map((n, i) =>
+	const scalers = {
+		nodes: (factor, pivot, nodes, sel) =>
+			nodes.map((n, i) =>
 				sel.indexOf(`node-${i}`) < 0
 					? n
 					: {
 							...n,
-							x: (n.x - px) * x + px,
-							y: (n.y - py) * y + py,
+							x: (n.x - pivot.x) * factor.x + pivot.x,
+							y: (n.y - pivot.y) * factor.y + pivot.y,
 						},
-			);
-		}, nodes);
+			),
+		drawings: (factor, pivot, drawings, sel) =>
+			drawings.map((d, i) =>
+				sel.indexOf(`drawing-${i}`) < 0
+					? d
+					: {
+							...d,
+							path: d.path.map(({ x, y }) => ({
+								x: (x - pivot.x) * factor.x + pivot.x,
+								y: (y - pivot.y) * factor.y + pivot.y,
+							})),
+						},
+			),
+	};
+
+	function scaleSelected(factor, pivot) {
+		const sel = selection.value;
+		update((doc) => {
+			return R.mapObjIndexed((entries, key) => {
+				if (scalers[key]) {
+					return scalers[key](factor, pivot, entries, sel);
+				} else {
+					return entries;
+				}
+			}, doc);
+		}, currentDocumentContent);
 	}
 
 	const newDrawing = view(
-		[L.appendTo, L.setter((n, o) => (n.length > 1 ? n : o))],
+		[L.appendTo, "path", L.setter((n, o) => (n.length > 1 ? n : o))],
 		drawings,
 	);
-	const newSpline = view([L.appendTo], splines);
+	const newSpline = view([L.appendTo, "path"], splines);
 	const newShape = view([L.appendTo], shapes);
 	const newGuide = view([L.appendTo], guides);
 	const newAxis = view(L.identity, axis);
