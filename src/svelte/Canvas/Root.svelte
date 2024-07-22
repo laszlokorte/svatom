@@ -66,9 +66,9 @@
 	import RubberBand from "./tools/RubberBand.svelte";
 	import NodesDef from "./tools/NodesDef.svelte";
 	//import NodesUse from "./tools/NodesUse.svelte";
-	import Edges from "./tools/Edges.svelte";
-	import Drawings from "./tools/Drawings.svelte";
-	import ShowSplines from "./tools/ShowSplines.svelte";
+	import EdgesDef from "./tools/EdgesDef.svelte";
+	import DrawingsDef from "./tools/DrawingsDef.svelte";
+	import SplinesDef from "./tools/SplinesDef.svelte";
 	import Bounds from "./tools/Bounds.svelte";
 	import Origin from "./tools/Origin.svelte";
 	import TextLines from "./tools/TextLines.svelte";
@@ -536,25 +536,93 @@
 					shapes: [
 						L.defaults([]),
 						L.elems,
-						L.reread((s, i) => ({
-							id: "shape-" + i,
-							zIndex: s.zIndex || 0,
-						})),
+						L.lens(
+							(s, i) => ({
+								id: "shape-" + i,
+								zIndex: s.zIndex,
+							}),
+							(newVal, old) => ({
+								...old,
+								zIndex: newVal.zIndex,
+							}),
+						),
+					],
+					edges: [
+						L.defaults([]),
+						L.elems,
+						L.lens(
+							(s, i) => ({
+								id: "edge-" + i,
+								zIndex: s.zIndex,
+							}),
+							(newVal, old) => ({
+								...old,
+								zIndex: newVal.zIndex,
+							}),
+						),
 					],
 					nodes: [
 						L.defaults([]),
 						L.elems,
-						L.reread((s, i) => ({
-							id: "node-" + i,
-							zIndex: s.zIndex || 0,
-						})),
+						L.lens(
+							(s, i) => ({
+								id: "node-" + i,
+								zIndex: s.zIndex,
+							}),
+							(newVal, old) => ({
+								...old,
+								zIndex: newVal.zIndex,
+							}),
+						),
+					],
+					splines: [
+						L.defaults([]),
+						L.elems,
+						L.lens(
+							(s, i) => ({
+								id: "spline-" + i,
+								zIndex: s.zIndex,
+							}),
+							(newVal, old) => ({
+								...old,
+								zIndex: newVal.zIndex,
+							}),
+						),
 					],
 				}),
 			),
-			L.reread(R.sortBy(R.prop("zIndex"))),
+			L.lens(R.sortBy(R.propOr(Infinity, "zIndex")), (newZ, olds) => {
+				if (newZ.length !== olds.length) {
+					return olds;
+				}
+
+				const sortedNew = R.sortBy(R.propOr(Infinity, "zIndex"), newZ);
+
+				return R.map(
+					(o) => ({
+						id: o.id,
+						zIndex: R.findIndex(
+							R.compose(R.equals(o.id), R.prop("id")),
+							sortedNew,
+						),
+					}),
+					olds,
+				);
+			}),
 		],
 		currentDocumentContent,
 	);
+
+	const zValues = view(L.partsOf([L.elems, "zIndex"]), zLayers);
+	const layerCount = $derived(zValues.value.length);
+	let layerCountPrev = $state(0);
+
+	$effect(() => {
+		if (layerCount !== layerCountPrev) {
+			zValues.value = R.range(0, layerCount);
+			layerCountPrev = layerCount;
+		}
+	});
 
 	const selectionInternal = atom([]);
 	const selection = view(L.normalize(R.uniq), selectionInternal);
@@ -1811,7 +1879,7 @@
 									{cameraScale}
 									{gridDistance}
 								/>
-								<Edges
+								<EdgesDef
 									{nodes}
 									{edges}
 									{rotationTransform}
@@ -1819,13 +1887,13 @@
 								/>
 								<NodesDef {nodes} {cameraScale} />
 
-								<Drawings
+								<DrawingsDef
 									{drawings}
 									{rotationTransform}
 									{cameraScale}
 								/>
 
-								<ShowSplines
+								<SplinesDef
 									{splines}
 									{rotationTransform}
 									{cameraScale}

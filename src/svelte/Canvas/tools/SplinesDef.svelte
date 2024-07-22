@@ -40,17 +40,18 @@
 	);
 </script>
 
-<g transform={rotationTransform.value} pointer-events="none">
-	{#each beziers.value as path (path)}
+<defs>
+	{#each beziers.value as path, i (path)}
 		<path
 			fill="none"
 			stroke="black"
 			d={path}
 			class="spline-line"
 			pointer-events="none"
+			id="spline-{i}"
 		/>
 	{/each}
-</g>
+</defs>
 
 <style>
 	.spline-line {
