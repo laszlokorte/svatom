@@ -33,13 +33,10 @@
 	} = $props();
 </script>
 
-<g
-	transform={rotationTransform.value}
-	vector-effect="non-rotation"
-	pointer-events="none"
->
+<defs>
 	{#each textBoxes.value as t, i (i)}
 		<g
+			id="textbox-{i}"
 			transform="translate({t.start.x}, {t.start
 				.y}) rotate({t.angle}) translate({-t.start.x}, {-t.start.y})"
 		>
@@ -71,7 +68,7 @@
 			></rect>
 		</g>
 	{/each}
-</g>
+</defs>
 
 <style>
 	.text-box {

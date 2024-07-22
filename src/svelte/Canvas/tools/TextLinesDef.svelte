@@ -20,9 +20,12 @@
 	} = $props();
 </script>
 
-<g transform={rotationTransform.value} vector-effect="non-rotation">
+<defs>
 	{#each textes.value as t, i (i)}
-		<g transform="rotate({-cameraOrientation.value}, {t.x}, {t.y})">
+		<g
+			id="textline-{i}"
+			transform="rotate({-cameraOrientation.value}, {t.x}, {t.y})"
+		>
 			<circle
 				cx={t.x}
 				cy={t.y + t.fontSize}
@@ -51,7 +54,7 @@
 			>
 		</g>
 	{/each}
-</g>
+</defs>
 
 <style>
 	text {

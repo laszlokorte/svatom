@@ -71,8 +71,8 @@
 	import SplinesDef from "./tools/SplinesDef.svelte";
 	import Bounds from "./tools/Bounds.svelte";
 	import Origin from "./tools/Origin.svelte";
-	import TextLines from "./tools/TextLines.svelte";
-	import TextBoxes from "./tools/TextBoxes.svelte";
+	import TextLinesDef from "./tools/TextLinesDef.svelte";
+	import TextBoxesDef from "./tools/TextBoxesDef.svelte";
 	import TextLineTyper from "./tools/TextLineTyper.svelte";
 	import TextBoxTyper from "./tools/TextBoxTyper.svelte";
 	import Magnifier from "./tools/Magnifier.svelte";
@@ -575,6 +575,34 @@
 							}),
 						),
 					],
+					textes: [
+						L.defaults([]),
+						L.elems,
+						L.lens(
+							(s, i) => ({
+								id: "textline-" + i,
+								zIndex: s.zIndex,
+							}),
+							(newVal, old) => ({
+								...old,
+								zIndex: newVal.zIndex,
+							}),
+						),
+					],
+					textBoxes: [
+						L.defaults([]),
+						L.elems,
+						L.lens(
+							(s, i) => ({
+								id: "textbox-" + i,
+								zIndex: s.zIndex,
+							}),
+							(newVal, old) => ({
+								...old,
+								zIndex: newVal.zIndex,
+							}),
+						),
+					],
 					splines: [
 						L.defaults([]),
 						L.elems,
@@ -688,6 +716,48 @@
 											},
 										],
 										id: "shape-" + i,
+									};
+								}),
+							],
+							textBoxes: [
+								L.elems,
+								L.reread((sp, i) => {
+									const cos = Math.cos(
+										(-sp.angle / 180) * Math.PI,
+									);
+									const sin = Math.sin(
+										(-sp.angle / 180) * Math.PI,
+									);
+
+									return {
+										type: "polygon",
+										points: [
+											{
+												x: sp.start.x,
+												y: sp.start.y,
+											},
+											{
+												x: sp.start.x + cos * sp.size.x,
+												y:
+													sp.start.y +
+													-sin * sp.size.x,
+											},
+											{
+												x:
+													sp.start.x +
+													cos * sp.size.x +
+													sin * sp.size.y,
+												y:
+													sp.start.y +
+													-sin * sp.size.x +
+													cos * sp.size.y,
+											},
+											{
+												x: sp.start.x + sin * sp.size.y,
+												y: sp.start.y + cos * sp.size.y,
+											},
+										],
+										id: "textbox-" + i,
 									};
 								}),
 							],
@@ -1899,7 +1969,7 @@
 									{cameraScale}
 								/>
 
-								<TextBoxes
+								<TextBoxesDef
 									{textBoxes}
 									{clientToCanvas}
 									{frameBoxPath}
@@ -1908,7 +1978,7 @@
 									{cameraOrientation}
 								/>
 
-								<TextLines
+								<TextLinesDef
 									{textes}
 									{clientToCanvas}
 									{frameBoxPath}
