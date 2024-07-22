@@ -1,7 +1,11 @@
 <script>
-	import * as U from '../../utils'
+	import * as L from "partial.lenses";
+	import * as R from "ramda";
+	import * as U from "../../utils";
+	import * as C from "../../combinators";
+	import { atom, view, read, update  } from "../../svatom.svelte.js";
 
-	const {children, cameraScale, selectionExtension, rotationTransform} = $props()
+	const {children, cameraScale, selectionExtension, rotationTransform, clientToCanvas, translateSelected, scaleSelected, frameBoxPath} = $props()
 
 
 	const rotationCursor = window.URL.createObjectURL(
@@ -21,43 +25,130 @@
 	const selectionExtensionValue = $derived(selectionExtension.value)
 
 	const handles = [
-		{wx: 0, wy:0, cursor: 'nw-resize',r:5},
-		{wx: 0, wy:1, cursor: 'nw-resize',r:5},
-		{wx: 1, wy:1, cursor: 'nw-resize',r:5},
-		{wx: 1, wy:0, cursor: 'nw-resize',r:5},
+		{wx: 0, wy:0, cursor: 'nw-resize',r:5, rx: 0, ry:0},
+		{wx: 0, wy:1, cursor: 'nw-resize',r:5, rx: 0, ry:0},
+		{wx: 1, wy:1, cursor: 'nw-resize',r:5, rx: 0, ry:0},
+		{wx: 1, wy:0, cursor: 'nw-resize',r:5, rx: 0, ry:0},
 
 
-		{wx: 0, wy:0.5, cursor: 'nw-resize',r:3},
-		{wx: 0.5, wy:1, cursor: 'nw-resize',r:3},
-		{wx: 0.5, wy:0, cursor: 'nw-resize',r:3},
-		{wx: 1, wy:0.5, cursor: 'nw-resize',r:3},
+		{wx: 0, wy:0.5, cursor: 'nw-resize',r:3, ry: 1, rx: 0},
+		{wx: 0.5, wy:1, cursor: 'nw-resize',r:3, rx: 1, ry: 0},
+		{wx: 0.5, wy:0, cursor: 'nw-resize',r:3, rx: 1, ry: 0},
+		{wx: 1, wy:0.5, cursor: 'nw-resize',r:3, ry: 1, rx: 0},
 	]
+
+	const transformation = atom({});
+	const activeGrab = view([L.removable('grab'), 'grab'], transformation);
+	const activeHandle = view(['handle', L.rewrite((x) => parseInt(x, 10))], transformation);
+	const activePivot = view(['pivot', L.rewrite((x) => JSON.parse(x))], transformation);
+	const translationAccum = view(['translationAccum', L.defaults({x:0,y:0})], transformation);
+	const scaleAccum = view(['scaleAccum', L.defaults({x:1,y:1})], transformation);
+
+	const isGrabbing = view(
+		L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
+		activeGrab,
+	);
+
+	let preventNextClick = $state(false)
 </script>
-<g
-	transform={rotationTransform.value}
->
+
 {#if selectionExtensionValue !== null}
 <g pointer-events="all"
 tabindex="-1"
 role="button"
 onpointerdown={evt => {
+	if (!evt.isPrimary || !U.isLeftButton(evt, true)) {
+		return;
+	}
+
+	const handle = evt.target.getAttribute('data-handle')
+	const translate = evt.target.getAttribute('data-translate')
+
+	if(handle || translate) {
+		evt.currentTarget.setPointerCapture(evt.pointerId);
+		activeGrab.value = clientToCanvas(evt.clientX, evt.clientY)
+
+		activeHandle.value = handle
+		activePivot.value = evt.target.getAttribute('data-resize-pivot')
+	} 
 }}
 onpointermove={evt => {
+	if (!evt.isPrimary) {
+			return;
+		}
+		if (!isGrabbing.value) {
+			return;
+		}
+
+		const newPos = clientToCanvas(evt.clientX, evt.clientY)
+		
+		if(translateSelected && !activePivot.value) {
+			const dx = newPos.x - activeGrab.value.x
+			const dy = newPos.y - activeGrab.value.y
+			translateSelected({dx, dy})
+			update(({x,y}) => ({x:x+dx, y:y+dy}), translationAccum)
+		} else if(scaleSelected && activePivot.value) {
+			const dxNew = newPos.x - activePivot.value.x
+			const dyNew = newPos.y - activePivot.value.y
+			const dxOld = activeGrab.value.x - activePivot.value.x
+			const dyOld = activeGrab.value.y - activePivot.value.y
+			const fx = U.lerp(dxNew/dxOld, 1, activePivot.value.rx)
+			const fy = U.lerp(dyNew/dyOld, 1, activePivot.value.ry)
+			scaleSelected({x: fx, y:  fy}, activePivot.value)
+			update(({x,y}) => ({x:x*fx, y:y*fy}), scaleAccum)
+		}
+		
+
+		activeGrab.value = newPos
+
 }}
 onpointerup={evt => {
+		if (!evt.isPrimary) {
+			return;
+		}
+		if (!isGrabbing.value) {
+			return;
+		}
+
+		isGrabbing.value = false
+		preventNextClick = true
 }}
 onpointercancel={evt => {
+	isGrabbing.value = false;
 }}
 onclick={evt => {
-	evt.preventDefault()
+	if(preventNextClick) {
+		preventNextClick = false
+		evt.preventDefault()
+	}
 }}
-onkeypress={evt => {
-	evt.preventDefault()
+oncontextmenu={(evt) => {
+	evt.preventDefault();
+	isGrabbing.value = false;
 }}
+onkeydown={evt => {
+	if (evt.key === "Escape" || evt.key === "Esc") {
+		if (isGrabbing.value) {
+			if(translationAccum.value) {
+				translateSelected({dx:-translationAccum.value.x, dy:-translationAccum.value.y})
+			} 
+			if(scaleAccum.value && activePivot.value) {
+				scaleSelected({x: 1/scaleAccum.value.x, y:1/scaleAccum.value.y}, activePivot.value)
+			}
+			evt.stopPropagation();
+		}
+		isGrabbing.value = false;
+	}
+}}
+>
+
+<path onpointerdown={evt => {evt.stopPropagation()}} tabindex="-1" role="button"  d={frameBoxPath.value} fill="none" pointer-events="all" />
+<g
+	transform={rotationTransform.value}
 >
 <line x1={(selectionExtensionValue.minX-padding + selectionExtensionValue.maxX+padding)/2} y1={selectionExtensionValue.minY-padding} x2={(selectionExtensionValue.minX-padding + selectionExtensionValue.maxX+padding)/2} y2="{selectionExtensionValue.minY-padding - 40*Math.min(cameraScaleValue, 2)}" stroke="RoyalBlue" vector-effect="non-scaling-stroke" />
 
-<rect x={selectionExtensionValue.minX-padding} y="{selectionExtensionValue.minY-padding}" width={selectionExtensionValue.maxX+padding - (selectionExtensionValue.minX-padding)} height="{(selectionExtensionValue.maxY+padding) - (selectionExtensionValue.minY-padding)}" class="box" pointer-events="all" fill="none"
+<rect data-translate="true" x={selectionExtensionValue.minX-padding} y="{selectionExtensionValue.minY-padding}" width={selectionExtensionValue.maxX+padding - (selectionExtensionValue.minX-padding)} height="{(selectionExtensionValue.maxY+padding) - (selectionExtensionValue.minY-padding)}" class="box" pointer-events="all" fill="none"
 tabindex="-1"
 role="button"
 onpointerdown={evt => {
@@ -71,7 +162,7 @@ onpointercancel={evt => {
 onclick={evt => {
 	evt.preventDefault()
 }}
-onkeypress={evt => {
+onkeydown={evt => { 
 	evt.preventDefault()
 }}
 
@@ -81,21 +172,23 @@ onkeypress={evt => {
 {#each handles as handle,i (i)}
 {@const cx = U.lerp((selectionExtensionValue.minX-padding), (selectionExtensionValue.maxX+padding), handle.wx)}
 {@const cy = U.lerp((selectionExtensionValue.minY-padding), (selectionExtensionValue.maxY+padding), handle.wy)}
-<g>	
-	
-	<circle cx={cx} cy={cy} r="{handle.r * cameraScaleValue}" class="handle-background" cursor={handle.cursor}  />
-	<circle cx={cx} cy={cy} r="{handle.r * cameraScaleValue}" class="handle" cursor={handle.cursor}  />
+{@const px = U.lerp((selectionExtensionValue.minX), (selectionExtensionValue.maxX), 1-handle.wx)}
+{@const py = U.lerp((selectionExtensionValue.minY), (selectionExtensionValue.maxY), 1-handle.wy)}
+<g class:active={activeHandle.value === i}>	
+	<circle data-handle={i} data-resize-pivot={`{"x": ${px}, "y": ${py}, "rx": ${handle.rx}, "ry":${handle.ry}}`} cx={cx} cy={cy} r="{handle.r * cameraScaleValue}" class="handle-background" cursor={handle.cursor}  />
+	<circle data-handle={i} data-resize-pivot={`{"x": ${px}, "y": ${py}, "rx": ${handle.rx}, "ry":${handle.ry}}`} cx={cx} cy={cy} r="{handle.r * cameraScaleValue}" class="handle" cursor={handle.cursor}  />
 </g>
 {/each}
-</g>
-
 <g style:--cursor-url="url({rotationCursor})" class="rotator-handle">
 	<circle cx={(selectionExtensionValue.minX-padding + selectionExtensionValue.maxX+padding)/2} cy="{selectionExtensionValue.minY-padding - 40*Math.min(cameraScaleValue, 2)}" r="{5 *cameraScaleValue}" pointer-events="all" class="handle-background" />
 	<circle cx={(selectionExtensionValue.minX-padding + selectionExtensionValue.maxX+padding)/2} cy="{selectionExtensionValue.minY-padding - 40*Math.min(cameraScaleValue, 2)}" r="{5 *cameraScaleValue}" pointer-events="all" class="handle"  />
 </g>
-{/if}
+</g>
+
+
 
 </g>
+{/if}
 
 {@render children()}
 
@@ -132,7 +225,7 @@ onkeypress={evt => {
 	g:hover > .handle {
 		stroke-width: 3px;
 	}
-	g:active > .handle {
+	g.active > .handle {
 		stroke-width: 3px;
 		fill: RoyalBlue;
 	}

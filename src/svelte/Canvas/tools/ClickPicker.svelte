@@ -46,7 +46,7 @@
 				}
 			case 'polyline':
 				return R.any(([from, to]) => {
-					return Geo.pointToLineDistance(pos, {from, to}) < cameraScale.value * (2 + pointerSize/2)
+					return Geo.pointToLineDistance(pos, {from, to}) < cameraScale.value * (10 + pointerSize/2)
 				}, R.aperture(2, ha.points))
 			default: 
 				return false

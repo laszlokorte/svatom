@@ -106,6 +106,9 @@
 
 	const defaultProperties = atom({});
 
+	const HISTORY_SETTINGS = {
+		replacePeriod: 1000,
+	};
 	animateWith(
 		read(
 			L.reread((el) =>
@@ -126,37 +129,34 @@
 		current: 0,
 		tabs: [
 			{
-				document: H.init(
-					{},
-					{
-						content: {
-							axis: {
-								start: { x: 0, y: 0 },
-								size: { x: 200, y: -200 },
-								angle: 0,
-							},
-							nodes: [
-								{ x: 200, y: 100 },
-								{
-									x: 266,
-									y: -217,
-								},
-								{
-									x: -110,
-									y: -10,
-								},
-							],
-							textes: [
-								{
-									x: 119.35297908638951,
-									y: -70.289311950847,
-									fontSize: 0.8922579558824082,
-									content: "Hello World",
-								},
-							],
+				document: H.init(HISTORY_SETTINGS, {
+					content: {
+						axis: {
+							start: { x: 0, y: 0 },
+							size: { x: 200, y: -200 },
+							angle: 0,
 						},
+						nodes: [
+							{ x: 200, y: 100 },
+							{
+								x: 266,
+								y: -217,
+							},
+							{
+								x: -110,
+								y: -10,
+							},
+						],
+						textes: [
+							{
+								x: 119.35297908638951,
+								y: -70.289311950847,
+								fontSize: 0.8922579558824082,
+								content: "Hello World",
+							},
+						],
 					},
-				),
+				}),
 				camera: { x: 100, y: -50, z: 0, w: 20 },
 			},
 		],
@@ -462,7 +462,7 @@
 				"tabs",
 				current,
 				"document",
-				L.defaults(H.init({}, {})),
+				L.defaults(H.init(HISTORY_SETTINGS, {})),
 			]),
 		],
 		allTabs,
@@ -498,7 +498,7 @@
 
 	const currentTabId = view("current", allTabs);
 
-	const tool = atom("pen");
+	const tool = atom("select");
 	const currentDocumentContent = view(["content"], canvasDocument);
 
 	const nodes = view(["nodes", L.define([])], currentDocumentContent);
@@ -793,10 +793,11 @@
 
 				switch (ha.type) {
 					case "circle":
-						minX = Math.min(minX, ha.cx - ha.r);
-						maxX = Math.max(maxX, ha.cx + ha.r);
-						minY = Math.min(minY, ha.cy - ha.r);
-						maxY = Math.max(maxY, ha.cy + ha.r);
+						// TODO
+						minX = Math.min(minX, ha.cx);
+						maxX = Math.max(maxX, ha.cx);
+						minY = Math.min(minY, ha.cy);
+						maxY = Math.max(maxY, ha.cy);
 						break;
 					case "polygon":
 						for (let p = 0; p < ha.points.length; p++) {
@@ -827,6 +828,36 @@
 		},
 		combine({ hit: hitAreas, sel: selection }),
 	);
+
+	function translateSelected({ dx, dy }) {
+		const sel = selection.value;
+		update((ns) => {
+			return ns.map((n, i) =>
+				sel.indexOf(`node-${i}`) < 0
+					? n
+					: {
+							...n,
+							x: n.x + dx,
+							y: n.y + dy,
+						},
+			);
+		}, nodes);
+	}
+
+	function scaleSelected({ x, y }, { x: px, y: py }) {
+		const sel = selection.value;
+		update((ns) => {
+			return ns.map((n, i) =>
+				sel.indexOf(`node-${i}`) < 0
+					? n
+					: {
+							...n,
+							x: (n.x - px) * x + px,
+							y: (n.y - py) * y + py,
+						},
+			);
+		}, nodes);
+	}
 
 	const newDrawing = view(
 		[L.appendTo, L.setter((n, o) => (n.length > 1 ? n : o))],
@@ -1140,7 +1171,15 @@
 		affineTansformer: {
 			name: "Transform",
 			component: AffineTansformer,
-			parameters: { cameraScale, selectionExtension, rotationTransform },
+			parameters: {
+				cameraScale,
+				selectionExtension,
+				rotationTransform,
+				clientToCanvas,
+				translateSelected,
+				scaleSelected,
+				frameBoxPath,
+			},
 		},
 		pen: {
 			name: "Pen",
@@ -2035,6 +2074,10 @@
 									{cameraScale}
 									{selectionExtension}
 									{rotationTransform}
+									{clientToCanvas}
+									{translateSelected}
+									{scaleSelected}
+									{frameBoxPath}
 								/>
 							{/if}
 
@@ -2137,6 +2180,7 @@
 	}
 
 	.scroller-hud-minimap {
+		position: absolute; /*needed for SVG overflow, not sure why yet*/
 		grid-area: 1/1/1/1;
 		align-self: start;
 		justify-self: end;
