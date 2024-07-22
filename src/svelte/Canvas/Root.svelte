@@ -692,6 +692,8 @@
 
 	const canvasDocument = view(H.present, canvasDocumentHistory);
 
+	const canvasDocumentMut = view(H.presentMut, canvasDocumentHistory);
+
 	const canvasUndoIndex = view(H.undoIndex, canvasDocumentHistory);
 
 	const canvasRedoIndex = view(H.redoIndex, canvasDocumentHistory);
@@ -722,6 +724,7 @@
 
 	const tool = atom("select");
 	const currentDocumentContent = view(["content"], canvasDocument);
+	const currentDocumentContentMut = view(["content"], canvasDocumentMut);
 
 	const nodes = view(["nodes", L.define([])], currentDocumentContent);
 	const edges = view(["edges", L.define([])], currentDocumentContent);
@@ -831,6 +834,20 @@
 						L.lens(
 							(s, i) => ({
 								id: "spline-" + i,
+								zIndex: s.zIndex,
+							}),
+							(newVal, old) => ({
+								...old,
+								zIndex: newVal.zIndex,
+							}),
+						),
+					],
+					drawings: [
+						L.defaults([]),
+						L.elems,
+						L.lens(
+							(s, i) => ({
+								id: "drawing-" + i,
 								zIndex: s.zIndex,
 							}),
 							(newVal, old) => ({
@@ -1076,17 +1093,20 @@
 			),
 	};
 
-	function translateSelected(delta) {
+	function translateSelected(delta, transient = false) {
 		const sel = selection.value;
-		update((doc) => {
-			return R.mapObjIndexed((entries, key) => {
-				if (translators[key]) {
-					return translators[key](delta, entries, sel);
-				} else {
-					return entries;
-				}
-			}, doc);
-		}, currentDocumentContent);
+		update(
+			(doc) => {
+				return R.mapObjIndexed((entries, key) => {
+					if (translators[key]) {
+						return translators[key](delta, entries, sel);
+					} else {
+						return entries;
+					}
+				}, doc);
+			},
+			transient ? currentDocumentContentMut : currentDocumentContent,
+		);
 	}
 
 	const scalers = {
@@ -1114,17 +1134,20 @@
 			),
 	};
 
-	function scaleSelected(factor, pivot) {
+	function scaleSelected(factor, pivot, transient = false) {
 		const sel = selection.value;
-		update((doc) => {
-			return R.mapObjIndexed((entries, key) => {
-				if (scalers[key]) {
-					return scalers[key](factor, pivot, entries, sel);
-				} else {
-					return entries;
-				}
-			}, doc);
-		}, currentDocumentContent);
+		update(
+			(doc) => {
+				return R.mapObjIndexed((entries, key) => {
+					if (scalers[key]) {
+						return scalers[key](factor, pivot, entries, sel);
+					} else {
+						return entries;
+					}
+				}, doc);
+			},
+			transient ? currentDocumentContentMut : currentDocumentContent,
+		);
 	}
 
 	const newDrawing = view(
@@ -1169,7 +1192,7 @@
 	const extension = calculateBoundingBox(100, currentDocumentContent, {
 		nodes: L.elems,
 		alerts: L.elems,
-		drawings: [L.elems, L.elems],
+		drawings: [L.elems, "path", L.elems],
 		axis: [
 			L.ifElse(
 				R.is(Object),
@@ -1279,6 +1302,7 @@
 		],
 		splines: [
 			L.elems,
+			"path",
 			L.elems,
 			L.ifElse(
 				R.is(Object),

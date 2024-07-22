@@ -19,17 +19,18 @@
 	const pathsValue = $derived(paths.value);
 </script>
 
-<g transform={rotationTransform.value} pointer-events="none">
+<defs>
 	{#each pathsValue as d, i (i)}
 		<path
 			fill="none"
 			stroke="black"
 			{d}
+			id="drawing-{i}"
 			class="drawing-line"
 			pointer-events="none"
 		/>
 	{/each}
-</g>
+</defs>
 
 <style>
 	.drawing-line {

@@ -387,10 +387,9 @@ nanoid@^3.3.7:
   resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.3.7.tgz#d0c301a691bc8d54efa0a2226ccf3fe2fd656bd8"
   integrity sha512-eSRppjcPIatRIMC1U6UngP8XFcz8MQWGQdt1MTBQ7NaAmvXDfvNxbvWV3x2y6CdEUciCSsDHDQZbhYaB8QEo2g==
 
-partial.lenses.history@^1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/partial.lenses.history/-/partial.lenses.history-1.2.0.tgz#10b04433b62097466a010b0dd699a8748cc08103"
-  integrity sha512-T8QCHShFcs5zDveYTpJs7bt+K4gZys26ifX6j1DWdhzVVaFm3OttLHLP7rtljAxTHnwvptiX0uZHugVjDFKUQQ==
+"partial.lenses.history@git+https://github.com/laszlokorte/partial.lenses.history#present-mut":
+  version "1.2.3"
+  resolved "git+https://github.com/laszlokorte/partial.lenses.history#bcef6d4a04fa8ae98ff3888899b24b8844a0e448"
   dependencies:
     infestines "^0.4.10"
     partial.lenses ">=2.2.0"

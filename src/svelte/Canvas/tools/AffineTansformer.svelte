@@ -43,6 +43,7 @@
 	const activePivot = view(['pivot', L.rewrite((x) => JSON.parse(x))], transformation);
 	const translationAccum = view(['translationAccum', L.defaults({x:0,y:0})], transformation);
 	const scaleAccum = view(['scaleAccum', L.defaults({x:1,y:1})], transformation);
+	const moved = view(['moved', L.defaults(false)], transformation);
 
 	const isGrabbing = view(
 		L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
@@ -63,13 +64,14 @@ onpointerdown={evt => {
 
 	const handle = evt.target.getAttribute('data-handle')
 	const translate = evt.target.getAttribute('data-translate')
+	const pivot = evt.target.getAttribute('data-resize-pivot')
 
 	if(handle || translate) {
 		evt.currentTarget.setPointerCapture(evt.pointerId);
 		activeGrab.value = clientToCanvas(evt.clientX, evt.clientY)
 
 		activeHandle.value = handle
-		activePivot.value = evt.target.getAttribute('data-resize-pivot')
+		activePivot.value = pivot
 	} 
 }}
 onpointermove={evt => {
@@ -85,7 +87,7 @@ onpointermove={evt => {
 		if(translateSelected && !activePivot.value) {
 			const dx = newPos.x - activeGrab.value.x
 			const dy = newPos.y - activeGrab.value.y
-			translateSelected({dx, dy})
+			translateSelected({dx, dy}, moved.value)
 			update(({x,y}) => ({x:x+dx, y:y+dy}), translationAccum)
 		} else if(scaleSelected && activePivot.value) {
 			const dxNew = newPos.x - activePivot.value.x
@@ -94,12 +96,13 @@ onpointermove={evt => {
 			const dyOld = activeGrab.value.y - activePivot.value.y
 			const fx = U.lerp(dxNew/dxOld, 1, activePivot.value.rx)
 			const fy = U.lerp(dyNew/dyOld, 1, activePivot.value.ry)
-			scaleSelected({x: fx, y:  fy}, activePivot.value)
+			scaleSelected({x: fx, y:  fy}, activePivot.value, moved.value)
 			update(({x,y}) => ({x:x*fx, y:y*fy}), scaleAccum)
 		}
 		
 
 		activeGrab.value = newPos
+		moved.value = true
 
 }}
 onpointerup={evt => {
