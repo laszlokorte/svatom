@@ -1091,6 +1091,16 @@
 							})),
 						},
 			),
+		shapes: ({ dx, dy }, shapes, sel) =>
+			shapes.map((s, i) =>
+				sel.indexOf(`shape-${i}`) < 0
+					? s
+					: L.modify(
+							["placement", "start"],
+							({ x, y }) => ({ x: x + dx, y: y + dy }),
+							s,
+						),
+			),
 	};
 
 	function translateSelected(delta, transient = false) {
@@ -1131,6 +1141,26 @@
 								y: (y - pivot.y) * factor.y + pivot.y,
 							})),
 						},
+			),
+		shapes: (factor, pivot, shapes, sel) =>
+			shapes.map((s, i) =>
+				sel.indexOf(`shape-${i}`) < 0
+					? s
+					: L.modify(
+							["placement", "start"],
+							({ x, y }) => ({
+								x: (x - pivot.x) * factor.x + pivot.x,
+								y: (y - pivot.y) * factor.y + pivot.y,
+							}),
+							L.modify(
+								["placement", "size"],
+								({ x, y }) => ({
+									x: x * factor.x || 0.001,
+									y: y * factor.y || 0.001,
+								}),
+								s,
+							),
+						),
 			),
 	};
 

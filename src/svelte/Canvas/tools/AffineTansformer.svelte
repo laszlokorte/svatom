@@ -26,15 +26,15 @@
 
 	const handles = [
 		{wx: 0, wy:0, cursor: 'nw-resize',r:5, rx: 0, ry:0},
-		{wx: 0, wy:1, cursor: 'nw-resize',r:5, rx: 0, ry:0},
-		{wx: 1, wy:1, cursor: 'nw-resize',r:5, rx: 0, ry:0},
-		{wx: 1, wy:0, cursor: 'nw-resize',r:5, rx: 0, ry:0},
+		{wx: 0, wy:1, cursor: 'ne-resize',r:5, rx: 0, ry:0},
+		{wx: 1, wy:1, cursor: 'se-resize',r:5, rx: 0, ry:0},
+		{wx: 1, wy:0, cursor: 'sw-resize',r:5, rx: 0, ry:0},
 
 
-		{wx: 0, wy:0.5, cursor: 'nw-resize',r:3, ry: 1, rx: 0},
-		{wx: 0.5, wy:1, cursor: 'nw-resize',r:3, rx: 1, ry: 0},
-		{wx: 0.5, wy:0, cursor: 'nw-resize',r:3, rx: 1, ry: 0},
-		{wx: 1, wy:0.5, cursor: 'nw-resize',r:3, ry: 1, rx: 0},
+		{wx: 0, wy:0.5, cursor: 'w-resize',r:3, ry: 1, rx: 0},
+		{wx: 0.5, wy:1, cursor: 's-resize',r:3, rx: 1, ry: 0},
+		{wx: 0.5, wy:0, cursor: 'n-resize',r:3, rx: 1, ry: 0},
+		{wx: 1, wy:0.5, cursor: 'e-resize',r:3, ry: 1, rx: 0},
 	]
 
 	const transformation = atom({});
@@ -90,12 +90,14 @@ onpointermove={evt => {
 			translateSelected({dx, dy}, moved.value)
 			update(({x,y}) => ({x:x+dx, y:y+dy}), translationAccum)
 		} else if(scaleSelected && activePivot.value) {
-			const dxNew = newPos.x - activePivot.value.x
-			const dyNew = newPos.y - activePivot.value.y
-			const dxOld = activeGrab.value.x - activePivot.value.x
-			const dyOld = activeGrab.value.y - activePivot.value.y
-			const fx = U.lerp(dxNew/dxOld, 1, activePivot.value.rx)
-			const fy = U.lerp(dyNew/dyOld, 1, activePivot.value.ry)
+
+			//TODO fix calculating to be more precise
+			const dxNew = (newPos.x - activePivot.value.xpadded)
+			const dyNew = (newPos.y - activePivot.value.ypadded)
+			const dxOld = (activeGrab.value.x - activePivot.value.xpadded)
+			const dyOld = (activeGrab.value.y - activePivot.value.ypadded)
+			const fx = U.lerp(dxOld?dxNew/dxOld:0, 1, activePivot.value.rx)
+			const fy = U.lerp(dyOld?dyNew/dyOld:0, 1, activePivot.value.ry)
 			scaleSelected({x: fx, y:  fy}, activePivot.value, moved.value)
 			update(({x,y}) => ({x:x*fx, y:y*fy}), scaleAccum)
 		}
@@ -179,9 +181,11 @@ onkeydown={evt => {
 {@const cy = U.lerp((selectionExtensionValue.minY-padding), (selectionExtensionValue.maxY+padding), handle.wy)}
 {@const px = U.lerp((selectionExtensionValue.minX), (selectionExtensionValue.maxX), 1-handle.wx)}
 {@const py = U.lerp((selectionExtensionValue.minY), (selectionExtensionValue.maxY), 1-handle.wy)}
+{@const pxpadded = U.lerp((selectionExtensionValue.minX-padding), (selectionExtensionValue.maxX+padding), 1-handle.wx)}
+{@const pypadded = U.lerp((selectionExtensionValue.minY-padding), (selectionExtensionValue.maxY+padding), 1-handle.wy)}
 <g class:active={activeHandle.value === i}>	
-	<circle data-handle={i} data-resize-pivot={`{"x": ${px}, "y": ${py}, "rx": ${handle.rx}, "ry":${handle.ry}}`} cx={cx} cy={cy} r="{handle.r * cameraScaleValue}" class="handle-background" cursor={handle.cursor}  />
-	<circle data-handle={i} data-resize-pivot={`{"x": ${px}, "y": ${py}, "rx": ${handle.rx}, "ry":${handle.ry}}`} cx={cx} cy={cy} r="{handle.r * cameraScaleValue}" class="handle" cursor={handle.cursor}  />
+	<circle data-handle={i} data-resize-pivot={`{"x": ${px}, "y": ${py}, "xpadded": ${pxpadded}, "ypadded": ${pypadded}, "rx": ${handle.rx}, "ry":${handle.ry}}`} cx={cx} cy={cy} r="{handle.r * cameraScaleValue}" class="handle-background" cursor={handle.cursor}  />
+	<circle data-handle={i} data-resize-pivot={`{"x": ${px}, "y": ${py}, "xpadded": ${pxpadded}, "ypadded": ${pypadded}, "rx": ${handle.rx}, "ry":${handle.ry}}`} cx={cx} cy={cy} r="{handle.r * cameraScaleValue}" class="handle" cursor={handle.cursor}  />
 </g>
 {/each}
 <g style:--cursor-url="url({rotationCursor})" class="rotator-handle">

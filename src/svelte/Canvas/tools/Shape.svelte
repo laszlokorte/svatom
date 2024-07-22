@@ -22,9 +22,9 @@
 	const minSize = 15;
 
 	const template = atom({
-		box: "-35 -50 60 100",
+		box: "-30 -50 60 100",
 		paths: [
-			{ fill: "coral", path: "M-35,-50h60v20h-40v20h20v20h-20v40h-20z" },
+			{ fill: "coral", path: "M-30,-50h60v20h-40v20h20v20h-20v40h-20z" },
 		],
 	});
 	const shape = atom(undefined);
