@@ -203,6 +203,15 @@ onkeydown={evt => {
 		pointer-events: all; 
 		stroke-width: 1px; 
 		vector-effect: non-scaling-stroke;
+		outline: none;
+
+		-webkit-touch-callout: none;
+		-webkit-user-callout: none;
+		-webkit-user-select: none;
+		-webkit-user-drag: none;
+		-webkit-user-modify: none;
+		-webkit-highlight: none;
+		user-select: none;
 	}
 
 	.handle {
@@ -211,6 +220,15 @@ onkeydown={evt => {
 		pointer-events: all; 
 		stroke-width: 1px; 
 		vector-effect: non-scaling-stroke;
+		outline: none;
+
+		-webkit-touch-callout: none;
+		-webkit-user-callout: none;
+		-webkit-user-select: none;
+		-webkit-user-drag: none;
+		-webkit-user-modify: none;
+		-webkit-highlight: none;
+		user-select: none;
 	}
 
 	.rotator-handle {
