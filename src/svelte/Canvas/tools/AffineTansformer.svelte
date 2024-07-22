@@ -131,9 +131,11 @@ onkeydown={evt => {
 		if (isGrabbing.value) {
 			if(translationAccum.value) {
 				translateSelected({dx:-translationAccum.value.x, dy:-translationAccum.value.y})
+				preventNextClick = true
 			} 
 			if(scaleAccum.value && activePivot.value) {
 				scaleSelected({x: 1/scaleAccum.value.x, y:1/scaleAccum.value.y}, activePivot.value)
+				preventNextClick = true
 			}
 			evt.stopPropagation();
 		}
