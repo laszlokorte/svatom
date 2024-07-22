@@ -1128,7 +1128,12 @@
 	}
 
 	const newDrawing = view(
-		[L.appendTo, "path", L.setter((n, o) => (n.length > 1 ? n : o))],
+		[
+			L.appendTo,
+			L.removable("path"),
+			"path",
+			L.setter((n, o) => (n.length > 1 ? n : o)),
+		],
 		drawings,
 	);
 	const newSpline = view([L.appendTo, "path"], splines);
