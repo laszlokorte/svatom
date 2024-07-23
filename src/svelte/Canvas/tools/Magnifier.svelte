@@ -127,6 +127,7 @@
 	}}
 	onpointerdown={(evt) => {
 		if (!evt.isPrimary || !U.isLeftButton(evt, true)) {
+			isActive.value = false;
 			return;
 		}
 
@@ -142,7 +143,6 @@
 	}}
 	onpointermove={(evt) => {
 		if (!evt.isPrimary) {
-			isActive.value = false;
 			return;
 		}
 		if (!isActive.value) {
