@@ -92,6 +92,7 @@
 	import Minimap from "./tools/Minimap.svelte";
 
 	import Droppables from "./toolbars/Droppables.svelte";
+	import Bookmarker from "./toolbars/Bookmarker.svelte";
 	import History from "./toolbars/History.svelte";
 	import Tabs from "./toolbars/Tabs.svelte";
 	import Properties from "./toolbars/Properties.svelte";
@@ -103,6 +104,9 @@
 
 	const debugFrames = atom(false);
 	const showBounds = atom(false);
+	const bookmarks = atom([
+		{ label: "Origin", value: { x: 0, y: 0, z: 0, w: 0 } },
+	]);
 
 	const defaultProperties = atom({});
 
@@ -2486,7 +2490,10 @@
 		</Dropper>
 	</div>
 
-	<Droppables properties={defaultProperties} />
+	<div class="beside">
+		<Droppables properties={defaultProperties} />
+		<Bookmarker current={cameraFocus} entries={bookmarks} />
+	</div>
 
 	{#if debugFrames.value}
 		<div

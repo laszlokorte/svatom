@@ -240,6 +240,7 @@ button:not(:disabled):focus-visible, .button:not(:disabled):focus-visible {
 	resize: vertical;
 	overflow: hidden;
 	padding: 2px 0.5em 0.5em 2px;
+	min-height: min-content;
 }
 
 .beside > * {
