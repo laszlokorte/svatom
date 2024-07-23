@@ -4,7 +4,7 @@
 	import { atom, view, read, combine } from "../../svatom.svelte.js";
 	import * as U from "../../utils.js";
 
-	const { children, extension, frameBoxPath, rotationInverseTransform, rotationTransform, cameraFocus } =
+	const { children, extension, frameBoxPath, rotationInverseTransform, rotationTransform, cameraFocus, visible = atom(true) } =
 		$props();
 
 	const viewBox = read(
@@ -16,6 +16,12 @@
 	const isActive = atom(false)
 </script>
 
+<div style="text-align: right;">
+	<label style="pointer-events: all;"><input type="checkbox" bind:checked={visible.value}/> Minimap</label>
+
+</div>
+
+{#if visible.value}
 <svg 
 	tabindex="-1"
 	role="button"
@@ -104,6 +110,7 @@
 
 	</g>
 </svg>
+{/if}
 
 <style>
 	svg {

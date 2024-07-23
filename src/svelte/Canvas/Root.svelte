@@ -1172,8 +1172,29 @@
 						},
 			),
 		shapes: (factor, pivot, shapes, sel) =>
-			shapes.map((s, i) =>
-				sel.indexOf(`shape-${i}`) < 0
+			shapes.map((s, i) => {
+				const sin = Math.sin((s.placement.angle * Math.PI) / 180);
+				const cos = Math.cos((s.placement.angle * Math.PI) / 180);
+
+				// TODO FIX ME
+				const p = cos * factor.x;
+				const q = sin * factor.y;
+				const pqlen = Math.hypot(p, q);
+
+				const l = -sin * factor.x;
+				const m = cos * factor.y;
+				const lmlen = Math.hypot(l, m);
+
+				const pp = pqlen * cos;
+				const qq = -pqlen * sin;
+
+				const ll = cos * lmlen;
+				const mm = sin * lmlen;
+
+				const fx = 1;
+				const fy = 1;
+
+				return sel.indexOf(`shape-${i}`) < 0
 					? s
 					: L.modify(
 							["placement", "start"],
@@ -1184,13 +1205,13 @@
 							L.modify(
 								["placement", "size"],
 								({ x, y }) => ({
-									x: x * factor.x || 0.001,
-									y: y * factor.y || 0.001,
+									x: x * fx || 0.001,
+									y: y * fy || 0.001,
 								}),
 								s,
 							),
-						),
-			),
+						);
+			}),
 	};
 
 	function scaleSelected(factor, pivot, transient = false) {
