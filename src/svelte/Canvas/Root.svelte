@@ -1023,6 +1023,10 @@
 			let maxX = -Infinity;
 			let minY = +Infinity;
 			let maxY = -Infinity;
+			let minXPadded = +Infinity;
+			let maxXPadded = -Infinity;
+			let minYPadded = +Infinity;
+			let maxYPadded = -Infinity;
 
 			for (let h = 0; h < hit.length; h++) {
 				const ha = hit[h];
@@ -1037,6 +1041,10 @@
 						maxX = Math.max(maxX, ha.cx);
 						minY = Math.min(minY, ha.cy);
 						maxY = Math.max(maxY, ha.cy);
+						minXPadded = Math.min(minXPadded, ha.cx - ha.r);
+						maxXPadded = Math.max(maxXPadded, ha.cx + ha.r);
+						minYPadded = Math.min(minYPadded, ha.cy - ha.r);
+						maxYPadded = Math.max(maxYPadded, ha.cy + ha.r);
 						break;
 					case "polygon":
 						for (let p = 0; p < ha.points.length; p++) {
@@ -1044,6 +1052,10 @@
 							maxX = Math.max(maxX, ha.points[p].x);
 							minY = Math.min(minY, ha.points[p].y);
 							maxY = Math.max(maxY, ha.points[p].y);
+							minXPadded = Math.min(minXPadded, ha.points[p].x);
+							maxXPadded = Math.max(maxXPadded, ha.points[p].x);
+							minYPadded = Math.min(minYPadded, ha.points[p].y);
+							maxYPadded = Math.max(maxYPadded, ha.points[p].y);
 						}
 						break;
 					case "polyline":
@@ -1052,6 +1064,10 @@
 							maxX = Math.max(maxX, ha.points[p].x);
 							minY = Math.min(minY, ha.points[p].y);
 							maxY = Math.max(maxY, ha.points[p].y);
+							minXPadded = Math.min(minXPadded, ha.points[p].x);
+							maxXPadded = Math.max(maxXPadded, ha.points[p].x);
+							minYPadded = Math.min(minYPadded, ha.points[p].y);
+							maxYPadded = Math.max(maxYPadded, ha.points[p].y);
 						}
 						break;
 					default:
@@ -1060,7 +1076,16 @@
 			}
 
 			if (isFinite(minX)) {
-				return { minX, maxX, minY, maxY };
+				return {
+					minX,
+					maxX,
+					minY,
+					maxY,
+					minXPadded,
+					maxXPadded,
+					minYPadded,
+					maxYPadded,
+				};
 			} else {
 				return null;
 			}

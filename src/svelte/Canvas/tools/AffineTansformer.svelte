@@ -159,9 +159,9 @@ onkeydown={evt => {
 <g
 	transform={rotationTransform.value}
 >
-<line x1={(selectionExtensionValue.minX-padding + selectionExtensionValue.maxX+padding)/2} y1={selectionExtensionValue.minY-padding} x2={(selectionExtensionValue.minX-padding + selectionExtensionValue.maxX+padding)/2} y2="{selectionExtensionValue.minY-padding - 40*Math.min(cameraScaleValue, 2)}" stroke="RoyalBlue" vector-effect="non-scaling-stroke" />
+<line x1={(selectionExtensionValue.minXPadded-padding + selectionExtensionValue.maxXPadded+padding)/2} y1={selectionExtensionValue.minYPadded-padding} x2={(selectionExtensionValue.minXPadded-padding + selectionExtensionValue.maxXPadded+padding)/2} y2="{selectionExtensionValue.minYPadded-padding - 40*Math.min(cameraScaleValue, 2)}" stroke="RoyalBlue" vector-effect="non-scaling-stroke" />
 
-<rect data-translate="true" x={selectionExtensionValue.minX-padding} y="{selectionExtensionValue.minY-padding}" width={selectionExtensionValue.maxX+padding - (selectionExtensionValue.minX-padding)} height="{(selectionExtensionValue.maxY+padding) - (selectionExtensionValue.minY-padding)}" class="box" pointer-events="all" fill="none"
+<rect data-translate="true" x={selectionExtensionValue.minXPadded-padding} y="{selectionExtensionValue.minYPadded-padding}" width={selectionExtensionValue.maxXPadded+padding - (selectionExtensionValue.minXPadded-padding)} height="{(selectionExtensionValue.maxYPadded+padding) - (selectionExtensionValue.minYPadded-padding)}" class="box" pointer-events="all" fill="none"
 tabindex="-1"
 role="button"
 onpointerdown={evt => {
@@ -185,8 +185,8 @@ onkeydown={evt => {
 {#each handles as handle,i (i)}
 {@const cx = U.lerp((selectionExtensionValue.minX), (selectionExtensionValue.maxX), (handle.wx+1)/2)}
 {@const cy = U.lerp((selectionExtensionValue.minY), (selectionExtensionValue.maxY), (handle.wy+1)/2)}
-{@const cxpadded = U.lerp((selectionExtensionValue.minX-padding), (selectionExtensionValue.maxX+padding), (handle.wx+1)/2)}
-{@const cypadded = U.lerp((selectionExtensionValue.minY-padding), (selectionExtensionValue.maxY+padding), (handle.wy+1)/2)}
+{@const cxpadded = U.lerp((selectionExtensionValue.minXPadded-padding), (selectionExtensionValue.maxXPadded+padding), (handle.wx+1)/2)}
+{@const cypadded = U.lerp((selectionExtensionValue.minYPadded-padding), (selectionExtensionValue.maxYPadded+padding), (handle.wy+1)/2)}
 {@const px = U.lerp((selectionExtensionValue.minX), (selectionExtensionValue.maxX), 1-(handle.wx+1)/2)}
 {@const py = U.lerp((selectionExtensionValue.minY), (selectionExtensionValue.maxY), 1-(handle.wy+1)/2)}
 <g class:active={activeHandle.value && activeHandle.value.wx === handle.wx * Math.sign(scaleAccum.value.x) && activeHandle.value.wy == handle.wy * Math.sign(scaleAccum.value.y)}>	
@@ -195,8 +195,8 @@ onkeydown={evt => {
 </g>
 {/each}
 <g style:--cursor-url="url({rotationCursor})" class="rotator-handle">
-	<circle cx={(selectionExtensionValue.minX-padding + selectionExtensionValue.maxX+padding)/2} cy="{selectionExtensionValue.minY-padding - 40*Math.min(cameraScaleValue, 2)}" r="{5 *cameraScaleValue}" pointer-events="all" class="handle-background" />
-	<circle cx={(selectionExtensionValue.minX-padding + selectionExtensionValue.maxX+padding)/2} cy="{selectionExtensionValue.minY-padding - 40*Math.min(cameraScaleValue, 2)}" r="{5 *cameraScaleValue}" pointer-events="all" class="handle"  />
+	<circle cx={(selectionExtensionValue.minXPadded-padding + selectionExtensionValue.maxXPadded+padding)/2} cy="{selectionExtensionValue.minYPadded-padding - 40*Math.min(cameraScaleValue, 2)}" r="{5 *cameraScaleValue}" pointer-events="all" class="handle-background" />
+	<circle cx={(selectionExtensionValue.minXPadded-padding + selectionExtensionValue.maxXPadded+padding)/2} cy="{selectionExtensionValue.minYPadded-padding - 40*Math.min(cameraScaleValue, 2)}" r="{5 *cameraScaleValue}" pointer-events="all" class="handle"  />
 </g>
 </g>
 
