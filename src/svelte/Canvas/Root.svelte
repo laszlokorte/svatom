@@ -912,6 +912,33 @@
 									cy: n.y,
 									r: 25 * Math.min(1, scale),
 									id: "node-" + i,
+									allowedTransform: {
+										translation: true,
+										scale: "multiple",
+										rotate: "multiple",
+									},
+								})),
+							],
+							edges: [
+								L.elems,
+								L.reread((e, i) => ({
+									type: "polyline",
+									id: "edge-" + i,
+									points: [
+										{
+											x: doc.nodes[e.source].x,
+											y: doc.nodes[e.source].y,
+										},
+										{
+											x: doc.nodes[e.target].x,
+											y: doc.nodes[e.target].y,
+										},
+									],
+									allowedTransform: {
+										translation: false,
+										scale: false,
+										rotate: false,
+									},
 								})),
 							],
 							shapes: [
@@ -959,6 +986,13 @@
 											},
 										],
 										id: "shape-" + i,
+										allowedTransform: {
+											translation: true,
+											scale:
+												sp.placement.angle === 0 ||
+												"multiple",
+											rotate: true,
+										},
 									};
 								}),
 							],
@@ -1001,6 +1035,11 @@
 											},
 										],
 										id: "textbox-" + i,
+										allowedTransform: {
+											translation: true,
+											scale: true,
+											rotate: true,
+										},
 									};
 								}),
 							],
@@ -1010,6 +1049,11 @@
 									type: "polyline",
 									id: "drawing-" + i,
 									points: drawing.path,
+									allowedTransform: {
+										translation: true,
+										scale: true,
+										rotate: true,
+									},
 								})),
 							],
 						}),
@@ -1031,12 +1075,30 @@
 			let maxXPadded = -Infinity;
 			let minYPadded = +Infinity;
 			let maxYPadded = -Infinity;
+			let allowedTransform = {
+				translation: true,
+				scale: true,
+				rotate: true,
+			};
 
 			for (let h = 0; h < hit.length; h++) {
 				const ha = hit[h];
 				if (sel.indexOf(ha.id) < 0) {
 					continue;
 				}
+
+				allowedTransform.translation &&=
+					ha.allowedTransform.translation === true ||
+					(ha.allowedTransform.translation === "multiple" &&
+						sel.length > 1);
+				allowedTransform.scale &&=
+					ha.allowedTransform.scale === true ||
+					(ha.allowedTransform.scale === "multiple" &&
+						sel.length > 1);
+				allowedTransform.rotate &&=
+					ha.allowedTransform.rotate === true ||
+					(ha.allowedTransform.rotate === "multiple" &&
+						sel.length > 1);
 
 				switch (ha.type) {
 					case "circle":
@@ -1089,6 +1151,7 @@
 					maxXPadded,
 					minYPadded,
 					maxYPadded,
+					allowedTransform,
 				};
 			} else {
 				return null;
@@ -1173,27 +1236,6 @@
 			),
 		shapes: (factor, pivot, shapes, sel) =>
 			shapes.map((s, i) => {
-				const sin = Math.sin((s.placement.angle * Math.PI) / 180);
-				const cos = Math.cos((s.placement.angle * Math.PI) / 180);
-
-				// TODO FIX ME
-				const p = cos * factor.x;
-				const q = sin * factor.y;
-				const pqlen = Math.hypot(p, q);
-
-				const l = -sin * factor.x;
-				const m = cos * factor.y;
-				const lmlen = Math.hypot(l, m);
-
-				const pp = pqlen * cos;
-				const qq = -pqlen * sin;
-
-				const ll = cos * lmlen;
-				const mm = sin * lmlen;
-
-				const fx = 1;
-				const fy = 1;
-
 				return sel.indexOf(`shape-${i}`) < 0
 					? s
 					: L.modify(
@@ -1205,8 +1247,8 @@
 							L.modify(
 								["placement", "size"],
 								({ x, y }) => ({
-									x: x * fx || 0.001,
-									y: y * fy || 0.001,
+									x: x * factor.x || 0.001,
+									y: y * factor.y || 0.001,
 								}),
 								s,
 							),
@@ -1221,6 +1263,62 @@
 				return R.mapObjIndexed((entries, key) => {
 					if (scalers[key]) {
 						return scalers[key](factor, pivot, entries, sel);
+					} else {
+						return entries;
+					}
+				}, doc);
+			},
+			transient ? currentDocumentContentMut : currentDocumentContent,
+		);
+	}
+
+	const rotators = {
+		nodes: (angle, pivot, nodes, sel) =>
+			nodes.map((n, i) =>
+				sel.indexOf(`node-${i}`) < 0
+					? n
+					: {
+							...n,
+							...Geo.rotatePivotDegree(pivot, angle, {
+								x: n.x,
+								y: n.y,
+							}),
+						},
+			),
+		drawings: (angle, pivot, drawings, sel) =>
+			drawings.map((d, i) =>
+				sel.indexOf(`drawing-${i}`) < 0
+					? d
+					: {
+							...d,
+							path: d.path.map((p) =>
+								Geo.rotatePivotDegree(pivot, angle, p),
+							),
+						},
+			),
+		shapes: (angle, pivot, shapes, sel) =>
+			shapes.map((s, i) => {
+				return sel.indexOf(`shape-${i}`) < 0
+					? s
+					: L.modify(
+							["placement", "start"],
+							(p) => Geo.rotatePivotDegree(pivot, angle, p),
+							L.modify(
+								["placement", "angle"],
+								(a) => a + angle,
+								s,
+							),
+						);
+			}),
+	};
+
+	function rotateSelected(angle, pivot, transient = false) {
+		const sel = selection.value;
+		update(
+			(doc) => {
+				return R.mapObjIndexed((entries, key) => {
+					if (scalers[key]) {
+						return rotators[key](angle, pivot, entries, sel);
 					} else {
 						return entries;
 					}
@@ -1555,6 +1653,7 @@
 				clientToCanvas,
 				translateSelected,
 				scaleSelected,
+				rotateSelected,
 				frameBoxPath,
 			},
 		},
@@ -2454,6 +2553,7 @@
 									{clientToCanvas}
 									{translateSelected}
 									{scaleSelected}
+									{rotateSelected}
 									{frameBoxPath}
 								/>
 							{/if}

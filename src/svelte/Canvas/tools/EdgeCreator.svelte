@@ -104,6 +104,8 @@
 	export function cancel() {
 		isActive.value = false;
 	}
+
+	let preventNextClick = $state(false);
 </script>
 
 <g
@@ -112,7 +114,10 @@
 	role="button"
 	tabindex="-1"
 	onclick={(evt) => {
-		evt.stopPropagation();
+		if (preventNextClick) {
+			evt.stopPropagation();
+			preventNextClick = false;
+		}
 	}}
 	oncontextmenu={(evt) => {
 		evt.preventDefault();
@@ -186,11 +191,13 @@
 
 		if (validConnection.value && newEdge) {
 			newEdge.value = connection.value;
+			preventNextClick = true;
 		} else if (newEdgeNode) {
 			newEdgeNode.value = {
 				source: draftSourceId.value,
 				newTarget: draftTargetPosition.value,
 			};
+			preventNextClick = true;
 		}
 
 		isActive.value = false;

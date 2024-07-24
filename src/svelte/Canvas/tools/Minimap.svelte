@@ -17,8 +17,7 @@
 </script>
 
 <div style="text-align: right;">
-	<label style="pointer-events: all;"><input type="checkbox" bind:checked={visible.value}/> Minimap</label>
-
+	<label style="pointer-events: all;"><input type="checkbox" bind:checked={visible.value} class="striked-label-checkbox" /> <span class="striked-label">Minimap</span></label>
 </div>
 
 {#if visible.value}
@@ -170,5 +169,18 @@
 		fill: none;
 		vector-effect: non-scaling-stroke;
 		stroke-width: 1px;
+	}
+
+	.striked-label-checkbox {
+		display: none;
+	}
+
+	.striked-label {
+		text-decoration: line-through;
+		cursor: pointer;
+	}
+
+	input:checked + .striked-label{
+		text-decoration: none;
 	}
 </style>
