@@ -35,6 +35,7 @@
 				}
 			}),
 			L.reread((x) => x.string),
+			L.defaults(""),
 		],
 		renewDocument,
 	);
@@ -117,21 +118,18 @@
 			}),
 		],
 		lines: [
+			L.elems,
 			L.pick({
 				minX: [
-					L.elems,
 					L.foldTraversalLens(L.minimum, ["points", L.elems, "x"]),
 				],
 				maxX: [
-					L.elems,
 					L.foldTraversalLens(L.maximum, ["points", L.elems, "x"]),
 				],
 				minY: [
-					L.elems,
 					L.foldTraversalLens(L.minimum, ["points", L.elems, "y"]),
 				],
 				maxY: [
-					L.elems,
 					L.foldTraversalLens(L.maximum, ["points", L.elems, "y"]),
 				],
 			}),
@@ -143,11 +141,11 @@
 			L.pick({
 				minX: [
 					L.foldTraversalLens(L.minimum, [boundsLens, "minX"]),
-					L.defaults(-10),
+					L.defaults(-200),
 				],
 				maxX: [
 					L.foldTraversalLens(L.maximum, [boundsLens, "maxX"]),
-					L.defaults(-10),
+					L.defaults(200),
 				],
 				minY: [
 					L.foldTraversalLens(L.minimum, [boundsLens, "minY"]),
@@ -155,7 +153,7 @@
 				],
 				maxY: [
 					L.foldTraversalLens(L.maximum, [boundsLens, "maxY"]),
-					L.defaults(-10),
+					L.defaults(10),
 				],
 			}),
 		],
@@ -164,12 +162,17 @@
 
 	const viewBox = view(
 		({ minX, minY, maxX, maxY }) =>
-			`${minX - 40} ${minY - 40} ${maxX - minX + 80} ${maxY - minY + 80}`,
+			`${minX - 10} ${minY - 10} ${maxX - minX + 20} ${maxY - minY + 20}`,
 		worldBounds,
 	);
 </script>
 
 <h1>Renew File</h1>
+
+<p>Load a renew file into the left text field.</p>
+<p>
+	It will be parsed and output as JSON on the right and rendered as SVG below.
+</p>
 
 <div class="beside" style="height: 15em">
 	<textarea
@@ -220,7 +223,6 @@
 
 <style>
 	svg {
-		height: 30em;
 		width: 100%;
 		resize: both;
 		shape-rendering: geometricPrecision;

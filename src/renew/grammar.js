@@ -1,4 +1,4 @@
-export function makeSyntax(version) {
+export function makeGrammar(version) {
 	return {
 		get version() {
 			return version

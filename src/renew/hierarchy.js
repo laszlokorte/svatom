@@ -1,11 +1,11 @@
-export function makeHierarchy(syntax) {
+export function makeHierarchy(grammar) {
 	function isChildOf(c, p) {
-		return c && (p === syntax[c].super || isChildOf(syntax[c].super, p))
+		return c && (p === grammar[c].super || isChildOf(grammar[c].super, p))
 	}
 
 	return {
 		descendantsOf(...kinds) {
-			return Object.keys(syntax).filter((k) => {
+			return Object.keys(grammar).filter((k) => {
 				return kinds.some(kind => k===kind || isChildOf(k, kind))
 			})
 		}

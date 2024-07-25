@@ -1,23 +1,16 @@
 
-export function makeParser(reader, syntax) {
+export function makeParser(reader, grammar) {
 	return function parser(inputString) {
 		const r = reader(inputString)
 		const refMap = [];
 
 		function parseInto(target, rule) {
-			const syn = syntax[rule];
+			const syn = grammar[rule];
 			if(!syn) {
-				throw new Error(`Unknown syntax node ${rule}`);
+				throw new Error(`Unknown grammar node ${rule}`);
 			}
 			if(syn.super && !syn.skipSuper) {
-				try {
-					target = parseInto(target, syn.super)
-
-				} catch (e) {
-					console.error("Error while parsing" + syn.super)
-					console.error(target)
-					throw e
-				}
+				parseInto(target, syn.super)
 			}
 
 			return Object.assign(target, syn.parser(context))
@@ -25,7 +18,7 @@ export function makeParser(reader, syntax) {
 
 		function transitiveTypes(kind) {
 			if(kind) {
-				return [kind, ...syntax[kind].interfaces, ...transitiveTypes(syntax[kind].super)]
+				return [kind, ...grammar[kind].interfaces, ...transitiveTypes(grammar[kind].super)]
 			} else {
 				return []
 			}
@@ -33,7 +26,7 @@ export function makeParser(reader, syntax) {
 
 		const context = {
 			get version() {
-				return syntax.version
+				return grammar.version
 			},
 			get refMap() {
 				return refMap;
@@ -60,40 +53,25 @@ export function makeParser(reader, syntax) {
 						__kind: t.value,
 					};
 
-					try {
-						refMap.push(newObject)
+					refMap.push(newObject)
 
-						const result = parseInto(newObject, t.value);
+					parseInto(newObject, t.value);
 
-
-						return result
-					} catch (e) {
-						console.error("Error while parsing " + t.value)
-						console.error(newObject)
-						throw e
-					}
+					return newObject
 				}
 			},
 			parseImplicitStorable (ofType, storeRef = true)  {
 				const newObject = {
 					__kind: ofType,
 				};
-				try {
 
-					if(storeRef) {
-						refMap.push(newObject)
-					}
-
-					const result = parseInto(newObject, ofType);
-
-
-					return result
-				} catch (e) {
-					console.error("Error while parsing " + ofType)
-					console.error(newObject)
-					throw e
+				if(storeRef) {
+					refMap.push(newObject)
 				}
-				
+
+				parseInto(newObject, ofType);
+
+				return newObject
 			},
 			parseInt() {
 				return r.read("int")
@@ -115,6 +93,22 @@ export function makeParser(reader, syntax) {
 			skipAny(types) {
 				return r.readAny(types)
 			},
+			parseWindowPositionMaybe() {
+				const x = r.read("int", false);
+				if(x) {
+					const y = r.read("int", true);
+					const w = r.read("int", true);
+					const h = r.read("int", true);
+					
+					return {x,y,w,h}
+				} else {
+					return null
+				}
+
+			},
+			expectFinish(allowWhitespace = true) {
+				r.readEOF()
+			}
 		}
 
 		return context

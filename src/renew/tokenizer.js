@@ -20,6 +20,10 @@ export function makeTokenizer(tokens) {
 			prevIndex = tokenReg.lastIndex
 		}
 
+		if(prevIndex !== string.length) {
+			throw new Error(`Expected EOF, but found "${string.slice(prevIndex, prevIndex+10)}"`)
+		}
+
 		return prevIndex
 	}
 }

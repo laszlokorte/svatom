@@ -50,7 +50,6 @@ export function makeReader(tokenize) {
 
 				const v = t.value
 
-
 				if(types.indexOf(v.type) < 0) {
 					if(strict) {
 						throw new Error(`Expected any of ${types.join(", ")} but got ${v.type} (${v.value}).`)
@@ -63,6 +62,26 @@ export function makeReader(tokenize) {
 					type: v.type,
 					value: v.value,
 				}
+			},
+
+			readEOF: (strict = true, allowWhitespace = true) => {
+				let t = tokenStream.next()
+				
+				while(allowWhitespace && !t.done && t.value.type == 'white'){
+					t = tokenStream.next()
+				}
+
+				const v = t.value
+				
+				if(!t.done) {
+					if(strict) {
+						throw new Error(`Expected any EOF but got ${v.type} (${v.value}).`)
+					} else {
+						return null
+					}
+				}
+
+				return true
 			}
 		}
 	}

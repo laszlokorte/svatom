@@ -3,7 +3,7 @@ import {isDeepEqual} from './compare.js'
 import {makeTokenizer} from './tokenizer.js'
 import {makeReader} from './reader.js'
 import {makeParser} from './parser.js'
-import {makeSyntax} from './syntax.js'
+import {makeGrammar} from './grammar.js'
 import {makeHierarchy} from './hierarchy.js'
 
 export const tokenizer = makeTokenizer([
@@ -20,8 +20,8 @@ export const tokenizer = makeTokenizer([
 
 export const reader = makeReader(tokenizer)
 
-export const parserV11 = makeParser(reader, makeSyntax(11))
-export const hierarchyV11 = makeHierarchy(makeSyntax(11))
+export const parserV11 = makeParser(reader, makeGrammar(11))
+export const hierarchyV11 = makeHierarchy(makeGrammar(11))
 
 export const parserAutoDetect = function(inputString) {
 	const tokenStream = tokenizer(inputString);
@@ -29,17 +29,25 @@ export const parserAutoDetect = function(inputString) {
 	const version = r.readAny(["int","className"], true);
 	
 	if(version.type == 'int') {
-		const parser = makeParser(reader, makeSyntax(version.value))
+		const parser = makeParser(reader, makeGrammar(version.value))
 		const p = parser(inputString)
 
 		p.skipAny(["int"])
-		return p.parseStorable();
+
+		const drawing = p.parseStorable();
+		p.parseWindowPositionMaybe();
+		p.expectFinish()
+
+		return drawing;
 	} else {
-		const parser = makeParser(reader, makeSyntax(-1))
+		const parser = makeParser(reader, makeGrammar(-1))
 		const p = parser(inputString)
 
+		const drawing = p.parseStorable();
+		p.parseWindowPositionMaybe();
+		p.expectFinish()
 
-		return p.parseStorable();
+		return drawing;
 	}
 }
 
