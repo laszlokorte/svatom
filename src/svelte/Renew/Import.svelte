@@ -23,6 +23,13 @@
 		kindKey,
 	} from "../../renew/index.js";
 
+	import exampleActor from "./actors.rnw?raw";
+	import exampleCloseDoor from "./closedoor.rnw?raw";
+	import exampleRenew from "./example.rnw?raw";
+	import exampleAip from "./example.aip?raw";
+
+	const examples = [exampleActor, exampleCloseDoor, exampleRenew, exampleAip];
+
 	const renewDocument = atom({ string: undefined, json: undefined });
 	const renewSerialized = failableView(
 		[
@@ -343,6 +350,17 @@
 <p>
 	It will be parsed and output as JSON on the right and rendered as SVG below.
 </p>
+
+<div style="display: flex; gap: 0.2em">
+	{#each examples as example, e (e)}
+		<button
+			type="button"
+			onclick={(e) => {
+				renewSerialized.value = example;
+			}}>Example #{e + 1}</button
+		>
+	{/each}
+</div>
 
 <div
 	ondragover={onDragOver}
