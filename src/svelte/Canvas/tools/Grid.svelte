@@ -118,6 +118,7 @@
 		stroke-width="1px"
 		fill="none"
 		vector-effect="non-scaling-stroke"
+		shape-rendering="optimizeSpeed"
 	/>
 	<path
 		class="grid-lines-primary"
@@ -126,6 +127,7 @@
 		stroke-width="1px"
 		fill="none"
 		vector-effect="non-scaling-stroke"
+		shape-rendering="optimizeSpeed"
 	/>
 </g>
 
@@ -133,13 +135,14 @@
 	.grid-lines-secondary {
 		stroke-width: 1px;
 		vector-effect: non-scaling-stroke;
+		shape-rendering: optimizeSpeed;
 		stroke: #f0f0f0;
-		stroke-dasharray: 3 3;
 		fill: none;
 	}
 	.grid-lines-primary {
 		stroke-width: 1px;
 		vector-effect: non-scaling-stroke;
+		shape-rendering: optimizeSpeed;
 		stroke: #e0f5ff;
 		fill: none;
 	}
