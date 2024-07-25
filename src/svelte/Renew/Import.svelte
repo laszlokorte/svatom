@@ -357,7 +357,7 @@
 			type="button"
 			onclick={(e) => {
 				renewSerialized.value = example;
-			}}>Example #{e + 1}</button
+			}}>File #{e + 1}</button
 		>
 	{/each}
 </div>
@@ -673,6 +673,10 @@
 </div>
 
 <style>
+	h2 {
+		word-break: break-word;
+	}
+
 	svg {
 		-webkit-user-callout: none;
 		width: 100%;
