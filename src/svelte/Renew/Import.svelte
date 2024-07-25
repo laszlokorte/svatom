@@ -31,7 +31,6 @@
 						json: parserAutoDetect(x),
 					};
 				} catch (e) {
-					console.log(e);
 					return e;
 				}
 			}),
@@ -98,26 +97,69 @@
 		renewDocument,
 	);
 
+	const boundsLens = L.branch({
+		rectangles: [
+			L.elems,
+			L.pick({
+				minX: "x",
+				maxX: (r) => r.x + r.w,
+				minY: "y",
+				maxY: (r) => r.y + r.h,
+			}),
+		],
+		textes: [
+			L.elems,
+			L.pick({
+				minX: "fOriginX",
+				maxX: "fOriginX",
+				minY: "fOriginY",
+				maxY: "fOriginY",
+			}),
+		],
+		lines: [
+			L.pick({
+				minX: [
+					L.elems,
+					L.foldTraversalLens(L.minimum, ["points", L.elems, "x"]),
+				],
+				maxX: [
+					L.elems,
+					L.foldTraversalLens(L.maximum, ["points", L.elems, "x"]),
+				],
+				minY: [
+					L.elems,
+					L.foldTraversalLens(L.minimum, ["points", L.elems, "y"]),
+				],
+				maxY: [
+					L.elems,
+					L.foldTraversalLens(L.maximum, ["points", L.elems, "y"]),
+				],
+			}),
+		],
+	});
+
 	const worldBounds = read(
-		L.pick({
-			minX: [
-				L.foldTraversalLens(L.minimum, [L.elems, "x"]),
-				L.defaults(-10),
-			],
-			maxX: [
-				L.foldTraversalLens(L.maximum, [L.elems, (r) => r.x + r.w]),
-				L.defaults(10),
-			],
-			minY: [
-				L.foldTraversalLens(L.minimum, [L.elems, "y"]),
-				L.defaults(-10),
-			],
-			maxY: [
-				L.foldTraversalLens(L.maximum, [L.elems, (r) => r.y + r.h]),
-				L.defaults(10),
-			],
-		}),
-		rectangles,
+		[
+			L.pick({
+				minX: [
+					L.foldTraversalLens(L.minimum, [boundsLens, "minX"]),
+					L.defaults(-10),
+				],
+				maxX: [
+					L.foldTraversalLens(L.maximum, [boundsLens, "maxX"]),
+					L.defaults(-10),
+				],
+				minY: [
+					L.foldTraversalLens(L.minimum, [boundsLens, "minY"]),
+					L.defaults(-10),
+				],
+				maxY: [
+					L.foldTraversalLens(L.maximum, [boundsLens, "maxY"]),
+					L.defaults(-10),
+				],
+			}),
+		],
+		combine({ rectangles, textes, lines }),
 	);
 
 	const viewBox = view(
@@ -145,18 +187,13 @@
 <svg viewBox={viewBox.value}>
 	{#each rectangles.value as rect}
 		<rect
-			x={rect.x + 10}
+			x={rect.x}
 			y={rect.y}
 			width={rect.w}
 			height={rect.h}
-			fill="#a80a"
+			fill="#70db93aa"
 		/>
-		<text
-			transform="rotate(-10 {rect.x} {rect.y})"
-			x={rect.x}
-			y={rect.y}
-			font-size="0.5em">{rect.__kind}</text
-		>
+		<text x={rect.x + 10} y={rect.y} font-size="0.5em">{rect.__kind}</text>
 	{/each}
 
 	{#each lines.value as line}
@@ -167,12 +204,17 @@
 			)}
 			fill="none"
 			stroke-width="1"
-			stroke="blue"
+			stroke="black"
 		/>
 	{/each}
 
 	{#each textes.value as text}
-		<text x={text.fOriginX} y={text.fOriginY}>{text.text}</text>
+		<text
+			x={text.fOriginX}
+			y={text.fOriginY}
+			font-size="1em"
+			font-family="sans-serif">{text.text}</text
+		>
 	{/each}
 </svg>
 
