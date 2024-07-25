@@ -833,11 +833,11 @@ export function makeGrammar(version) {
 				interfaces: ["de.renew.diagram.RepresentableDiagramFigure"],
 				parser: (context) => {
 					return {
-						fDisplayBox: {
+						displayBox: {
 							x:context.parseInt(),
 							y:context.parseInt(),
-							width: context.parseInt(),
-							height: context.parseInt(),
+							w: context.parseInt(),
+							h: context.parseInt(),
 						}
 					}
 				},

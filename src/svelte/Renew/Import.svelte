@@ -53,6 +53,11 @@
 	const ellipseTypes = hierarchyV11.descendantsOf(
 		"CH.ifa.draw.figures.EllipseFigure",
 	);
+	const diagramTypes = hierarchyV11.descendantsOf(
+		"de.renew.diagram.DiagramFigure",
+	);
+
+	console.log(diagramTypes);
 
 	const lineTypes = hierarchyV11.descendantsOf(
 		"CH.ifa.draw.figures.PolyLineFigure",
@@ -62,9 +67,6 @@
 	);
 
 	const allRoots = [
-		"CH.ifa.draw.standard.AbstractFigure",
-		"CH.ifa.draw.figures.FigureAttributes",
-		"de.renew.hierarchicalworkflownets.gui.layout.Vec2d",
 		"CH.ifa.draw.figures.AbstractLocator",
 		"CH.ifa.draw.figures.ArrowTip",
 		"de.renew.gui.CircleDecoration",
@@ -95,6 +97,21 @@
 				L.elems,
 				L.satisfying(
 					R.compose(R.includes(R.__, rectTypes), R.prop(kindKey)),
+				),
+			),
+		],
+		renewDocument,
+	);
+
+	const diagramFigs = view(
+		[
+			"json",
+			"drawing",
+			"figures",
+			L.partsOf(
+				L.elems,
+				L.satisfying(
+					R.compose(R.includes(R.__, diagramTypes), R.prop(kindKey)),
 				),
 			),
 		],
@@ -165,6 +182,16 @@
 				maxY: (r) => r.y + r.h,
 			}),
 		],
+		diagramFigs: [
+			L.elems,
+			"displayBox",
+			L.pick({
+				minX: "x",
+				maxX: (r) => r.x + r.w,
+				minY: "y",
+				maxY: (r) => r.y + r.h,
+			}),
+		],
 		textes: [
 			L.elems,
 			L.pick({
@@ -202,7 +229,7 @@
 				maxY: [L.foldTraversalLens(L.maximum, [boundsLens, "maxY"])],
 			}),
 		],
-		combine({ rectangles, textes, lines, ellipses }),
+		combine({ rectangles, textes, lines, ellipses, diagramFigs }),
 	);
 
 	const viewBox = view(
@@ -320,6 +347,8 @@
 		<button type="button" onclick={renewSerialized.reset}>Reset</button>
 		{renewSerialized.error}
 	</div>
+
+	<label><input type="checkbox" bind:checked={debug.value} /> Debug</label>
 
 	{#if viewBox.value}
 		<h2>{doctype.value} (version: {version.value})</h2>
@@ -466,6 +495,43 @@
 							font-family="monospace"
 							title={ellipse[kindKey]}
 							>{R.last(ellipse[kindKey].split("."))}</text
+						>
+					</g>
+				{/each}
+
+				{#each diagramFigs.value as diag}
+					<g
+						id={diag.attributes?.attrs.FigureWithID ??
+							"auto-id" + refMap.value.indexOf(diag)}
+					>
+						<g
+							fill={renewToRgba(readAttribute(diag, "FillColor"))}
+							stroke={renewToRgba(
+								readAttribute(diag, "FrameColor"),
+							)}
+							stroke-width={readAttribute(diag, "LineWidth")}
+							stroke-dasharray={readAttribute(diag, "LineStyle")}
+							vector-effect="non-scaling-stroke"
+						>
+							<rect
+								x={diag.displayBox.x}
+								y={diag.displayBox.y}
+								width={diag.displayBox.w}
+								height={diag.displayBox.h}
+							/>
+						</g>
+
+						<text
+							class:hidden={!debug.value}
+							shape-rendering="geometricPrecision"
+							x={diag.displayBox.x + diag.displayBox.w / 2}
+							y={diag.displayBox.y}
+							text-anchor="middle"
+							font-size="7"
+							fill="royalblue"
+							font-family="monospace"
+							title={diag[kindKey]}
+							>{R.last(diag[kindKey].split("."))}</text
 						>
 					</g>
 				{/each}

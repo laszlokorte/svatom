@@ -111,7 +111,7 @@ export function makeParser(reader, grammar, autoDeref = true) {
 			},
 			parseWindowPositionMaybe() {
 				const x = r.read("int", false);
-				if(x !== null) {
+				if(!(x instanceof Error)) {
 					const y = r.read("int", true);
 					const w = r.read("int", true);
 					const h = r.read("int", true);
@@ -123,7 +123,7 @@ export function makeParser(reader, grammar, autoDeref = true) {
 
 			},
 			expectFinish(allowWhitespace = true) {
-				r.readEOF()
+				r.readEOF(true, allowWhitespace)
 			}
 		}
 

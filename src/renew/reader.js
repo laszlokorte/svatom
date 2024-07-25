@@ -16,7 +16,7 @@ export function makeReader(tokenize) {
 					if(strict) {
 						throw new Error(`Expected ${type} but got EOF.`)
 					} else {
-						return null
+						return new Error(`Expected ${type} but got EOF.`)
 					}
 				}
 
@@ -26,7 +26,7 @@ export function makeReader(tokenize) {
 					if(strict) {
 						throw new Error(`Expected ${type} but got ${v.type} (${v.value}).`)
 					} else {
-						return null
+						return new Error(`Expected ${type} but got ${v.type} (${v.value}).`)
 					}
 				}
 
@@ -44,7 +44,7 @@ export function makeReader(tokenize) {
 					if(strict) {
 						throw new Error(`Expected any of ${types.join(", ")} but got EOF.`)
 					} else {
-						return null
+						return new Error(`Expected any of ${types.join(", ")} but got EOF.`)
 					}
 				}
 
@@ -54,7 +54,7 @@ export function makeReader(tokenize) {
 					if(strict) {
 						throw new Error(`Expected any of ${types.join(", ")} but got ${v.type} (${v.value}).`)
 					} else {
-						return null
+						return new Error(`Expected any of ${types.join(", ")} but got ${v.type} (${v.value}).`)
 					}
 				}
 
@@ -75,9 +75,9 @@ export function makeReader(tokenize) {
 				
 				if(!t.done) {
 					if(strict) {
-						throw new Error(`Expected any EOF but got ${v.type} (${v.value}).`)
+						throw new Error(`Expected EOF but got ${v.type} (${v.value}).`)
 					} else {
-						return null
+						return new Error(`Expected EOF but got ${v.type} (${v.value}).`)
 					}
 				}
 
