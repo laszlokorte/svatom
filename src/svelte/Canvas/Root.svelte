@@ -29,6 +29,7 @@
 		traverse,
 		animateWith,
 		adjustSize,
+		isFullscreen,
 	} from "../svatom.svelte.js";
 	import { constructLenses } from "./camera/live.js";
 
@@ -100,10 +101,13 @@
 	const svgElement = atom(undefined);
 	const bitmapCanvas = atom(undefined);
 	const cameraTow = atom(undefined);
-	let currentToolElement = atom(undefined);
+	const currentToolElement = atom(undefined);
+	const fullScreenContainer = atom(undefined);
 
 	const debugFrames = atom(false);
 	const showBounds = atom(false);
+	const fullPageCanvas = atom(false);
+	const isFullScreen = isFullscreen();
 	const bookmarks = atom([
 		{ label: "Origin", value: { x: 0, y: 0, z: 0, w: 0 } },
 	]);
@@ -1982,6 +1986,18 @@
 	const camClient = view(["focus", L.props("x", "y"), worldPageIso], camera);
 	const camClientX = view("x", camClient);
 	const camClientY = view("y", camClient);
+
+	$effect(() => {
+		document.body.classList.toggle("noScroll", fullPageCanvas.value);
+	});
+
+	function requestFullScreen() {
+		fullScreenContainer.value.requestFullscreen().catch((err) => {
+			alert(
+				`Error attempting to enable fullscreen mode: ${err.message} (${err.name})`,
+			);
+		});
+	}
 </script>
 
 <div class="container">
@@ -2106,6 +2122,22 @@
 						bind:checked={cameraAutoPadding.value}
 					/> Extend Scrollbars</label
 				>
+				<br />
+
+				<div class:fullPageCorner={fullPageCanvas.value}>
+					<label
+						><input
+							type="checkbox"
+							bind:checked={fullPageCanvas.value}
+						/> Stretch to Page</label
+					>
+
+					<button
+						type="button"
+						disabled={!fullScreenContainer.value}
+						onclick={requestFullScreen}>Full Screen</button
+					>
+				</div>
 			</div>
 		</fieldset>
 
@@ -2380,7 +2412,11 @@
 
 	<Properties properties={defaultProperties} />
 
-	<div class="prevent-selection">
+	<div
+		class="prevent-selection"
+		bind:this={fullScreenContainer.value}
+		class:fullPageFill={fullPageCanvas.value || isFullScreen.value}
+	>
 		<Dropper
 			{newText}
 			{clientToCanvas}
@@ -2921,5 +2957,32 @@
 		user-select: none;
 		-webkit-user-select: none;
 		touch-action: pan-x pan-y;
+	}
+	.fullPageCorner {
+		position: fixed;
+		top: 1em;
+		left: 1em;
+		z-index: 90000;
+	}
+
+	.fullPageFill {
+		background: white;
+		position: fixed;
+		inset: 0;
+		display: grid;
+		place-content: stretch;
+		place-items: stretch;
+		z-index: 10000;
+	}
+
+	.fullPageFill :global(.scroller) {
+		resize: none !important;
+		height: 100% !important;
+		border: 0;
+	}
+
+	:global(.noScroll) {
+		overflow: hidden;
+		touch-action: none;
 	}
 </style>

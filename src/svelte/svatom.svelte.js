@@ -733,3 +733,24 @@ export function onPointerClick(node, fn) {
 		node.removeEventListener('pointerdown', onDown)
 	}
 }
+
+export function isFullscreen() {
+	let isFull = $state(document.fullscreenElement !== null)
+
+	function updateFullScreenState() {
+		isFull = document.fullscreenElement !== null
+	}
+
+	$effect(() => {
+		document.addEventListener("fullscreenchange", updateFullScreenState, false);  
+		return () => {
+			document.removeEventListener("fullscreenchange", updateFullScreenState, false); 
+		}
+	})
+
+	return {
+		get value() {
+			return isFull
+		}
+	}
+}
