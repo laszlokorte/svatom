@@ -988,9 +988,7 @@
 										id: "shape-" + i,
 										allowedTransform: {
 											translation: true,
-											scale:
-												sp.placement.angle === 0 ||
-												"multiple",
+											scale: false,
 											rotate: true,
 										},
 									};

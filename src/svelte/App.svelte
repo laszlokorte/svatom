@@ -18,6 +18,7 @@
 	import Table from "./Table.svelte";
 	import Scroller from "./Scroller.svelte";
 	import Canvas from "./Canvas/Root.svelte";
+	import RenewImport from "./Renew/Import.svelte";
 	import asciiLogo from "./asciiLogo.txt?raw";
 	import { clamp, lerp } from "./utils.js";
 	import favicon from "../../favicon.svg";
@@ -640,6 +641,8 @@
 	</p>
 
 	<Canvas />
+
+	<RenewImport />
 </section>
 
 <style>

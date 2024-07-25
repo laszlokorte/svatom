@@ -225,8 +225,8 @@ onkeydown={evt => {
 {@const cy = selectionExtensionValue.minYPadded-padding - 40*Math.min(cameraScaleValue, 2)}
 {@const px = U.lerp((selectionExtensionValue.minX), (selectionExtensionValue.maxX), 0.5)}
 {@const py = U.lerp((selectionExtensionValue.minY), (selectionExtensionValue.maxY), 0.5)}
-<g style:--cursor-url="url({rotationCursor})" class="rotator-handle">
-	<circle data-rotate="true" cx={cx} cy={cy} r="{5 *cameraScaleValue}" pointer-events="all" class="handle-background" data-pivot={`{"x": ${px}, "y": ${py}, "cx": ${cx}, "cy": ${cy}, "wx": 0, "wy": 0}`} />
+<g style:--cursor-url="url({rotationCursor})" class="rotator-handle" class:active={activeRotationPivot.value}>
+	<circle data-rotate="true" cx={cx} cy={cy} r="{3*5 *cameraScaleValue}" pointer-events="all" class="handle-background" data-pivot={`{"x": ${px}, "y": ${py}, "cx": ${cx}, "cy": ${cy}, "wx": 0, "wy": 0}`} />
 	<circle data-rotate="true" cx={cx} cy="{cy}" r="{5 *cameraScaleValue}" data-pivot={`{"x": ${px}, "y": ${py}, "cx": ${cx}, "cy": ${cy}, "wx": 0, "wy": 0}`} pointer-events="all" class="handle"  />
 </g>
 {/if}
