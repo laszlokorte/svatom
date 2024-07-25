@@ -39,7 +39,7 @@ export const parserAutoDetect = function(inputString, autoDeref = true) {
 		p.parseWindowPositionMaybe();
 		p.expectFinish()
 
-		return drawing;
+		return {version: p.version, doctype: drawing[kindKey], drawing, refMap: p.refMap};
 	} else {
 		const parser = makeParser(reader, makeGrammar(-1))
 		const p = parser(inputString)
@@ -48,7 +48,7 @@ export const parserAutoDetect = function(inputString, autoDeref = true) {
 		p.parseWindowPositionMaybe();
 		p.expectFinish()
 
-		return drawing;
+		return {version: p.version, doctype: drawing[kindKey], drawing, refMap: p.refMap};
 	}
 }
 

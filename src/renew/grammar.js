@@ -256,7 +256,7 @@ export function makeGrammar(version) {
 				},
 			},
 			"de.renew.gui.PlaceFigure": {
-				super: "CH.ifa.draw.figures.RectangleFigure",
+				super: "CH.ifa.draw.figures.EllipseFigure",
 				interfaces: ["CH.ifa.draw.framework.Figure","de.renew.gui.InscribableFigure", "CH.ifa.draw.framework.ParentFigure"],
 				parser: (context) => {
 					if(version >= 3) {

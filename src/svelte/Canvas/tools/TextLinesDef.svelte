@@ -42,7 +42,8 @@
 				paint-order="stroke"
 				stroke-width="1px"
 				font-size="{t.fontSize}em"
-				text-anchor="middle">{t.content}</text
+				text-anchor="middle"
+				role="presentation">{t.content}</text
 			>
 			<text
 				x={t.x}

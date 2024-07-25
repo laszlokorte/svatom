@@ -55,6 +55,25 @@
 
 	const selectionExtensionValue = $derived(activeRotationPivot.value ? activeSelection.value : selectionExtension.value)
 	let preventNextClick = $state(false)
+
+	export function cancel() {
+		if(translationAccum.value) {
+			translateSelected({dx:-translationAccum.value.x, dy:-translationAccum.value.y})
+			preventNextClick = true
+		} 
+		if(scaleAccum.value && activeScalePivot.value) {
+			scaleSelected({x: 1/scaleAccum.value.x, y:1/scaleAccum.value.y}, activeScalePivot.value)
+			preventNextClick = true
+		}
+		if(rotationAccum.value && activeRotationPivot.value) {
+			rotateSelected(-rotationAccum.value, activeRotationPivot.value)
+			preventNextClick = true
+		}
+
+		isGrabbing.value = false;
+	}
+
+	export const canCancel = isGrabbing;
 </script>
 
 {#if selectionExtensionValue !== null}
@@ -89,42 +108,42 @@ onpointerdown={evt => {
 }}
 onpointermove={evt => {
 	if (!evt.isPrimary) {
-			return;
-		}
-		if (!isGrabbing.value) {
-			return;
-		}
+		return;
+	}
+	if (!isGrabbing.value) {
+		return;
+	}
 
-		const newPos = clientToCanvas(evt.clientX, evt.clientY)
-		
-		if(translateSelected && !activeScalePivot.value && !activeRotationPivot.value) {
-			const dx = newPos.x - offset.value.x - activeGrab.value.x
-			const dy = newPos.y - offset.value.y - activeGrab.value.y
-			translateSelected({dx, dy}, moved.value)
-			update(({x,y}) => ({x:x+dx, y:y+dy}), translationAccum)
-		} else if(scaleSelected && activeScalePivot.value) {
-			const dxNew = (newPos.x - offset.value.x - activeScalePivot.value.x)
-			const dyNew = (newPos.y - offset.value.y - activeScalePivot.value.y)
-			const dxOld = (activeGrab.value.x - offset.value.x - activeScalePivot.value.x)
-			const dyOld = (activeGrab.value.y - offset.value.y - activeScalePivot.value.y)
-			const fx = U.lerp(dxOld?dxNew/dxOld:0, 1, activeScalePivot.value.rx)
-			const fy = U.lerp(dyOld?dyNew/dyOld:0, 1, activeScalePivot.value.ry)
-			scaleSelected({x: fx, y:  fy}, activeScalePivot.value, moved.value)
-			update(({x,y}) => ({x:x*fx, y:y*fy}), scaleAccum)
-		} else if(rotateSelected && activeRotationPivot.value) {
-			const dxNew = (newPos.x - offset.value.x - activeRotationPivot.value.x)
-			const dyNew = (newPos.y - offset.value.y - activeRotationPivot.value.y)
-			const dxOld = (activeGrab.value.x - offset.value.x - activeRotationPivot.value.x)
-			const dyOld = (activeGrab.value.y - offset.value.y - activeRotationPivot.value.y)
-			const angle = (Math.atan2(dyNew, dxNew) - Math.atan2(dyOld, dxOld)) * 180 / Math.PI
-			rotateSelected(angle, activeRotationPivot.value, moved.value)
-			update((a) => a+angle, rotationAccum)
+	const newPos = clientToCanvas(evt.clientX, evt.clientY)
 
-		}
-		
+	if(translateSelected && !activeScalePivot.value && !activeRotationPivot.value) {
+		const dx = newPos.x - offset.value.x - activeGrab.value.x
+		const dy = newPos.y - offset.value.y - activeGrab.value.y
+		translateSelected({dx, dy}, moved.value)
+		update(({x,y}) => ({x:x+dx, y:y+dy}), translationAccum)
+	} else if(scaleSelected && activeScalePivot.value) {
+		const dxNew = (newPos.x - offset.value.x - activeScalePivot.value.x)
+		const dyNew = (newPos.y - offset.value.y - activeScalePivot.value.y)
+		const dxOld = (activeGrab.value.x - offset.value.x - activeScalePivot.value.x)
+		const dyOld = (activeGrab.value.y - offset.value.y - activeScalePivot.value.y)
+		const fx = U.lerp(dxOld?dxNew/dxOld:0, 1, activeScalePivot.value.rx)
+		const fy = U.lerp(dyOld?dyNew/dyOld:0, 1, activeScalePivot.value.ry)
+		scaleSelected({x: fx, y:  fy}, activeScalePivot.value, moved.value)
+		update(({x,y}) => ({x:x*fx, y:y*fy}), scaleAccum)
+	} else if(rotateSelected && activeRotationPivot.value) {
+		const dxNew = (newPos.x - offset.value.x - activeRotationPivot.value.x)
+		const dyNew = (newPos.y - offset.value.y - activeRotationPivot.value.y)
+		const dxOld = (activeGrab.value.x - offset.value.x - activeRotationPivot.value.x)
+		const dyOld = (activeGrab.value.y - offset.value.y - activeRotationPivot.value.y)
+		const angle = (Math.atan2(dyNew, dxNew) - Math.atan2(dyOld, dxOld)) * 180 / Math.PI
+		rotateSelected(angle, activeRotationPivot.value, moved.value)
+		update((a) => a+angle, rotationAccum)
 
-		activeGrab.value = newPos
-		moved.value = true
+	}
+
+
+	activeGrab.value = newPos
+	moved.value = true
 
 }}
 onpointerup={evt => {
@@ -154,21 +173,9 @@ oncontextmenu={(evt) => {
 onkeydown={evt => {
 	if (evt.key === "Escape" || evt.key === "Esc") {
 		if (isGrabbing.value) {
-			if(translationAccum.value) {
-				translateSelected({dx:-translationAccum.value.x, dy:-translationAccum.value.y})
-				preventNextClick = true
-			} 
-			if(scaleAccum.value && activeScalePivot.value) {
-				scaleSelected({x: 1/scaleAccum.value.x, y:1/scaleAccum.value.y}, activeScalePivot.value)
-				preventNextClick = true
-			}
-			if(rotationAccum.value && activeRotationPivot.value) {
-				rotateSelected(-rotationAccum.value, activeRotationPivot.value)
-				preventNextClick = true
-			}
+			cancel()
 			evt.stopPropagation();
 		}
-		isGrabbing.value = false;
 	}
 }}
 >

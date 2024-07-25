@@ -21,6 +21,7 @@
 		frame,
 		rotationTransform,
 		cameraOrientation,
+		cameraScale,
 	} = $props();
 
 	const rubberBand = atom(undefined);
@@ -42,10 +43,7 @@
 		rubberBandStart,
 	);
 
-	const hasProgressed = view(
-		L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
-		rubberBandSize,
-	);
+	const hasProgressed = view(["progressed", L.valueOr(false)], rubberBand);
 
 	const rubberBandAngle = view([L.removable("angle"), "angle"], rubberBand);
 	const rubberBandAngleCos = view(
@@ -104,6 +102,7 @@
 	}}
 	onpointerdown={(evt) => {
 		if (!evt.isPrimary || !U.isLeftButton(evt)) {
+			isActive.value = false;
 			return;
 		}
 
@@ -125,10 +124,19 @@
 
 		const dx = worldPos.x - rubberBandStart.value.x;
 		const dy = worldPos.y - rubberBandStart.value.y;
-		rubberBandSize.value = {
+
+		const newSize = {
 			x: rubberBandAngleCos.value * dx + rubberBandAngleSin.value * dy,
 			y: -rubberBandAngleSin.value * dx + rubberBandAngleCos.value * dy,
 		};
+
+		rubberBandSize.value = newSize;
+		if (
+			Math.hypot(newSize.x, newSize.y) >
+			(cameraScale.value * Math.hypot(evt.width, evt.height)) / 4
+		) {
+			hasProgressed.value = true;
+		}
 	}}
 	onpointerup={(evt) => {
 		if (!evt.isPrimary) {
@@ -154,15 +162,17 @@
 	}}
 />
 
-<g pointer-events="none" transform={rotationTransform.value}>
-	<path
-		d={rubberBandPath.value}
-		transform={rubberBandTransform.value}
-		fill="none"
-		class="rubber-band"
-		pointer-events="none"
-	/>
-</g>
+{#if hasProgressed.value}
+	<g pointer-events="none" transform={rotationTransform.value}>
+		<path
+			d={rubberBandPath.value}
+			transform={rubberBandTransform.value}
+			fill="none"
+			class="rubber-band"
+			pointer-events="none"
+		/>
+	</g>
+{/if}
 
 <style>
 	.rubber-band-surface {

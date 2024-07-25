@@ -23,9 +23,9 @@
 {#if visible.value}
 <svg 
 	tabindex="-1"
-	role="button"
 	class:active={isActive.value}
 	viewBox={viewBox.value} 
+	role="presentation"
 	preserveAspectRatio="xMidYMid meet"
 	onclick={(evt) => {
 		evt.stopPropagation();

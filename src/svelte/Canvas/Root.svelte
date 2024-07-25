@@ -1583,6 +1583,7 @@
 				frameBoxPath,
 				rotationTransform,
 				cameraOrientation,
+				cameraScale,
 			},
 		},
 		createNode: {

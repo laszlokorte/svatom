@@ -22,7 +22,7 @@
 		kindKey,
 	} from "../../renew/index.js";
 
-	const renewDocument = atom({ string: "", json: undefined });
+	const renewDocument = atom({ string: undefined, json: undefined });
 	const renewSerialized = failableView(
 		[
 			L.rewrite((x) => {
@@ -50,6 +50,10 @@
 		"CH.ifa.draw.figures.RectangleFigure",
 		"CH.ifa.draw.figures.RoundRectangleFigure",
 	);
+	const ellipseTypes = hierarchyV11.descendantsOf(
+		"CH.ifa.draw.figures.EllipseFigure",
+	);
+
 	const lineTypes = hierarchyV11.descendantsOf(
 		"CH.ifa.draw.figures.PolyLineFigure",
 	);
@@ -68,11 +72,24 @@
 		"de.renew.diagram.SplitDecoration",
 	];
 
-	console.log(kindKey);
+	const ids = view(
+		[
+			"json",
+			"drawing",
+			"figures",
+			L.partsOf(
+				L.elems,
+				L.satisfying(R.prop("FigureWithID")),
+				"FigureWithID",
+			),
+		],
+		renewDocument,
+	);
 
 	const rectangles = view(
 		[
 			"json",
+			"drawing",
 			"figures",
 			L.partsOf(
 				L.elems,
@@ -84,9 +101,25 @@
 		renewDocument,
 	);
 
+	const ellipses = view(
+		[
+			"json",
+			"drawing",
+			"figures",
+			L.partsOf(
+				L.elems,
+				L.satisfying(
+					R.compose(R.includes(R.__, ellipseTypes), R.prop(kindKey)),
+				),
+			),
+		],
+		renewDocument,
+	);
+
 	const lines = view(
 		[
 			"json",
+			"drawing",
 			"figures",
 			L.partsOf(
 				L.elems,
@@ -101,6 +134,7 @@
 	const textes = view(
 		[
 			"json",
+			"drawing",
 			"figures",
 			L.partsOf(
 				L.elems,
@@ -114,6 +148,15 @@
 
 	const boundsLens = L.branch({
 		rectangles: [
+			L.elems,
+			L.pick({
+				minX: "x",
+				maxX: (r) => r.x + r.w,
+				minY: "y",
+				maxY: (r) => r.y + r.h,
+			}),
+		],
+		ellipses: [
 			L.elems,
 			L.pick({
 				minX: "x",
@@ -159,18 +202,22 @@
 				maxY: [L.foldTraversalLens(L.maximum, [boundsLens, "maxY"])],
 			}),
 		],
-		combine({ rectangles, textes, lines }),
+		combine({ rectangles, textes, lines, ellipses }),
 	);
 
 	const viewBox = view(
 		L.reread(
 			({ minX, minY, maxX, maxY }) =>
-				`${minX - 10} ${minY - 10} ${Math.max(600, maxX - minX) + 20} ${Math.max(200, maxY - minY) + 20}`,
+				`${minX - 50} ${minY - 50} ${Math.max(600, maxX - minX) + 100} ${Math.max(200, maxY - minY) + 100}`,
 		),
 		worldBounds,
 	);
+	const version = view(["json", "version"], renewDocument);
+	const doctype = view(["json", "doctype"], renewDocument);
+	const refMap = view(["json", "refMap"], renewDocument);
 
 	const dragging = atom(0);
+	const debug = atom(false);
 
 	const onDragOver = (evt) => {
 		if (evt.dataTransfer.items.length < 1) {
@@ -236,6 +283,7 @@
 		LineShape: 0,
 		BSplineSegments: 15,
 		BSplineDegree: 12,
+		ArcScale: false,
 	};
 
 	function readAttribute(obj, attr) {
@@ -259,11 +307,13 @@
 >
 	<div class="beside" style="height: 15em">
 		<textarea
+			class="drop-target"
+			placeholder="// Drop a renew file here"
 			class:has-error={renewSerialized.hasError}
 			bind:value={renewSerialized.value}
 			class:dragging={dragging.value > 0}
 		></textarea>
-		<pre>{renewJson.value}</pre>
+		<textarea readonly>{renewJson.value}</textarea>
 	</div>
 
 	<div class="error-message" hidden={!renewSerialized.hasError}>
@@ -272,66 +322,206 @@
 	</div>
 
 	{#if viewBox.value}
+		<h2>{doctype.value} (version: {version.value})</h2>
 		<svg viewBox={viewBox.value}>
-			{#each lines.value as line}
-				<polyline
-					points={R.join(
-						" ",
-						R.map(
-							R.compose(R.join(" "), R.props(["x", "y"])),
-							line.points,
-						),
-					)}
-					fill="none"
-					stroke={renewToRgba(readAttribute(line, "FrameColor"))}
-					stroke-width={readAttribute(line, "LineWidth")}
-					stroke-dasharray={readAttribute(line, "LineStyle")}
-					vector-effect="non-scaling-stroke"
-				/>
-			{/each}
+			<defs>
+				{#each lines.value as line}
+					<polyline
+						id={line.attributes?.attrs.FigureWithID ??
+							"auto-id" + refMap.value.indexOf(line)}
+						points={R.join(
+							" ",
+							R.map(
+								R.compose(R.join(" "), R.props(["x", "y"])),
+								line.points,
+							),
+						)}
+						fill="none"
+						stroke={renewToRgba(readAttribute(line, "FrameColor"))}
+						stroke-width={readAttribute(line, "LineWidth")}
+						stroke-dasharray={readAttribute(line, "LineStyle")}
+						vector-effect="non-scaling-stroke"
+					/>
+				{/each}
 
-			{#each rectangles.value as rect}
-				<rect
-					x={rect.x}
-					y={rect.y}
-					width={rect.w}
-					height={rect.h}
-					fill={renewToRgba(readAttribute(rect, "FillColor"))}
-					stroke={renewToRgba(readAttribute(rect, "FrameColor"))}
-					stroke-width={readAttribute(rect, "LineWidth")}
-					stroke-dasharray={readAttribute(rect, "LineStyle")}
-					vector-effect="non-scaling-stroke"
-					shape-rendering="crispEdges"
-				/>
-				<text opacity="0.0" x={rect.x + 10} y={rect.y} font-size="0.5em"
-					>{rect.__kind}</text
-				>
-			{/each}
-
-			{#each textes.value as text}
-				{@const fontSize = readAttribute(text, "FontSize")}
-				{@const fontStyle = readAttribute(text, "FontStyle")}
-				{@const TextAlignment = readAttribute(text, "TextAlignment")}
-				<text
-					x={text.fOriginX}
-					y={text.fOriginY}
-					fill={renewToRgba(readAttribute(text, "TextColor"))}
-					font-family={readAttribute(text, "FontName")}
-					font-weight={fontStyle === 1 ? "bold" : "normal"}
-					font-style={fontStyle === 2 ? "italic" : "normal"}
-					text-anchor={["start", "center", "end"][TextAlignment]}
-					font-size={fontSize / 2}
-				>
-					{#each text.text.split("\n") as line, l (l)}
-						<tspan
-							x={text.fOriginX}
-							dy={l ? (fontSize / 2) * 1.5 : 0}
-							text-anchor={["start", "center", "end"][
-								TextAlignment
-							]}>{line}</tspan
+				{#each rectangles.value as rect}
+					<g
+						id={rect.attributes?.attrs.FigureWithID ??
+							"auto-id" + refMap.value.indexOf(rect)}
+					>
+						<g
+							fill={renewToRgba(readAttribute(rect, "FillColor"))}
+							stroke={renewToRgba(
+								readAttribute(rect, "FrameColor"),
+							)}
+							stroke-width={readAttribute(rect, "LineWidth")}
+							stroke-dasharray={readAttribute(rect, "LineStyle")}
+							vector-effect="non-scaling-stroke"
+							shape-rendering="crispEdges"
 						>
-					{/each}
-				</text>
+							{#if rect[kindKey] === "CH.ifa.draw.contrib.DiamondFigure"}
+								<polygon
+									points="{rect.x + rect.w / 2} {rect.y}
+						{rect.x + rect.w} {rect.y + rect.h / 2}
+						{rect.x + rect.w / 2} {rect.y + rect.h}
+						{rect.x} {rect.y + rect.h / 2}"
+								/>
+							{:else if rect[kindKey] === "CH.ifa.draw.contrib.TriangleFigure"}
+								{@const corners = [
+									{ x: rect.x + rect.w / 2, y: rect.y },
+									{ x: rect.x + rect.w, y: rect.y },
+									{
+										x: rect.x + rect.w,
+										y: rect.y + rect.h / 2,
+									},
+									{ x: rect.x + rect.w, y: rect.y + rect.h },
+									{
+										x: rect.x + rect.w / 2,
+										y: rect.y + rect.h,
+									},
+									{ x: rect.x, y: rect.y + rect.h },
+									{ x: rect.x, y: rect.y + rect.h / 2 },
+									{ x: rect.x, y: rect.y },
+								]}
+								<polygon
+									points="{corners[rect.rotation].x} {corners[
+										rect.rotation
+									].y}
+									{corners[(rect.rotation + 3 - (rect.rotation % 2)) % 8].x} {corners[
+										(rect.rotation +
+											3 -
+											(rect.rotation % 2)) %
+											8
+									].y}
+									{corners[(rect.rotation + 5 + (rect.rotation % 2)) % 8].x} {corners[
+										(rect.rotation +
+											5 +
+											(rect.rotation % 2)) %
+											8
+									].y}"
+								/>
+							{:else}
+								<rect
+									x={rect.x}
+									y={rect.y}
+									rx={rect.arcWidth ?? 0 / 2}
+									ry={rect.arcHeight ?? 0 / 2}
+									width={rect.w}
+									height={rect.h}
+								/>
+							{/if}
+						</g>
+						<text
+							class:hidden={!debug.value}
+							shape-rendering="geometricPrecision"
+							x={rect.x + rect.w / 2}
+							y={rect.y}
+							text-anchor="middle"
+							font-size="7"
+							fill="royalblue"
+							font-family="monospace"
+							title={rect[kindKey]}
+						>
+							{rect[kindKey]}</text
+						>
+					</g>
+				{/each}
+
+				{#each ellipses.value as ellipse}
+					<g
+						id={ellipse.attributes?.attrs.FigureWithID ??
+							"auto-id" + refMap.value.indexOf(ellipse)}
+					>
+						<g
+							fill={renewToRgba(
+								readAttribute(ellipse, "FillColor"),
+							)}
+							stroke={renewToRgba(
+								readAttribute(ellipse, "FrameColor"),
+							)}
+							stroke-width={readAttribute(ellipse, "LineWidth")}
+							stroke-dasharray={readAttribute(
+								ellipse,
+								"LineStyle",
+							)}
+							vector-effect="non-scaling-stroke"
+							shape-rendering="crispEdges"
+						>
+							<ellipse
+								cx={ellipse.x + ellipse.w / 2}
+								cy={ellipse.y + ellipse.h / 2}
+								rx={ellipse.w / 2}
+								ry={ellipse.h / 2}
+							/>
+						</g>
+
+						<text
+							class:hidden={!debug.value}
+							shape-rendering="geometricPrecision"
+							x={ellipse.x + ellipse.w / 2}
+							y={ellipse.y}
+							text-anchor="middle"
+							font-size="7"
+							fill="royalblue"
+							font-family="monospace"
+							title={ellipse[kindKey]}
+							>{R.last(ellipse[kindKey].split("."))}</text
+						>
+					</g>
+				{/each}
+
+				{#each textes.value as text}
+					"fCurrentFontName": "SansSerif", "fCurrentFontStyle": 1,
+					"fCurrentFontSize": 12,
+					{@const fontSize =
+						text.fCurrentFontSize ??
+						readAttribute(text, "FontSize")}
+					{@const fontStyle =
+						text.fCurrentFontStyle ??
+						readAttribute(text, "FontStyle")}
+					{@const fontFamily =
+						text.fCurrentFontName ??
+						readAttribute(text, "FontName")}
+					{@const textColor = renewToRgba(
+						readAttribute(text, "TextColor"),
+					)}
+					{@const TextAlignment =
+						0 && readAttribute(text, "TextAlignment")}
+					<text
+						id={text.attributes?.attrs.FigureWithID ??
+							"auto-id" + refMap.value.indexOf(text)}
+						x={text.fOriginX}
+						y={text.fOriginY}
+						fill={textColor}
+						font-family={fontFamily.replace(
+							"SansSerif",
+							"sans-serif",
+						)}
+						font-weight={fontStyle === 1 ? "bold" : "normal"}
+						font-style={fontStyle === 2 ? "italic" : "normal"}
+						text-anchor={["start", "middle", "end"][TextAlignment]}
+						font-size={fontSize}
+					>
+						{#each text.text.split("\n") as line, l (l)}
+							<tspan
+								x={text.fOriginX}
+								dy={"1.2em"}
+								text-anchor={["start", "middle", "end"][
+									TextAlignment
+								]}>{line}</tspan
+							>
+						{/each}
+					</text>
+				{/each}
+			</defs>
+
+			{#each ids.value as id, i (i)}
+				<use href="#{id}" />
+			{/each}
+			{#each refMap.value as ref, i (i)}
+				{#if !ref.attributes?.attrs.FigureWithID}
+					<use href="#auto-id{i}" />
+				{/if}
 			{/each}
 		</svg>
 	{/if}
@@ -339,16 +529,25 @@
 
 <style>
 	svg {
+		-webkit-user-callout: none;
 		width: 100%;
 		resize: both;
 		shape-rendering: geometricPrecision;
 	}
 
-	textarea {
+	.drop-target {
 		border: 0.5em solid gray;
 	}
 
-	.dragging {
+	.drop-target.dragging {
 		border-color: lime;
+	}
+
+	textarea {
+		outline: none;
+	}
+
+	.hidden {
+		display: none;
 	}
 </style>
