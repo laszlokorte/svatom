@@ -19,6 +19,7 @@
 		parserAutoDetect,
 		stringify,
 		hierarchyV11,
+		kindKey,
 	} from "../../renew/index.js";
 
 	const renewDocument = atom({ string: "", json: undefined });
@@ -28,7 +29,7 @@
 				try {
 					return {
 						string: x,
-						json: parserAutoDetect(x),
+						json: parserAutoDetect(x, false),
 					};
 				} catch (e) {
 					return e;
@@ -67,6 +68,8 @@
 		"de.renew.diagram.SplitDecoration",
 	];
 
+	console.log(kindKey);
+
 	const rectangles = view(
 		[
 			"json",
@@ -74,7 +77,7 @@
 			L.partsOf(
 				L.elems,
 				L.satisfying(
-					R.compose(R.includes(R.__, rectTypes), R.prop("__kind")),
+					R.compose(R.includes(R.__, rectTypes), R.prop(kindKey)),
 				),
 			),
 		],
@@ -88,7 +91,7 @@
 			L.partsOf(
 				L.elems,
 				L.satisfying(
-					R.compose(R.includes(R.__, lineTypes), R.prop("__kind")),
+					R.compose(R.includes(R.__, lineTypes), R.prop(kindKey)),
 				),
 			),
 		],
@@ -102,7 +105,7 @@
 			L.partsOf(
 				L.elems,
 				L.satisfying(
-					R.compose(R.includes(R.__, textTypes), R.prop("__kind")),
+					R.compose(R.includes(R.__, textTypes), R.prop(kindKey)),
 				),
 			),
 		],
@@ -167,7 +170,7 @@
 		worldBounds,
 	);
 
-	const dragging = atom(false);
+	const dragging = atom(0);
 
 	const onDragOver = (evt) => {
 		if (evt.dataTransfer.items.length < 1) {
@@ -176,7 +179,7 @@
 		}
 		evt.preventDefault();
 		evt.dataTransfer.dropEffect = "copy";
-		dragging.value = true;
+		dragging.value += 1;
 	};
 
 	const onDragEnter = (evt) => {
@@ -184,12 +187,12 @@
 			return;
 		}
 		evt.preventDefault();
-		dragging.value = true;
+		dragging.value += 1;
 	};
 
 	const onDragLeave = (evt) => {
 		evt.preventDefault();
-		dragging.value = false;
+		dragging.value -= 1;
 	};
 
 	const reader = new FileReader();
@@ -199,7 +202,7 @@
 
 	const onDragDrop = (evt) => {
 		evt.preventDefault();
-		dragging.value = false;
+		dragging.value = 0;
 
 		if (evt.dataTransfer.files.length === 1) {
 			reader.readAsText(evt.dataTransfer.files[0]);
@@ -258,7 +261,7 @@
 		<textarea
 			class:has-error={renewSerialized.hasError}
 			bind:value={renewSerialized.value}
-			class:dragging={dragging.value}
+			class:dragging={dragging.value > 0}
 		></textarea>
 		<pre>{renewJson.value}</pre>
 	</div>

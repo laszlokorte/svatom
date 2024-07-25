@@ -1,5 +1,7 @@
+export const kindKey = Symbol("kind");
+export const refKey = Symbol("ref");
 
-export function makeParser(reader, grammar) {
+export function makeParser(reader, grammar, autoDeref = true) {
 	return function parser(inputString) {
 		const r = reader(inputString)
 		const refMap = [];
@@ -24,12 +26,16 @@ export function makeParser(reader, grammar) {
 			}
 		}
 
+
 		const context = {
 			get version() {
 				return grammar.version
 			},
 			get refMap() {
 				return refMap;
+			},
+			get kindKey() {
+				return kindKey;
 			},
 			parseStorable(ofInterface, allowNull = true)  {
 				const t = r.readAny(['nil','ref','className'])
@@ -42,12 +48,17 @@ export function makeParser(reader, grammar) {
 					const referencedObject = refMap[t.value]
 					
 					if(ofInterface) {
-						if(transitiveTypes(referencedObject.__kind).indexOf(ofInterface) < 0) {
-							throw new Error(`Expected parsed object to be of kind ${ofInterface} but was ${referencedObject.__kind}`);
+						if(transitiveTypes(referencedObject[kindKey]).indexOf(ofInterface) < 0) {
+							throw new Error(`Expected parsed object to be of kind ${ofInterface} but was ${referencedObject[kindKey]}`);
 						}
 					}
 
-					return referencedObject
+					if(autoDeref) {
+						return referencedObject
+					} else {
+						return {[refKey]: true, ref: t.value}
+					}
+
 				} else if(t.type === 'nil') {
 					if(!allowNull) {
 						throw new Error("Expected object to be not null");
@@ -55,7 +66,7 @@ export function makeParser(reader, grammar) {
 					return null
 				} else if(t.type === 'className') {
 					const newObject = {
-						__kind: t.value,
+						[kindKey]: t.value,
 					};
 
 					refMap.push(newObject)
@@ -67,7 +78,7 @@ export function makeParser(reader, grammar) {
 			},
 			parseImplicitStorable (ofType, storeRef = true)  {
 				const newObject = {
-					__kind: ofType,
+					[kindKey]: ofType,
 				};
 
 				if(storeRef) {

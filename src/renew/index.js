@@ -2,7 +2,7 @@ import {decycle, retrocycle} from './cycle.js'
 import {isDeepEqual} from './compare.js'
 import {makeTokenizer} from './tokenizer.js'
 import {makeReader} from './reader.js'
-import {makeParser} from './parser.js'
+import {makeParser, kindKey} from './parser.js'
 import {makeGrammar} from './grammar.js'
 import {makeHierarchy} from './hierarchy.js'
 
@@ -17,19 +17,20 @@ export const tokenizer = makeTokenizer([
 	{name: "string", pattern: /\"(?:(?:\\\\)*\\\"|[^\"])*\"/, cast: (v) => eval(v)},
 ])
 
+export {kindKey}
 
 export const reader = makeReader(tokenizer)
 
 export const parserV11 = makeParser(reader, makeGrammar(11))
 export const hierarchyV11 = makeHierarchy(makeGrammar(11))
 
-export const parserAutoDetect = function(inputString) {
+export const parserAutoDetect = function(inputString, autoDeref = true) {
 	const tokenStream = tokenizer(inputString);
 	const r = reader(inputString)
 	const version = r.readAny(["int","className"], true);
 	
 	if(version.type == 'int') {
-		const parser = makeParser(reader, makeGrammar(version.value))
+		const parser = makeParser(reader, makeGrammar(version.value), autoDeref)
 		const p = parser(inputString)
 
 		p.skipAny(["int"])
