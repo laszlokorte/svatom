@@ -13,7 +13,7 @@ export const tokenizer = makeTokenizer([
 	{name: "boolean", pattern: /(true|false|0|1)/, cast: (v) => v==="1" || v.toLowerCase() === "true"},
 	{name: "nil", pattern: /NULL/, cast: (v) => null},
 	{name: "ref", pattern: /\d+/, prefix: /REF\s+/, cast: (v) => v},
-	{name: "className", pattern: /[_a-zA-Z]+(?:\.[_a-zA-Z][_a-zA-Z0-9]*)+/, cast: (v) => v},
+	{name: "className", pattern: /[_a-zA-Z]+(?:\.[_a-zA-Z][_a-zA-Z0-9]*)*/, cast: (v) => v},
 	{name: "string", pattern: /\"(?:(?:\\\\)*\\\"|[^\"])*\"/, cast: (v) => eval(v)},
 ])
 

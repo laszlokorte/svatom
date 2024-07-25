@@ -56,6 +56,17 @@
 		"CH.ifa.draw.figures.TextFigure",
 	);
 
+	const allRoots = [
+		"CH.ifa.draw.standard.AbstractFigure",
+		"CH.ifa.draw.figures.FigureAttributes",
+		"de.renew.hierarchicalworkflownets.gui.layout.Vec2d",
+		"CH.ifa.draw.figures.AbstractLocator",
+		"CH.ifa.draw.figures.ArrowTip",
+		"de.renew.gui.CircleDecoration",
+		"CH.ifa.draw.standard.AbstractConnector",
+		"de.renew.diagram.SplitDecoration",
+	];
+
 	const rectangles = view(
 		[
 			"json",
@@ -139,32 +150,94 @@
 	const worldBounds = read(
 		[
 			L.pick({
-				minX: [
-					L.foldTraversalLens(L.minimum, [boundsLens, "minX"]),
-					L.defaults(-200),
-				],
-				maxX: [
-					L.foldTraversalLens(L.maximum, [boundsLens, "maxX"]),
-					L.defaults(200),
-				],
-				minY: [
-					L.foldTraversalLens(L.minimum, [boundsLens, "minY"]),
-					L.defaults(-10),
-				],
-				maxY: [
-					L.foldTraversalLens(L.maximum, [boundsLens, "maxY"]),
-					L.defaults(10),
-				],
+				minX: [L.foldTraversalLens(L.minimum, [boundsLens, "minX"])],
+				maxX: [L.foldTraversalLens(L.maximum, [boundsLens, "maxX"])],
+				minY: [L.foldTraversalLens(L.minimum, [boundsLens, "minY"])],
+				maxY: [L.foldTraversalLens(L.maximum, [boundsLens, "maxY"])],
 			}),
 		],
 		combine({ rectangles, textes, lines }),
 	);
 
 	const viewBox = view(
-		({ minX, minY, maxX, maxY }) =>
-			`${minX - 10} ${minY - 10} ${maxX - minX + 20} ${maxY - minY + 20}`,
+		L.reread(
+			({ minX, minY, maxX, maxY }) =>
+				`${minX - 10} ${minY - 10} ${Math.max(600, maxX - minX) + 20} ${Math.max(200, maxY - minY) + 20}`,
+		),
 		worldBounds,
 	);
+
+	const dragging = atom(false);
+
+	const onDragOver = (evt) => {
+		if (evt.dataTransfer.items.length < 1) {
+			dragging.value = 0;
+			return;
+		}
+		evt.preventDefault();
+		evt.dataTransfer.dropEffect = "copy";
+		dragging.value = true;
+	};
+
+	const onDragEnter = (evt) => {
+		if (evt.dataTransfer.items.length < 1) {
+			return;
+		}
+		evt.preventDefault();
+		dragging.value = true;
+	};
+
+	const onDragLeave = (evt) => {
+		evt.preventDefault();
+		dragging.value = false;
+	};
+
+	const reader = new FileReader();
+	reader.onload = (evt) => {
+		renewSerialized.value = evt.target.result;
+	};
+
+	const onDragDrop = (evt) => {
+		evt.preventDefault();
+		dragging.value = false;
+
+		if (evt.dataTransfer.files.length === 1) {
+			reader.readAsText(evt.dataTransfer.files[0]);
+		}
+	};
+
+	function renewToRgba(color) {
+		if (!color) {
+			return "rgb(0,0,0, 0)";
+		}
+		if (color.length == 4) {
+			return `rgb(${color[0]},${color[1]},${color[2]},${color[3]})`;
+		} else if (color.length == 3) {
+			return `rgb(${color[0]},${color[1]},${color[2]})`;
+		} else {
+			return "rgb(0,0,0)";
+		}
+	}
+
+	const defaultsAttributes = {
+		FrameColor: [0, 0, 0, 1],
+		FillColor: [112, 219, 147], // new Color(0x70DB93),
+		TextColor: [0, 0, 0, 1],
+		TextAlignment: 0,
+		ArrowMode: 0,
+		FontName: "Helvetica",
+		LineWidth: 1,
+		LineStyle: "",
+		FontSize: 12,
+		FontStyle: 0,
+		LineShape: 0,
+		BSplineSegments: 15,
+		BSplineDegree: 12,
+	};
+
+	function readAttribute(obj, attr) {
+		return obj.attributes?.attrs[attr] ?? defaultsAttributes[attr] ?? null;
+	}
 </script>
 
 <h1>Renew File</h1>
@@ -174,57 +247,105 @@
 	It will be parsed and output as JSON on the right and rendered as SVG below.
 </p>
 
-<div class="beside" style="height: 15em">
-	<textarea
-		class:has-error={renewSerialized.hasError}
-		bind:value={renewSerialized.value}
-	></textarea>
-	<pre>{renewJson.value}</pre>
+<div
+	ondragover={onDragOver}
+	ondragenter={onDragEnter}
+	ondragleave={onDragLeave}
+	ondrop={onDragDrop}
+	role="application"
+>
+	<div class="beside" style="height: 15em">
+		<textarea
+			class:has-error={renewSerialized.hasError}
+			bind:value={renewSerialized.value}
+			class:dragging={dragging.value}
+		></textarea>
+		<pre>{renewJson.value}</pre>
+	</div>
+
+	<div class="error-message" hidden={!renewSerialized.hasError}>
+		<button type="button" onclick={renewSerialized.reset}>Reset</button>
+		{renewSerialized.error}
+	</div>
+
+	{#if viewBox.value}
+		<svg viewBox={viewBox.value}>
+			{#each lines.value as line}
+				<polyline
+					points={R.join(
+						" ",
+						R.map(
+							R.compose(R.join(" "), R.props(["x", "y"])),
+							line.points,
+						),
+					)}
+					fill="none"
+					stroke={renewToRgba(readAttribute(line, "FrameColor"))}
+					stroke-width={readAttribute(line, "LineWidth")}
+					stroke-dasharray={readAttribute(line, "LineStyle")}
+					vector-effect="non-scaling-stroke"
+				/>
+			{/each}
+
+			{#each rectangles.value as rect}
+				<rect
+					x={rect.x}
+					y={rect.y}
+					width={rect.w}
+					height={rect.h}
+					fill={renewToRgba(readAttribute(rect, "FillColor"))}
+					stroke={renewToRgba(readAttribute(rect, "FrameColor"))}
+					stroke-width={readAttribute(rect, "LineWidth")}
+					stroke-dasharray={readAttribute(rect, "LineStyle")}
+					vector-effect="non-scaling-stroke"
+					shape-rendering="crispEdges"
+				/>
+				<text opacity="0.0" x={rect.x + 10} y={rect.y} font-size="0.5em"
+					>{rect.__kind}</text
+				>
+			{/each}
+
+			{#each textes.value as text}
+				{@const fontSize = readAttribute(text, "FontSize")}
+				{@const fontStyle = readAttribute(text, "FontStyle")}
+				{@const TextAlignment = readAttribute(text, "TextAlignment")}
+				<text
+					x={text.fOriginX}
+					y={text.fOriginY}
+					fill={renewToRgba(readAttribute(text, "TextColor"))}
+					font-family={readAttribute(text, "FontName")}
+					font-weight={fontStyle === 1 ? "bold" : "normal"}
+					font-style={fontStyle === 2 ? "italic" : "normal"}
+					text-anchor={["start", "center", "end"][TextAlignment]}
+					font-size={fontSize / 2}
+				>
+					{#each text.text.split("\n") as line, l (l)}
+						<tspan
+							x={text.fOriginX}
+							dy={l ? (fontSize / 2) * 1.5 : 0}
+							text-anchor={["start", "center", "end"][
+								TextAlignment
+							]}>{line}</tspan
+						>
+					{/each}
+				</text>
+			{/each}
+		</svg>
+	{/if}
 </div>
-
-<div class="error-message" hidden={!renewSerialized.hasError}>
-	<button type="button" onclick={renewSerialized.reset}>Reset</button>
-	{renewSerialized.error}
-</div>
-
-<svg viewBox={viewBox.value}>
-	{#each rectangles.value as rect}
-		<rect
-			x={rect.x}
-			y={rect.y}
-			width={rect.w}
-			height={rect.h}
-			fill="#70db93aa"
-		/>
-		<text x={rect.x + 10} y={rect.y} font-size="0.5em">{rect.__kind}</text>
-	{/each}
-
-	{#each lines.value as line}
-		<polyline
-			points={R.join(
-				" ",
-				R.map(R.compose(R.join(" "), R.props(["x", "y"])), line.points),
-			)}
-			fill="none"
-			stroke-width="1"
-			stroke="black"
-		/>
-	{/each}
-
-	{#each textes.value as text}
-		<text
-			x={text.fOriginX}
-			y={text.fOriginY}
-			font-size="1em"
-			font-family="sans-serif">{text.text}</text
-		>
-	{/each}
-</svg>
 
 <style>
 	svg {
 		width: 100%;
 		resize: both;
 		shape-rendering: geometricPrecision;
+	}
+
+	textarea {
+		border: 0.5em solid gray;
+	}
+
+	.dragging {
+		border-color: lime;
 	}
 </style>

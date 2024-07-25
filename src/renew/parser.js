@@ -5,7 +5,7 @@ export function makeParser(reader, grammar) {
 		const refMap = [];
 
 		function parseInto(target, rule) {
-			const syn = grammar[rule];
+			const syn = grammar.rules[rule];
 			if(!syn) {
 				throw new Error(`Unknown grammar node ${rule}`);
 			}
@@ -18,7 +18,7 @@ export function makeParser(reader, grammar) {
 
 		function transitiveTypes(kind) {
 			if(kind) {
-				return [kind, ...grammar[kind].interfaces, ...transitiveTypes(grammar[kind].super)]
+				return [kind, ...grammar.rules[kind].interfaces, ...transitiveTypes(grammar.rules[kind].super)]
 			} else {
 				return []
 			}
@@ -100,7 +100,7 @@ export function makeParser(reader, grammar) {
 			},
 			parseWindowPositionMaybe() {
 				const x = r.read("int", false);
-				if(x) {
+				if(x !== null) {
 					const y = r.read("int", true);
 					const w = r.read("int", true);
 					const h = r.read("int", true);
