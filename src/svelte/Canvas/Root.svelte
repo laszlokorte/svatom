@@ -103,6 +103,7 @@
 	const cameraTow = atom(undefined);
 	const currentToolElement = atom(undefined);
 	const fullScreenContainer = atom(undefined);
+	const canFullScreen = read("requestFullscreen", fullScreenContainer);
 
 	const debugFrames = atom(false);
 	const showBounds = atom(false);
@@ -1992,11 +1993,13 @@
 	});
 
 	function requestFullScreen() {
-		fullScreenContainer.value.requestFullscreen().catch((err) => {
-			alert(
-				`Error attempting to enable fullscreen mode: ${err.message} (${err.name})`,
-			);
-		});
+		if (canFullScreen.value) {
+			fullScreenContainer.value.requestFullscreen().catch((err) => {
+				alert(
+					`Error attempting to enable fullscreen mode: ${err.message} (${err.name})`,
+				);
+			});
+		}
 	}
 </script>
 
@@ -2134,7 +2137,7 @@
 
 					<button
 						type="button"
-						disabled={!fullScreenContainer.value}
+						disabled={!canFullScreen.value}
 						onclick={requestFullScreen}>Full Screen</button
 					>
 				</div>
