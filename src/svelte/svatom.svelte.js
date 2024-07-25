@@ -630,6 +630,19 @@ export function bindScrollMax(node, someAtom) {
 	};
 }
 
+export function bindBoundingBox(node, someAtom) {
+	$effect.pre(() => {
+		tick().then(() => {
+			const bbox = node.getBBox();
+			if(bbox.width || bbox.height) {
+				someAtom.value = {x:bbox.x, y:bbox.y, width: bbox.width, height: bbox.height}
+			} else {
+				someAtom.value = undefined
+			}
+		})
+	})
+}
+
 
 export function readTextreaScrollSize(node, someAtom) {
 	function oninput(e) {

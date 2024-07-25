@@ -13,6 +13,7 @@
 		bindScrollMax,
 		bindSize,
 		string,
+		bindBoundingBox,
 	} from "../svatom.svelte.js";
 
 	import {
@@ -41,6 +42,8 @@
 		renewDocument,
 	);
 
+	const sizeCache = view(["cachedSizes", L.defaults({})], renewDocument);
+
 	const renewJson = read(
 		["json", L.inverse(L.json({ space: "  " }))],
 		renewDocument,
@@ -57,7 +60,7 @@
 		"de.renew.diagram.DiagramFigure",
 	);
 
-	console.log(diagramTypes);
+	// console.log(diagramTypes);
 
 	const lineTypes = hierarchyV11.descendantsOf(
 		"CH.ifa.draw.figures.PolyLineFigure",
@@ -284,12 +287,28 @@
 	};
 
 	function renewToRgba(color) {
+		const NONE = [255, 199, 158, 255]; //WTF?
 		if (!color) {
-			return "rgb(0,0,0, 0)";
+			return "rgba(0,0,0,0)";
 		}
 		if (color.length == 4) {
-			return `rgb(${color[0]},${color[1]},${color[2]},${color[3]})`;
+			if (
+				NONE[0] == color[0] &&
+				NONE[1] == color[1] &&
+				NONE[2] == color[2] &&
+				NONE[3] == color[3]
+			) {
+				return "rgba(0,0,0,0)";
+			}
+			return `rgba(${color[0]},${color[1]},${color[2]},${color[3] / 255})`;
 		} else if (color.length == 3) {
+			if (
+				NONE[0] == color[0] &&
+				NONE[1] == color[1] &&
+				NONE[2] == color[2]
+			) {
+				return "rgba(0,0,0,0)";
+			}
 			return `rgb(${color[0]},${color[1]},${color[2]})`;
 		} else {
 			return "rgb(0,0,0)";
@@ -297,9 +316,9 @@
 	}
 
 	const defaultsAttributes = {
-		FrameColor: [0, 0, 0, 1],
+		FrameColor: [0, 0, 0, 255],
 		FillColor: [112, 219, 147], // new Color(0x70DB93),
-		TextColor: [0, 0, 0, 1],
+		TextColor: [0, 0, 0, 255],
 		TextAlignment: 0,
 		ArrowMode: 0,
 		FontName: "Helvetica",
@@ -536,9 +555,14 @@
 					</g>
 				{/each}
 
-				{#each textes.value as text}
-					"fCurrentFontName": "SansSerif", "fCurrentFontStyle": 1,
-					"fCurrentFontSize": 12,
+				{#each textes.value as text, i (i)}
+					{@const id =
+						text.attributes?.attrs.FigureWithID ??
+						"auto-id" + refMap.value.indexOf(text)}
+					{@const measuredSize = view(
+						["id" + id, L.props("x", "y", "width", "height")],
+						sizeCache,
+					)}
 					{@const fontSize =
 						text.fCurrentFontSize ??
 						readAttribute(text, "FontSize")}
@@ -553,40 +577,77 @@
 					)}
 					{@const TextAlignment =
 						0 && readAttribute(text, "TextAlignment")}
-					<text
-						id={text.attributes?.attrs.FigureWithID ??
-							"auto-id" + refMap.value.indexOf(text)}
-						x={text.fOriginX}
-						y={text.fOriginY}
-						fill={textColor}
-						font-family={fontFamily.replace(
-							"SansSerif",
-							"sans-serif",
-						)}
-						font-weight={fontStyle === 1 ? "bold" : "normal"}
-						font-style={fontStyle === 2 ? "italic" : "normal"}
-						text-anchor={["start", "middle", "end"][TextAlignment]}
-						font-size={fontSize}
-					>
-						{#each text.text.split("\n") as line, l (l)}
-							<tspan
-								x={text.fOriginX}
-								dy={"1.2em"}
-								text-anchor={["start", "middle", "end"][
-									TextAlignment
-								]}>{line}</tspan
-							>
-						{/each}
-					</text>
+					{@const measureValue = measuredSize.value}
+					<g {id}>
+						{#if measureValue}
+							<rect
+								fill={renewToRgba(
+									readAttribute(text, "FillColor"),
+								)}
+								stroke={renewToRgba(
+									readAttribute(text, "FrameColor"),
+								)}
+								stroke-width={readAttribute(text, "LineWidth")}
+								stroke-dasharray={readAttribute(
+									text,
+									"LineStyle",
+								)}
+								{...measureValue}
+							/>
+						{/if}
+						<text
+							x={text.fOriginX}
+							y={text.fOriginY}
+							fill={textColor}
+							font-family={fontFamily.replace(
+								"SansSerif",
+								"sans-serif",
+							)}
+							font-weight={fontStyle === 1 ? "bold" : "normal"}
+							font-style={fontStyle === 2 ? "italic" : "normal"}
+							text-anchor={["start", "middle", "end"][
+								TextAlignment
+							]}
+							font-size={fontSize}
+							dominant-baseline="hanging"
+						>
+							{#each text.text.split("\n") as line, l (l)}
+								<tspan
+									x={text.fOriginX}
+									dy={l ? "1.2em" : "0.2em"}
+									text-anchor={["start", "middle", "end"][
+										TextAlignment
+									]}>{line}</tspan
+								>
+							{/each}
+						</text>
+					</g>
 				{/each}
 			</defs>
 
 			{#each ids.value as id, i (i)}
-				<use href="#{id}" />
+				{@const measuredSize = view(
+					[
+						"id" + id,
+						L.removable("x", "y", "width", "height"),
+						L.props("x", "y", "width", "height"),
+					],
+					sizeCache,
+				)}
+				<use href="#{id}" use:bindBoundingBox={measuredSize} />
 			{/each}
 			{#each refMap.value as ref, i (i)}
 				{#if !ref.attributes?.attrs.FigureWithID}
-					<use href="#auto-id{i}" />
+					{@const id = "auto-id" + i}
+					{@const measuredSize = view(
+						[
+							"id" + id,
+							L.removable("x", "y", "width", "height"),
+							L.props("x", "y", "width", "height"),
+						],
+						sizeCache,
+					)}
+					<use href="#{id}" use:bindBoundingBox={measuredSize} />
 				{/if}
 			{/each}
 		</svg>
