@@ -35,7 +35,12 @@ export function makeParser(reader, grammar) {
 				const t = r.readAny(['nil','ref','className'])
 
 				if(t.type === 'ref') {
+					if(t.value >= refMap.length) {
+						throw new Error(`Forward References are not allowed: try reading "REF ${t.value}" but only ${refMap.length} objects have been loaded yet.`)
+					}
+					
 					const referencedObject = refMap[t.value]
+					
 					if(ofInterface) {
 						if(transitiveTypes(referencedObject.__kind).indexOf(ofInterface) < 0) {
 							throw new Error(`Expected parsed object to be of kind ${ofInterface} but was ${referencedObject.__kind}`);

@@ -21,7 +21,7 @@
 		hierarchyV11,
 	} from "../../renew/index.js";
 
-	const renewDocument = atom({ string: "", json: null });
+	const renewDocument = atom({ string: "", json: undefined });
 	const renewSerialized = failableView(
 		[
 			L.rewrite((x) => {
