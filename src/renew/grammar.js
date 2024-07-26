@@ -184,7 +184,7 @@ export function makeGrammar(version) {
 			},
 			"CH.ifa.draw.contrib.PolygonFigure": {
 				super: "CH.ifa.draw.figures.AttributeFigure",
-				interfaces: [],
+				interfaces: ["CH.ifa.draw.figures.PolyLineable"],
 				parser: (context) => {
 					const o = {points: []}
 					const size = context.parseInt()
@@ -528,7 +528,7 @@ export function makeGrammar(version) {
 			},
 			"CH.ifa.draw.figures.PolyLineFigure": {
 				super: version >= 1 ? "CH.ifa.draw.figures.AttributeFigure" : null,
-				interfaces: [],
+				interfaces: ["CH.ifa.draw.figures.PolyLineable"],
 				parser: (context) => {
 					const size = context.parseInt()
 					const o = {
@@ -541,8 +541,8 @@ export function makeGrammar(version) {
 			            o.points.push({x,y});
 			        }
 
-			        o.fStartDecoration =  context.parseStorable("LineDecoration");
-			        o.fEndDecoration = context.parseStorable("LineDecoration");
+			        o.startDecoration =  context.parseStorable("LineDecoration");
+			        o.endDecoration = context.parseStorable("LineDecoration");
 
 			        if(version >= 8) {
 			            o.arrowName = context.parseString();

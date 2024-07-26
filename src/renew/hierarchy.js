@@ -10,6 +10,22 @@ export function makeHierarchy(grammar) {
 			})
 		},
 
+
+		implementorsOf(interfa) {
+			return Object.keys(grammar.rules).filter((k) => {
+				return this.interfacesOf(k).indexOf(interfa) > -1
+			})
+		},
+
+
+		interfacesOf(kind) {
+			if(kind) {
+				return [...grammar.rules[kind].interfaces, ...this.interfacesOf(grammar.rules[kind].super)]
+			} else {
+				return []
+			}
+		},
+
 		roots() {
 			return Object.keys(grammar.rules).filter((k) => {
 				return !grammar.rules[k].super

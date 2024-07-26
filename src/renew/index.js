@@ -2,7 +2,7 @@ import {decycle, retrocycle} from './cycle.js'
 import {isDeepEqual} from './compare.js'
 import {makeTokenizer} from './tokenizer.js'
 import {makeReader} from './reader.js'
-import {makeParser, kindKey} from './parser.js'
+import {makeParser, kindKey, refKey} from './parser.js'
 import {makeGrammar} from './grammar.js'
 import {makeHierarchy} from './hierarchy.js'
 
@@ -24,13 +24,13 @@ export const reader = makeReader(tokenizer)
 export const parserV11 = makeParser(reader, makeGrammar(11))
 export const hierarchyV11 = makeHierarchy(makeGrammar(11))
 
-export const parserAutoDetect = function(inputString, autoDeref = true) {
+export const parserAutoDetect = function(inputString, autoDeref = true, kindStringKey = null) {
 	const tokenStream = tokenizer(inputString);
 	const r = reader(inputString)
 	const version = r.readAny(["int","className"], true);
 	
 	if(version.type == 'int') {
-		const parser = makeParser(reader, makeGrammar(version.value), autoDeref)
+		const parser = makeParser(reader, makeGrammar(version.value), autoDeref, kindStringKey)
 		const p = parser(inputString)
 
 		p.skipAny(["int"])
@@ -53,3 +53,9 @@ export const parserAutoDetect = function(inputString, autoDeref = true) {
 }
 
 export const stringify = (x) => JSON.stringify(decycle(x), null, 2);
+
+export function tryDeref(refOrObject, refMap, path = []) {
+	const object = refOrObject && refOrObject[refKey] ? refMap[refOrObject.ref] : refOrObject
+
+	return path.reduce((o, k) => o ? tryDeref(o[k], refMap) : null, object)
+}

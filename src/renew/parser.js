@@ -1,7 +1,7 @@
 export const kindKey = Symbol("kind");
 export const refKey = Symbol("ref");
 
-export function makeParser(reader, grammar, autoDeref = true) {
+export function makeParser(reader, grammar, autoDeref = true, kindStringKey = null) {
 	return function parser(inputString) {
 		const r = reader(inputString)
 		const refMap = [];
@@ -69,6 +69,10 @@ export function makeParser(reader, grammar, autoDeref = true) {
 						[kindKey]: t.value,
 					};
 
+					if(kindStringKey) {
+						newObject[kindStringKey] = t.value
+					}
+
 					refMap.push(newObject)
 
 					parseInto(newObject, t.value);
@@ -80,6 +84,10 @@ export function makeParser(reader, grammar, autoDeref = true) {
 				const newObject = {
 					[kindKey]: ofType,
 				};
+
+				if(kindStringKey) {
+					newObject[kindStringKey] = ofType
+				}
 
 				if(storeRef) {
 					refMap.push(newObject)
