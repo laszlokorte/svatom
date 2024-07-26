@@ -638,14 +638,15 @@
 										text,
 										"LineStyle",
 									)}
-									{...measureValue}
-									x={text.fOriginX}
-									y={text.fOriginY}
+									width={measureValue.width + 2}
+									height={measureValue.height + 2}
+									x={text.fOriginX - 1}
+									y={text.fOriginY - 1}
 								/>
 							{/if}
 							<text
 								x={textX}
-								y={text.fOriginY}
+								y={text.fOriginY + fontSize}
 								fill={textColor}
 								font-family={fontFamily.replace(
 									"SansSerif",
@@ -661,12 +662,11 @@
 									textAlignment
 								]}
 								font-size={fontSize}
-								dominant-baseline="hanging"
 							>
 								{#each text.text.split("\n") as line, l (l)}
 									<tspan
 										x={textX}
-										dy={l ? "1.2em" : "0.2em"}
+										dy={l ? "1.2em" : "0"}
 										text-anchor={["start", "middle", "end"][
 											textAlignment
 										]}>{line}</tspan
