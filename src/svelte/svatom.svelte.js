@@ -631,16 +631,27 @@ export function bindScrollMax(node, someAtom) {
 }
 
 export function bindBoundingBox(node, someAtom) {
+	let oldV
 	$effect.pre(() => {
 		tick().then(() => {
 			const bbox = node.getBBox();
 			if(bbox.width || bbox.height) {
-				someAtom.value = {x:bbox.x, y:bbox.y, width: bbox.width, height: bbox.height}
+				oldV = {x:bbox.x, y:bbox.y, width: bbox.width, height: bbox.height}
+				someAtom.value = oldV
 			} else {
+				oldV = undefined
 				someAtom.value = undefined
 			}
 		})
 	})
+
+	return {
+		update(newAtom) {
+		},
+		destroy() {
+			someAtom.value = undefined
+		}
+	}
 }
 
 
