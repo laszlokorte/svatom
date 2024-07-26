@@ -80,8 +80,12 @@
 	const textTypes = hierarchyV11.descendantsOf(
 		"CH.ifa.draw.figures.TextFigure",
 	);
-	const decorationTypes = hierarchyV11.implementorsOf(
+	const lineDecorationTypes = hierarchyV11.implementorsOf(
 		"CH.ifa.draw.figures.LineDecoration",
+	);
+
+	const boxDecorationTypes = hierarchyV11.implementorsOf(
+		"de.renew.diagram.FigureDecoration",
 	);
 
 	const renderedTypes = [
@@ -91,6 +95,18 @@
 		...textTypes,
 		...diagramTypes,
 	];
+
+	const selectableTypes = [
+		...rectTypes,
+		...ellipseTypes,
+		...lineTypes,
+		...textTypes,
+		...diagramTypes,
+		...lineDecorationTypes,
+		...boxDecorationTypes,
+	];
+
+	//console.log(boxDecorationTypes);
 
 	//console.log(renderedTypes);
 
@@ -279,7 +295,7 @@
 					renderedTypes.indexOf(ref[kindKey]) > -1 ? i : null /*&&
 				!ref.attributes?.attrs.FigureWithID*/,
 			)
-			.filter((i) => i !== false);
+			.filter((i) => i !== false && i !== null);
 	}, refMap);
 
 	const dragging = atom(0);
@@ -527,8 +543,7 @@
 			{#each currentRefMap as ref, r (r)}
 				<option
 					value={r}
-					disabled={renderedTypes.indexOf(ref[kindKey]) < 0 &&
-						decorationTypes.indexOf(ref[kindKey]) < 0}
+					disabled={selectableTypes.indexOf(ref[kindKey]) < 0}
 					>#{r} {ref[kindKey]}</option
 				>
 			{/each}
@@ -545,6 +560,7 @@
 	{#if viewBox.value}
 		<h2>{doctype.value} (version: {version.value})</h2>
 		{#key currentRefMap}
+			<!-- svelte-ignore a11y_click_events_have_key_events -->
 			<svg
 				tabindex="-1"
 				role="button"
@@ -930,32 +946,39 @@
 								{#if decoration}
 									{@const decorationKind =
 										decoration[kindKey]}
-									{#if boxDecorations[decorationKind]}
-										{@const x =
-											diag.displayBox.x +
-											diag.displayBox.w / 2}
-										{@const y =
-											diag.displayBox.y +
-											diag.displayBox.h / 2}
+									<g
+										pointer-events="all"
+										class:selected={currentSelection.indexOf(
+											decoration[selfKey],
+										) > -1}
+									>
+										{#if boxDecorations[decorationKind]}
+											{@const x =
+												diag.displayBox.x +
+												diag.displayBox.w / 2}
+											{@const y =
+												diag.displayBox.y +
+												diag.displayBox.h / 2}
 
-										<path
-											d={boxDecorations[
-												decorationKind
-											].path(x, y, decoration)}
-										/>
-									{:else}
-										<text
-											class:hidden={!debug.value}
-											shape-rendering="geometricPrecision"
-											x={diag.displayBox.x}
-											y={diag.displayBox.y}
-											text-anchor="middle"
-											font-size="17"
-											fill="red"
-											font-family="monospace"
-											>{decorationKind}</text
-										>
-									{/if}
+											<path
+												d={boxDecorations[
+													decorationKind
+												].path(x, y, decoration)}
+											/>
+										{:else}
+											<text
+												class:hidden={!debug.value}
+												shape-rendering="geometricPrecision"
+												x={diag.displayBox.x}
+												y={diag.displayBox.y}
+												text-anchor="middle"
+												font-size="17"
+												fill="red"
+												font-family="monospace"
+												>{decorationKind}</text
+											>
+										{/if}
+									</g>
 								{/if}
 
 								<text
