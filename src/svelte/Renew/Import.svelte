@@ -209,6 +209,15 @@
 	);
 
 	const boundsLens = L.branch({
+		sizeCache: [
+			L.values,
+			L.pick({
+				minX: "x",
+				maxX: (r) => r.x + r.width,
+				minY: "y",
+				maxY: (r) => r.y + r.height,
+			}),
+		],
 		rectangles: [
 			L.elems,
 			L.pick({
@@ -274,7 +283,14 @@
 				maxY: [L.foldTraversalLens(L.maximum, [boundsLens, "maxY"])],
 			}),
 		],
-		combine({ rectangles, textes, lines, ellipses, diagramFigs }),
+		combine({
+			rectangles,
+			textes,
+			lines,
+			ellipses,
+			diagramFigs,
+			sizeCache,
+		}),
 	);
 
 	const viewBox = view(
@@ -1004,7 +1020,10 @@
 								/*text.attributes?.attrs.FigureWithID ??*/
 								"ref-" + text[selfKey]}
 							{@const measuredSize = view(
-								["id" + id, L.props("width", "height")],
+								[
+									"id" + id,
+									L.props("x", "y", "width", "height"),
+								],
 								sizeCache,
 							)}
 							{@const fontSize =
@@ -1096,8 +1115,8 @@
 					{@const measuredSize = view(
 						[
 							"id" + id,
-							L.removable("width", "height"),
-							L.props("width", "height"),
+							L.removable("x", "y", "width", "height"),
+							L.props("x", "y", "width", "height"),
 						],
 						sizeCache,
 					)}
@@ -1108,8 +1127,8 @@
 					{@const measuredSize = view(
 						[
 							"id" + id,
-							L.removable("width", "height"),
-							L.props("width", "height"),
+							L.removable("x", "y", "width", "height"),
+							L.props("x", "y", "width", "height"),
 						],
 						sizeCache,
 					)}
