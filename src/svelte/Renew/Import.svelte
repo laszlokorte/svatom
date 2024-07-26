@@ -22,6 +22,7 @@
 		hierarchyV11,
 		kindKey,
 		tryDeref,
+		selfKey,
 	} from "../../renew/index.js";
 
 	import exampleActor from "./actors.rnw?raw";
@@ -53,7 +54,11 @@
 	const sizeCache = view(["cachedSizes", L.defaults({})], renewDocument);
 
 	const renewJson = read(
-		["json", L.inverse(L.json({ space: "  " }))],
+		[
+			"json",
+			L.props("version", "doctype", "drawing"),
+			L.inverse(L.json({ space: "  " })),
+		],
 		renewDocument,
 	);
 
@@ -87,7 +92,7 @@
 		...diagramTypes,
 	];
 
-	console.log(renderedTypes);
+	//console.log(renderedTypes);
 
 	const allRoots = [
 		"CH.ifa.draw.figures.AbstractLocator",
@@ -279,6 +284,9 @@
 
 	const dragging = atom(0);
 	const debug = atom(false);
+	const selection = view(["selection", L.defaults([])], renewDocument);
+
+	const currentSelection = $derived(selection.value);
 
 	const onDragOver = (evt) => {
 		if (evt.dataTransfer.items.length < 1) {
@@ -367,7 +375,7 @@
 		return obj.attributes?.attrs[attr] ?? defaultsAttributes[attr] ?? null;
 	}
 
-	const decorations = {
+	const lineDecorations = {
 		"de.renew.gui.AssocArrowTip": {
 			path: (from, to) => {
 				const dx = to.x - from.x;
@@ -410,6 +418,37 @@
 				stroke: "black",
 			}),
 		},
+		"de.renew.gui.CircleDecoration": {
+			path: (from, to) => {
+				const dx = to.x - from.x;
+				const dy = to.y - from.y;
+				const dl = Math.hypot(dx, dy);
+
+				const dxn = dx / dl;
+				const dyn = dy / dl;
+				const orthoX = -dyn;
+				const orthoY = dxn;
+
+				const size = 4;
+				const width = 1;
+				const angle = (180 / Math.PI) * Math.atan2(dy, dx);
+
+				return `M${to.x},${to.y}
+				m${-dxn * size},${-dyn * size}
+				m${-orthoX * size * width},${-orthoY * size * width}
+				a${size},${size * width}
+				${angle} 1 1
+				${2 * orthoX * size * width},${2 * orthoY * size * width}
+				a${size},${size * width}
+				${angle} 1 1
+				${-2 * orthoX * size * width},${-2 * orthoY * size * width}
+				`;
+			},
+			attributes: () => ({
+				fill: "black",
+				stroke: "black",
+			}),
+		},
 		"CH.ifa.draw.figures.ArrowTip": {
 			path: (from, to) => {
 				const dx = to.x - from.x;
@@ -437,6 +476,16 @@
 			}),
 		},
 	};
+
+	const boxDecorations = {
+		"de.renew.diagram.ANDDecoration": {
+			path: (x, y, { size, halfSize }) => {
+				return `M${x},${y}m${-halfSize},0l${halfSize},${halfSize}l${halfSize},${-halfSize}l${-halfSize},${-halfSize}z`;
+			},
+		},
+	};
+
+	const currentRefMap = $derived(refMap.value);
 </script>
 
 <h1>Renew File</h1>
@@ -473,6 +522,17 @@
 			class:dragging={dragging.value > 0}
 		></textarea>
 		<textarea readonly>{renewJson.value}</textarea>
+
+		<select size="10" bind:value={selection.value} multiple="multiple">
+			{#each currentRefMap as ref, r (r)}
+				<option
+					value={r}
+					disabled={renderedTypes.indexOf(ref[kindKey]) < 0 &&
+						decorationTypes.indexOf(ref[kindKey]) < 0}
+					>#{r} {ref[kindKey]}</option
+				>
+			{/each}
+		</select>
 	</div>
 
 	<div class="error-message" hidden={!renewSerialized.hasError}>
@@ -484,35 +544,67 @@
 
 	{#if viewBox.value}
 		<h2>{doctype.value} (version: {version.value})</h2>
-		{#key refMap.value}
-			<svg viewBox={viewBox.value}>
+		{#key currentRefMap}
+			<svg
+				tabindex="-1"
+				role="button"
+				viewBox={viewBox.value}
+				onclick={(evt) => {
+					if (evt.target.id && R.startsWith("ref-", evt.target.id)) {
+						selection.value = evt.target.id.slice(4);
+					} else if (
+						evt.target.href &&
+						evt.target.href.baseVal &&
+						R.startsWith("#ref-", evt.target.href.baseVal)
+					) {
+						selection.value = [
+							parseInt(evt.target.href.baseVal.slice(5), 10),
+						];
+					} else {
+						selection.value = [];
+					}
+				}}
+			>
 				<defs>
 					<g name="lines">
-						{#each lines.value as line, i (i)}
-							{@const startDecoration = tryDeref(line, refMap, [
-								"startDecoration",
-							])}
-							{@const startConnector = tryDeref(line, refMap, [
-								"start",
-							])}
+						{#each lines.value as line, i (line[selfKey])}
+							{@const startDecoration = tryDeref(
+								line,
+								currentRefMap,
+								["startDecoration"],
+							)}
+							{@const startConnector = tryDeref(
+								line,
+								currentRefMap,
+								["start"],
+							)}
 							{@const startOwner = tryDeref(
 								startConnector,
-								refMap,
+								currentRefMap,
 								["owner"],
 							)}
 
-							{@const endDecoration = tryDeref(line, refMap, [
-								"endDecoration",
-							])}
-							{@const endConnector = tryDeref(line, refMap, [
-								"end",
-							])}
-							{@const endOwner = tryDeref(endConnector, refMap, [
-								"owner",
-							])}
+							{@const endDecoration = tryDeref(
+								line,
+								currentRefMap,
+								["endDecoration"],
+							)}
+							{@const endConnector = tryDeref(
+								line,
+								currentRefMap,
+								["end"],
+							)}
+							{@const endOwner = tryDeref(
+								endConnector,
+								currentRefMap,
+								["owner"],
+							)}
 							<g
+								class:selected={currentSelection.indexOf(
+									line[selfKey],
+								) > -1}
 								id={/*line.attributes?.attrs.FigureWithID ??*/
-								"auto-id" + refMap.value.indexOf(line)}
+								"ref-" + line[selfKey]}
 							>
 								{#if endDecoration}
 									{@const decorationType =
@@ -522,58 +614,92 @@
 										-2,
 										line.points,
 									)}
-									{#if decorations[decorationType]}
-										<path
-											d={decorations[decorationType].path(
-												preEndPoint,
-												endPoint,
-											)}
-											{...decorations[
-												decorationType
-											].attributes()}
-										/>
-									{:else}
-										<circle
-											r="10"
-											fill="red"
-											fill-opacity="0.3"
-											cx={endPoint.x}
-											cy={endPoint.y}
-										></circle>
-										<text x={endPoint.x} y={endPoint.y}
-											>{endDecoration[kindKey]}</text
-										>
-									{/if}
+									<g
+										class:selected={currentSelection.indexOf(
+											endDecoration[selfKey],
+										) > -1}
+									>
+										{#if lineDecorations[decorationType]}
+											<path
+												d={lineDecorations[
+													decorationType
+												].path(preEndPoint, endPoint)}
+												{...lineDecorations[
+													decorationType
+												].attributes()}
+											/>
+										{:else}
+											<circle
+												r="10"
+												fill="red"
+												fill-opacity="0.3"
+												cx={endPoint.x}
+												cy={endPoint.y}
+											></circle>
+											<text x={endPoint.x} y={endPoint.y}
+												>{endDecoration[kindKey]}</text
+											>
+										{/if}
+									</g>
 								{/if}
 
 								{#if startDecoration}
 									{@const decorationType =
 										startDecoration[kindKey]}
-									{@const firstPoint = R.first(line.points)}
-									{@const secondPoint = R.nth(2, line.points)}
-									{#if decorations[decorationType]}
-										<path
-											d={decorations[decorationType].path(
-												secondPoint,
-												firstPoint,
-											)}
-											{...decorations[
-												decorationType
-											].attributes()}
-										/>
-									{:else}
-										<circle
-											r="10"
-											fill="red"
-											fill-opacity="0.3"
-											cx={endPoint.x}
-											cy={endPoint.y}
-										></circle>
-										<text x={endPoint.x} y={endPoint.y}
-											>{decorationType}</text
-										>
-									{/if}
+									{@const firstPoint = R.nth(0, line.points)}
+									{@const secondPoint = R.nth(1, line.points)}
+
+									<g
+										pointer-events="all"
+										class:selected={currentSelection.indexOf(
+											startDecoration[selfKey],
+										) > -1}
+									>
+										{#if lineDecorations[decorationType]}
+											<path
+												d={lineDecorations[
+													decorationType
+												].path(secondPoint, firstPoint)}
+												{...lineDecorations[
+													decorationType
+												].attributes()}
+											/>
+										{:else}
+											<circle
+												r="10"
+												fill="red"
+												fill-opacity="0.3"
+												cx={firstPoint.x}
+												cy={firstPoint.y}
+											></circle>
+											<text
+												x={firstPoint.x}
+												y={firstPoint.y}
+												>{decorationType}</text
+											>
+										{/if}
+									</g>
 								{/if}
+
+								<polyline
+									points={R.join(
+										" ",
+										R.map(
+											R.compose(
+												R.join(" "),
+												R.props(["x", "y"]),
+											),
+											line.points,
+										),
+									)}
+									fill="none"
+									class="clickarea"
+									pointer-events="all"
+									stroke={"transparent"}
+									stroke-linecap="none"
+									stroke-width={15}
+									vector-effect="non-scaling-stroke"
+								/>
 
 								<polyline
 									points={R.join(
@@ -605,10 +731,13 @@
 					</g>
 
 					<g name="rects">
-						{#each rectangles.value as rect, i (i)}
+						{#each rectangles.value as rect, i (rect[selfKey])}
 							<g
+								class:selected={currentSelection.indexOf(
+									rect[selfKey],
+								) > -1}
 								id={/*rect.attributes?.attrs.FigureWithID ??*/
-								"auto-id" + refMap.value.indexOf(rect)}
+								"ref-" + rect[selfKey]}
 							>
 								<g
 									fill={renewToRgba(
@@ -707,10 +836,13 @@
 					</g>
 
 					<g name="ellipses">
-						{#each ellipses.value as ellipse, i (i)}
+						{#each ellipses.value as ellipse, i (ellipse[selfKey])}
 							<g
+								class:selected={currentSelection.indexOf(
+									ellipse[selfKey],
+								) > -1}
 								id={/*ellipse.attributes?.attrs.FigureWithID ??*/
-								"auto-id" + refMap.value.indexOf(ellipse)}
+								"ref-" + ellipse[selfKey]}
 							>
 								<g
 									fill={renewToRgba(
@@ -755,10 +887,20 @@
 					</g>
 
 					<g name="diagramFigs">
-						{#each diagramFigs.value as diag, i (i)}
+						{#each diagramFigs.value as diag, i (diag[selfKey])}
+							{@const decoration = tryDeref(
+								diag,
+								currentRefMap,
+								["decoration"],
+								diag[kindKey] ===
+									"de.renew.diagram.HSplitFigure",
+							)}
 							<g
+								class:selected={currentSelection.indexOf(
+									diag[selfKey],
+								) > -1}
 								id={/*diag.attributes?.attrs.FigureWithID ??*/
-								"auto-id" + refMap.value.indexOf(diag)}
+								"ref-" + diag[selfKey]}
 							>
 								<g
 									fill={renewToRgba(
@@ -785,6 +927,37 @@
 									/>
 								</g>
 
+								{#if decoration}
+									{@const decorationKind =
+										decoration[kindKey]}
+									{#if boxDecorations[decorationKind]}
+										{@const x =
+											diag.displayBox.x +
+											diag.displayBox.w / 2}
+										{@const y =
+											diag.displayBox.y +
+											diag.displayBox.h / 2}
+
+										<path
+											d={boxDecorations[
+												decorationKind
+											].path(x, y, decoration)}
+										/>
+									{:else}
+										<text
+											class:hidden={!debug.value}
+											shape-rendering="geometricPrecision"
+											x={diag.displayBox.x}
+											y={diag.displayBox.y}
+											text-anchor="middle"
+											font-size="17"
+											fill="red"
+											font-family="monospace"
+											>{decorationKind}</text
+										>
+									{/if}
+								{/if}
+
 								<text
 									class:hidden={!debug.value}
 									shape-rendering="geometricPrecision"
@@ -792,7 +965,7 @@
 										diag.displayBox.w / 2}
 									y={diag.displayBox.y}
 									text-anchor="middle"
-									font-size="7"
+									font-size="12"
 									fill="royalblue"
 									font-family="monospace"
 									title={diag[kindKey]}
@@ -803,10 +976,10 @@
 					</g>
 
 					<g name="textes">
-						{#each textes.value as text, i (i)}
+						{#each textes.value as text, i (text[selfKey])}
 							{@const id =
 								/*text.attributes?.attrs.FigureWithID ??*/
-								"auto-id" + refMap.value.indexOf(text)}
+								"ref-" + text[selfKey]}
 							{@const measuredSize = view(
 								["id" + id, L.props("width", "height")],
 								sizeCache,
@@ -833,7 +1006,12 @@
 								(measureValue
 									? (measureValue.width * textAlignment) / 2
 									: 0)}
-							<g {id}>
+							<g
+								{id}
+								class:selected={currentSelection.indexOf(
+									text[selfKey],
+								) > -1}
+							>
 								{#if measureValue}
 									<rect
 										fill={renewToRgba(
@@ -903,7 +1081,7 @@
 					<use href="#{id}" use:bindBoundingBox={measuredSize} />
 				{/each} -->
 				{#each renderedRefMap.value as ref, i}
-					{@const id = "auto-id" + ref}
+					{@const id = "ref-" + ref}
 					{@const measuredSize = view(
 						[
 							"id" + id,
@@ -945,5 +1123,29 @@
 
 	.hidden {
 		display: none;
+	}
+
+	.selected rect {
+		paint-order: stroke;
+		stroke: #ff6666aa;
+		stroke-width: 5;
+	}
+	.selected path {
+		paint-order: stroke;
+		stroke: #ff6666aa;
+		stroke-width: 5;
+	}
+	.selected polyline.clickarea {
+		paint-order: stroke;
+		stroke: #ff6666aa;
+	}
+
+	.selected {
+		transform: scale(1, 1);
+		transform-origin: center center;
+		transform-box: fill-box;
+	}
+	use {
+		pointer-events: all;
 	}
 </style>
