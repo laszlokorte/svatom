@@ -1,6 +1,12 @@
 <script>
 	import * as L from "partial.lenses";
 	import * as R from "ramda";
+	import { untrack, tick } from "svelte";
+	import * as Geo from "../geometry";
+	import Navigator from "../Canvas/camera/Navigator.svelte";
+
+	import { frameBoxLens } from "../Canvas/camera/lenses";
+
 	import {
 		atom,
 		view,
@@ -14,6 +20,7 @@
 		bindSize,
 		string,
 		bindBoundingBox,
+		update,
 	} from "../svatom.svelte.js";
 
 	import {
@@ -22,6 +29,7 @@
 		hierarchyV11,
 		tryDeref,
 	} from "../../renew/index.js";
+	import Scroller from "../Scroller.svelte";
 
 	import exampleActor from "./actors.rnw?raw";
 	import exampleCloseDoor from "./closedoor.rnw?raw";
@@ -310,7 +318,7 @@
 		],
 	});
 
-	const worldBounds = read(
+	const extension = read(
 		[
 			L.pick({
 				minX: [L.foldTraversalLens(L.minimum, [boundsLens, "minX"])],
@@ -329,13 +337,216 @@
 		}),
 	);
 
-	const viewBox = view(
-		L.reread(
-			({ minX, minY, maxX, maxY }) =>
-				`${minX - 50} ${minY - 50} ${Math.max(600, maxX - minX) + 100} ${Math.max(200, maxY - minY) + 100}`,
-		),
-		worldBounds,
+	// const viewBox = view(
+	// 	L.reread(
+	// 		({ minX, minY, maxX, maxY }) =>
+	// 			`${minX - 50} ${minY - 50} ${Math.max(600, maxX - minX) + 100} ${Math.max(200, maxY - minY) + 100}`,
+	// 	),
+	// 	worldBounds,
+	// );
+
+	const camera = atom({
+		focus: { x: 0, y: 0, z: 0, w: 0 },
+		plane: {
+			autosize: true,
+			x: 1000,
+			y: 1000,
+		},
+		frame: {
+			aspect: "meet",
+			alignX: "Mid",
+			alignY: "Mid",
+			autoPadding: true,
+			size: {
+				x: 100,
+				y: 100,
+			},
+		},
+	});
+	const cameraScaleLens = L.reread((c) => Math.exp(-c.focus.z));
+
+	const cameraX = view(["focus", "x"], camera);
+	const cameraY = view(["focus", "y"], camera);
+	const cameraScale = read(cameraScaleLens, camera);
+
+	const scrollWindowSize = view(
+		[
+			L.lens(R.prop("frame"), (newSize) => ({
+				frame: newSize,
+				plane: newSize,
+			})),
+		],
+		combine({
+			plane: view(["plane", L.props("x", "y")], camera),
+			frame: view(["frame", "size"], camera),
+		}),
 	);
+
+	function rotatedBounds(degree, rect) {
+		if (!rect) {
+			return {
+				angle: 0,
+				minX: 0,
+				maxX: 0,
+				minY: 0,
+				maxY: 0,
+			};
+		}
+		const rectCenterX = (rect.maxX + rect.minX) / 2;
+		const rectCenterY = (rect.maxY + rect.minY) / 2;
+		const halfWidth = (rect.maxX - rect.minX) / 2;
+		const halfHeight = (rect.maxY - rect.minY) / 2;
+
+		const c1 = Geo.rotateDegree(degree, { x: halfWidth, y: halfHeight });
+		const c2 = Geo.rotateDegree(degree, { x: -halfWidth, y: halfHeight });
+		const c3 = Geo.rotateDegree(degree, { x: halfWidth, y: -halfHeight });
+		const c4 = Geo.rotateDegree(degree, { x: -halfWidth, y: -halfHeight });
+
+		const halfWidthRot = Math.max(
+			Math.abs(c1.x),
+			Math.abs(c2.x),
+			Math.abs(c3.x),
+			Math.abs(c4.x),
+		);
+		const halfHeightRot = Math.max(
+			Math.abs(c1.y),
+			Math.abs(c2.y),
+			Math.abs(c3.y),
+			Math.abs(c4.y),
+		);
+
+		return {
+			angle: degree,
+			minX: rectCenterX - halfWidthRot,
+			maxX: rectCenterX + halfWidthRot,
+			minY: rectCenterY - halfHeightRot,
+			maxY: rectCenterY + halfHeightRot,
+		};
+	}
+
+	const cameraBounds = read(
+		({ c, e }) => {
+			return rotatedBounds(c.focus.w, e);
+		},
+		combine({ c: camera, e: extension }),
+	);
+
+	const cameraInBounds = view(
+		L.lens(
+			({ x, y, s, w, b }) => {
+				const rot = Geo.rotatePivotXYDegree(
+					(b.minX + b.maxX) / 2,
+					(b.minY + b.maxY) / 2,
+					b.angle,
+					{ x, y },
+				);
+
+				return {
+					x: (rot.x - b.minX) / s - w.x / 2,
+					y: (rot.y - b.minY) / s - w.y / 2,
+				};
+			},
+			({ x, y }, { s, w, b }) => {
+				const rot = Geo.rotatePivotXYDegree(
+					(b.minX + b.maxX) / 2,
+					(b.minY + b.maxY) / 2,
+					-b.angle,
+					{
+						x: (x + w.x / 2) * s + b.minX,
+						y: (y + w.y / 2) * s + b.minY,
+					},
+				);
+
+				return {
+					x: rot.x,
+					y: rot.y,
+				};
+			},
+		),
+		combine(
+			{
+				x: cameraX,
+				y: cameraY,
+				s: cameraScale,
+				w: scrollWindowSize,
+				b: cameraBounds,
+			},
+			{ x: true, y: true },
+		),
+	);
+
+	const integerLens = L.lens(
+		(x) => Math.floor(x),
+		(newV, oldV) => Math.ceil(newV) + (oldV - Math.floor(oldV)),
+	);
+
+	const scrollPosition = view(
+		[
+			L.pick({ x: ["x", integerLens], y: ["y", integerLens] }),
+			L.setter((newScroll, old) => ({
+				x:
+					(newScroll.atMinX && old.x < newScroll.x) ||
+					(newScroll.atMaxX && old.x > newScroll.x)
+						? old.x
+						: newScroll.x,
+				y:
+					(newScroll.atMinY && old.y < newScroll.y) ||
+					(newScroll.atMaxY && old.y > newScroll.y)
+						? old.y
+						: newScroll.y,
+			})),
+		],
+		cameraInBounds,
+	);
+
+	const boxPathLens = L.reread(
+		({ minX, minY, width, height }) =>
+			`M${numberSvgFormat.format(minX)},${numberSvgFormat.format(minY)}h${numberSvgFormat.format(width)}v${numberSvgFormat.format(height)}h${numberSvgFormat.format(-width)}z`,
+	);
+
+	const frameBoxPath = read(
+		[frameBoxLens, "screenSpaceAligned", boxPathLens],
+		camera,
+	);
+
+	const preserveAspectRatioLens = [
+		"frame",
+		L.props("aspect", "alignX", "alignY"),
+		L.iso(
+			(frame) =>
+				frame.aspect
+					? `x${frame.alignX}Y${frame.alignY} ${frame.aspect}`
+					: "none",
+			R.compose(
+				R.ifElse(
+					R.prop("noAspect"),
+					R.compose(R.objOf("aspect"), R.prop("noAspect")),
+					R.props(["alignX", "alignY", "aspect"]),
+				),
+				R.prop("groups"),
+				R.match(
+					/^((?<noAspect>none)|x(?:(?<alignX>Min|Mid|Max)Y(?<alignY>Min|Mid|Max) (?<aspect>meet|slice)))$/,
+				),
+			),
+		),
+	];
+
+	const preserveAspectRatio = read(preserveAspectRatioLens, camera);
+
+	const numberSvgFormat = new Intl.NumberFormat("en-US", {
+		minimumFractionDigits: 5,
+		maximumFractionDigits: 5,
+		useGrouping: false,
+	});
+
+	const viewBoxLens = L.reread((cam) => {
+		return `${numberSvgFormat.format(cam.focus.x - (cam.plane.x / 2) * Math.exp(-cam.focus.z))} 
+		${numberSvgFormat.format(cam.focus.y - (cam.plane.y / 2) * Math.exp(-cam.focus.z))} 
+		${numberSvgFormat.format(cam.plane.x * Math.exp(-cam.focus.z))} 
+		${numberSvgFormat.format(cam.plane.y * Math.exp(-cam.focus.z))}`;
+	});
+	const viewBox = view(viewBoxLens, camera);
+
 	const version = view(["json", "version"], renewDocument);
 	const doctype = view(["json", "doctype"], renewDocument);
 	const refMap = view(["json", "refMap"], renewDocument);
@@ -366,6 +577,17 @@
 		renewDocument,
 	);
 
+	const scrollContentSize = view(
+		({ s, w, b }) => ({
+			x: (b.maxX - b.minX) / s,
+			y: (b.maxY - b.minY) / s,
+		}),
+		combine({
+			s: cameraScale,
+			b: cameraBounds,
+		}),
+	);
+
 	const dragging = atom(0);
 	const debug = atom(false);
 	const searchTerm = atom("");
@@ -394,6 +616,34 @@
 		evt.preventDefault();
 		dragging.value -= 1;
 	};
+
+	function refitCamera() {
+		console.log(camera.value.plane.x);
+		console.log(camera.value.plane.y);
+		update(
+			L.set(["focus", L.props("z", "x", "y", "w")], {
+				x: (cameraBounds.value.maxX + cameraBounds.value.minX) / 2,
+				y: (cameraBounds.value.maxY + cameraBounds.value.minY) / 2,
+				z: -Math.max(
+					Math.log(
+						cameraBounds.value.maxX - cameraBounds.value.minX,
+					) - Math.log(camera.value.plane.x),
+					Math.log(
+						cameraBounds.value.maxY - cameraBounds.value.minY,
+					) - Math.log(camera.value.plane.y),
+				),
+				w: cameraBounds.value.angle,
+			}),
+			camera,
+		);
+	}
+
+	$effect.pre(() => {
+		const newSize = sizeCache.value;
+		tick().then(() => {
+			refitCamera();
+		});
+	});
 
 	const reader = new FileReader();
 	reader.onload = (evt) => {
@@ -740,9 +990,9 @@
 	{#await moreExamples then filenames}
 		<select
 			oninput={(e) =>
-				loadExample(e.currentTarget.value).then(
-					(x) => (renewSerialized.value = x.content),
-				)}
+				loadExample(e.currentTarget.value).then((x) => {
+					renewSerialized.value = x.content;
+				})}
 		>
 			{#each filenames as name}
 				<option>{name}</option>
@@ -807,14 +1057,25 @@
 
 	<label><input type="checkbox" bind:checked={debug.value} /> Debug</label>
 
-	{#if viewBox.value}
+	{#if doctype.value}
 		<h2>{doctype.value} (version: {version.value})</h2>
-		{#key currentRefMap}
-			<!-- svelte-ignore a11y_click_events_have_key_events -->
+	{/if}
+	{#key currentRefMap}
+		<!-- svelte-ignore a11y_click_events_have_key_events -->
+		<Scroller
+			allowOverscroll={false}
+			alignment="center"
+			extraScrollPadding={atom(true)}
+			{scrollPosition}
+			contentSize={scrollContentSize}
+			{scrollWindowSize}
+		>
 			<svg
+				class="canvas"
+				viewBox={viewBox.value}
+				preserveAspectRatio={preserveAspectRatio.value}
 				tabindex="-1"
 				role="button"
-				viewBox={viewBox.value}
 				onclick={(evt) => {
 					if (evt.target.id && R.startsWith("ref-", evt.target.id)) {
 						selection.value = evt.target.id.slice(4);
@@ -915,7 +1176,6 @@
 										line,
 										"LineStyle",
 									)}
-									vector-effect="non-scaling-stroke"
 								/>
 
 								{#if endDecoration}
@@ -1020,7 +1280,6 @@
 										rect,
 										"LineStyle",
 									)}
-									vector-effect="non-scaling-stroke"
 									shape-rendering="geometricPrecision"
 								>
 									{#if rect[kindKey] === "CH.ifa.draw.contrib.DiamondFigure"}
@@ -1051,7 +1310,10 @@
 												x: rect.x + rect.w / 2,
 												y: rect.y,
 											},
-											{ x: rect.x + rect.w, y: rect.y },
+											{
+												x: rect.x + rect.w,
+												y: rect.y,
+											},
 											{
 												x: rect.x + rect.w,
 												y: rect.y + rect.h / 2,
@@ -1064,7 +1326,10 @@
 												x: rect.x + rect.w / 2,
 												y: rect.y + rect.h,
 											},
-											{ x: rect.x, y: rect.y + rect.h },
+											{
+												x: rect.x,
+												y: rect.y + rect.h,
+											},
 											{
 												x: rect.x,
 												y: rect.y + rect.h / 2,
@@ -1162,7 +1427,6 @@
 										ellipse,
 										"LineStyle",
 									)}
-									vector-effect="non-scaling-stroke"
 									shape-rendering="geometricPrecision"
 								>
 									<ellipse
@@ -1220,7 +1484,6 @@
 										diag,
 										"LineStyle",
 									)}
-									vector-effect="non-scaling-stroke"
 								>
 									<rect
 										x={diag.displayBox.x}
@@ -1483,21 +1746,33 @@
 					)}
 					<use href="#{id}" use:bindBoundingBox={measuredSize} />
 				{/each} -->
-				{#each renderedRefMap.value as ref, i}
-					{@const id = "ref-" + ref}
-					{@const measuredSize = view(
-						[
-							"id" + id,
-							L.removable("x", "y", "width", "height"),
-							L.props("x", "y", "width", "height"),
-						],
-						sizeCache,
-					)}
-					<use href="#{id}" use:bindBoundingBox={measuredSize} />
-				{/each}
+				{#if extension.value}
+					<rect
+						x={extension.value.minX}
+						y={extension.value.minY}
+						width={extension.value.maxX - extension.value.minX}
+						height={extension.value.maxY - extension.value.minY}
+						fill="red"
+						fill-opacity="0.1"
+					/>
+				{/if}
+				<Navigator {camera} {frameBoxPath}>
+					{#each renderedRefMap.value as ref, i}
+						{@const id = "ref-" + ref}
+						{@const measuredSize = view(
+							[
+								"id" + id,
+								L.removable("x", "y", "width", "height"),
+								L.props("x", "y", "width", "height"),
+							],
+							sizeCache,
+						)}
+						<use href="#{id}" use:bindBoundingBox={measuredSize} />
+					{/each}
+				</Navigator>
 			</svg>
-		{/key}
-	{/if}
+		</Scroller>
+	{/key}
 </div>
 
 <style>
@@ -1510,6 +1785,13 @@
 		width: 100%;
 		resize: both;
 		shape-rendering: geometricPrecision;
+
+		position: absolute;
+		display: block;
+		grid-area: 1/1/1/1;
+		place-self: stretch;
+		width: 100%;
+		height: 100%;
 	}
 
 	.drop-target {
