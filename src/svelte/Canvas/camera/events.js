@@ -131,6 +131,7 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 	let mouseGrab
 	function onPointerStart(evt) {
 		if(evt.pointerType === 'mouse' && evt.button === 1 && evt.shiftKey) {
+			evt.preventDefault()
 			node.setPointerCapture(evt.pointerId)
 			mouseGrab = {
 				pointerId: evt.pointerId,
@@ -139,7 +140,6 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 				world: L.get(eventWorld, evt),
 			}
 		}
-
 	}
 
 	function onPointerEnd(evt) {
