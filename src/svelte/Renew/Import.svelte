@@ -79,7 +79,10 @@
 
 	const sizeCache = view(["cachedSizes", L.defaults({})], renewDocument);
 
-	const renewJsonCurrent = failableView(["json"], renewDocument);
+	const renewJsonCurrent = failableView(
+		["json", L.props("version", "doctype", "drawing")],
+		renewDocument,
+	);
 
 	const renewJson = failableView(
 		L.inverse(L.json({ space: "  " })),
@@ -807,6 +810,11 @@
 	<div class="error-message" hidden={!renewSerialized.hasError}>
 		<button type="button" onclick={renewSerialized.reset}>Reset</button>
 		{renewSerialized.error}
+	</div>
+
+	<div class="error-message" hidden={!renewJson.hasError}>
+		<button type="button" onclick={renewJson.reset}>Reset</button>
+		{renewJson.error}
 	</div>
 
 	<label><input type="checkbox" bind:checked={debug.value} /> Debug</label>
