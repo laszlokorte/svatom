@@ -1024,6 +1024,20 @@
 									shape-rendering="geometricPrecision"
 								>
 									{#if rect[kindKey] === "CH.ifa.draw.contrib.DiamondFigure"}
+										<polyline
+											points="{rect.x +
+												rect.w / 2} {rect.y}
+						{rect.x + rect.w} {rect.y + rect.h / 2}
+						{rect.x + rect.w / 2} {rect.y + rect.h}
+						{rect.x} {rect.y + rect.h / 2}"
+											fill="none"
+											class="clickarea"
+											pointer-events="all"
+											stroke={"transparent"}
+											stroke-linecap="none"
+											stroke-width={15}
+											vector-effect="non-scaling-stroke"
+										/>
 										<polygon
 											points="{rect.x +
 												rect.w / 2} {rect.y}
@@ -1057,6 +1071,29 @@
 											},
 											{ x: rect.x, y: rect.y },
 										]}
+										<polyline
+											points="{corners[rect.rotation]
+												.x} {corners[rect.rotation].y}
+									{corners[(rect.rotation + 3 - (rect.rotation % 2)) % 8].x} {corners[
+												(rect.rotation +
+													3 -
+													(rect.rotation % 2)) %
+													8
+											].y}
+									{corners[(rect.rotation + 5 + (rect.rotation % 2)) % 8].x} {corners[
+												(rect.rotation +
+													5 +
+													(rect.rotation % 2)) %
+													8
+											].y}"
+											fill="none"
+											class="clickarea"
+											pointer-events="all"
+											stroke={"transparent"}
+											stroke-linecap="none"
+											stroke-width={15}
+											vector-effect="non-scaling-stroke"
+										/>
 										<polygon
 											points="{corners[rect.rotation]
 												.x} {corners[rect.rotation].y}
@@ -1256,7 +1293,12 @@
 							{@const id =
 								/*text.attributes?.attrs.FigureWithID ??*/
 								"ref-" + group[selfKey]}
-							<g {id}>
+							<g
+								{id}
+								class:selected={currentSelection.indexOf(
+									group[selfKey],
+								) > -1}
+							>
 								{#each group.figures as f}
 									<use href="#ref-{f[selfKey] || f.ref}" />
 								{/each}
@@ -1504,6 +1546,21 @@
 	.selected polyline.clickarea {
 		stroke: #ff6666aa;
 		pointer-events: none;
+	}
+	.selected polygon.clickarea {
+		stroke: #ff6666aa;
+		pointer-events: none;
+	}
+	.selected:has(use) {
+		stroke: #ff6666aa;
+		pointer-events: none;
+		outline: 2px solid #ff6666aa;
+	}
+
+	.selected > use {
+		stroke: #ff666633;
+		pointer-events: none;
+		outline: 2px solid #ff666633;
 	}
 
 	.selected {
