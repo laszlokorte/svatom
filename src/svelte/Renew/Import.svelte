@@ -632,7 +632,9 @@
 		dragging.value -= 1;
 	};
 
-	function refitCamera() {
+	async function refitCamera() {
+		await tick();
+		await tick();
 		update(
 			L.set(["focus", L.props("z", "x", "y", "w")], {
 				x: (cameraBounds.value.maxX + cameraBounds.value.minX) / 2,
@@ -994,7 +996,6 @@
 			}}>File #{e + 1}</button
 		>
 	{/each}
-
 	{#await moreExamples then filenames}
 		<select
 			oninput={(e) =>
