@@ -664,7 +664,7 @@ export function makeGrammar(version) {
 				super: "CH.ifa.draw.figures.AttributeFigure",
 				interfaces: [],
 				parser: (context) => {
-					return {
+					const text= {
 						fOriginX: context.parseInt(),
 						fOriginY: context.parseInt(),
 						text: context.parseString(),
@@ -675,6 +675,10 @@ export function makeGrammar(version) {
 						fParent: context.parseStorable("CH.ifa.draw.framework.ParentFigure"),
 						fLocator: context.parseStorable("CH.ifa.draw.standard.OffsetLocator"),
 					}
+
+					text.lines = text.text.split("\n").filter(x=>x)
+
+					return text
 				},
 			},
 			"de.renew.gui.CPNTextFigure": {

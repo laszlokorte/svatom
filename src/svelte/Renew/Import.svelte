@@ -509,6 +509,20 @@
 		camera,
 	);
 
+	const cameraRotationTransformLens = L.reread(
+		(c) => `rotate(${c.focus.w}, ${c.focus.x}, ${c.focus.y})`,
+	);
+
+	const cameraRotationInverseTransformLens = L.reread(
+		(c) => `rotate(${-c.focus.w}, ${c.focus.x}, ${c.focus.y})`,
+	);
+
+	const rotationTransform = read(cameraRotationTransformLens, camera);
+	const rotationInverseTransform = read(
+		cameraRotationInverseTransformLens,
+		camera,
+	);
+
 	const preserveAspectRatioLens = [
 		"frame",
 		L.props("aspect", "alignX", "alignY"),
@@ -618,8 +632,6 @@
 	};
 
 	function refitCamera() {
-		console.log(camera.value.plane.x);
-		console.log(camera.value.plane.y);
 		update(
 			L.set(["focus", L.props("z", "x", "y", "w")], {
 				x: (cameraBounds.value.maxX + cameraBounds.value.minX) / 2,
@@ -638,16 +650,10 @@
 		);
 	}
 
-	$effect.pre(() => {
-		const newSize = sizeCache.value;
-		tick().then(() => {
-			refitCamera();
-		});
-	});
-
 	const reader = new FileReader();
 	reader.onload = (evt) => {
 		renewSerialized.value = evt.target.result;
+		refitCamera();
 	};
 
 	const onDragDrop = (evt) => {
@@ -983,6 +989,7 @@
 			type="button"
 			onclick={(e) => {
 				renewSerialized.value = example;
+				refitCamera();
 			}}>File #{e + 1}</button
 		>
 	{/each}
@@ -992,6 +999,7 @@
 			oninput={(e) =>
 				loadExample(e.currentTarget.value).then((x) => {
 					renewSerialized.value = x.content;
+					refitCamera();
 				})}
 		>
 			{#each filenames as name}
@@ -1060,38 +1068,38 @@
 	{#if doctype.value}
 		<h2>{doctype.value} (version: {version.value})</h2>
 	{/if}
-	{#key currentRefMap}
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<Scroller
-			allowOverscroll={false}
-			alignment="center"
-			extraScrollPadding={atom(true)}
-			{scrollPosition}
-			contentSize={scrollContentSize}
-			{scrollWindowSize}
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	<Scroller
+		allowOverscroll={false}
+		alignment="center"
+		extraScrollPadding={atom(true)}
+		{scrollPosition}
+		contentSize={scrollContentSize}
+		{scrollWindowSize}
+	>
+		<svg
+			class="canvas"
+			viewBox={viewBox.value}
+			preserveAspectRatio={preserveAspectRatio.value}
+			tabindex="-1"
+			role="button"
+			onclick={(evt) => {
+				if (evt.target.id && R.startsWith("ref-", evt.target.id)) {
+					selection.value = evt.target.id.slice(4);
+				} else if (
+					evt.target.href &&
+					evt.target.href.baseVal &&
+					R.startsWith("#ref-", evt.target.href.baseVal)
+				) {
+					selection.value = [
+						parseInt(evt.target.href.baseVal.slice(5), 10),
+					];
+				} else {
+					selection.value = [];
+				}
+			}}
 		>
-			<svg
-				class="canvas"
-				viewBox={viewBox.value}
-				preserveAspectRatio={preserveAspectRatio.value}
-				tabindex="-1"
-				role="button"
-				onclick={(evt) => {
-					if (evt.target.id && R.startsWith("ref-", evt.target.id)) {
-						selection.value = evt.target.id.slice(4);
-					} else if (
-						evt.target.href &&
-						evt.target.href.baseVal &&
-						R.startsWith("#ref-", evt.target.href.baseVal)
-					) {
-						selection.value = [
-							parseInt(evt.target.href.baseVal.slice(5), 10),
-						];
-					} else {
-						selection.value = [];
-					}
-				}}
-			>
+			{#key currentRefMap}
 				<defs>
 					<g name="lines">
 						{#each lines.value as line, i (line[selfKey])}
@@ -1388,7 +1396,7 @@
 								</g>
 								<text
 									class:hidden={!debug.value}
-									shape-rendering="geometricPrecision"
+									text-rendering="geometricPrecision"
 									x={rect.x + rect.w / 2}
 									y={rect.y}
 									text-anchor="middle"
@@ -1439,7 +1447,7 @@
 
 								<text
 									class:hidden={!debug.value}
-									shape-rendering="geometricPrecision"
+									text-rendering="geometricPrecision"
 									x={ellipse.x + ellipse.w / 2}
 									y={ellipse.y}
 									text-anchor="middle"
@@ -1536,7 +1544,7 @@
 
 								<text
 									class:hidden={!debug.value}
-									shape-rendering="geometricPrecision"
+									text-rendering="geometricPrecision"
 									x={diag.displayBox.x +
 										diag.displayBox.w / 2}
 									y={diag.displayBox.y}
@@ -1603,10 +1611,7 @@
 								(measureValue
 									? (measureValue.width * textAlignment) / 2
 									: 0)}
-							{@const lines = R.reject(
-								R.isEmpty,
-								text.text.split("\n"),
-							)}
+							{@const lines = text.lines}
 							{@const textLineStyle =
 								textLineStyles[text[kindKey]]}
 							<g
@@ -1693,7 +1698,8 @@
 									text-anchor={["start", "middle", "end"][
 										textAlignment
 									]}
-									font-size={fontSize}
+									font-size={fontSize + "px"}
+									text-rendering="geometricPrecision"
 								>
 									{#each lines as line, l (l)}
 										{@const replacedLine = textLineStyle
@@ -1704,6 +1710,8 @@
 										<tspan
 											x={textX}
 											dy={l ? "1.2em" : "0"}
+											dx="0"
+											text-rendering="geometricPrecision"
 											{...textLineStyle?.attributes(
 												l,
 												line,
@@ -1720,7 +1728,7 @@
 
 								<text
 									class:hidden={!debug.value}
-									shape-rendering="geometricPrecision"
+									text-rendering="geometricPrecision"
 									x={textX}
 									y={text.fOriginY}
 									text-anchor="middle"
@@ -1735,7 +1743,8 @@
 						{/each}
 					</g>
 				</defs>
-				<!-- {#each ids.value as id, i (i)}
+			{/key}
+			<!-- {#each ids.value as id, i (i)}
 					{@const measuredSize = view(
 						[
 							"id" + id,
@@ -1746,17 +1755,18 @@
 					)}
 					<use href="#{id}" use:bindBoundingBox={measuredSize} />
 				{/each} -->
-				{#if extension.value}
-					<rect
-						x={extension.value.minX}
-						y={extension.value.minY}
-						width={extension.value.maxX - extension.value.minX}
-						height={extension.value.maxY - extension.value.minY}
-						fill="red"
-						fill-opacity="0.1"
-					/>
-				{/if}
-				<Navigator {camera} {frameBoxPath}>
+
+			<Navigator {camera} {frameBoxPath}>
+				<g pointer-events="none" transform={rotationTransform.value}>
+					{#if extension.value}
+						<rect
+							x={extension.value.minX}
+							y={extension.value.minY}
+							width={extension.value.maxX - extension.value.minX}
+							height={extension.value.maxY - extension.value.minY}
+							fill="#ffeeee"
+						/>
+					{/if}
 					{#each renderedRefMap.value as ref, i}
 						{@const id = "ref-" + ref}
 						{@const measuredSize = view(
@@ -1769,10 +1779,10 @@
 						)}
 						<use href="#{id}" use:bindBoundingBox={measuredSize} />
 					{/each}
-				</Navigator>
-			</svg>
-		</Scroller>
-	{/key}
+				</g>
+			</Navigator>
+		</svg>
+	</Scroller>
 </div>
 
 <style>
@@ -1792,6 +1802,17 @@
 		place-self: stretch;
 		width: 100%;
 		height: 100%;
+
+		user-select: none;
+		-webkit-user-select: none;
+		touch-action: none;
+
+		-webkit-touch-callout: none;
+		-webkit-user-callout: none;
+		-webkit-user-select: none;
+		-webkit-user-drag: none;
+		-webkit-user-modify: none;
+		-webkit-highlight: none;
 	}
 
 	.drop-target {

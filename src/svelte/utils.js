@@ -28,8 +28,8 @@ export function scaleViewBox({
     scaling,
 }, targetWidth, targetHeight, padding = 0) {
     if(!scaling) {
-        const hPad = padding * width/targetWidth;
-        const vPad = padding * height/targetHeight;
+        const hPad = padding * targetWidth?width/targetWidth:1;
+        const vPad = padding * targetHeight?height/targetHeight:1;
 
         return {
             minX: minX + hPad,
@@ -41,7 +41,7 @@ export function scaleViewBox({
         const factor = {
             'meet': Math.max,
             'slice': Math.min,
-        }[scaling].call(Math, width/targetWidth, height/targetHeight)
+        }[scaling].call(Math, targetWidth?width/targetWidth:1, targetHeight?height/targetHeight:1)
 
         const actualWidth = targetWidth * factor
         const actualHeight = targetHeight * factor
