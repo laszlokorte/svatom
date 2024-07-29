@@ -1024,7 +1024,7 @@
 									shape-rendering="geometricPrecision"
 								>
 									{#if rect[kindKey] === "CH.ifa.draw.contrib.DiamondFigure"}
-										<polyline
+										<polygon
 											points="{rect.x +
 												rect.w / 2} {rect.y}
 						{rect.x + rect.w} {rect.y + rect.h / 2}
@@ -1071,7 +1071,7 @@
 											},
 											{ x: rect.x, y: rect.y },
 										]}
-										<polyline
+										<polygon
 											points="{corners[rect.rotation]
 												.x} {corners[rect.rotation].y}
 									{corners[(rect.rotation + 3 - (rect.rotation % 2)) % 8].x} {corners[
