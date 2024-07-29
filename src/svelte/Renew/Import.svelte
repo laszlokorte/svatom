@@ -29,8 +29,28 @@
 	import exampleCloseDoor from "./closedoor.rnw?raw";
 	import exampleRenew from "./example.rnw?raw";
 	import exampleAip from "./example.aip?raw";
+	import exampleTextLines from "./textLineStyles.rnw?raw";
+	import exampleDoubleArrow from "./doublearrow.rnw?raw";
+	import exampleColors from "./colors.rnw?raw";
 
-	const examples = [exampleActor, exampleCloseDoor, exampleRenew, exampleAip];
+	const examples = [
+		exampleActor,
+		exampleCloseDoor,
+		exampleRenew,
+		exampleAip,
+		exampleTextLines,
+		exampleDoubleArrow,
+		exampleColors,
+	];
+	const moreExampes = fetch("http://127.0.0.1:8080/")
+		.then((x) => x.json().catch((e) => null))
+		.catch((e) => null);
+
+	function loadExample(name) {
+		return fetch(
+			"http://127.0.0.1:8080/?" + new URLSearchParams([["file", name]]),
+		).then((x) => x.json());
+	}
 
 	const renewDocument = atom({ string: undefined, json: undefined });
 	const renewSerialized = failableView(
@@ -316,6 +336,7 @@
 
 	const dragging = atom(0);
 	const debug = atom(false);
+	const searchTerm = atom("");
 	const selection = view(["selection", L.defaults([])], renewDocument);
 
 	const currentSelection = $derived(selection.value);
@@ -407,6 +428,39 @@
 		return obj.attributes?.attrs[attr] ?? defaultsAttributes[attr] ?? null;
 	}
 
+	const textLineStyles = {
+		"de.renew.gui.fs.ConceptFigure": {
+			replace: (lineIndex, lineContent) => {
+				const firstChar = lineContent[0];
+				return ["_", "\\"].indexOf(firstChar) > -1
+					? lineContent.substr(1)
+					: lineContent;
+			},
+			attributes: (lineIndex, lineContent) => {
+				const firstChar = lineContent[0];
+				return {
+					"font-weight": lineIndex == 0 ? "bold" : "normal",
+					"font-style": firstChar == "\\" ? "italic" : "normal",
+					"text-decoration":
+						firstChar == "_" ? "underline" : "normal",
+				};
+			},
+			backgroundAttributes: (
+				x,
+				y,
+				width,
+				height,
+				lineIndex,
+				lineContent,
+			) => {
+				return {};
+			},
+			backgroundPath: (x, y, width, height, lineIndex, lineContent) => {
+				return lineIndex > 0 ? `M${x},${y}h${width}` : "";
+			},
+		},
+	};
+
 	const lineDecorations = {
 		"de.renew.gui.AssocArrowTip": {
 			path: (from, to) => {
@@ -426,6 +480,48 @@
 			},
 			attributes: () => ({
 				fill: "none",
+				stroke: "black",
+			}),
+		},
+		"de.renew.gui.IsaArrowTip": {
+			path: (from, to) => {
+				const dx = to.x - from.x;
+				const dy = to.y - from.y;
+				const dl = Math.hypot(dx, dy);
+
+				const dxn = dx / dl;
+				const dyn = dy / dl;
+				const orthoX = -dyn;
+				const orthoY = dxn;
+
+				const size = 10;
+				const width = 0.7;
+
+				return `M${to.x},${to.y}l${(-dxn + orthoX * width) * size},${(-dyn + orthoY * width) * size}l${-2 * orthoX * width * size},${-2 * orthoY * width * size}z`;
+			},
+			attributes: () => ({
+				fill: "white",
+				stroke: "black",
+			}),
+		},
+		"de.renew.gui.fs.IsaArrowTip": {
+			path: (from, to) => {
+				const dx = to.x - from.x;
+				const dy = to.y - from.y;
+				const dl = Math.hypot(dx, dy);
+
+				const dxn = dx / dl;
+				const dyn = dy / dl;
+				const orthoX = -dyn;
+				const orthoY = dxn;
+
+				const size = 10;
+				const width = 0.7;
+
+				return `M${to.x},${to.y}l${(-dxn + orthoX * width) * size},${(-dyn + orthoY * width) * size}l${-2 * orthoX * width * size},${-2 * orthoY * width * size}z`;
+			},
+			attributes: () => ({
+				fill: "white",
 				stroke: "black",
 			}),
 		},
@@ -493,10 +589,42 @@
 				const orthoY = dxn;
 
 				const size = 6;
-				const width = 0.6;
+				const width = 0.4;
 				const indent = -0.15;
 
 				return `M${to.x},${to.y}
+				l${(-dxn + orthoX * width) * size},${(-dyn + orthoY * width) * size}
+				l${-orthoX * width * size + dxn * indent * size},${-orthoY * width * size + dyn * indent * size}
+				l${-orthoX * width * size - dxn * indent * size},${-orthoY * width * size - dyn * indent * size}
+				z`;
+			},
+			attributes: () => ({
+				fill: "black",
+				stroke: "black",
+			}),
+		},
+
+		"de.renew.gui.DoubleArrowTip": {
+			path: (from, to) => {
+				const dx = to.x - from.x;
+				const dy = to.y - from.y;
+				const dl = Math.hypot(dx, dy);
+
+				const dxn = dx / dl;
+				const dyn = dy / dl;
+				const orthoX = -dyn;
+				const orthoY = dxn;
+
+				const size = 6;
+				const width = 0.4;
+				const indent = -0.15;
+
+				return `M${to.x},${to.y}
+				l${(-dxn + orthoX * width) * size},${(-dyn + orthoY * width) * size}
+				l${-orthoX * width * size + dxn * indent * size},${-orthoY * width * size + dyn * indent * size}
+				l${-orthoX * width * size - dxn * indent * size},${-orthoY * width * size - dyn * indent * size}
+				z
+				m${-dxn * size},${-dyn * size}
 				l${(-dxn + orthoX * width) * size},${(-dyn + orthoY * width) * size}
 				l${-orthoX * width * size + dxn * indent * size},${-orthoY * width * size + dyn * indent * size}
 				l${-orthoX * width * size - dxn * indent * size},${-orthoY * width * size - dyn * indent * size}
@@ -536,6 +664,19 @@
 			}}>File #{e + 1}</button
 		>
 	{/each}
+
+	{#await moreExampes then filenames}
+		<select
+			oninput={(e) =>
+				loadExample(e.currentTarget.value).then(
+					(x) => (renewSerialized.value = x.content),
+				)}
+		>
+			{#each filenames as name}
+				<option>{name}</option>
+			{/each}
+		</select>
+	{/await}
 </div>
 
 <div
@@ -555,15 +696,27 @@
 		></textarea>
 		<textarea readonly>{renewJson.value}</textarea>
 
-		<select size="10" bind:value={selection.value} multiple="multiple">
-			{#each currentRefMap as ref, r (r)}
-				<option
-					value={r}
-					disabled={selectableTypes.indexOf(ref[kindKey]) < 0}
-					>#{r} {ref[kindKey]}</option
-				>
-			{/each}
-		</select>
+		<div
+			style="display: grid; flex-direction: column; align-items: stretch; align-content: stretch;flex-grow: 1; grid-template-rows: auto 1fr;"
+		>
+			<input
+				type="search"
+				placeholder="Search..."
+				bind:value={searchTerm.value}
+				style="flex-grow: 0; height: 2em;"
+			/>
+			<select size="10" bind:value={selection.value} multiple="multiple">
+				{#each currentRefMap as ref, r (r)}
+					{#if !searchTerm.value.length || ref[kindKey].indexOf(searchTerm.value) > -1}
+						<option
+							value={r}
+							disabled={selectableTypes.indexOf(ref[kindKey]) < 0}
+							>#{r} {ref[kindKey]}</option
+						>
+					{/if}
+				{/each}
+			</select>
+		</div>
 	</div>
 
 	<div class="error-message" hidden={!renewSerialized.hasError}>
@@ -638,6 +791,52 @@
 								id={/*line.attributes?.attrs.FigureWithID ??*/
 								"ref-" + line[selfKey]}
 							>
+								<polyline
+									points={R.join(
+										" ",
+										R.map(
+											R.compose(
+												R.join(" "),
+												R.props(["x", "y"]),
+											),
+											line.points,
+										),
+									)}
+									fill="none"
+									class="clickarea"
+									pointer-events="all"
+									stroke={"transparent"}
+									stroke-linecap="none"
+									stroke-width={15}
+									vector-effect="non-scaling-stroke"
+								/>
+
+								<polyline
+									points={R.join(
+										" ",
+										R.map(
+											R.compose(
+												R.join(" "),
+												R.props(["x", "y"]),
+											),
+											line.points,
+										),
+									)}
+									fill="none"
+									stroke={renewToRgba(
+										readAttribute(line, "FrameColor"),
+									)}
+									stroke-width={readAttribute(
+										line,
+										"LineWidth",
+									)}
+									stroke-dasharray={readAttribute(
+										line,
+										"LineStyle",
+									)}
+									vector-effect="non-scaling-stroke"
+								/>
+
 								{#if endDecoration}
 									{@const decorationType =
 										endDecoration[kindKey]}
@@ -712,52 +911,6 @@
 										{/if}
 									</g>
 								{/if}
-
-								<polyline
-									points={R.join(
-										" ",
-										R.map(
-											R.compose(
-												R.join(" "),
-												R.props(["x", "y"]),
-											),
-											line.points,
-										),
-									)}
-									fill="none"
-									class="clickarea"
-									pointer-events="all"
-									stroke={"transparent"}
-									stroke-linecap="none"
-									stroke-width={15}
-									vector-effect="non-scaling-stroke"
-								/>
-
-								<polyline
-									points={R.join(
-										" ",
-										R.map(
-											R.compose(
-												R.join(" "),
-												R.props(["x", "y"]),
-											),
-											line.points,
-										),
-									)}
-									fill="none"
-									stroke={renewToRgba(
-										readAttribute(line, "FrameColor"),
-									)}
-									stroke-width={readAttribute(
-										line,
-										"LineWidth",
-									)}
-									stroke-dasharray={readAttribute(
-										line,
-										"LineStyle",
-									)}
-									vector-effect="non-scaling-stroke"
-								/>
 							</g>
 						{/each}
 					</g>
@@ -787,7 +940,7 @@
 										"LineStyle",
 									)}
 									vector-effect="non-scaling-stroke"
-									shape-rendering="crispEdges"
+									shape-rendering="geometricPrecision"
 								>
 									{#if rect[kindKey] === "CH.ifa.draw.contrib.DiamondFigure"}
 										<polygon
@@ -892,7 +1045,7 @@
 										"LineStyle",
 									)}
 									vector-effect="non-scaling-stroke"
-									shape-rendering="crispEdges"
+									shape-rendering="geometricPrecision"
 								>
 									<ellipse
 										cx={ellipse.x + ellipse.w / 2}
@@ -1048,6 +1201,12 @@
 								(measureValue
 									? (measureValue.width * textAlignment) / 2
 									: 0)}
+							{@const lines = R.reject(
+								R.isEmpty,
+								text.text.split("\n"),
+							)}
+							{@const textLineStyle =
+								textLineStyles[text[kindKey]]}
 							<g
 								{id}
 								class:selected={currentSelection.indexOf(
@@ -1055,7 +1214,7 @@
 								) > -1}
 							>
 								{#if measureValue}
-									<rect
+									<g
 										fill={renewToRgba(
 											readAttribute(text, "FillColor"),
 										)}
@@ -1070,12 +1229,51 @@
 											text,
 											"LineStyle",
 										)}
-										width={measureValue.width + 2}
-										height={measureValue.height + 2}
-										x={text.fOriginX - 1}
-										y={text.fOriginY - 1}
-									/>
+									>
+										<rect
+											width={measureValue.width + 2}
+											height={measureValue.height + 2}
+											x={text.fOriginX - 1}
+											y={text.fOriginY - 1}
+										/>
+
+										{#if lines.length && textLineStyle}
+											{#each lines as line, l}
+												{@const width =
+													measureValue.width + 2}}
+												{@const height =
+													(measureValue.height + 2) /
+													lines.length}
+												{@const x = text.fOriginX - 1}
+												{@const y =
+													text.fOriginY +
+													l *
+														((measureValue.height +
+															2) /
+															lines.length)}
+												<path
+													d={textLineStyle.backgroundPath(
+														x,
+														y,
+														width,
+														height,
+														l,
+														line,
+													)}
+													{...textLineStyle.backgroundAttributes(
+														x,
+														y,
+														width,
+														height,
+														l,
+														line,
+													)}
+												/>
+											{/each}
+										{/if}
+									</g>
 								{/if}
+
 								<text
 									x={textX}
 									y={text.fOriginY + fontSize}
@@ -1095,18 +1293,42 @@
 									]}
 									font-size={fontSize}
 								>
-									{#each text.text.split("\n") as line, l (l)}
+									{#each lines as line, l (l)}
+										{@const replacedLine = textLineStyle
+											? textLineStyles[
+													text[kindKey]
+												].replace(l, line)
+											: line}
 										<tspan
 											x={textX}
 											dy={l ? "1.2em" : "0"}
+											{...textLineStyle?.attributes(
+												l,
+												line,
+											)}
 											text-anchor={[
 												"start",
 												"middle",
 												"end",
-											][textAlignment]}>{line}</tspan
+											][textAlignment]}
+											>{replacedLine}</tspan
 										>
 									{/each}
 								</text>
+
+								<text
+									class:hidden={!debug.value}
+									shape-rendering="geometricPrecision"
+									x={textX}
+									y={text.fOriginY}
+									text-anchor="middle"
+									font-size="7"
+									fill="royalblue"
+									font-family="monospace"
+									title={text[kindKey]}
+								>
+									{text[kindKey]} ({lines.length})</text
+								>
 							</g>
 						{/each}
 					</g>
@@ -1168,6 +1390,11 @@
 	}
 
 	.selected rect {
+		paint-order: stroke;
+		stroke: #ff6666aa;
+		stroke-width: 5;
+	}
+	.selected ellipse {
 		paint-order: stroke;
 		stroke: #ff6666aa;
 		stroke-width: 5;

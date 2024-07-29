@@ -512,7 +512,7 @@ export function makeGrammar(version) {
 					return {
 						fOffsetX: context.parseInt(),
 				        fOffsetY: context.parseInt(),
-				        fBase: context.parseStorable("Locator"),
+				        fBase: context.parseStorable("CH.ifa.draw.framework.Locator"),
 					}
 				},
 			},
@@ -541,8 +541,8 @@ export function makeGrammar(version) {
 			            o.points.push({x,y});
 			        }
 
-			        o.startDecoration =  context.parseStorable("LineDecoration");
-			        o.endDecoration = context.parseStorable("LineDecoration");
+			        o.startDecoration =  context.parseStorable("CH.ifa.draw.figures.LineDecoration");
+			        o.endDecoration = context.parseStorable("CH.ifa.draw.figures.LineDecoration");
 
 			        if(version >= 8) {
 			            o.arrowName = context.parseString();

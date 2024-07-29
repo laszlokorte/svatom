@@ -1,0 +1,90 @@
+11 
+    de.renew.gui.CPNDrawing 36 
+        CH.ifa.draw.contrib.TriangleFigure "attributes" "attributes" 3 "FigureWithID" "Int" 152 "FrameColor" "Color" 0 0 0 0 "FillColor" "Color" 192 192 192 102 -6 136 163 141 5  
+        CH.ifa.draw.figures.RectangleFigure "attributes" "attributes" 3 "FigureWithID" "Int" 5208 "FrameColor" "Color" 0 0 0 0 "FillColor" "Color" 192 192 192 102 -4 -9 247 100  
+        CH.ifa.draw.figures.RectangleFigure "attributes" "attributes" 3 "FigureWithID" "Int" 172 "FrameColor" "Color" 0 0 0 0 "FillColor" "Color" 112 219 147 0 -28 -37 328 146  
+        CH.ifa.draw.figures.RectangleFigure "attributes" "attributes" 3 "FigureWithID" "Int" 5214 "FrameColor" "Color" 0 0 0 0 "FillColor" "Color" 112 219 147 0 -13 123 186 200  
+        de.renew.netcomponents.NetComponentFigure "attributes" "attributes" 4 "LineStyle" "String" "1 2" "FigureWithID" "Int" 5224 "FrameColor" "Color" 255 199 158 255 "FillColor" "Color" 255 199 158 255 18 REF 1 
+            de.renew.gui.ArcConnection "attributes" "attributes" 1 "FigureWithID" "Int" 118 3 94 34 94 58 169 58 NULL 
+                CH.ifa.draw.figures.ArrowTip 0.4 8.0 8.0 1  "CH.ifa.draw.figures.ArrowTip" 
+                CH.ifa.draw.figures.ChopEllipseConnector 
+                    de.renew.gui.PlaceFigure "attributes" "attributes" 2 "FigureWithID" "Int" 107 "FillColor" "Color" 0 0 255 255 84 14 20 20 NULL   
+                CH.ifa.draw.standard.ChopBoxConnector 
+                    de.renew.gui.TransitionFigure "attributes" "attributes" 2 "FigureWithID" "Int" 119 "FillColor" "Color" 112 219 147 255 169 50 24 16 NULL    REF 2 
+            de.renew.gui.DoubleArcConnection "attributes" "attributes" 1 "FigureWithID" "Int" 146 2 193 58 257 58 NULL 
+                de.renew.gui.DoubleArrowTip 0.4 8.0 8.0 1  "de.renew.gui.DoubleArrowTip" 
+                CH.ifa.draw.standard.ChopBoxConnector REF 11  
+                CH.ifa.draw.figures.ChopEllipseConnector 
+                    de.renew.gui.PlaceFigure "attributes" "attributes" 2 "FigureWithID" "Int" 133 "FillColor" "Color" 255 0 0 255 256 48 20 20 NULL    
+            de.renew.gui.PlaceFigure "attributes" "attributes" 2 "FigureWithID" "Int" 138 "FillColor" "Color" 0 255 0 255 256 15 20 20 NULL  REF 3 
+            de.renew.gui.VirtualPlaceFigure "attributes" "attributes" 3 "FigureWithID" "Int" 109 "FrameColor" "Color" 0 0 0 255 "FillColor" "Color" 0 0 255 255 15 203 20 20 NULL REF 9  
+            de.renew.gui.TransitionFigure "attributes" "attributes" 2 "FigureWithID" "Int" 117 "FillColor" "Color" 112 219 147 255 168 17 24 16 NULL  
+            de.renew.gui.ArcConnection "attributes" "attributes" 1 "FigureWithID" "Int" 116 2 104 24 168 24 NULL 
+                CH.ifa.draw.figures.ArrowTip 0.4 8.0 8.0 1  "CH.ifa.draw.figures.ArrowTip" 
+                CH.ifa.draw.figures.ChopEllipseConnector REF 9  
+                CH.ifa.draw.standard.ChopBoxConnector REF 19   
+            de.renew.gui.PlaceFigure "attributes" "attributes" 1 "FigureWithID" "Int" 123 149 249 20 20 NULL  
+            de.renew.gui.ArcConnection "attributes" "attributes" 1 "FigureWithID" "Int" 137 2 192 25 257 25 NULL 
+                CH.ifa.draw.figures.ArrowTip 0.4 8.0 8.0 1  "CH.ifa.draw.figures.ArrowTip" 
+                CH.ifa.draw.standard.ChopBoxConnector REF 19  
+                CH.ifa.draw.figures.ChopEllipseConnector REF 17   REF 4 REF 16 
+            de.renew.gui.ArcConnection "attributes" "attributes" 1 "FigureWithID" "Int" 188 2 25 252 25 223 NULL 
+                CH.ifa.draw.figures.ArrowTip 0.4 8.0 8.0 1  "CH.ifa.draw.figures.ArrowTip" 
+                CH.ifa.draw.standard.ChopBoxConnector 
+                    de.renew.gui.TransitionFigure "attributes" "attributes" 2 "FigureWithID" "Int" 94 "FillColor" "Color" 192 192 192 255 14 252 24 16 NULL   
+                CH.ifa.draw.figures.ChopEllipseConnector REF 18   
+            de.renew.gui.ArcConnection "attributes" "attributes" 1 "FigureWithID" "Int" 5186 2 38 259 150 259 NULL 
+                CH.ifa.draw.figures.ArrowTip 0.4 8.0 8.0 1  "CH.ifa.draw.figures.ArrowTip" 
+                CH.ifa.draw.standard.ChopBoxConnector REF 32  
+                CH.ifa.draw.figures.ChopEllipseConnector REF 24   REF 9 REF 11 REF 32  REF 17 REF 18 REF 19 REF 24 REF 16 REF 9 REF 11 REF 32 REF 6 
+        de.renew.gui.CPNTextFigure "attributes" "attributes" 4 "TextAlignment" "Int" 1 "FigureWithID" "Int" 145 "FrameColor" "Color" 255 199 158 255 "FillColor" "Color" 255 199 158 255 241 -16 "authorized\nMailclient" "SansSerif" 1 12 0 REF 17 
+            CH.ifa.draw.standard.OffsetLocator 5 -25 
+                CH.ifa.draw.standard.RelativeLocator 0.5 0.5   2  REF 12 
+        CH.ifa.draw.figures.TextFigure "attributes" "attributes" 5 "TextAlignment" "Int" 1 "FigureWithID" "Int" 171 "FrameColor" "Color" 255 199 158 255 "TextColor" "Color" 0 0 255 255 "FillColor" "Color" 255 199 158 255 37 327 "[logging into \nMailserver]" "SansSerif" 0 18 0 REF 4 
+            CH.ifa.draw.standard.OffsetLocator 8 128 
+                CH.ifa.draw.standard.RelativeLocator 0.5 0.5    
+        de.renew.gui.CPNTextFigure "attributes" "attributes" 4 "TextAlignment" "Int" 1 "FigureWithID" "Int" 110 "FrameColor" "Color" 255 199 158 255 "FillColor" "Color" 255 199 158 255 1 187 "Mailclient" "SansSerif" 1 12 0 REF 18 
+            CH.ifa.draw.standard.OffsetLocator 3 -18 
+                CH.ifa.draw.standard.RelativeLocator 0.5 0.5   2  
+        de.renew.gui.CPNTextFigure "attributes" "attributes" 4 "TextAlignment" "Int" 1 "FigureWithID" "Int" 130 "FrameColor" "Color" 255 199 158 255 "FillColor" "Color" 255 199 158 255 2 -1 "[true, errorList] = mailclient.getIsLoggedIn()" "SansSerif" 0 12 0 REF 19 
+            CH.ifa.draw.standard.OffsetLocator -61 -18 
+                CH.ifa.draw.standard.RelativeLocator 0.5 0.5   1  REF 20 
+        de.renew.gui.CPNTextFigure "attributes" "attributes" 4 "TextAlignment" "Int" 1 "FigureWithID" "Int" 129 "FrameColor" "Color" 255 199 158 255 "FillColor" "Color" 254 254 254 255 74 46 "mailclient" "SansSerif" 0 12 0 REF 6 
+            CH.ifa.draw.standard.OffsetLocator -31 8 
+                CH.ifa.draw.standard.RelativeLocator 0.5 0.5   1  
+        de.renew.gui.CPNTextFigure "attributes" "attributes" 4 "TextAlignment" "Int" 1 "FigureWithID" "Int" 148 "FrameColor" "Color" 255 199 158 255 "FillColor" "Color" 255 199 158 255 248 66 "Errors" "SansSerif" 1 12 0 REF 16 
+            CH.ifa.draw.standard.OffsetLocator 0 16 
+                CH.ifa.draw.standard.RelativeLocator 0.5 0.5   2  
+        de.renew.gui.CPNTextFigure "attributes" "attributes" 4 "TextAlignment" "Int" 1 "FigureWithID" "Int" 131 "FrameColor" "Color" 255 199 158 255 "FillColor" "Color" 255 199 158 255 -2 66 "[false, errorList] = mailclient.getIsLoggedIn();" "SansSerif" 0 12 0 REF 11 
+            CH.ifa.draw.standard.OffsetLocator -61 16 
+                CH.ifa.draw.standard.RelativeLocator 0.5 0.5   1  REF 25 
+        de.renew.gui.CPNTextFigure "attributes" "attributes" 4 "TextAlignment" "Int" 1 "FigureWithID" "Int" 140 "FrameColor" "Color" 255 199 158 255 "FillColor" "Color" 254 254 254 255 105 16 "mailclient" "SansSerif" 0 12 0 REF 20 
+            CH.ifa.draw.standard.OffsetLocator -5 0 
+                CH.ifa.draw.standard.RelativeLocator 0.5 0.5   1  REF 29 REF 34 
+        de.renew.gui.CPNTextFigure "attributes" "attributes" 4 "TextAlignment" "Int" 1 "FigureWithID" "Int" 108 "FrameColor" "Color" 255 199 158 255 "FillColor" "Color" 255 199 158 255 28 16 "Mailclient" "SansSerif" 1 12 0 REF 9 
+            CH.ifa.draw.standard.OffsetLocator -39 0 
+                CH.ifa.draw.standard.RelativeLocator 0.5 0.5   2  
+        de.renew.gui.CPNTextFigure "attributes" "attributes" 4 "TextAlignment" "Int" 1 "FigureWithID" "Int" 99 "FrameColor" "Color" 255 199 158 255 "FillColor" "Color" 255 199 158 255 -127 289 "action mailclient = new Mailserver(\"mailserverconfig.properties\");" "SansSerif" 0 12 0 REF 32 
+            CH.ifa.draw.standard.OffsetLocator 23 37 
+                CH.ifa.draw.standard.RelativeLocator 0.5 0.5   1  
+        de.renew.gui.CPNTextFigure "attributes" "attributes" 5 "TextAlignment" "Int" 1 "FigureWithID" "Int" 3664 "FrameColor" "Color" 255 199 158 255 "TextColor" "Color" 255 0 0 255 "FillColor" "Color" 255 199 158 255 166 252 ">" "SansSerif" 1 12 0 REF 24 
+            CH.ifa.draw.standard.OffsetLocator 10 1 
+                CH.ifa.draw.standard.RelativeLocator 0.5 0.5   0  
+        de.renew.gui.CPNTextFigure "attributes" "attributes" 4 "TextAlignment" "Int" 1 "FigureWithID" "Int" 147 "FrameColor" "Color" 255 199 158 255 "FillColor" "Color" 254 254 254 255 195 49 "errorList" "SansSerif" 0 12 0 REF 12 
+            CH.ifa.draw.standard.OffsetLocator -7 -1 
+                CH.ifa.draw.standard.RelativeLocator 0.5 0.5   1  
+        de.renew.gui.CPNTextFigure "attributes" "attributes" 4 "TextAlignment" "Int" 1 "FigureWithID" "Int" 189 "FrameColor" "Color" 255 199 158 255 "FillColor" "Color" 254 254 254 255 0 233 "mailclient" "SansSerif" 0 12 0 REF 29 
+            CH.ifa.draw.standard.OffsetLocator 1 4 
+                CH.ifa.draw.standard.RelativeLocator 0.5 0.5   1  
+        de.renew.gui.CPNTextFigure "attributes" "attributes" 5 "TextAlignment" "Int" 1 "FigureWithID" "Int" 3665 "FrameColor" "Color" 255 199 158 255 "TextColor" "Color" 255 0 0 255 "FillColor" "Color" 255 199 158 255 11 252 ">" "SansSerif" 1 12 0 REF 32 
+            CH.ifa.draw.standard.OffsetLocator -12 0 
+                CH.ifa.draw.standard.RelativeLocator 0.5 0.5   0  
+        de.renew.gui.CPNTextFigure "attributes" "attributes" 4 "TextAlignment" "Int" 1 "FigureWithID" "Int" 144 "FrameColor" "Color" 255 199 158 255 "FillColor" "Color" 254 254 254 255 193 18 "mailclient" "SansSerif" 0 12 0 REF 25 
+            CH.ifa.draw.standard.OffsetLocator -5 1 
+                CH.ifa.draw.standard.RelativeLocator 0.5 0.5   1  
+        CH.ifa.draw.figures.TextFigure "attributes" "attributes" 5 "TextAlignment" "Int" 1 "FigureWithID" "Int" 173 "FrameColor" "Color" 255 199 158 255 "TextColor" "Color" 0 0 255 255 "FillColor" "Color" 255 199 158 255 52 -41 "[checking success]" "SansSerif" 0 18 0 REF 5 
+            CH.ifa.draw.standard.OffsetLocator -9 -172 
+                CH.ifa.draw.standard.RelativeLocator 0.5 0.5    
+        CH.ifa.draw.figures.TextFigure "attributes" "attributes" 5 "TextAlignment" "Int" 1 "FigureWithID" "Int" 5215 "FrameColor" "Color" 255 199 158 255 "TextColor" "Color" 0 0 255 255 "FillColor" "Color" 255 199 158 255 -105 375 "user input:\nmailserverconfig.properties for the specific mailserver. [\"name_of_file\"]\n(needs to be specify first in properties file)" "SansSerif" 0 12 0 REF 4 
+            CH.ifa.draw.standard.OffsetLocator 7 176 
+                CH.ifa.draw.standard.RelativeLocator 0.5 0.5    NULL  
