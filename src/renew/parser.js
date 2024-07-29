@@ -38,7 +38,7 @@ export function makeParser(reader, grammar, autoDeref = true, kindStringKey = nu
 			get kindKey() {
 				return kindKey;
 			},
-			parseStorable(ofInterface, allowNull = true)  {
+			parseStorable(ofInterface, allowNull = true, forceDeref = false)  {
 				const t = r.readAny(['nil','ref','className'])
 
 				if(t.type === 'ref') {
@@ -54,7 +54,7 @@ export function makeParser(reader, grammar, autoDeref = true, kindStringKey = nu
 						}
 					}
 
-					if(autoDeref) {
+					if(autoDeref || forceDeref) {
 						return referencedObject
 					} else {
 						return {[refKey]: true, ref: t.value}

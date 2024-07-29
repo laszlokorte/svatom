@@ -23,7 +23,7 @@ export function makeGrammar(version) {
 					}
 					const size = context.parseInt();
 			        for (let i = 0; i < size; i++) {
-			            o.figures.push(context.parseStorable('CH.ifa.draw.framework.Figure'))
+			            o.figures.push(context.parseStorable('CH.ifa.draw.framework.Figure', true))
 			        }
 
 			        return o

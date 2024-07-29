@@ -29,6 +29,7 @@
 	import exampleCloseDoor from "./closedoor.rnw?raw";
 	import exampleRenew from "./example.rnw?raw";
 	import exampleAip from "./example.aip?raw";
+	import exampleAip2 from "./example2.aip?raw";
 	import exampleTextLines from "./textLineStyles.rnw?raw";
 	import exampleDoubleArrow from "./doublearrow.rnw?raw";
 	import exampleColors from "./colors.rnw?raw";
@@ -38,13 +39,12 @@
 		exampleCloseDoor,
 		exampleRenew,
 		exampleAip,
+		exampleAip2,
 		exampleTextLines,
 		exampleDoubleArrow,
 		exampleColors,
 	];
-	const moreExampes = fetch("http://127.0.0.1:8080/")
-		.then((x) => x.json().catch((e) => null))
-		.catch((e) => null);
+	const moreExamples = fetch("http://127.0.0.1:8080/").then((x) => x.json());
 
 	function loadExample(name) {
 		return fetch(
@@ -94,6 +94,10 @@
 		"de.renew.diagram.DiagramFigure",
 	);
 
+	const groupTypes = hierarchyV11.descendantsOf(
+		"CH.ifa.draw.figures.GroupFigure",
+	);
+
 	const lineTypes = hierarchyV11.implementorsOf(
 		"CH.ifa.draw.figures.PolyLineable",
 	);
@@ -114,6 +118,7 @@
 		...lineTypes,
 		...textTypes,
 		...diagramTypes,
+		...groupTypes,
 	];
 
 	const selectableTypes = [
@@ -122,6 +127,7 @@
 		...lineTypes,
 		...textTypes,
 		...diagramTypes,
+		...groupTypes,
 		...lineDecorationTypes,
 		...boxDecorationTypes,
 	];
@@ -177,6 +183,21 @@
 				L.elems,
 				L.satisfying(
 					R.compose(R.includes(R.__, diagramTypes), R.prop(kindKey)),
+				),
+			),
+		],
+		renewDocument,
+	);
+
+	const groupFigs = view(
+		[
+			"json",
+			"drawing",
+			"figures",
+			L.partsOf(
+				L.elems,
+				L.satisfying(
+					R.compose(R.includes(R.__, groupTypes), R.prop(kindKey)),
 				),
 			),
 		],
@@ -324,15 +345,31 @@
 	const doctype = view(["json", "doctype"], renewDocument);
 	const refMap = view(["json", "refMap"], renewDocument);
 
-	const renderedRefMap = view((map) => {
-		return map
-			.map(
-				(ref, i) =>
-					renderedTypes.indexOf(ref[kindKey]) > -1 ? i : null /*&&
-				!ref.attributes?.attrs.FigureWithID*/,
-			)
-			.filter((i) => i !== false && i !== null);
-	}, refMap);
+	// const renderedRefMap = view((map) => {
+	// 	return map
+	// 		.map(
+	// 			(ref, i) =>
+	// 				renderedTypes.indexOf(ref[kindKey]) > -1 ? i : null /*&&
+	// 			!ref.attributes?.attrs.FigureWithID*/,
+	// 		)
+	// 		.filter((i) => i !== false && i !== null);
+	// }, refMap);
+
+	const renderedRefMap = view(
+		[
+			"json",
+			"drawing",
+			"figures",
+			L.partsOf(
+				L.elems,
+				L.choices(
+					(e) => e[selfKey],
+					(e) => e.ref,
+				),
+			),
+		],
+		renewDocument,
+	);
 
 	const dragging = atom(0);
 	const debug = atom(false);
@@ -546,6 +583,27 @@
 				stroke: "black",
 			}),
 		},
+		"de.renew.diagram.SynchronousMessageArrowTip": {
+			path: (from, to) => {
+				const dx = to.x - from.x;
+				const dy = to.y - from.y;
+				const dl = Math.hypot(dx, dy);
+
+				const dxn = dx / dl;
+				const dyn = dy / dl;
+				const orthoX = -dyn;
+				const orthoY = dxn;
+
+				const size = 6;
+				const width = 0.7;
+
+				return `M${to.x},${to.y}l${(-dxn + orthoX * width) * size},${(-dyn + orthoY * width) * size}M${to.x},${to.y}l${(-dxn - orthoX * width) * size},${(-dyn - orthoY * width) * size}`;
+			},
+			attributes: () => ({
+				fill: "black",
+				stroke: "black",
+			}),
+		},
 		"de.renew.gui.CircleDecoration": {
 			path: (from, to) => {
 				const dx = to.x - from.x;
@@ -642,6 +700,26 @@
 			path: (x, y, { size, halfSize }) => {
 				return `M${x},${y}m${-halfSize},0l${halfSize},${halfSize}l${halfSize},${-halfSize}l${-halfSize},${-halfSize}z`;
 			},
+			attributes: () => {
+				return {
+					fill: "black",
+				};
+			},
+		},
+		"de.renew.diagram.XORDecoration": {
+			path: (x, y, { size, halfSize }) => {
+				return `M${x},${y}
+				l${halfSize / 2},${halfSize / 2}l${halfSize / 2},${-halfSize / 2}l${-halfSize / 2},${-halfSize / 2}z
+				l${-halfSize / 2},${-halfSize / 2}l${-halfSize / 2},${halfSize / 2}l${halfSize / 2},${halfSize / 2}z
+				l${-halfSize / 2},${-halfSize / 2}l${halfSize / 2},${-halfSize / 2}l${halfSize / 2},${halfSize / 2}z
+				l${halfSize / 2},${halfSize / 2}l${-halfSize / 2},${halfSize / 2}l${-halfSize / 2},${-halfSize / 2}z`;
+			},
+			attributes: () => {
+				return {
+					fill: "white",
+					stroke: "black",
+				};
+			},
 		},
 	};
 
@@ -655,7 +733,7 @@
 	It will be parsed and output as JSON on the right and rendered as SVG below.
 </p>
 
-<div style="display: flex; gap: 0.2em">
+<div style="display: flex; gap: 0.2em; align-items: baseline;">
 	{#each examples as example, e (e)}
 		<button
 			type="button"
@@ -665,7 +743,7 @@
 		>
 	{/each}
 
-	{#await moreExampes then filenames}
+	{#await moreExamples then filenames}
 		<select
 			oninput={(e) =>
 				loadExample(e.currentTarget.value).then(
@@ -676,6 +754,10 @@
 				<option>{name}</option>
 			{/each}
 		</select>
+	{:catch}
+		<em style="color: #aaa"
+			>Or Drop Renew Files from your own PC into the text field</em
+		>
 	{/await}
 </div>
 
@@ -1133,6 +1215,9 @@
 												d={boxDecorations[
 													decorationKind
 												].path(x, y, decoration)}
+												{...boxDecorations[
+													decorationKind
+												].attributes()}
 											/>
 										{:else}
 											<text
@@ -1163,6 +1248,19 @@
 									title={diag[kindKey]}
 									>{R.last(diag[kindKey].split("."))}</text
 								>
+							</g>
+						{/each}
+					</g>
+
+					<g name="groupFigs">
+						{#each groupFigs.value as group, i (group[selfKey])}
+							{@const id =
+								/*text.attributes?.attrs.FigureWithID ??*/
+								"ref-" + group[selfKey]}
+							<g {id}>
+								{#each group.figures as f}
+									<use href="#ref-{f[selfKey] || f.ref}" />
+								{/each}
 							</g>
 						{/each}
 					</g>
@@ -1390,22 +1488,18 @@
 	}
 
 	.selected rect {
-		paint-order: stroke;
 		stroke: #ff6666aa;
 		stroke-width: 5;
 	}
 	.selected ellipse {
-		paint-order: stroke;
 		stroke: #ff6666aa;
 		stroke-width: 5;
 	}
 	.selected path {
-		paint-order: stroke;
 		stroke: #ff6666aa;
 		stroke-width: 5;
 	}
 	.selected polyline.clickarea {
-		paint-order: stroke;
 		stroke: #ff6666aa;
 	}
 
