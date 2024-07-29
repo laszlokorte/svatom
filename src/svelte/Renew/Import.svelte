@@ -159,7 +159,7 @@
 	// 		"figures",
 	// 		L.partsOf(
 	// 			L.elems,
-	// 			L.satisfying(R.prop("FigureWithID")),
+	// 			L.when(R.prop("FigureWithID")),
 	// 			"FigureWithID",
 	// 		),
 	// 	],
@@ -169,13 +169,10 @@
 	const rectangles = view(
 		[
 			"json",
-			"drawing",
-			"figures",
+			"refMap",
 			L.partsOf(
 				L.elems,
-				L.satisfying(
-					R.compose(R.includes(R.__, rectTypes), R.prop(kindKey)),
-				),
+				L.when(R.compose(R.includes(R.__, rectTypes), R.prop(kindKey))),
 			),
 		],
 		renewDocument,
@@ -184,11 +181,10 @@
 	const diagramFigs = view(
 		[
 			"json",
-			"drawing",
-			"figures",
+			"refMap",
 			L.partsOf(
 				L.elems,
-				L.satisfying(
+				L.when(
 					R.compose(R.includes(R.__, diagramTypes), R.prop(kindKey)),
 				),
 			),
@@ -199,11 +195,10 @@
 	const groupFigs = view(
 		[
 			"json",
-			"drawing",
-			"figures",
+			"refMap",
 			L.partsOf(
 				L.elems,
-				L.satisfying(
+				L.when(
 					R.compose(R.includes(R.__, groupTypes), R.prop(kindKey)),
 				),
 			),
@@ -214,11 +209,10 @@
 	const ellipses = view(
 		[
 			"json",
-			"drawing",
-			"figures",
+			"refMap",
 			L.partsOf(
 				L.elems,
-				L.satisfying(
+				L.when(
 					R.compose(R.includes(R.__, ellipseTypes), R.prop(kindKey)),
 				),
 			),
@@ -229,13 +223,10 @@
 	const lines = view(
 		[
 			"json",
-			"drawing",
-			"figures",
+			"refMap",
 			L.partsOf(
 				L.elems,
-				L.satisfying(
-					R.compose(R.includes(R.__, lineTypes), R.prop(kindKey)),
-				),
+				L.when(R.compose(R.includes(R.__, lineTypes), R.prop(kindKey))),
 			),
 		],
 		renewDocument,
@@ -244,13 +235,10 @@
 	const textes = view(
 		[
 			"json",
-			"drawing",
-			"figures",
+			"refMap",
 			L.partsOf(
 				L.elems,
-				L.satisfying(
-					R.compose(R.includes(R.__, textTypes), R.prop(kindKey)),
-				),
+				L.when(R.compose(R.includes(R.__, textTypes), R.prop(kindKey))),
 			),
 		],
 		renewDocument,
