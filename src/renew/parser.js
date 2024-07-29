@@ -2,7 +2,7 @@ export const kindKey = Symbol("kind");
 export const refKey = Symbol("ref");
 export const selfKey = Symbol("self");
 
-export function makeParser(reader, grammar, autoDeref = true, kindStringKey = null) {
+export function makeParser(reader, grammar, autoDeref = true, metaKeys = {}) {
 	return function parser(inputString) {
 		const r = reader(inputString)
 		const refMap = [];
@@ -57,7 +57,12 @@ export function makeParser(reader, grammar, autoDeref = true, kindStringKey = nu
 					if(autoDeref || forceDeref) {
 						return referencedObject
 					} else {
-						return {[refKey]: true, ref: t.value}
+						const ref = {[refKey]: true, ref: t.value}
+						if(metaKeys.ref) {
+							ref[metaKeys.ref] = t.value
+						}
+
+						return ref
 					}
 
 				} else if(t.type === 'nil') {
@@ -70,11 +75,14 @@ export function makeParser(reader, grammar, autoDeref = true, kindStringKey = nu
 						[kindKey]: t.value,
 					};
 
-					if(kindStringKey) {
-						newObject[kindStringKey] = t.value
+					if(metaKeys.kind) {
+						newObject[metaKeys.kind] = t.value
 					}
 
 					newObject[selfKey] = refMap.length
+					if(metaKeys.self) {
+						newObject[metaKeys.self] = refMap.length
+					}
 					refMap.push(newObject)
 
 					parseInto(newObject, t.value);
@@ -87,12 +95,15 @@ export function makeParser(reader, grammar, autoDeref = true, kindStringKey = nu
 					[kindKey]: ofType,
 				};
 
-				if(kindStringKey) {
-					newObject[kindStringKey] = ofType
+				if(metaKeys.kind) {
+					newObject[metaKeys.kind] = ofType
 				}
 
 				if(storeRef) {
 					newObject[selfKey] = refMap.length
+					if(metaKeys.self) {
+						newObject[metaKeys.self] = refMap.length
+					}
 					refMap.push(newObject)
 				}
 

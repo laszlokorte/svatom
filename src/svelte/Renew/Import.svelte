@@ -20,9 +20,7 @@
 		parserAutoDetect,
 		stringify,
 		hierarchyV11,
-		kindKey,
 		tryDeref,
-		selfKey,
 	} from "../../renew/index.js";
 
 	import exampleActor from "./actors.rnw?raw";
@@ -52,6 +50,10 @@
 		).then((x) => x.json());
 	}
 
+	const kindKey = "__kind";
+	const selfKey = "__self";
+	const refKey = "__ref";
+
 	const renewDocument = atom({ string: undefined, json: undefined });
 	const renewSerialized = failableView(
 		[
@@ -59,7 +61,11 @@
 				try {
 					return {
 						string: x,
-						json: parserAutoDetect(x, false, "__kind"),
+						json: parserAutoDetect(x, false, {
+							kind: kindKey,
+							ref: refKey,
+							self: selfKey,
+						}),
 					};
 				} catch (e) {
 					return e;
@@ -73,13 +79,11 @@
 
 	const sizeCache = view(["cachedSizes", L.defaults({})], renewDocument);
 
-	const renewJson = read(
-		[
-			"json",
-			L.props("version", "doctype", "drawing"),
-			L.inverse(L.json({ space: "  " })),
-		],
-		renewDocument,
+	const renewJsonCurrent = failableView(["json"], renewDocument);
+
+	const renewJson = failableView(
+		L.inverse(L.json({ space: "  " })),
+		renewJsonCurrent,
 	);
 
 	const rectTypes = hierarchyV11.descendantsOf(
@@ -776,7 +780,7 @@
 			bind:value={renewSerialized.value}
 			class:dragging={dragging.value > 0}
 		></textarea>
-		<textarea readonly>{renewJson.value}</textarea>
+		<textarea bind:value={renewJson.value}></textarea>
 
 		<div
 			style="display: grid; flex-direction: column; align-items: stretch; align-content: stretch;flex-grow: 1; grid-template-rows: auto 1fr;"

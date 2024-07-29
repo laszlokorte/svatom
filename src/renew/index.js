@@ -24,13 +24,13 @@ export const reader = makeReader(tokenizer)
 export const parserV11 = makeParser(reader, makeGrammar(11))
 export const hierarchyV11 = makeHierarchy(makeGrammar(11))
 
-export const parserAutoDetect = function(inputString, autoDeref = true, kindStringKey = null) {
+export const parserAutoDetect = function(inputString, autoDeref = true, metaKeys = {}) {
 	const tokenStream = tokenizer(inputString);
 	const r = reader(inputString)
 	const version = r.readAny(["int","className"], true);
 	
 	if(version.type == 'int') {
-		const parser = makeParser(reader, makeGrammar(version.value), autoDeref, kindStringKey)
+		const parser = makeParser(reader, makeGrammar(version.value), autoDeref, metaKeys)
 		const p = parser(inputString)
 
 		p.skipAny(["int"])
@@ -41,7 +41,7 @@ export const parserAutoDetect = function(inputString, autoDeref = true, kindStri
 
 		return {version: p.version, doctype: drawing[kindKey], drawing, refMap: p.refMap};
 	} else {
-		const parser = makeParser(reader, makeGrammar(-1), autoDeref, kindStringKey)
+		const parser = makeParser(reader, makeGrammar(-1), autoDeref, metaKeys)
 		const p = parser(inputString)
 
 		const drawing = p.parseStorable();

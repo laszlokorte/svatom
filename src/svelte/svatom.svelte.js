@@ -1,6 +1,6 @@
 import { get, set, collect, foldl, propsExcept } from 'partial.lenses'
 import * as R from "ramda";
-import {tick} from "svelte";
+import {tick, untrack} from "svelte";
 import { createActor } from 'xstate';
 
 
@@ -255,6 +255,15 @@ export function adjustSize(node, someAtom) {
 }
 
 export function failableView(opticLense, someAtom, autoReset = true, errorAtom = atom(null), transientAtom = atom(null)) {
+	$effect(() => {
+		const changed = someAtom.value
+
+		untrack(() => {
+			errorAtom.value = null
+			transientAtom.value = null
+		})
+	})
+
 	return {
 		get value() {
 			return !$state.is(errorAtom.value, null) ? transientAtom.value : get(opticLense, someAtom.value)
