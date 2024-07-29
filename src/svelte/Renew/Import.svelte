@@ -1493,17 +1493,21 @@
 	.selected rect {
 		stroke: #ff6666aa;
 		stroke-width: 5;
+		pointer-events: none;
 	}
 	.selected ellipse {
 		stroke: #ff6666aa;
 		stroke-width: 5;
+		pointer-events: none;
 	}
 	.selected path {
 		stroke: #ff6666aa;
+		pointer-events: none;
 		stroke-width: 5;
 	}
 	.selected polyline.clickarea {
 		stroke: #ff6666aa;
+		pointer-events: none;
 	}
 
 	.selected {
