@@ -389,7 +389,6 @@
 		}
 		evt.preventDefault();
 		evt.dataTransfer.dropEffect = "copy";
-		dragging.value += 1;
 	};
 
 	const onDragEnter = (evt) => {
