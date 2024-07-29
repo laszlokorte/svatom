@@ -74,6 +74,7 @@
 							ref: refKey,
 							self: selfKey,
 						}),
+						cachedSizes: undefined,
 					};
 				} catch (e) {
 					return e;
@@ -1288,7 +1289,7 @@
 										rect,
 										"LineStyle",
 									)}
-									shape-rendering="geometricPrecision"
+									text-rendering="geometricPrecision"
 								>
 									{#if rect[kindKey] === "CH.ifa.draw.contrib.DiamondFigure"}
 										<polygon
@@ -1435,7 +1436,7 @@
 										ellipse,
 										"LineStyle",
 									)}
-									shape-rendering="geometricPrecision"
+									text-rendering="geometricPrecision"
 								>
 									<ellipse
 										cx={ellipse.x + ellipse.w / 2}
@@ -1698,7 +1699,7 @@
 									text-anchor={["start", "middle", "end"][
 										textAlignment
 									]}
-									font-size={fontSize + "px"}
+									font-size={fontSize}
 									text-rendering="geometricPrecision"
 								>
 									{#each lines as line, l (l)}
@@ -1710,8 +1711,6 @@
 										<tspan
 											x={textX}
 											dy={l ? "1.2em" : "0"}
-											dx="0"
-											text-rendering="geometricPrecision"
 											{...textLineStyle?.attributes(
 												l,
 												line,
@@ -1767,18 +1766,23 @@
 							fill="#ffeeee"
 						/>
 					{/if}
-					{#each renderedRefMap.value as ref, i}
-						{@const id = "ref-" + ref}
-						{@const measuredSize = view(
-							[
-								"id" + id,
-								L.removable("x", "y", "width", "height"),
-								L.props("x", "y", "width", "height"),
-							],
-							sizeCache,
-						)}
-						<use href="#{id}" use:bindBoundingBox={measuredSize} />
-					{/each}
+					{#key currentRefMap}
+						{#each renderedRefMap.value as ref, i}
+							{@const id = "ref-" + ref}
+							{@const measuredSize = view(
+								[
+									"id" + id,
+									L.removable("x", "y", "width", "height"),
+									L.props("x", "y", "width", "height"),
+								],
+								sizeCache,
+							)}
+							<use
+								href="#{id}"
+								use:bindBoundingBox={measuredSize}
+							/>
+						{/each}
+					{/key}
 				</g>
 			</Navigator>
 		</svg>

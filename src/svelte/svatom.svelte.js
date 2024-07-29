@@ -533,7 +533,7 @@ export function bindScroll(node, someAtom) {
 
 	$effect.pre(() => {
 		const newPos = someAtom.value
-		tick().then(function bindScrollEfect() {
+		tick().then(function bindScrollEffect() {
 			const scrollMaxX = Math.max(0, node.scrollLeftMax  ?? node.scrollWidth - node.offsetWidth)
 			const scrollMaxY = Math.max(0, node.scrollTopMax  ?? node.scrollHeight - node.offsetHeight)
 			const newX =  R.clamp(0, scrollMaxX, newPos.x)
@@ -655,6 +655,8 @@ export function bindBoundingBox(node, someAtom) {
 	})
 
 	return {
+		update(newAtom) {
+		},
 		destroy() {
 			someAtom.value = undefined
 		}
