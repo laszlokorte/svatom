@@ -727,7 +727,7 @@
 	It will be parsed and output as JSON on the right and rendered as SVG below.
 </p>
 
-<div style="display: flex; gap: 0.2em; align-items: baseline;">
+<div style="display: flex; gap: 0.2em; align-items: baseline; flex-wrap: wrap;">
 	{#each examples as example, e (e)}
 		<button
 			type="button"
