@@ -322,10 +322,22 @@
 	const extension = read(
 		[
 			L.pick({
-				minX: [L.foldTraversalLens(L.minimum, [boundsLens, "minX"])],
-				maxX: [L.foldTraversalLens(L.maximum, [boundsLens, "maxX"])],
-				minY: [L.foldTraversalLens(L.minimum, [boundsLens, "minY"])],
-				maxY: [L.foldTraversalLens(L.maximum, [boundsLens, "maxY"])],
+				minX: [
+					L.foldTraversalLens(L.minimum, [boundsLens, "minX"]),
+					L.reread((x) => (isNaN(x) ? 0 : x)),
+				],
+				maxX: [
+					L.foldTraversalLens(L.maximum, [boundsLens, "maxX"]),
+					L.reread((x) => (isNaN(x) ? 0 : x)),
+				],
+				minY: [
+					L.foldTraversalLens(L.minimum, [boundsLens, "minY"]),
+					L.reread((x) => (isNaN(x) ? 0 : x)),
+				],
+				maxY: [
+					L.foldTraversalLens(L.maximum, [boundsLens, "maxY"]),
+					L.reread((x) => (isNaN(x) ? 0 : x)),
+				],
 			}),
 		],
 		combine({
@@ -337,6 +349,8 @@
 			sizeCache,
 		}),
 	);
+
+	const extensionCurrentValue = $derived(extension.value);
 
 	// const viewBox = view(
 	// 	L.reread(
@@ -1709,6 +1723,10 @@
 								"TextAlignment",
 							)}
 							{@const measureValue = measuredSize.value}
+							{@const lineCount = R.count(
+								R.isNotEmpty,
+								text.lines,
+							)}
 							{@const textX =
 								1 * text.fOriginX +
 								(measureValue
@@ -1747,13 +1765,13 @@
 											y={text.fOriginY - 1}
 										/>
 
-										{#if lines.length && textLineStyle}
-											{#each lines as line, l}
+										{#if lineCount && textLineStyle}
+											{#each R.reject(R.isEmpty, lines) as line, l}
 												{@const width =
 													measureValue.width + 2}}
 												{@const height =
 													(measureValue.height + 2) /
-													lines.length}
+													lineCount}
 												{@const x =
 													1 * text.fOriginX - 1}
 												{@const y =
@@ -1761,7 +1779,7 @@
 													l *
 														((measureValue.height +
 															2) /
-															lines.length)}
+															lineCount)}
 												<path
 													d={textLineStyle.backgroundPath(
 														x,
@@ -1799,9 +1817,11 @@
 									font-style={fontStyle == 2
 										? "italic"
 										: "normal"}
-									text-anchor={["start", "middle", "end"][
-										textAlignment
-									]}
+									text-anchor={measureValue
+										? ["start", "middle", "end"][
+												textAlignment
+											]
+										: "start"}
 									font-size={fontSize}
 									text-rendering="geometricPrecision"
 								>
@@ -1818,12 +1838,11 @@
 												l,
 												line,
 											)}
-											text-anchor={[
-												"start",
-												"middle",
-												"end",
-											][textAlignment]}
-											>{replacedLine}</tspan
+											text-anchor={measureValue
+												? ["start", "middle", "end"][
+														textAlignment
+													]
+												: "start"}>{replacedLine}</tspan
 										>
 									{/each}
 								</text>
@@ -1860,12 +1879,14 @@
 
 			<Navigator {camera} {frameBoxPath}>
 				<g pointer-events="none" transform={rotationTransform.value}>
-					{#if extension.value}
+					{#if extensionCurrentValue}
 						<rect
-							x={extension.value.minX}
-							y={extension.value.minY}
-							width={extension.value.maxX - extension.value.minX}
-							height={extension.value.maxY - extension.value.minY}
+							x={extensionCurrentValue.minX}
+							y={extensionCurrentValue.minY}
+							width={extensionCurrentValue.maxX -
+								extensionCurrentValue.minX}
+							height={extensionCurrentValue.maxY -
+								extensionCurrentValue.minY}
 							fill="#ffeeee"
 						/>
 					{/if}
