@@ -1067,6 +1067,35 @@
 
 	<label><input type="checkbox" bind:checked={debug.value} /> Debug</label>
 
+	{#each selection.value as s}
+		{@const attrsSelected = read(
+			[s, "attributes", "attrs", L.partsOf(L.keys)],
+			refMap,
+		)}
+		<fieldset>
+			<legend># {s}</legend>
+
+			<dl>
+				{#each attrsSelected.value as attr}
+					{@const attrValue = view(
+						[
+							s,
+							"attributes",
+							"attrs",
+							attr,
+							attr.indexOf("Color") > -1
+								? L.inverse(L.split(","))
+								: L.identity,
+						],
+						refMap,
+					)}
+					<dt>{attr}</dt>
+					<dd><input type="text" bind:value={attrValue.value} /></dd>
+				{/each}
+			</dl>
+		</fieldset>
+	{/each}
+
 	{#if doctype.value}
 		<h2>{doctype.value} (version: {version.value})</h2>
 	{/if}
