@@ -1066,35 +1066,107 @@
 	</div>
 
 	<label><input type="checkbox" bind:checked={debug.value} /> Debug</label>
+	<div
+		class:hidden={selection.value.length == 0}
+		style=" position: fixed; top: 1em; left: 1em;z-index: 10000; max-height: 70vh; overflow: auto; color: #fff; "
+	>
+		<div
+			style="display: flex; flex-direction: column; background: #333d; gap: 1em; padding: 0.5em"
+		>
+			<button
+				type="button"
+				onclick={(e) => {
+					selection.value = [];
+				}}>Clear Selection</button
+			>
+			{#each selection.value as s}
+				{@const attrsSelected = read(
+					[s, "attributes", "attrs", L.partsOf(L.keys)],
+					refMap,
+				)}
+				{@const propsSelected = read(
+					[
+						s,
+						L.partsOf(
+							L.keys,
+							L.when((x) => x != "attributes" && x[0] !== "_"),
+						),
+					],
+					refMap,
+				)}
+				{@const selectedKind = read([s, kindKey], refMap)}
+				<fieldset>
+					<legend># {s} ({selectedKind.value})</legend>
 
-	{#each selection.value as s}
-		{@const attrsSelected = read(
-			[s, "attributes", "attrs", L.partsOf(L.keys)],
-			refMap,
-		)}
-		<fieldset>
-			<legend># {s}</legend>
-
-			<dl>
-				{#each attrsSelected.value as attr}
-					{@const attrValue = view(
-						[
-							s,
-							"attributes",
-							"attrs",
-							attr,
-							attr.indexOf("Color") > -1
-								? L.inverse(L.split(","))
-								: L.identity,
-						],
-						refMap,
-					)}
-					<dt>{attr}</dt>
-					<dd><input type="text" bind:value={attrValue.value} /></dd>
-				{/each}
-			</dl>
-		</fieldset>
-	{/each}
+					<h4>Props</h4>
+					<dl>
+						{#each propsSelected.value as prop}
+							{@const propValue = view(
+								[
+									s,
+									prop,
+									prop === "lines"
+										? L.inverse(L.split("\n"))
+										: L.identity,
+									[
+										"x",
+										"y",
+										"w",
+										"h",
+										"fCurrentFontSize",
+										"fCurrentFontStyle",
+										"fOriginX",
+										"fOriginY",
+									].indexOf(prop) > -1
+										? [L.setter((x) => parseFloat(x) || 0)]
+										: L.identity,
+								],
+								refMap,
+							)}
+							<dt>{prop}</dt>
+							<dd>
+								{#if prop === "lines"}
+									<textarea
+										type="text"
+										bind:value={propValue.value}
+									></textarea>
+								{:else}
+									<input
+										type="text"
+										bind:value={propValue.value}
+									/>
+								{/if}
+							</dd>
+						{/each}
+					</dl>
+					<h4>Attributes</h4>
+					<dl>
+						{#each attrsSelected.value as attr}
+							{@const attrValue = view(
+								[
+									s,
+									"attributes",
+									"attrs",
+									attr,
+									attr.indexOf("Color") > -1
+										? L.inverse(L.split(","))
+										: L.identity,
+								],
+								refMap,
+							)}
+							<dt>{attr}</dt>
+							<dd>
+								<input
+									type="text"
+									bind:value={attrValue.value}
+								/>
+							</dd>
+						{/each}
+					</dl>
+				</fieldset>
+			{/each}
+		</div>
+	</div>
 
 	{#if doctype.value}
 		<h2>{doctype.value} (version: {version.value})</h2>
@@ -1638,7 +1710,7 @@
 							)}
 							{@const measureValue = measuredSize.value}
 							{@const textX =
-								text.fOriginX +
+								1 * text.fOriginX +
 								(measureValue
 									? (measureValue.width * textAlignment) / 2
 									: 0)}
@@ -1682,9 +1754,10 @@
 												{@const height =
 													(measureValue.height + 2) /
 													lines.length}
-												{@const x = text.fOriginX - 1}
+												{@const x =
+													1 * text.fOriginX - 1}
 												{@const y =
-													text.fOriginY +
+													1 * text.fOriginY +
 													l *
 														((measureValue.height +
 															2) /
@@ -1720,10 +1793,10 @@
 										"SansSerif",
 										"sans-serif",
 									)}
-									font-weight={fontStyle === 1
+									font-weight={fontStyle == 1
 										? "bold"
 										: "normal"}
-									font-style={fontStyle === 2
+									font-style={fontStyle == 2
 										? "italic"
 										: "normal"}
 									text-anchor={["start", "middle", "end"][
@@ -1907,5 +1980,16 @@
 	}
 	use {
 		pointer-events: all;
+	}
+
+	dl {
+		display: grid;
+		grid-template-columns: auto auto;
+	}
+
+	dt,
+	dd {
+		margin: 0;
+		padding: 0;
 	}
 </style>
