@@ -683,38 +683,38 @@
 	};
 
 	function renewToRgba(color) {
-		const NONE = [255, 199, 158, 255]; //WTF?
+		const NONE = { r: 255, g: 199, b: 158, a: 255 }; //WTF?
 		if (!color) {
 			return "rgba(0,0,0,0)";
 		}
-		if (color.length == 4) {
+		if (Object.prototype.hasOwnProperty.call(color, "a")) {
 			if (
-				NONE[0] == color[0] &&
-				NONE[1] == color[1] &&
-				NONE[2] == color[2] &&
-				NONE[3] == color[3]
+				NONE.r == color.r &&
+				NONE.g == color.g &&
+				NONE.b == color.b &&
+				NONE.a == color.a
 			) {
 				return "rgba(0,0,0,0)";
 			}
-			return `rgba(${color[0]},${color[1]},${color[2]},${color[3] / 255})`;
-		} else if (color.length == 3) {
-			if (
-				NONE[0] == color[0] &&
-				NONE[1] == color[1] &&
-				NONE[2] == color[2]
-			) {
+			return `rgba(${color.r},${color.g},${color.b},${color.a / 255})`;
+		} else if (
+			Object.prototype.hasOwnProperty.call(color, "r") &&
+			Object.prototype.hasOwnProperty.call(color, "g") &&
+			Object.prototype.hasOwnProperty.call(color, "b")
+		) {
+			if (NONE.r == color.r && NONE.g == color.g && NONE.b == color.b) {
 				return "rgba(0,0,0,0)";
 			}
-			return `rgb(${color[0]},${color[1]},${color[2]})`;
+			return `rgb(${color.r},${color.g},${color.b})`;
 		} else {
 			return "rgb(0,0,0)";
 		}
 	}
 
 	const defaultsAttributes = {
-		FrameColor: [0, 0, 0, 255],
-		FillColor: [112, 219, 147], // new Color(0x70DB93),
-		TextColor: [0, 0, 0, 255],
+		FrameColor: { r: 0, g: 0, b: 0, a: 255 },
+		FillColor: { r: 112, g: 219, b: 147 }, // new Color(0x70DB93),
+		TextColor: { r: 0, g: 0, b: 0, a: 255 },
 		TextAlignment: 0,
 		ArrowMode: 0,
 		FontName: "Helvetica",
@@ -1166,10 +1166,13 @@
 									attr,
 									isColor
 										? [
+												L.props("r", "g", "b"),
 												L.lens(
 													(x) =>
-														`#${x
-															.slice(0, 3)
+														`#${R.props(
+															["r", "g", "b"],
+															x,
+														)
 															.map((v) =>
 																(
 																	"0" +
@@ -1182,14 +1185,12 @@
 															)
 															.join("")}`,
 													(hex) =>
-														R.props(
-															["r", "g", "b"],
-															console.log(hex) ||
-																hex.match(
-																	/#(?<r>[a-f0-9]{2})(?<g>[a-f0-9]{2})(?<b>[a-f0-9]{2})/,
-																).groups,
-														).map((c) =>
-															parseInt(c, 16),
+														R.map(
+															(c) =>
+																parseInt(c, 16),
+															hex.match(
+																/#(?<r>[a-f0-9]{2})(?<g>[a-f0-9]{2})(?<b>[a-f0-9]{2})/,
+															).groups,
 														),
 												),
 											]
@@ -1203,6 +1204,26 @@
 									type={isColor ? "color" : "text"}
 									bind:value={attrValue.value}
 								/>
+								{#if isColor}
+									{@const alphaValue = view(
+										[
+											s,
+											"attributes",
+											"attrs",
+											attr,
+											"a",
+											L.divide(255),
+										],
+										refMap,
+									)}
+									<input
+										type={"number"}
+										min="0"
+										max="1"
+										step="0.05"
+										bind:value={alphaValue.value}
+									/>
+								{/if}
 							</dd>
 						{/each}
 					</dl>
@@ -1490,17 +1511,10 @@
 											},
 											{ x: rect.x, y: rect.y },
 										]}
-										{@const i1 = rect.rotation % 8}
-										{@const i2 =
-											(rect.rotation +
-												3 -
-												(rect.rotation % 2)) %
-											8}
-										{@const i3 =
-											(rect.rotation +
-												5 +
-												(rect.rotation % 2)) %
-											8}
+										{@const i1 =
+											((rect.rotation % 8) + 8) % 8}
+										{@const i2 = (i1 + 3 - (i1 % 2)) % 8}
+										{@const i3 = (i1 + 5 + (i1 % 2)) % 8}
 										<polygon
 											points="{corners[i1].x} {corners[i1]
 												.y}

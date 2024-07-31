@@ -4,15 +4,23 @@ export function makeGrammar(version) {
 			return version
 		},
 		
+		aliases: {
+			"de.renew.gui.fs.AssocArrowTip": "de.renew.gui.AssocArrowTip",
+	        "de.renew.gui.fs.IsaArrowTip": "de.renew.gui.IsaArrowTip",
+	        "de.renew.diagram.AssocArrowTip": "de.renew.gui.AssocArrowTip",
+	        "de.renew.fa.figures.AssocArrowTip": "de.renew.gui.AssocArrowTip",
+	        "CH.ifa.draw.cpn.DeclarationFigure": "de.renew.gui.DeclarationFigure",
+			"CH.ifa.draw.cpn.CPNDrawing": "de.renew.gui.CPNDrawing",
+			"CH.ifa.draw.cpn.PlaceFigure": "de.renew.gui.PlaceFigure",
+			"CH.ifa.draw.cpn.TransitionFigure": "de.renew.gui.TransitionFigure",
+			"CH.ifa.draw.cpn.ArcConnection": "de.renew.gui.ArcConnection",
+			"CH.ifa.draw.cpn.CPNTextFigure": "de.renew.gui.CPNTextFigure",
+		},
 
 		rules: {
 			"CH.ifa.draw.standard.AbstractFigure": {
 				super: null,
 				interfaces: ['CH.ifa.draw.framework.Figure',"CH.ifa.draw.framework.ParentFigure"],
-				parser: (context) => {
-				
-					return {}
-				},
 			},
 			"CH.ifa.draw.standard.CompositeFigure": {
 				super: "CH.ifa.draw.standard.AbstractFigure",
@@ -27,23 +35,22 @@ export function makeGrammar(version) {
 			        }
 
 			        return o
-				
+				},
+
+				writer: (object, context) => {
+					context.writeInt(object.figures.length)
+			        for (let i = 0; i < object.figures.length; i++) {
+			            context.writeStorable(object.figures[i])
+			        }
 				},
 			},
 			"CH.ifa.draw.figures.GroupFigure": {
 				super: "CH.ifa.draw.standard.CompositeFigure",
 				interfaces: [],
-				parser: (context) => {
-					return {}
-				
-				},
 			},
 			"CH.ifa.draw.standard.StandardDrawing": {
 				super: "CH.ifa.draw.standard.CompositeFigure",
 				interfaces: ['CH.ifa.draw.framework.Figure'],
-				parser: (context) => {
-					return {}
-				},
 			},
 			"CH.ifa.draw.figures.FigureAttributes": {
 				interfaces: [],
@@ -53,36 +60,75 @@ export function makeGrammar(version) {
 					}
 
 					const numAttributes = context.parseInt();
-					const o = {attrs: {}}
+					const o = {attrs: {}, attrTypes: {}}
 
 					for(let i =0;i<numAttributes;i++) {
 						const key = context.parseString()
 						const type = context.parseString()
 						let val;
 
-						if (type == "Color") {
+						if (type === "Color") {
 							if(version < 11) {
-			                 	val = [context.parseInt(), context.parseInt(), context.parseInt()];
+			                 	val = {[context.kindKey]:"color", r:context.parseInt(), g:context.parseInt(), b:context.parseInt()};
 							} else {
-			                	val = [context.parseInt(), context.parseInt(), context.parseInt(),
-			                                    context.parseInt()];
+			                	val = {[context.kindKey]:"color", r:context.parseInt(), g:context.parseInt(), b:context.parseInt(), a:context.parseInt()};
 							}
-			            } else if (type == "Boolean") {
+			            } else if (type === "Boolean") {
 			                val = context.parseString().toLowerCase() === "true";
-			            } else if (type == "String") {
+			            } else if (type === "String") {
 			                val = context.parseString();
-			            } else if (type == "Int") {
+			            } else if (type === "Int") {
 			                val = context.parseInt()
-			            } else if (type == "Storable") {
+			            } else if (type === "Storable") {
 			                val = context.parseStorable();
-			            } else if (type == "UNKNOWN") {
+			            } else if (type === "UNKNOWN") {
 			                continue;
 			            }
 
 			            o.attrs[key] = val
+			            o.attrTypes[key] = type
 					}
 
 					return o
+				},
+
+
+				writer: (object, context) => {
+					const keys = Object.keys(object.attr)
+
+					context.writeString("attributes");
+					context.writeInt(keys.length)
+
+			        for (let i = 0; i < keys.length; i++) {
+			            const key = keys[i]
+			            const value = object.attrs[key]
+			            const type = object.attrTypes[key]
+
+			            context.writeString(type);
+
+			            if (type === "Color") {
+							if(version < 11) {
+			                 	context.writeInt(value.r)
+			                 	context.writeInt(value.g)
+			                 	context.writeInt(value.b)
+			                 	context.writeInt(value.a)
+							} else {
+			                 	context.writeInt(value.r)
+			                 	context.writeInt(value.g)
+			                 	context.writeInt(value.b)
+							}
+			            } else if (type === "Boolean") {
+		                 	context.writeString(val ? "true" : "false")
+			            } else if (type === "String") {
+			            	context.writeString(val)
+			            } else if (type === "Int") {
+			            	context.writeInt(val)
+			            } else if (type === "Storable") {
+			            	context.writeStorable(val)
+			            } else {
+			            	context.writeStorable(val)
+			            }
+			        }
 				},
 			},
 			"CH.ifa.draw.figures.AttributeFigure": {
@@ -97,6 +143,12 @@ export function makeGrammar(version) {
 
 					return o
 				},
+				writer: (object, context) => {
+					if(object.attributes) {
+						context.writeString("attributes")
+						context.writeImplicitStorable("CH.ifa.draw.figures.FigureAttributes", object.attributes);
+					}
+				},
 			},
 			"CH.ifa.draw.figures.RectangleFigure": {
 				super: "CH.ifa.draw.figures.AttributeFigure",
@@ -109,14 +161,16 @@ export function makeGrammar(version) {
 						h: context.parseInt(),
 					}
 				},
+				writer: (object, context) => {
+					context.writeInt(object.x)
+					context.writeInt(object.y)
+					context.writeInt(object.w)
+					context.writeInt(object.h)
+				},
 			},
 			"CH.ifa.draw.contrib.DiamondFigure": {
 				super: "CH.ifa.draw.figures.RectangleFigure",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.hierarchicalworkflownets.gui.HNViewDrawing": {
 				super: "de.renew.gui.CPNDrawing",
@@ -126,7 +180,6 @@ export function makeGrammar(version) {
 					const o = {
 						figures: []
 					}
-					//hnModel_.read(context, this);
 					
 					function readNode() {
 						const n = context.parseInt();
@@ -157,30 +210,23 @@ export function makeGrammar(version) {
 
 			        return o
 				},
+				writer: (object, context) => {
+					//TODO
+
+					throw new Exception("Not yet implemented!")
+				},
 			},
 			"de.renew.hierarchicalworkflownets.gui.HNPlaceFigure": {
 				super: "de.renew.gui.PlaceFigure",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.workflow.TaskFigure": {
 				super: "de.renew.gui.TransitionFigure",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.wfnet.TaskFigure": {
 				super: "de.renew.gui.TransitionFigure",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"CH.ifa.draw.contrib.PolygonFigure": {
 				super: "CH.ifa.draw.figures.AttributeFigure",
@@ -197,14 +243,18 @@ export function makeGrammar(version) {
 
 			        return o
 				},
+				writer: (object, context) => {
+					context.writeInt(object.points.length)
+
+					for (let i = 0; i < object.points.length; i++) {
+			            context.writeInt(object.points[i].x)
+			            context.writeInt(object.points[i].y)
+			        }
+				},
 			},
 			"de.renew.hierarchicalworkflownets.gui.HNTransitionFigure": {
 				super: "de.renew.gui.TransitionFigure",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.hierarchicalworkflownets.gui.layout.Vec2d": {
 				super: false,
@@ -214,6 +264,10 @@ export function makeGrammar(version) {
 						x: context.parseFloat(),
 						y: context.parseFloat(),
 					}
+				},
+				writer: (object, context) => {
+					context.writeFloat(object.x)
+					context.writeFloat(object.y)
 				},
 			},
 			"CH.ifa.draw.figures.EllipseFigure": {
@@ -226,6 +280,12 @@ export function makeGrammar(version) {
 						w: context.parseInt(),
 						h: context.parseInt(),
 					}
+				},
+				writer: (object, context) => {
+					context.writeInt(object.x)
+					context.writeInt(object.y)
+					context.writeInt(object.w)
+					context.writeInt(object.h)
 				},
 			},
 			"CH.ifa.draw.figures.RoundRectangleFigure": {
@@ -241,6 +301,14 @@ export function makeGrammar(version) {
 						arcHeight: context.parseInt(),
 					}
 				},
+				writer: (object, context) => {
+					context.writeInt(object.x)
+					context.writeInt(object.y)
+					context.writeInt(object.w)
+					context.writeInt(object.h)
+					context.writeInt(object.arcWidth)
+					context.writeInt(object.arcHeight)
+				},
 			},
 			"de.renew.gui.TransitionFigure": {
 				super: "CH.ifa.draw.figures.RectangleFigure",
@@ -252,6 +320,11 @@ export function makeGrammar(version) {
 						}
 					} else {
 						return {}
+					}
+				},
+				writer: (object, context) => {
+					if(version >= 4) {
+						context.writeStorable(object.highlightFigure);
 					}
 				},
 			},
@@ -267,6 +340,11 @@ export function makeGrammar(version) {
 						return {}
 					}
 				},
+				writer: (object, context) => {
+					if(version >= 3) {
+						context.writeStorable(object.highlightFigure);
+					}
+				},
 			},
 			"de.renew.gui.VirtualPlaceFigure": {
 				super: "de.renew.gui.PlaceFigure",
@@ -276,46 +354,29 @@ export function makeGrammar(version) {
 						placeFigure: context.parseStorable("de.renew.gui.PlaceFigure"),
 					}
 				},
+				writer: (object, context) => {
+					context.writeStorable(object.placeFigure);
+				},
 			},
 			"de.renew.gui.ArcConnection": {
 				super: "CH.ifa.draw.figures.LineConnection",
 				interfaces: ["CH.ifa.draw.framework.Figure","de.renew.gui.InscribableFigure", "CH.ifa.draw.framework.ParentFigure"],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.gui.DoubleArcConnection": {
 				super: "de.renew.gui.ArcConnection",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.gui.HollowDoubleArcConnection": {
 				super: "de.renew.gui.ArcConnection",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.gui.InhibitorConnection": {
 				super: "de.renew.gui.ArcConnection",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.gui.fs.ConceptConnection": {
 				super: "CH.ifa.draw.figures.LineConnection",
 				interfaces: ["CH.ifa.draw.framework.Figure"],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.gui.fs.IsaConnection": {
 				super: "de.renew.gui.fs.ConceptConnection",
@@ -325,62 +386,37 @@ export function makeGrammar(version) {
 						isDisjunctive: context.parseBoolean(),
 					}
 				},
+				writer: (object, context) => {
+					context.writeBoolean(object.isDisjunctive);
+				},
 			},
 			"fs.IsaConnection": {
 				super: "de.renew.gui.fs.ConceptConnection",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.gui.IsaArrowTip": {
 				super: "CH.ifa.draw.figures.ArrowTip",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.gui.fs.IsaArrowTip": {
 				super: "CH.ifa.draw.figures.ArrowTip",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"fs.IsaArrowTip": {
 				super: "CH.ifa.draw.figures.ArrowTip",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.gui.DoubleArrowTip": {
 				super: "CH.ifa.draw.figures.ArrowTip",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"CH.ifa.draw.figures.AbstractLocator": {
 				super: null,
 				interfaces: ["CH.ifa.draw.framework.Locator"],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.gui.fs.ConceptFigure": {
 				super: "CH.ifa.draw.figures.TextFigure",
 				interfaces: ["CH.ifa.draw.framework.Locator"],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"fs.ConceptFigure": {
 				super: "CH.ifa.draw.figures.TextFigure",
@@ -392,6 +428,11 @@ export function makeGrammar(version) {
 						}
 					} else {
 						return {}
+					}
+				},
+				writer: (object, context) => {
+					if(version < 0) {
+						context.writeInt(object.type)
 					}
 				},
 			},
@@ -406,94 +447,56 @@ export function makeGrammar(version) {
 						h: context.parseInt(),
 					}
 				},
+				writer: (object, context) => {
+					context.writeInt(object.x)
+					context.writeInt(object.y)
+					context.writeInt(object.w)
+					context.writeInt(object.h)
+				},
 			},
 			"de.renew.gui.fs.FSNodeFigure": {
 				super: "CH.ifa.draw.figures.TextFigure",
 				interfaces: ["CH.ifa.draw.framework.Locator"],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"CH.ifa.draw.contrib.ChopPolygonConnector": {
 				super: "CH.ifa.draw.standard.ChopBoxConnector",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"CH.ifa.draw.figures.ShortestDistanceConnector": {
 				super: "CH.ifa.draw.standard.AbstractConnector",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"CH.ifa.draw.figures.ElbowConnection": {
 				super: "CH.ifa.draw.figures.LineConnection",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.gui.fs.FeatureConnection": {
 				super: "CH.ifa.draw.figures.LineConnection",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"CH.ifa.draw.figures.ChopRoundRectangleConnector": {
 				super: "CH.ifa.draw.standard.ChopBoxConnector",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.gui.fs.UMLNoteFigure": {
 				super: "CH.ifa.draw.figures.TextFigure",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.wfnet.TaskFigure": {
 				super: "de.renew.gui.TransitionFigure",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.gui.fs.AssocConnection": {
 				super: "de.renew.gui.fs.ConceptConnection",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.gui.AssocArrowTip": {
 				super: "CH.ifa.draw.figures.ArrowTip",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.gui.fs.AssocArrowTip": {
 				super: "CH.ifa.draw.figures.ArrowTip",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.bpmn.roundtrip.RoundtripNetComponentFigure": {
 				super: "de.renew.netcomponents.NetComponentFigure",
@@ -503,6 +506,9 @@ export function makeGrammar(version) {
 					return {
 						
 					}
+				},
+				writer: (object, context) => {
+					context.writeString("NOT SURE WHAT THIS IS")
 				},
 			},
 			"CH.ifa.draw.standard.OffsetLocator": {
@@ -515,6 +521,11 @@ export function makeGrammar(version) {
 				        fBase: context.parseStorable("CH.ifa.draw.framework.Locator"),
 					}
 				},
+				writer: (object, context) => {
+					context.writeInt(object.fOffsetX)
+					context.writeInt(object.fOffsetY)
+					context.writeStorable(object.fBase)
+				},
 			},
 			"CH.ifa.draw.standard.RelativeLocator": {
 				super: "CH.ifa.draw.figures.AbstractLocator",
@@ -524,6 +535,10 @@ export function makeGrammar(version) {
 						fOffsetX: context.parseDouble(),
 				        fOffsetY: context.parseDouble(),
 					}
+				},
+				writer: (object, context) => {
+					context.writeInt(object.fOffsetX)
+					context.writeInt(object.fOffsetY)
 				},
 			},
 			"CH.ifa.draw.figures.PolyLineFigure": {
@@ -549,11 +564,31 @@ export function makeGrammar(version) {
 			        }
 
 			        if(version === -1) {
-			        	o.frameColor = [context.parseInt(), context.parseInt(), context.parseInt()]
+			        	o.frameColor = {r:context.parseInt(), g:context.parseInt(), b:context.parseInt()}
 			        }
-			        
 
 					return o;
+				},
+				writer: (object, context) => {
+					context.writeInt(object.points.length)
+
+					for (let i = 0; i < object.points.length; i++) {
+			            context.writeInt(object.points[i].x)
+			            context.writeInt(object.points[i].y)
+			        }
+
+					context.writeStorable(object.startDecoration)
+					context.writeStorable(object.endDecoration)
+
+					if(version >= 8) {
+			            context.writeString(o.arrowName);
+			        }
+
+			        if(version === -1) {
+			            context.writeInt(object.frameColor.r)
+			            context.writeInt(object.frameColor.g)
+			            context.writeInt(object.frameColor.b)
+			        }
 				},
 			},
 			"CH.ifa.draw.figures.LineConnection": {
@@ -564,6 +599,10 @@ export function makeGrammar(version) {
 						start: context.parseStorable('CH.ifa.draw.framework.Connector'),
 						end: context.parseStorable('CH.ifa.draw.framework.Connector'),
 					}
+				},
+				writer: (object, context) => {
+					context.writeStorable(object.start)
+					context.writeStorable(object.end)
 				},
 			},
 			"CH.ifa.draw.figures.ArrowTip": {
@@ -582,29 +621,26 @@ export function makeGrammar(version) {
 					}
 					
 				},
+				writer: (object, context) => {
+					if(version >= 5) {
+						context.parseDouble(object.Angle)
+			            context.parseDouble(object.fOuterRadius)
+			            context.parseDouble(object.fInnerRadius)
+			            context.parseBoolean(object.fFilled)
+					}				
+				},
 			},
 			"de.renew.gui.CircleDecoration": {
 				super: null,
 				interfaces: ["CH.ifa.draw.figures.LineDecoration"],
-				parser: (context) => {
-					return {}				
-				},
 			},
 			"CH.ifa.draw.standard.ChopBoxConnector": {
 				super: "CH.ifa.draw.standard.AbstractConnector",
 				interfaces: ["CH.ifa.draw.framework.Connector"],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"CH.ifa.draw.figures.ChopEllipseConnector": {
 				super: "CH.ifa.draw.standard.ChopBoxConnector",
 				interfaces: ["CH.ifa.draw.framework.Connector"],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"CH.ifa.draw.standard.AbstractConnector": {
 				super: null,
@@ -614,30 +650,18 @@ export function makeGrammar(version) {
 						owner : context.parseStorable("CH.ifa.draw.framework.Figure"),
 					}
 				},
+
+				writer: (object, context) => {
+			        context.writeStorable(object.owner)				
+				},
 			},
 			"de.renew.gui.DeclarationFigure": {
 				super: "de.renew.gui.CPNTextFigure",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
-			},
-			"CH.ifa.draw.cpn.DeclarationFigure": {
-				super: "de.renew.gui.CPNTextFigure",
-				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"fs.FSFigure": {
 				super: "de.renew.gui.fs.FSFigure",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.gui.fs.FSFigure": {
 				super:  version >-1 && version <= 5 ? "CH.ifa.draw.figures.TextFigure" :  "de.renew.gui.CPNTextFigure",
@@ -658,6 +682,15 @@ export function makeGrammar(version) {
 			        }
 
 			        return o;
+				},
+				writer: (object, context) => {
+			        if (version > 6) {
+			        	context.writeInt(object.paths.length)
+		                const paths = context.parseInt();
+		                for(let i=0;i<object.paths.length;i++) {
+		                	context.writeString(object.paths[i])
+		                }
+		            }
 				},
 			},
 			"CH.ifa.draw.figures.TextFigure": {
@@ -680,6 +713,17 @@ export function makeGrammar(version) {
 
 					return text
 				},
+				write: (object, context) => {
+					context.writeInt(object.fOriginX);
+					context.writeInt(object.fOriginY);
+					context.writeString(object.text);
+					context.writeString(object.fCurrentFontName);
+					context.writeInt(object.fCurrentFontStyle);
+					context.writeInt(object.fCurrentFontSize);
+					context.writeBoolean(object.fIsReadOnly);
+					context.writeStorable(object.fParent);
+					context.writeStorable(object.fLocator);
+				},
 			},
 			"de.renew.gui.CPNTextFigure": {
 				super: "CH.ifa.draw.figures.TextFigure",
@@ -688,6 +732,9 @@ export function makeGrammar(version) {
 					return {
 						fType: context.parseInt(),
 					}
+				},
+				write: (object, context) => {
+					context.writeInt(object.fType);
 				},
 			},
 			"CH.ifa.draw.figures.ImageFigure": {
@@ -702,6 +749,13 @@ export function makeGrammar(version) {
 						name: context.parseString(),
 					}
 				},
+				writer: (object, context) => {
+					context.writeInt(object.x)
+					context.writeInt(object.y)
+					context.writeInt(object.w)
+					context.writeInt(object.h)
+					context.writeString(object.name)
+				},
 			},
 			"fs.TypeFigure": {
 				super: "CH.ifa.draw.figures.TextFigure",
@@ -711,12 +765,13 @@ export function makeGrammar(version) {
 						type: context.parseInt(),
 					}
 				},
+				writer: (object, context) => {
+					context.writeInt(object.type)
+				},
 			},
 			"CH.ifa.draw.figures.LineFigure": {
 				super: "CH.ifa.draw.figures.PolyLineFigure",
 				interfaces: [],
-				parser: (context) => {
-				},
 			},
 			"CH.ifa.draw.contrib.TriangleFigure": {
 				super: "CH.ifa.draw.figures.RectangleFigure",
@@ -726,6 +781,9 @@ export function makeGrammar(version) {
 						rotation: context.parseInt(),
 					}
 				},
+				writer: (object, context) => {
+					context.writeInt(object.rotation)
+				},
 			},
 			"CH.ifa.draw.figures.CompositeAttributeFigure": {
 				super: version > 9 ? "CH.ifa.draw.figures.AttributeFigure" : null,
@@ -734,20 +792,24 @@ export function makeGrammar(version) {
 					const o = {figures: []}
 
 					const size = context.parseInt();
+
 			        for (let i = 0; i < size; i++) {
 		                o.figures.push(context.parseStorable('CH.ifa.draw.framework.Figure'))
 		            }
 
 		            return o
 				},
+				writer: (object, context) => {
+					context.writeInt(object.figures.length)
+
+					for (let i = 0; i < object.figures.length; i++) {
+		                context.writeStorable(object.figures[i])
+		            }
+				},
 			},
 			"de.renew.netcomponents.NetComponentFigure": {
 				super: "CH.ifa.draw.figures.CompositeAttributeFigure",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.gui.CPNDrawing": {
 				super: "CH.ifa.draw.standard.StandardDrawing",
@@ -761,76 +823,27 @@ export function makeGrammar(version) {
 						return {}
 					}
 				},
+				writer: (object, context) => {
+					if(version >= 2) {
+						context.writeStorable(object.icon)
+					}
+				},
 			},
 			"de.renew.sdnet.gui.SDNDrawing": {
 				super: "de.renew.gui.CPNDrawing",
 				interfaces: ['CH.ifa.draw.framework.Figure'],
-				parser: (context) => {
-
-				},
 			},
 			"de.renew.sdnet.gui.figure.SDNPlaceTextFigure": {
 				super: "de.renew.gui.CPNTextFigure",
 				interfaces: ['CH.ifa.draw.framework.Figure'],
-				parser: (context) => {
-
-				},
-			},
-			"CH.ifa.draw.cpn.CPNDrawing": {
-				super: "de.renew.gui.CPNDrawing",
-				interfaces: [],
-				parser: (context) => {
-					return {}
-				},
-			},
-			"CH.ifa.draw.cpn.PlaceFigure": {
-				super: "de.renew.gui.PlaceFigure",
-				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
-			},
-			"CH.ifa.draw.cpn.TransitionFigure": {
-				super: "de.renew.gui.TransitionFigure",
-				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
-			},
-			"CH.ifa.draw.cpn.ArcConnection": {
-				super: "CH.ifa.draw.figures.LineConnection",
-				interfaces: ["CH.ifa.draw.framework.Figure","de.renew.gui.InscribableFigure", "CH.ifa.draw.framework.ParentFigure"],
-				parser: (context) => {
-					return {
-					}
-				},
-			},
-			"CH.ifa.draw.cpn.CPNTextFigure": {
-				super: "CH.ifa.draw.figures.TextFigure",
-				interfaces: [],
-				parser: (context) => {
-					return {
-						fType: context.parseInt(),
-					}
-				},
 			},
 			"de.renew.diagram.drawing.DiagramDrawing": {
 				super: "CH.ifa.draw.standard.StandardDrawing",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.RoleDescriptorFigure": {
 				super: "de.renew.diagram.TailFigure",
 				interfaces: ["RepresentableRoleFigure"],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.DiagramFigure": {
 				super: "CH.ifa.draw.figures.AttributeFigure",
@@ -838,49 +851,47 @@ export function makeGrammar(version) {
 				parser: (context) => {
 					return {
 						displayBox: {
-							x:context.parseInt(),
-							y:context.parseInt(),
+							x: context.parseInt(),
+							y: context.parseInt(),
 							w: context.parseInt(),
 							h: context.parseInt(),
 						}
 					}
 				},
+				writer: (object, context) => {
+					context.writeInt(object.displayBox.x)
+					context.writeInt(object.displayBox.y)
+					context.writeInt(object.displayBox.w)
+					context.writeInt(object.displayBox.h)
+				},
 			},
 			"de.renew.diagram.TailFigure": {
 				super: "de.renew.diagram.DiagramFigure",
 				interfaces: ["de.renew.diagram.RepresentableTailFigure"],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.LifeLineLogicFigure": {
 				super: "de.renew.diagram.TailFigure",
 				interfaces: ["de.renew.diagram.RepresentableLifeLineLogicFigure","de.renew.diagram.ISplitFigure"],
 				parser: (context) => {
 					const decoration = context.parseStorable("de.renew.diagram.FigureDecoration");
-					context.parseString()
+					const _skip = context.parseString()
 
 					return {
 						decoration
 					}
 				},
+				writer: (object, context) => {
+					context.writeStorable(object.decoration)
+					context.writeString(object.decoration[context.kindKey])
+				},
 			},
 			"de.renew.diagram.VSplitFigure": {
 				super: "de.renew.diagram.LifeLineLogicFigure",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.VJoinFigure": {
 				super: "de.renew.diagram.LifeLineLogicFigure",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.HSplitFigure": {
 				super: "de.renew.diagram.DiagramFigure",
@@ -893,22 +904,18 @@ export function makeGrammar(version) {
 						decoration
 					}
 				},
+				writer: (object, context) => {
+					context.writeStorable(object.decoration)
+					context.writeString(object.decoration[context.kindKey])
+				},
 			},
 			"de.renew.diagram.VSplitCenterConnector": {
 				super: "CH.ifa.draw.standard.AbstractConnector",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.HSplitCenterConnector": {
 				super: "CH.ifa.draw.standard.AbstractConnector",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.SplitDecoration": {
 				super: null,
@@ -919,190 +926,102 @@ export function makeGrammar(version) {
 	        			halfSize : context.parseInt(),
 					}
 				},
+				writer: (object, context) => {
+					context.writeInt(object.size)
+					context.writeInt(object.halfSize)
+				},
 			},
 			"de.renew.diagram.XORDecoration": {
 				super: "de.renew.diagram.SplitDecoration",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.ANDDecoration": {
 				super: "de.renew.diagram.SplitDecoration",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.LifeLineConnection": {
 				super: "CH.ifa.draw.figures.LineConnection",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.VerticalConnector": {
 				super: "CH.ifa.draw.standard.AbstractConnector",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.HorizontalConnector": {
 				super: "CH.ifa.draw.standard.AbstractConnector",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.TopConnector": {
 				super: "CH.ifa.draw.standard.AbstractConnector",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.RightConnector": {
 				super: "CH.ifa.draw.standard.AbstractConnector",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.HTopConnector": {
 				super: "CH.ifa.draw.standard.AbstractConnector",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.HBottomConnector": {
 				super: "CH.ifa.draw.standard.AbstractConnector",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.DiagramTextFigure": {
 				super: "CH.ifa.draw.figures.TextFigure",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.DCServiceTextFigure": {
 				super: "CH.ifa.draw.figures.TextFigure",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.ActionTextFigure": {
 				super: "CH.ifa.draw.figures.TextFigure",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.BottomConnector": {
 				super: "CH.ifa.draw.standard.AbstractConnector",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.LeftConnector": {
 				super: "CH.ifa.draw.standard.AbstractConnector",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.TaskFigure": {
 				super: "de.renew.diagram.TailFigure",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.DestructionFigure": {
 				super: "de.renew.diagram.TailFigure",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.AbstractMessageConnection": {
 				super: "CH.ifa.draw.figures.LineConnection",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.MessageConnection": {
 				super: "de.renew.diagram.AbstractMessageConnection",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.SynchronousMessageConnection": {
 				super: "de.renew.diagram.AbstractMessageConnection",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.SynchronousMessageArrowTip": {
 				super: "CH.ifa.draw.figures.ArrowTip",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.SynchronousReplyConnection": {
 				super: "de.renew.diagram.AbstractMessageConnection",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.DiagramFrameFigure": {
 				super: "CH.ifa.draw.figures.RoundRectangleFigure",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 			"de.renew.diagram.AssocArrowTip": {
 				super: "de.renew.gui.AssocArrowTip",
 				interfaces: [],
-				parser: (context) => {
-					return {
-					}
-				},
 			},
 		}
 	}

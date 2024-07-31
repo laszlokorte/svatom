@@ -16,7 +16,12 @@ export function makeParser(reader, grammar, autoDeref = true, metaKeys = {}) {
 				parseInto(target, syn.super)
 			}
 
-			return Object.assign(target, syn.parser(context))
+			if(syn.parser) {
+				return Object.assign(target, syn.parser(context))
+			} else {
+				return target
+			}
+			
 		}
 
 		function transitiveTypes(kind) {
@@ -25,6 +30,10 @@ export function makeParser(reader, grammar, autoDeref = true, metaKeys = {}) {
 			} else {
 				return []
 			}
+		}
+
+		function replaceAlias(className) {
+			return grammar.aliases[className] ?? className
 		}
 
 
@@ -72,7 +81,7 @@ export function makeParser(reader, grammar, autoDeref = true, metaKeys = {}) {
 					return null
 				} else if(t.type === 'className') {
 					const newObject = {
-						[kindKey]: t.value,
+						[kindKey]: replaceAlias(t.value),
 					};
 
 					if(metaKeys.kind) {
