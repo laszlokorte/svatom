@@ -41,6 +41,7 @@ export function makeGrammar(version) {
 					context.writeInt(object.figures.length)
 			        for (let i = 0; i < object.figures.length; i++) {
 			            context.writeStorable(object.figures[i])
+			            context.writeLine()
 			        }
 				},
 			},
@@ -94,28 +95,29 @@ export function makeGrammar(version) {
 
 
 				writer: (object, context) => {
-					const keys = Object.keys(object.attr)
+					const keys = Object.keys(object.attrs)
 
 					context.writeString("attributes");
 					context.writeInt(keys.length)
 
 			        for (let i = 0; i < keys.length; i++) {
 			            const key = keys[i]
-			            const value = object.attrs[key]
+			            const val = object.attrs[key]
 			            const type = object.attrTypes[key]
 
+			            context.writeString(key);
 			            context.writeString(type);
 
 			            if (type === "Color") {
 							if(version < 11) {
-			                 	context.writeInt(value.r)
-			                 	context.writeInt(value.g)
-			                 	context.writeInt(value.b)
-			                 	context.writeInt(value.a)
+			                 	context.writeInt(val.r)
+			                 	context.writeInt(val.g)
+			                 	context.writeInt(val.b)
 							} else {
-			                 	context.writeInt(value.r)
-			                 	context.writeInt(value.g)
-			                 	context.writeInt(value.b)
+			                 	context.writeInt(val.r)
+			                 	context.writeInt(val.g)
+			                 	context.writeInt(val.b)
+			                 	context.writeInt(val.a ?? 255)
 							}
 			            } else if (type === "Boolean") {
 		                 	context.writeString(val ? "true" : "false")
@@ -581,13 +583,13 @@ export function makeGrammar(version) {
 					context.writeStorable(object.endDecoration)
 
 					if(version >= 8) {
-			            context.writeString(o.arrowName);
+			            context.writeString("CH.ifa.draw.figures.ArrowTip");
 			        }
 
 			        if(version === -1) {
-			            context.writeInt(object.frameColor.r)
-			            context.writeInt(object.frameColor.g)
-			            context.writeInt(object.frameColor.b)
+			            context.writeInt(object.frameColor.r??0)
+			            context.writeInt(object.frameColor.g??0)
+			            context.writeInt(object.frameColor.b??0)
 			        }
 				},
 			},
@@ -623,10 +625,10 @@ export function makeGrammar(version) {
 				},
 				writer: (object, context) => {
 					if(version >= 5) {
-						context.parseDouble(object.Angle)
-			            context.parseDouble(object.fOuterRadius)
-			            context.parseDouble(object.fInnerRadius)
-			            context.parseBoolean(object.fFilled)
+						context.writeDouble(object.Angle)
+			            context.writeDouble(object.fOuterRadius)
+			            context.writeDouble(object.fInnerRadius)
+			            context.writeBoolean(object.fFilled)
 					}				
 				},
 			},
@@ -713,10 +715,10 @@ export function makeGrammar(version) {
 
 					return text
 				},
-				write: (object, context) => {
+				writer: (object, context) => {
 					context.writeInt(object.fOriginX);
 					context.writeInt(object.fOriginY);
-					context.writeString(object.text);
+					context.writeString(object.lines ? object.lines.join("\n") : object.text);
 					context.writeString(object.fCurrentFontName);
 					context.writeInt(object.fCurrentFontStyle);
 					context.writeInt(object.fCurrentFontSize);
@@ -733,7 +735,7 @@ export function makeGrammar(version) {
 						fType: context.parseInt(),
 					}
 				},
-				write: (object, context) => {
+				writer: (object, context) => {
 					context.writeInt(object.fType);
 				},
 			},
@@ -804,6 +806,7 @@ export function makeGrammar(version) {
 
 					for (let i = 0; i < object.figures.length; i++) {
 		                context.writeStorable(object.figures[i])
+		                context.writeLine()
 		            }
 				},
 			},
@@ -882,7 +885,7 @@ export function makeGrammar(version) {
 				},
 				writer: (object, context) => {
 					context.writeStorable(object.decoration)
-					context.writeString(object.decoration[context.kindKey])
+					context.writeString("de.renew.diagram.FigureDecoration")
 				},
 			},
 			"de.renew.diagram.VSplitFigure": {
@@ -906,7 +909,7 @@ export function makeGrammar(version) {
 				},
 				writer: (object, context) => {
 					context.writeStorable(object.decoration)
-					context.writeString(object.decoration[context.kindKey])
+					context.writeString("de.renew.diagram.FigureDecoration")
 				},
 			},
 			"de.renew.diagram.VSplitCenterConnector": {

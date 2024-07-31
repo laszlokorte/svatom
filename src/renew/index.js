@@ -2,7 +2,9 @@ import {decycle, retrocycle} from './cycle.js'
 import {isDeepEqual} from './compare.js'
 import {makeTokenizer} from './tokenizer.js'
 import {makeReader} from './reader.js'
-import {makeParser, kindKey, refKey, selfKey} from './parser.js'
+import {kindKey, refKey, selfKey} from './symbols.js'
+import {makeParser} from './parser.js'
+import {makeSerializer} from './serializer.js'
 import {makeGrammar} from './grammar.js'
 import {makeHierarchy} from './hierarchy.js'
 
@@ -22,6 +24,7 @@ export {kindKey, selfKey}
 export const reader = makeReader(tokenizer)
 
 export const parserV11 = makeParser(reader, makeGrammar(11))
+export const serializerV11 = makeSerializer(makeGrammar(11))
 export const hierarchyV11 = makeHierarchy(makeGrammar(11))
 
 export const parserAutoDetect = function(inputString, autoDeref = true, metaKeys = {}) {

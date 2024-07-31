@@ -1,6 +1,4 @@
-export const kindKey = Symbol("kind");
-export const refKey = Symbol("ref");
-export const selfKey = Symbol("self");
+import {kindKey, refKey, selfKey} from './symbols.js'
 
 export function makeParser(reader, grammar, autoDeref = true, metaKeys = {}) {
 	return function parser(inputString) {

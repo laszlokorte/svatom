@@ -25,6 +25,7 @@
 
 	import {
 		parserAutoDetect,
+		serializerV11,
 		stringify,
 		hierarchyV11,
 		tryDeref,
@@ -86,14 +87,57 @@
 		renewDocument,
 	);
 
+	// const reserialized = view(
+	// 	[
+	// 		"json",
+	// 		L.reread((j) => {
+	// 			const s = serializerV11(j.refMap);
+	// 			s.context.writeVersion();
+	// 			s.context.writeStorable(j.drawing);
+	// 			return s.output.join(" ");
+	// 		}),
+	// 	],
+	// 	renewDocument,
+	// );
+
 	const sizeCache = view(["cachedSizes", L.defaults({})], renewDocument);
 
-	const renewJsonCurrent = failableView(
-		["json", L.props("version", "doctype", "drawing")],
+	const jsonLens = L.lens(
+		(x) => x.json,
+		(newJson, old) => {
+			console.log({
+				version: 11,
+				doctype: newJson.doctype,
+				drawing: newJson.drawing,
+				refMap: newJson.refMap,
+			});
+			const s = serializerV11(newJson.refMap, {
+				kind: kindKey,
+				ref: refKey,
+				self: selfKey,
+			});
+			s.context.writeVersion();
+			s.context.writeStorable(newJson.drawing);
+			return {
+				selection: old.selection,
+				string: s.output.join(" "),
+				json: {
+					version: 11,
+					doctype: newJson.doctype,
+					drawing: newJson.drawing,
+					refMap: newJson.refMap,
+				},
+				cachedSizes: undefined,
+			};
+		},
+	);
+
+	const renewJsonCurrent = view(
+		[jsonLens, L.props("version", "doctype", "drawing")],
 		renewDocument,
 	);
 
-	const renewJson = failableView(
+	const renewJson = view(
 		L.inverse(L.json({ space: "  " })),
 		renewJsonCurrent,
 	);
@@ -578,7 +622,7 @@
 
 	const version = view(["json", "version"], renewDocument);
 	const doctype = view(["json", "doctype"], renewDocument);
-	const refMap = view(["json", "refMap"], renewDocument);
+	const refMap = view([jsonLens, "refMap"], renewDocument);
 
 	// const renderedRefMap = view((map) => {
 	// 	return map
@@ -592,7 +636,7 @@
 
 	const renderedRefMap = view(
 		[
-			"json",
+			jsonLens,
 			"drawing",
 			"figures",
 			L.partsOf(
