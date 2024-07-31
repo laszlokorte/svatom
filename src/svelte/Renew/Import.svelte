@@ -1115,6 +1115,18 @@
 					<h4>Props</h4>
 					<dl>
 						{#each propsSelected.value as prop}
+							{@const isNumeric =
+								[
+									"x",
+									"y",
+									"w",
+									"h",
+									"fCurrentFontSize",
+									"fCurrentFontStyle",
+									"fOriginX",
+									"fOriginY",
+									"rotation",
+								].indexOf(prop) > -1}
 							{@const propValue = view(
 								[
 									s,
@@ -1122,16 +1134,7 @@
 									prop === "lines"
 										? L.inverse(L.split("\n"))
 										: L.identity,
-									[
-										"x",
-										"y",
-										"w",
-										"h",
-										"fCurrentFontSize",
-										"fCurrentFontStyle",
-										"fOriginX",
-										"fOriginY",
-									].indexOf(prop) > -1
+									isNumeric
 										? [L.setter((x) => parseFloat(x) || 0)]
 										: L.identity,
 								],
@@ -1140,13 +1143,11 @@
 							<dt>{prop}</dt>
 							<dd>
 								{#if prop === "lines"}
-									<textarea
-										type="text"
-										bind:value={propValue.value}
+									<textarea bind:value={propValue.value}
 									></textarea>
 								{:else}
 									<input
-										type="text"
+										type={isNumeric ? "number" : "text"}
 										bind:value={propValue.value}
 									/>
 								{/if}
@@ -1156,14 +1157,42 @@
 					<h4>Attributes</h4>
 					<dl>
 						{#each attrsSelected.value as attr}
+							{@const isColor = attr.indexOf("Color") > -1}
 							{@const attrValue = view(
 								[
 									s,
 									"attributes",
 									"attrs",
 									attr,
-									attr.indexOf("Color") > -1
-										? L.inverse(L.split(","))
+									isColor
+										? [
+												L.lens(
+													(x) =>
+														`#${x
+															.slice(0, 3)
+															.map((v) =>
+																(
+																	"0" +
+																	v.toString(
+																		16,
+																	)
+																)
+																	.slice(-2)
+																	.toUpperCase(),
+															)
+															.join("")}`,
+													(hex) =>
+														R.props(
+															["r", "g", "b"],
+															console.log(hex) ||
+																hex.match(
+																	/#(?<r>[a-f0-9]{2})(?<g>[a-f0-9]{2})(?<b>[a-f0-9]{2})/,
+																).groups,
+														).map((c) =>
+															parseInt(c, 16),
+														),
+												),
+											]
 										: L.identity,
 								],
 								refMap,
@@ -1171,7 +1200,7 @@
 							<dt>{attr}</dt>
 							<dd>
 								<input
-									type="text"
+									type={isColor ? "color" : "text"}
 									bind:value={attrValue.value}
 								/>
 							</dd>
@@ -1461,21 +1490,22 @@
 											},
 											{ x: rect.x, y: rect.y },
 										]}
+										{@const i1 = rect.rotation % 8}
+										{@const i2 =
+											(rect.rotation +
+												3 -
+												(rect.rotation % 2)) %
+											8}
+										{@const i3 =
+											(rect.rotation +
+												5 +
+												(rect.rotation % 2)) %
+											8}
 										<polygon
-											points="{corners[rect.rotation]
-												.x} {corners[rect.rotation].y}
-									{corners[(rect.rotation + 3 - (rect.rotation % 2)) % 8].x} {corners[
-												(rect.rotation +
-													3 -
-													(rect.rotation % 2)) %
-													8
-											].y}
-									{corners[(rect.rotation + 5 + (rect.rotation % 2)) % 8].x} {corners[
-												(rect.rotation +
-													5 +
-													(rect.rotation % 2)) %
-													8
-											].y}"
+											points="{corners[i1].x} {corners[i1]
+												.y}
+									{corners[i2].x} {corners[i2].y}
+									{corners[i3].x} {corners[i3].y}"
 											fill="none"
 											class="clickarea"
 											pointer-events="all"
@@ -1485,20 +1515,10 @@
 											vector-effect="non-scaling-stroke"
 										/>
 										<polygon
-											points="{corners[rect.rotation]
-												.x} {corners[rect.rotation].y}
-									{corners[(rect.rotation + 3 - (rect.rotation % 2)) % 8].x} {corners[
-												(rect.rotation +
-													3 -
-													(rect.rotation % 2)) %
-													8
-											].y}
-									{corners[(rect.rotation + 5 + (rect.rotation % 2)) % 8].x} {corners[
-												(rect.rotation +
-													5 +
-													(rect.rotation % 2)) %
-													8
-											].y}"
+											points="{corners[i1].x} {corners[i1]
+												.y}
+									{corners[i2].x} {corners[i2].y}
+									{corners[i3].x} {corners[i3].y}"
 										/>
 									{:else}
 										<rect
