@@ -45,7 +45,7 @@ export function makeParser(reader, grammar, autoDeref = true, metaKeys = {}) {
 			get kindKey() {
 				return kindKey;
 			},
-			parseStorable(ofInterface, allowNull = true, forceDeref = false)  {
+			parseStorable(ofInterface = null, allowNull = true, forceDeref = null)  {
 				const t = r.readAny(['nil','ref','className'])
 
 				if(t.type === 'ref') {
@@ -61,7 +61,7 @@ export function makeParser(reader, grammar, autoDeref = true, metaKeys = {}) {
 						}
 					}
 
-					if(autoDeref || forceDeref) {
+					if(autoDeref || forceDeref === true) {
 						return referencedObject
 					} else {
 						const ref = {[refKey]: true, ref: t.value}
@@ -93,6 +93,15 @@ export function makeParser(reader, grammar, autoDeref = true, metaKeys = {}) {
 					refMap.push(newObject)
 
 					parseInto(newObject, t.value);
+
+					if(forceDeref === false) {
+						const ref = {[refKey]: true, ref: newObject[metaKeys.self]}
+						if(metaKeys.ref) {
+							ref[metaKeys.ref] = newObject[metaKeys.self]
+						}
+
+						return ref
+					}
 
 					return newObject
 				}

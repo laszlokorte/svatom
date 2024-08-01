@@ -86,15 +86,15 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 		const suddenPan = Math.hypot(dx, dy) > 15 * window.devicePixelRatio
 
 		if(!suddenAngle && !suddenZoom && !suddenPan) {
-			rotationDelta.value = {
-				px: worldPos.x,
-				py: worldPos.y,
-				dw: dw,
-			}
 			zoomDelta.value = {
 				px: worldPos.x,
 				py: worldPos.y,
 				dz: dz,
+			}
+			rotationDelta.value = {
+				px: worldPos.x,
+				py: worldPos.y,
+				dw: dw,
 			}
 			panScreenDelta.value = {
 				dx,
@@ -301,15 +301,15 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 
 			const worldPos = L.get(eventWorld, {clientX: newPivot.x, clientY: newPivot.y})
 
-			rotationDelta.value = {
-				px: worldPos.x,
-				py: worldPos.y,
-				dw: dw / evt.touches.length,
-			}
 			zoomDelta.value = {
 				px: worldPos.x,
 				py: worldPos.y,
 				dz: dz,
+			}
+			rotationDelta.value = {
+				px: worldPos.x,
+				py: worldPos.y,
+				dw: dw / evt.touches.length,
 			}
 			panScreenDelta.value = {
 				dx,
@@ -333,7 +333,7 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 	node.addEventListener('getpointercapture', onPointerGotCapture, true)
 	node.addEventListener('pointerup', onPointerEnd, true)
 
-	const nativeGestureEvents = (typeof window.GestureEvent) !== "undefined"
+	const nativeGestureEvents =  (typeof window.GestureEvent) !== "undefined"
 	const nativeTouchEvents = (typeof window.TouchEvent) !== "undefined"
 
 	if(nativeGestureEvents) {

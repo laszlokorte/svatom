@@ -38,20 +38,20 @@ export const parserAutoDetect = function(inputString, autoDeref = true, metaKeys
 
 		p.skipAny(["int"])
 
-		const drawing = p.parseStorable();
+		const drawing = p.parseStorable(null, true, false);
 		p.parseWindowPositionMaybe();
 		p.expectFinish()
 
-		return {version: p.version, doctype: drawing[kindKey], drawing, refMap: p.refMap};
+		return {version: p.version, doctype: tryDeref(drawing, p.refMap, [kindKey]), drawing, refMap: p.refMap};
 	} else {
 		const parser = makeParser(reader, makeGrammar(-1), autoDeref, metaKeys)
 		const p = parser(inputString)
 
-		const drawing = p.parseStorable();
+		const drawing = p.parseStorable(null, true, false);
 		p.parseWindowPositionMaybe();
 		p.expectFinish()
 
-		return {version: p.version, doctype: drawing[kindKey], drawing, refMap: p.refMap};
+		return {version: p.version, doctype: tryDeref(drawing, p.refMap, [kindKey]), drawing, refMap: p.refMap};
 	}
 }
 

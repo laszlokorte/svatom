@@ -105,12 +105,6 @@
 	const jsonLens = L.lens(
 		(x) => x.json,
 		(newJson, old) => {
-			console.log({
-				version: 11,
-				doctype: newJson.doctype,
-				drawing: newJson.drawing,
-				refMap: newJson.refMap,
-			});
 			const s = serializerV11(newJson.refMap, {
 				kind: kindKey,
 				ref: refKey,
@@ -132,14 +126,15 @@
 		},
 	);
 
-	const renewJsonCurrent = view(
-		[jsonLens, L.props("version", "doctype", "drawing")],
-		renewDocument,
-	);
+	const renewJsonCurrent = view(jsonLens, renewDocument);
 
 	const renewJson = view(
 		L.inverse(L.json({ space: "  " })),
 		renewJsonCurrent,
+	);
+
+	const drawingTypes = hierarchyV11.descendantsOf(
+		"CH.ifa.draw.standard.StandardDrawing",
 	);
 
 	const rectTypes = hierarchyV11.descendantsOf(
@@ -637,8 +632,7 @@
 	const renderedRefMap = view(
 		[
 			jsonLens,
-			"drawing",
-			"figures",
+			L.reread((x) => x.refMap[x.drawing["__ref"]]["figures"]),
 			L.partsOf(
 				L.elems,
 				L.choices(

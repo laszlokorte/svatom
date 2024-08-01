@@ -9,8 +9,8 @@ export function makeSerializer(grammar) {
 		const decimalFormat =  new Intl.NumberFormat('en-US', { minimumFractionDigits: 1 })
 
 		function tryDeref(refOrObject, sourceRefMap, path = []) {
-			const selfId = refOrObject && refOrObject[metaKeys.self || selfKey];
-			const object = (refOrObject && refOrObject[metaKeys.ref || refKey]) ? sourceRefMap[refOrObject.ref] : selfId ? sourceRefMap[selfId] : refOrObject
+			const selfId = refOrObject ? refOrObject[metaKeys.self || selfKey] : undefined;
+			const object = (refOrObject && refOrObject[metaKeys.ref || refKey] !== undefined) ? sourceRefMap[refOrObject.ref] : selfId!==undefined ? sourceRefMap[selfId] : refOrObject
 
 			return path.reduce((o, k) => o ? tryDeref(o[k], sourceRefMap) : null, object)
 		}
