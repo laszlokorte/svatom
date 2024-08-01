@@ -116,6 +116,7 @@
 		border: 1px solid cyan;
 		overflow: hidden;
 		flex-direction: var(--direction, row);
+		user-select: none;
 	}
 
 	.split.dir-row {
@@ -131,6 +132,23 @@
 		flex-basis: 0.5em;
 		flex-shrink: 0;
 		flex-grow: 0;
+		touch-action: none;
+		user-select: none;
+
+		-webkit-touch-callout: none;
+		-webkit-user-callout: none;
+		-webkit-user-select: none;
+		-webkit-user-drag: none;
+		-webkit-user-modify: none;
+		-webkit-highlight: none;
+		position: relative;
+	}
+
+	.split-divider::after {
+		content: ' ';
+		position: absolute;
+		inset: -1em;
+
 	}
 
 	.split-divider.dir-row {
