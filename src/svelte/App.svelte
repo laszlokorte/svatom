@@ -18,6 +18,7 @@
 	import Table from "./Table.svelte";
 	import Scroller from "./Scroller.svelte";
 	import Canvas from "./Canvas/Root.svelte";
+	import Split from "./SplitView/Split.svelte";
 	import RenewImport from "./Renew/Import.svelte";
 	import asciiLogo from "./asciiLogo.txt?raw";
 	import { clamp, lerp } from "./utils.js";
@@ -643,6 +644,15 @@
 	<Canvas />
 
 	<RenewImport />
+
+	<h2>Split View</h2>
+
+	<Split></Split>
+	<Split direction="column"></Split>
+
+	<Split direction="column">
+		<Split></Split>
+	</Split>
 </section>
 
 <style>

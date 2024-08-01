@@ -1,0 +1,155 @@
+<script>
+	import * as L from "partial.lenses";
+	import * as R from "ramda";
+	import {
+		atom,
+		view,
+		read,
+		combine,
+		combineWithRest,
+		failableView,
+		bindValue,
+		bindScroll,
+		bindScrollMax,
+		bindSize,
+		string,
+	} from "../svatom.svelte.js";
+
+	const {
+		content = atom([
+			{ size: 10, content: "x" },
+			{ size: 30, content: "y" },
+			{ size: 40, content: "z" },
+			{ size: 20, content: "w" },
+		]),
+		direction = "row",
+		children,
+	} = $props();
+
+	const dir = {
+		row: {
+			x: 1,
+			y: 0,
+		},
+		column: {
+			x: 0,
+			y: 1,
+		},
+	};
+
+	const percentListLens = L.normalize((l) => {
+		const norm = 100 / (R.sum(l) || 1);
+
+		return R.map(R.multiply(norm), l);
+	});
+
+	const summingLens = (i, forceSum = null) =>
+		L.lens(
+			(a) => a[i],
+			(n, o) => {
+				const delta = Math.min(n - o[i], o[i + 1]);
+
+				return [
+					...o.slice(0, i),
+					o[i] + delta,
+					o[i + 1] - delta,
+					...o.slice(i + 2),
+				];
+			},
+		);
+</script>
+
+<div
+	class="split"
+	class:dir-column={direction === "column"}
+	class:dir-row={direction === "row"}
+>
+	{#each content.value as c, i (i)}
+		{#if i > 0}
+			{@const s = view(
+				[
+					L.partsOf(L.elems, "size"),
+					percentListLens,
+					summingLens(i - 1),
+					L.normalize(R.clamp(0, 100)),
+				],
+				content,
+			)}
+			<div
+				class="split-divider"
+				class:dir-column={direction === "column"}
+				class:dir-row={direction === "row"}
+				onpointerdown={(e) => {
+					e.currentTarget.setPointerCapture(e.pointerId);
+				}}
+				onpointermove={(e) => {
+					if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+						s.value +=
+							(dir[direction].x *
+								(100 *
+									(e.pageX -
+										e.currentTarget.offsetLeft -
+										e.currentTarget.offsetWidth / 2))) /
+								e.currentTarget.parentElement.offsetWidth +
+							(dir[direction].y *
+								(100 *
+									(e.pageY -
+										e.currentTarget.offsetTop -
+										e.currentTarget.offsetHeight / 2))) /
+								e.currentTarget.parentElement.offsetHeight;
+					}
+				}}
+			></div>
+		{/if}
+		<div class="split-content" style:--split-size={c.size}>
+			{@render children()}
+		</div>
+	{/each}
+</div>
+
+<style>
+	.split {
+		display: flex;
+		justify-items: stretch;
+		min-height: 20em;
+		min-width: 20em;
+		border: 1px solid cyan;
+		overflow: hidden;
+		flex-direction: var(--direction, row);
+	}
+
+	.split.dir-row {
+		flex-direction: row;
+	}
+	.split.dir-column {
+		flex-direction: column;
+	}
+
+	.split-divider {
+		align-self: stretch;
+		background: #eee;
+		flex-basis: 0.5em;
+		flex-shrink: 0;
+		flex-grow: 0;
+	}
+
+	.split-divider.dir-row {
+		border-left: 1px solid #ccc;
+		border-right: 1px solid #ccc;
+		cursor: col-resize;
+	}
+	.split-divider.dir-column {
+		border-top: 1px solid #ccc;
+		border-bottom: 1px solid #ccc;
+		cursor: row-resize;
+	}
+
+	.split-content {
+		flex-basis: 1px;
+		flex-grow: var(--split-size, 1);
+		flex-shrink: 1;
+		min-width: 0;
+		min-height: 0;
+		overflow: hidden;
+	}
+</style>
