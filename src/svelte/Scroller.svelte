@@ -118,6 +118,7 @@
 </div>
 <style>
 	.scroller {
+		contain: strict;
 		border: 3px solid #333;
 		min-height: 10em;
 		resize: both;

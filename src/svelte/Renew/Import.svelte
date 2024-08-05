@@ -4,6 +4,7 @@
 	import { untrack, tick } from "svelte";
 	import * as Geo from "../geometry";
 	import Navigator from "../Canvas/camera/Navigator.svelte";
+	import Static from "./Static.svelte";
 
 	import { frameBoxLens } from "../Canvas/camera/lenses";
 
@@ -186,10 +187,6 @@
 		...lineDecorationTypes,
 		...boxDecorationTypes,
 	];
-
-	//console.log(boxDecorationTypes);
-
-	//console.log(renderedTypes);
 
 	const allRoots = [
 		"CH.ifa.draw.figures.AbstractLocator",
@@ -1081,12 +1078,16 @@
 	{/each}
 	{#await moreExamples then { files }}
 		<select
-			oninput={(e) =>
-				loadExample(e.currentTarget.value).then((x) => {
-					renewSerialized.value = x.content;
-					refitCamera();
-				})}
+			oninput={(e) => {
+				if (e.currentTarget.value) {
+					loadExample(e.currentTarget.value).then((x) => {
+						renewSerialized.value = x.content;
+						refitCamera();
+					});
+				}
+			}}
 		>
+			<option value="">More examples</option>
 			{#each files as { name, href }}
 				<option value={href}>{name}</option>
 			{/each}
@@ -1615,20 +1616,21 @@
 										/>
 									{/if}
 								</g>
-								<text
-									class:hidden={!debug.value}
-									pointer-events="none"
-									text-rendering="geometricPrecision"
-									x={rect.x + rect.w / 2}
-									y={rect.y}
-									text-anchor="middle"
-									font-size="7"
-									fill="royalblue"
-									font-family="monospace"
-									title={rect[kindKey]}
-								>
-									{rect[kindKey]}</text
-								>
+								{#if debug.value}
+									<text
+										pointer-events="none"
+										text-rendering="geometricPrecision"
+										x={rect.x + rect.w / 2}
+										y={rect.y}
+										text-anchor="middle"
+										font-size="7"
+										fill="royalblue"
+										font-family="monospace"
+										title={rect[kindKey]}
+									>
+										{rect[kindKey]}</text
+									>
+								{/if}
 							</g>
 						{/each}
 					</g>
@@ -1668,19 +1670,22 @@
 									/>
 								</g>
 
-								<text
-									class:hidden={!debug.value}
-									pointer-events="none"
-									text-rendering="geometricPrecision"
-									x={ellipse.x + ellipse.w / 2}
-									y={ellipse.y}
-									text-anchor="middle"
-									font-size="7"
-									fill="royalblue"
-									font-family="monospace"
-									title={ellipse[kindKey]}
-									>{R.last(ellipse[kindKey].split("."))}</text
-								>
+								{#if debug.value}
+									<text
+										pointer-events="none"
+										text-rendering="geometricPrecision"
+										x={ellipse.x + ellipse.w / 2}
+										y={ellipse.y}
+										text-anchor="middle"
+										font-size="7"
+										fill="royalblue"
+										font-family="monospace"
+										title={ellipse[kindKey]}
+										>{R.last(
+											ellipse[kindKey].split("."),
+										)}</text
+									>
+								{/if}
 							</g>
 						{/each}
 					</g>
@@ -1762,11 +1767,10 @@
 													decorationKind
 												].attributes()}
 											/>
-										{:else}
+										{:else if debug.value}
 											<text
-												class:hidden={!debug.value}
 												pointer-events="none"
-												shape-rendering="geometricPrecision"
+												text-rendering="geometricPrecision"
 												x={diag.displayBox.x}
 												y={diag.displayBox.y}
 												text-anchor="middle"
@@ -1973,20 +1977,21 @@
 									{/each}
 								</text>
 
-								<text
-									class:hidden={!debug.value}
-									pointer-events="none"
-									text-rendering="geometricPrecision"
-									x={textX}
-									y={text.fOriginY}
-									text-anchor="middle"
-									font-size="7"
-									fill="royalblue"
-									font-family="monospace"
-									title={text[kindKey]}
-								>
-									{text[kindKey]} ({lines.length})</text
-								>
+								{#if debug.value}
+									<text
+										pointer-events="none"
+										text-rendering="geometricPrecision"
+										x={textX}
+										y={text.fOriginY}
+										text-anchor="middle"
+										font-size="7"
+										fill="royalblue"
+										font-family="monospace"
+										title={text[kindKey]}
+									>
+										{text[kindKey]} ({lines.length})</text
+									>
+								{/if}
 							</g>
 						{/each}
 					</g>
@@ -2030,6 +2035,8 @@
 							)}
 							<use
 								href="#{id}"
+								shape-rendering="geometricPrecision"
+								text-rendering="optimizeSpeed"
 								use:bindBoundingBox={measuredSize}
 							/>
 						{/each}
@@ -2045,11 +2052,11 @@
 		word-break: break-word;
 	}
 
-	svg {
+	.canvas {
+		contain: strict;
 		-webkit-user-callout: none;
 		width: 100%;
 		resize: both;
-		shape-rendering: geometricPrecision;
 
 		position: absolute;
 		display: block;
@@ -2119,6 +2126,10 @@
 		stroke: #ff666633;
 		pointer-events: none;
 		outline: 2px solid #ff666633;
+	}
+
+	use {
+		contain: strict;
 	}
 
 	.selected {
