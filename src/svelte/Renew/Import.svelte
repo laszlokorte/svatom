@@ -1390,7 +1390,7 @@
 									)}
 									fill="none"
 									class="clickarea"
-									pointer-events="all"
+									pointer-events="stroke"
 									stroke={"transparent"}
 									stroke-linecap="none"
 									stroke-width={15}
@@ -1611,11 +1611,13 @@
 											ry={rect.arcHeight ?? 0 / 2}
 											width={rect.w}
 											height={rect.h}
+											pointer-events="all"
 										/>
 									{/if}
 								</g>
 								<text
 									class:hidden={!debug.value}
+									pointer-events="none"
 									text-rendering="geometricPrecision"
 									x={rect.x + rect.w / 2}
 									y={rect.y}
@@ -1662,11 +1664,13 @@
 										cy={ellipse.y + ellipse.h / 2}
 										rx={ellipse.w / 2}
 										ry={ellipse.h / 2}
+										pointer-events="all"
 									/>
 								</g>
 
 								<text
 									class:hidden={!debug.value}
+									pointer-events="none"
 									text-rendering="geometricPrecision"
 									x={ellipse.x + ellipse.w / 2}
 									y={ellipse.y}
@@ -1718,6 +1722,7 @@
 										y={diag.displayBox.y}
 										width={diag.displayBox.w}
 										height={diag.displayBox.h}
+										pointer-events="all"
 									/>
 
 									{#if diag[kindKey] === "de.renew.diagram.DestructionFigure"}
@@ -1760,6 +1765,7 @@
 										{:else}
 											<text
 												class:hidden={!debug.value}
+												pointer-events="none"
 												shape-rendering="geometricPrecision"
 												x={diag.displayBox.x}
 												y={diag.displayBox.y}
@@ -1775,6 +1781,7 @@
 
 								<text
 									class:hidden={!debug.value}
+									pointer-events="none"
 									text-rendering="geometricPrecision"
 									x={diag.displayBox.x +
 										diag.displayBox.w / 2}
@@ -1802,7 +1809,10 @@
 								) > -1}
 							>
 								{#each group.figures as f}
-									<use href="#ref-{f[selfKey] || f.ref}" />
+									<use
+										href="#ref-{f[selfKey] || f.ref}"
+										pointer-events="all"
+									/>
 								{/each}
 							</g>
 						{/each}
@@ -1877,6 +1887,7 @@
 											height={measureValue.height + 2}
 											x={text.fOriginX - 1}
 											y={text.fOriginY - 1}
+											pointer-events="all"
 										/>
 
 										{#if lineCount && textLineStyle}
@@ -1921,6 +1932,7 @@
 									x={textX}
 									y={text.fOriginY + fontSize}
 									fill={textColor}
+									pointer-events="all"
 									font-family={fontFamily.replace(
 										"SansSerif",
 										"sans-serif",
@@ -1963,6 +1975,7 @@
 
 								<text
 									class:hidden={!debug.value}
+									pointer-events="none"
 									text-rendering="geometricPrecision"
 									x={textX}
 									y={text.fOriginY}
@@ -2112,9 +2125,6 @@
 		transform: scale(1, 1);
 		transform-origin: center center;
 		transform-box: fill-box;
-	}
-	use {
-		pointer-events: all;
 	}
 
 	dl {

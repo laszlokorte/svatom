@@ -647,12 +647,20 @@
 
 	<h2>Split View</h2>
 
-	<Split></Split>
-	<Split direction="column"></Split>
-
-	<Split direction="column">
+	<div
+		style="display: grid; grid-template-columns: 1fr; grid-auto-rows: 20em;gap: 1em"
+	>
 		<Split></Split>
-	</Split>
+		<Split direction="column"></Split>
+
+		<Split direction="column">
+			<Split></Split>
+		</Split>
+
+		<Split>
+			<Split></Split>
+		</Split>
+	</div>
 </section>
 
 <style>

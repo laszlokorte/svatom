@@ -117,12 +117,13 @@
 	.split {
 		display: flex;
 		justify-items: stretch;
-		min-height: 20em;
-		min-width: 20em;
-		border: 1px solid cyan;
+		width: 100%;
+		height: 100%;
 		overflow: hidden;
 		flex-direction: var(--direction, row);
 		user-select: none;
+		min-width: min-content;
+		outline: 1px solid #ccc;
 	}
 
 	.split.dir-row {
