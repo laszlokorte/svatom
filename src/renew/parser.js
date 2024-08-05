@@ -78,12 +78,13 @@ export function makeParser(reader, grammar, autoDeref = true, metaKeys = {}) {
 					}
 					return null
 				} else if(t.type === 'className') {
+					const className = replaceAlias(t.value)
 					const newObject = {
-						[kindKey]: replaceAlias(t.value),
+						[kindKey]: className,
 					};
 
 					if(metaKeys.kind) {
-						newObject[metaKeys.kind] = t.value
+						newObject[metaKeys.kind] = className
 					}
 
 					newObject[selfKey] = refMap.length
@@ -92,7 +93,7 @@ export function makeParser(reader, grammar, autoDeref = true, metaKeys = {}) {
 					}
 					refMap.push(newObject)
 
-					parseInto(newObject, t.value);
+					parseInto(newObject, className);
 
 					if(forceDeref === false) {
 						const ref = {[refKey]: true, ref: newObject[metaKeys.self]}

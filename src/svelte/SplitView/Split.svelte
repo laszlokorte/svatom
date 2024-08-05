@@ -57,6 +57,8 @@
 				];
 			},
 		);
+
+	let offset = $state({x:0,y:0})
 </script>
 
 <div
@@ -81,19 +83,23 @@
 				class:dir-row={direction === "row"}
 				onpointerdown={(e) => {
 					e.currentTarget.setPointerCapture(e.pointerId);
+					offset = {
+						x: e.pageX - e.currentTarget.offsetLeft - e.currentTarget.offsetWidth / 2,
+						y: e.pageY - e.currentTarget.offsetTop - e.currentTarget.offsetHeight / 2,
+					}
 				}}
 				onpointermove={(e) => {
 					if (e.currentTarget.hasPointerCapture(e.pointerId)) {
 						s.value +=
 							(dir[direction].x *
 								(100 *
-									(e.pageX -
+									(e.pageX - offset.x -
 										e.currentTarget.offsetLeft -
 										e.currentTarget.offsetWidth / 2))) /
 								e.currentTarget.parentElement.offsetWidth +
 							(dir[direction].y *
 								(100 *
-									(e.pageY -
+									(e.pageY - offset.y -
 										e.currentTarget.offsetTop -
 										e.currentTarget.offsetHeight / 2))) /
 								e.currentTarget.parentElement.offsetHeight;

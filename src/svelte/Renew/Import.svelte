@@ -51,12 +51,12 @@
 		exampleDoubleArrow,
 		exampleColors,
 	];
-	const moreExamples = fetch("http://127.0.0.1:8080/").then((x) => x.json());
+	const moreExamples = fetch("https://renew.laszlokorte.de/").then((x) =>
+		x.json(),
+	);
 
-	function loadExample(name) {
-		return fetch(
-			"http://127.0.0.1:8080/?" + new URLSearchParams([["file", name]]),
-		).then((x) => x.json());
+	function loadExample(href) {
+		return fetch(href).then((x) => x.json());
 	}
 
 	const kindKey = "__kind";
@@ -364,18 +364,22 @@
 				minX: [
 					L.foldTraversalLens(L.minimum, [boundsLens, "minX"]),
 					L.reread((x) => (isNaN(x) ? 0 : x)),
+					L.defaults(0),
 				],
 				maxX: [
 					L.foldTraversalLens(L.maximum, [boundsLens, "maxX"]),
 					L.reread((x) => (isNaN(x) ? 0 : x)),
+					L.defaults(0),
 				],
 				minY: [
 					L.foldTraversalLens(L.minimum, [boundsLens, "minY"]),
 					L.reread((x) => (isNaN(x) ? 0 : x)),
+					L.defaults(0),
 				],
 				maxY: [
 					L.foldTraversalLens(L.maximum, [boundsLens, "maxY"]),
 					L.reread((x) => (isNaN(x) ? 0 : x)),
+					L.defaults(0),
 				],
 			}),
 		],
@@ -693,10 +697,16 @@
 				y: (cameraBounds.value.maxY + cameraBounds.value.minY) / 2,
 				z: -Math.max(
 					Math.log(
-						cameraBounds.value.maxX - cameraBounds.value.minX,
+						Math.max(
+							1,
+							cameraBounds.value.maxX - cameraBounds.value.minX,
+						),
 					) - Math.log(camera.value.plane.x),
 					Math.log(
-						cameraBounds.value.maxY - cameraBounds.value.minY,
+						Math.max(
+							1,
+							cameraBounds.value.maxY - cameraBounds.value.minY,
+						),
 					) - Math.log(camera.value.plane.y),
 				),
 				w: cameraBounds.value.angle,
@@ -805,6 +815,27 @@
 
 	const lineDecorations = {
 		"de.renew.gui.AssocArrowTip": {
+			path: (from, to) => {
+				const dx = to.x - from.x;
+				const dy = to.y - from.y;
+				const dl = Math.hypot(dx, dy);
+
+				const dxn = dx / dl;
+				const dyn = dy / dl;
+				const orthoX = -dyn;
+				const orthoY = dxn;
+
+				const size = 5;
+				const width = 0.7;
+
+				return `M${to.x},${to.y}l${(-dxn + orthoX * width) * size},${(-dyn + orthoY * width) * size}M${to.x},${to.y}l${(-dxn - orthoX * width) * size},${(-dyn - orthoY * width) * size}`;
+			},
+			attributes: () => ({
+				fill: "none",
+				stroke: "black",
+			}),
+		},
+		"de.renew.diagram.AssocArrowTip": {
 			path: (from, to) => {
 				const dx = to.x - from.x;
 				const dy = to.y - from.y;
@@ -1048,7 +1079,7 @@
 			}}>File #{e + 1}</button
 		>
 	{/each}
-	{#await moreExamples then filenames}
+	{#await moreExamples then { files }}
 		<select
 			oninput={(e) =>
 				loadExample(e.currentTarget.value).then((x) => {
@@ -1056,8 +1087,8 @@
 					refitCamera();
 				})}
 		>
-			{#each filenames as name}
-				<option>{name}</option>
+			{#each files as { name, href }}
+				<option value={href}>{name}</option>
 			{/each}
 		</select>
 	{:catch}
@@ -1688,6 +1719,17 @@
 										width={diag.displayBox.w}
 										height={diag.displayBox.h}
 									/>
+
+									{#if diag[kindKey] === "de.renew.diagram.DestructionFigure"}
+										<path
+											d="M{diag.displayBox.x +
+												diag.displayBox.w / 2},{diag
+												.displayBox.y +
+												diag.displayBox.h /
+													2}m-10,-10l20,20m-20,0l20,-20"
+											stroke="black"
+										/>
+									{/if}
 								</g>
 
 								{#if decoration}
