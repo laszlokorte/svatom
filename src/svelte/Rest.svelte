@@ -11,26 +11,38 @@
 		bindSize,
 	} from "./svatom.svelte.js";
 
-	const loginUrl = "https://renewcollab.laszlokorte.de//api/auth/login";
-	const documentsUrl = "https://renewcollab.laszlokorte.de//api/documents";
+	import { Socket } from "phoenix";
+
+	const loginUrl = "http://127.0.0.1:4000/api/auth/login";
+	const documentsUrl = "http://127.0.0.1:4000/api/documents";
 
 	const token = atom(null);
 	const documents = atom(null);
 	const currentDocumentId = atom(null);
+	let socket = $state(null);
 
 	$effect(() => {
 		const currentToken = token.value;
 
-		if (token.value) {
+		if (!documents.value && currentToken) {
 			fetch(documentsUrl, {
 				headers: {
 					"Content-Type": "application/json",
-					Authorization: `Bearer ${token.value}`,
+					Authorization: `Bearer ${currentToken}`,
 				},
 			})
 				.then((r) => r.json())
 				.then((j) => {
 					documents.value = j.data;
+					if (!socket) {
+						socket = new Socket(
+							"http://127.0.0.1:4000/collaboration",
+							{
+								params: { token: currentToken },
+							},
+						);
+						socket.connect();
+					}
 				});
 		}
 	});
@@ -84,6 +96,8 @@
 		type="button"
 		onclick={(e) => {
 			token.value = undefined;
+			documents.value = undefined;
+			currentDocumentId.value = undefined;
 		}}>Logout</button
 	>
 {:else}
@@ -122,6 +136,7 @@
 		documents,
 	)}
 	{token}
+	{socket}
 />
 
 <style>

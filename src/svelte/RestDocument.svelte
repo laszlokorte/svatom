@@ -1,7 +1,7 @@
 <script>
 	import * as L from "partial.lenses";
 	import * as R from "ramda";
-	const { doc, token } = $props();
+	const { doc, token, socket } = $props();
 
 	$effect(() => {
 		if (doc.value && !doc.value.elements) {
@@ -15,6 +15,36 @@
 				.then((j) => {
 					doc.value = j.data;
 				});
+		}
+	});
+
+	let channel = $state(null);
+
+	$effect(() => {
+		if (socket && doc.value && doc.value.channel) {
+			if (channel && channel.topic !== doc.value.channel) {
+				channel.leave();
+				channel = null;
+			}
+			if (!channel) {
+				channel = socket.channel(doc.value.channel, {});
+				channel
+					.join()
+					.receive("ok", (resp) => {
+						console.log("Joined successfully", resp);
+					})
+					.receive("error", (resp) => {
+						console.log("Unable to join", resp);
+					});
+
+				channel.on("element:new", (resp) => {
+					doc.value = L.set(
+						["elements", "items", L.appendTo],
+						resp,
+						doc.value,
+					);
+				});
+			}
 		}
 	});
 </script>
@@ -79,11 +109,11 @@
 			})
 				.then((r) => r.json())
 				.then((j) => {
-					doc.value = L.set(
-						["elements", "items", L.appendTo],
-						j.data,
-						doc.value,
-					);
+					// doc.value = L.set(
+					// 	["elements", "items", L.appendTo],
+					// 	j.data,
+					// 	doc.value,
+					// );
 				});
 		}}
 	>
