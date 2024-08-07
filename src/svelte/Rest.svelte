@@ -13,7 +13,9 @@
 
 	import { Socket } from "phoenix";
 
-	const baseUrl = "http://127.0.0.1:4000";
+	const baseUrl = false
+		? "//127.0.0.1:4000"
+		: "//renewcollab.laszlokorte.de/";
 	const loginUrl = `${baseUrl}/api/auth/login`;
 	const documentsUrl = `${baseUrl}/api/documents`;
 

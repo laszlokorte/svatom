@@ -3,8 +3,11 @@
 	import * as R from "ramda";
 	const { doc, token, socket } = $props();
 
+	let prevHref = $state();
+
 	$effect(() => {
-		if (doc.value && !doc.value.elements) {
+		if (doc.value && doc.value.href !== prevHref) {
+			prevHref = doc.value.href;
 			fetch(doc.value.href, {
 				headers: {
 					"Content-Type": "application/json",
@@ -13,7 +16,11 @@
 			})
 				.then((r) => r.json())
 				.then((j) => {
+					prevHref = j.data.href;
 					doc.value = j.data;
+				})
+				.catch((e) => {
+					prevHref = undefined;
 				});
 		}
 	});
@@ -31,10 +38,10 @@
 				channel
 					.join()
 					.receive("ok", (resp) => {
-						//console.log("Joined successfully", resp);
+						//alert("joined ok");
 					})
 					.receive("error", (resp) => {
-						//console.log("Unable to join", resp);
+						//alert(resp);
 					});
 
 				channel.on("element:new", (resp) => {
@@ -44,6 +51,7 @@
 						doc.value,
 					);
 				});
+				//alert("joinedA");
 			}
 		}
 	});
