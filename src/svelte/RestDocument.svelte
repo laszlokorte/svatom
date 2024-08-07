@@ -31,10 +31,10 @@
 				channel
 					.join()
 					.receive("ok", (resp) => {
-						console.log("Joined successfully", resp);
+						//console.log("Joined successfully", resp);
 					})
 					.receive("error", (resp) => {
-						console.log("Unable to join", resp);
+						//console.log("Unable to join", resp);
 					});
 
 				channel.on("element:new", (resp) => {
@@ -117,10 +117,13 @@
 				});
 		}}
 	>
-		<text>Hello</text>
 		{#if doc.value.elements}
 			{#each doc.value.elements.items as e}
 				<circle r="20" fill="red" cx={e.position_x} cy={e.position_y} />
+			{:else}
+				<text font-size="80" cx="0" cy="0" text-anchor="middle"
+					>Click to Place a circle</text
+				>
 			{/each}
 		{/if}
 	</svg>

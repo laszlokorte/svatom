@@ -13,11 +13,13 @@
 
 	import { Socket } from "phoenix";
 
-	const loginUrl = "http://127.0.0.1:4000/api/auth/login";
-	const documentsUrl = "http://127.0.0.1:4000/api/documents";
+	const baseUrl = "http://127.0.0.1:4000";
+	const loginUrl = `${baseUrl}/api/auth/login`;
+	const documentsUrl = `${baseUrl}/api/documents`;
 
 	const token = atom(null);
 	const documents = atom(null);
+	const documentItems = view(["items"], documents);
 	const currentDocumentId = atom(null);
 	let socket = $state(null);
 
@@ -35,37 +37,71 @@
 				.then((j) => {
 					documents.value = j.data;
 					if (!socket) {
-						socket = new Socket(
-							"http://127.0.0.1:4000/collaboration",
-							{
-								params: { token: currentToken },
-							},
-						);
+						socket = new Socket(`${baseUrl}/collaboration`, {
+							params: { token: currentToken },
+						});
 						socket.connect();
 					}
 				});
 		}
 	});
+
+	let channel = $state(null);
+
+	$effect(() => {
+		if (socket && documents.value && documents.value.channel) {
+			if (channel && channel.topic !== documents.value.channel) {
+				channel.leave();
+				channel = null;
+			}
+			if (!channel) {
+				channel = socket.channel(documents.value.channel, {});
+				channel
+					.join()
+					.receive("ok", (resp) => {
+						//console.log("Joined successfully", resp);
+					})
+					.receive("error", (resp) => {
+						//console.log("Unable to join", resp);
+					});
+
+				channel.on("document:new", (resp) => {
+					documents.value = L.set(
+						["items", L.find((l) => l.href == resp.href)],
+						resp,
+						documents.value,
+					);
+				});
+
+				channel.on("document:delete", (resp) => {
+					documentItems.value = L.remove(
+						L.find((l) => l.href == resp.href),
+						documentItems.value,
+					);
+					if (currentDocumentId.value === resp.href) {
+						currentDocumentId.value = undefined;
+					}
+				});
+			}
+		}
+	});
 </script>
 
 {#if token.value}
-	<ul
-		style="display: flex; flex-wrap: wrap;gap: 0.5em; margin: 0; padding: 0.2em; flex-direction: row;"
-	>
-		{#each documents.value as d}
-			<li>
-				<button
-					class:active={currentDocumentId.value === d.href}
-					onclick={(e) => {
-						e.preventDefault();
-						currentDocumentId.value = d.href;
-					}}>{d.name}</button
-				>
-			</li>
-		{/each}
-	</ul>
+	<div>
+		<button
+			style="margin-left: auto; display: block"
+			type="button"
+			onclick={(e) => {
+				token.value = undefined;
+				documents.value = undefined;
+				currentDocumentId.value = undefined;
+			}}>Logout</button
+		>
+	</div>
 	<form
 		onsubmit={(e) => {
+			const form = e.currentTarget;
 			e.preventDefault();
 			fetch(documentsUrl, {
 				method: "post",
@@ -81,25 +117,43 @@
 			})
 				.then((r) => r.json())
 				.then((j) => {
-					documents.value = [...documents.value, j.data];
+					form.reset();
+					documents.value = L.set(
+						["items", L.find((l) => l.href == j.data.href)],
+						j.data,
+						documents.value,
+					);
 					currentDocumentId.value = j.data.href;
 				});
 		}}
 	>
-		<select name="kind">
-			<option value="drawing">drawing</option>
+		<select name="kind" required>
+			<option value="drawing">Type: drawing</option>
 		</select>
-		<input type="text" name="name" value="" />
+		<input
+			type="text"
+			name="name"
+			value=""
+			required
+			placeholder="Document Name"
+		/>
 		<button type="submit">Create Document</button>
 	</form>
-	<button
-		type="button"
-		onclick={(e) => {
-			token.value = undefined;
-			documents.value = undefined;
-			currentDocumentId.value = undefined;
-		}}>Logout</button
+	<ul
+		style="display: flex; flex-wrap: wrap;gap: 0.5em; margin: 0; padding: 0.2em; flex-direction: row;"
 	>
+		{#each documentItems.value as d}
+			<li>
+				<button
+					class:active={currentDocumentId.value === d.href}
+					onclick={(e) => {
+						e.preventDefault();
+						currentDocumentId.value = d.href;
+					}}>{d.name}</button
+				>
+			</li>
+		{/each}
+	</ul>
 {:else}
 	<form
 		onsubmit={(e) => {
@@ -129,11 +183,11 @@
 		<button type="submit">Login</button>
 	</form>
 {/if}
-
+<hr />
 <RestDocument
 	doc={view(
 		L.find((l) => l.href == currentDocumentId.value),
-		documents,
+		documentItems,
 	)}
 	{token}
 	{socket}
