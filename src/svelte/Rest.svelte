@@ -13,13 +13,14 @@
 
 	import { Socket } from "phoenix";
 
-	const baseUrl = false
-		? "//127.0.0.1:4000"
-		: "//renewcollab.laszlokorte.de/";
-	const loginUrl = `${baseUrl}/api/auth/login`;
-	const documentsUrl = `${baseUrl}/api/documents`;
+	const prod = false;
+	const baseUrl = prod ? "renewcollab.laszlokorte.de" : "127.0.0.1:4000";
+	const loginUrl = `http${prod ? "s" : ""}://${baseUrl}/api/auth/login`;
+	const documentsUrl = `http${prod ? "s" : ""}://${baseUrl}/api/documents`;
+	const socketUrl = `ws${prod ? "s" : ""}://${baseUrl}/collaboration`;
 
 	const token = atom(null);
+	const error = atom(null);
 	const documents = atom(null);
 	const documentItems = view(["items"], documents);
 	const currentDocumentId = atom(null);
@@ -39,7 +40,7 @@
 				.then((j) => {
 					documents.value = j.data;
 					if (!socket) {
-						socket = new Socket(`${baseUrl}/collaboration`, {
+						socket = new Socket(socketUrl, {
 							params: { token: currentToken },
 						});
 						socket.connect();
@@ -160,6 +161,9 @@
 	<form
 		onsubmit={(e) => {
 			e.preventDefault();
+			const form = e.currentTarget;
+			form.disabled = true;
+			error.value = undefined;
 			fetch(loginUrl, {
 				method: "post",
 				body: JSON.stringify(
@@ -178,10 +182,19 @@
 				})
 				.then((j) => {
 					token.value = j.token;
+					form.disabled = false;
+				})
+				.catch((e) => {
+					form.disabled = false;
+					error.value = e.message;
 				});
 		}}
 	>
-		<input type="password" name="password" />
+		{#if error.value}
+			<div style="color:#aa0000">{error.value}</div>
+		{/if}
+		<input type="text" name="email" />
+		<input type="password" name="password" required />
 		<button type="submit">Login</button>
 	</form>
 {/if}
