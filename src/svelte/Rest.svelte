@@ -9,28 +9,59 @@
 		combine,
 		bindScroll,
 		bindSize,
+		string,
+		failableView,
+		mutableView,
+		strictView,
 	} from "./svatom.svelte.js";
 
 	import { Socket } from "phoenix";
 
-	const prod = false;
-	const baseUrl = prod ? "renewcollab.laszlokorte.de" : "127.0.0.1:4000";
-	const loginUrl = `http${prod ? "s" : ""}://${baseUrl}/api/auth/login`;
-	const documentsUrl = `http${prod ? "s" : ""}://${baseUrl}/api/documents`;
-	const socketUrl = `ws${prod ? "s" : ""}://${baseUrl}/collaboration`;
+	const prod = true;
+	const secure = atom(true);
+	const securePrefix = view(
+		L.reread((b) => (b ? "s" : "")),
+		secure,
+	);
+	const domain = atom(prod ? "renewcollab.laszlokorte.de" : "127.0.0.1:4000");
+	const baseUrl = string`${securePrefix}://${domain}`;
+	const loginUrl = string`http${baseUrl}/api/auth/login`;
+	const documentsUrl = string`http${baseUrl}/api/documents`;
+	const socketUrl = string`ws${baseUrl}/collaboration`;
 
-	const token = atom(null);
+	const token = mutableView(R.always(undefined), baseUrl);
 	const error = atom(null);
-	const documents = atom(null);
+	const socketParams = mutableView(
+		(t) =>
+			t
+				? {
+						params: { token: t },
+					}
+				: undefined,
+		token,
+	);
+	const socket = mutableView((p, old) => {
+		if (old) {
+			old.disconnect();
+		}
+		if (!p) {
+			return undefined;
+		}
+		const socket = new Socket(socketUrl.value, p);
+		socket.connect();
+
+		return socket;
+	}, socketParams);
+
+	const documents = mutableView(R.always(undefined), token);
 	const documentItems = view(["items"], documents);
 	const currentDocumentId = atom(null);
-	let socket = $state(null);
 
 	$effect(() => {
 		const currentToken = token.value;
 
 		if (!documents.value && currentToken) {
-			fetch(documentsUrl, {
+			fetch(documentsUrl.value, {
 				headers: {
 					"Content-Type": "application/json",
 					Authorization: `Bearer ${currentToken}`,
@@ -39,12 +70,6 @@
 				.then((r) => r.json())
 				.then((j) => {
 					documents.value = j.data;
-					if (!socket) {
-						socket = new Socket(socketUrl, {
-							params: { token: currentToken },
-						});
-						socket.connect();
-					}
 				});
 		}
 	});
@@ -52,13 +77,13 @@
 	let channel = $state(null);
 
 	$effect(() => {
-		if (socket && documents.value && documents.value.channel) {
+		if (socket.value && documents.value && documents.value.channel) {
 			if (channel && channel.topic !== documents.value.channel) {
 				channel.leave();
 				channel = null;
 			}
 			if (!channel) {
-				channel = socket.channel(documents.value.channel, {});
+				channel = socket.value.channel(documents.value.channel, {});
 				channel
 					.join()
 					.receive("ok", (resp) => {
@@ -90,23 +115,23 @@
 	});
 </script>
 
+API:
+<div class="url-form">
+	<label class="checkbox-toggle"
+		><input type="checkbox" bind:checked={securePrefix.value} />
+		<span class="checkbox-yes">https://</span><span class="checkbox-no"
+			>http://</span
+		></label
+	>
+	<input type="text" bind:value={domain.value} />
+</div>
+
 {#if token.value}
-	<div>
-		<button
-			style="margin-left: auto; display: block"
-			type="button"
-			onclick={(e) => {
-				token.value = undefined;
-				documents.value = undefined;
-				currentDocumentId.value = undefined;
-			}}>Logout</button
-		>
-	</div>
 	<form
 		onsubmit={(e) => {
 			const form = e.currentTarget;
 			e.preventDefault();
-			fetch(documentsUrl, {
+			fetch(documentsUrl.value, {
 				method: "post",
 				body: JSON.stringify({
 					document: Object.fromEntries(
@@ -130,20 +155,33 @@
 				});
 		}}
 	>
-		<select name="kind" required>
-			<option value="drawing">Type: drawing</option>
-		</select>
-		<input
-			type="text"
-			name="name"
-			value=""
-			required
-			placeholder="Document Name"
-		/>
-		<button type="submit">Create Document</button>
+		<div style="display: flex;flex-direction: row;gap:5px;margin: 5px 0">
+			<select name="kind" required>
+				<option value="drawing">Type: drawing</option>
+			</select>
+			<input
+				type="text"
+				name="name"
+				value=""
+				required
+				placeholder="Document Name"
+			/>
+			<button type="submit">Create Document</button>
+
+			<button
+				style="margin-left: auto; display: block"
+				type="button"
+				onclick={(e) => {
+					e.preventDefault();
+					token.value = undefined;
+					documents.value = undefined;
+					currentDocumentId.value = undefined;
+				}}>Logout</button
+			>
+		</div>
 	</form>
 	<ul
-		style="display: flex; flex-wrap: wrap;gap: 0.5em; margin: 0; padding: 0.2em; flex-direction: row;"
+		style="display: flex; flex-wrap: wrap;gap: 2px; margin: 0; margin: 0.2em 0; flex-direction: row;"
 	>
 		{#each documentItems.value as d}
 			<li>
@@ -164,7 +202,7 @@
 			const form = e.currentTarget;
 			form.disabled = true;
 			error.value = undefined;
-			fetch(loginUrl, {
+			fetch(loginUrl.value, {
 				method: "post",
 				body: JSON.stringify(
 					Object.fromEntries(new FormData(e.currentTarget).entries()),
@@ -193,9 +231,11 @@
 		{#if error.value}
 			<div style="color:#aa0000">{error.value}</div>
 		{/if}
-		<input type="text" name="email" />
-		<input type="password" name="password" required />
-		<button type="submit">Login</button>
+		<div style="display: flex;flex-direction: row;gap:5px;margin:5px 0">
+			<input type="text" name="email" />
+			<input type="password" name="password" required />
+			<button type="submit">Login</button>
+		</div>
 	</form>
 {/if}
 <hr />
@@ -205,7 +245,7 @@
 		documentItems,
 	)}
 	{token}
-	{socket}
+	socket={socket.value}
 />
 
 <style>
@@ -214,5 +254,46 @@
 	.active:active {
 		background: #ccc !important;
 		color: #111;
+	}
+
+	.url-form {
+		display: flex;
+		flex-direction: row;
+		gap: 2px;
+	}
+
+	.checkbox-toggle {
+		user-select: none;
+		cursor: pointer;
+		background: #eee;
+		font-family: monospace;
+		display: grid;
+		text-align: center;
+	}
+
+	.checkbox-toggle > span {
+		visibility: hidden;
+		grid-column: 1 / span 1;
+		grid-row: 1 / span 1;
+		padding: 3px 7px;
+		border: 1px solid #ccc;
+		border-radius: 3px;
+	}
+
+	.checkbox-toggle > input {
+		display: none;
+	}
+
+	.checkbox-toggle > input:checked ~ .checkbox-yes {
+		visibility: visible;
+		color: #006600;
+		border-color: #006600;
+		background: #aaffaa;
+	}
+	.checkbox-toggle > input:not(:checked) ~ .checkbox-no {
+		visibility: visible;
+		color: #660000;
+		border-color: #660000;
+		background: #ffaaaa;
 	}
 </style>

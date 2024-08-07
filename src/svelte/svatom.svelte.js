@@ -147,17 +147,64 @@ export function combineArray(listOfAtoms) {
 }
 
 export function view(opticLense, someAtom) {
-	const cached = $derived(get(opticLense, someAtom.value))
+	const cachedOriginal = $derived(someAtom.value)
+	const cached = $derived(get(opticLense, cachedOriginal))
 
 	return {
 		get value() {
 			return cached
 		},
 		set value(newVal) {
+			const transformed = set(opticLense, newVal, cachedOriginal)
+			
+			if (!(transformed instanceof Error)) {
+				someAtom.value = transformed
+			}
+		},
+	}
+}
+
+export function strictView(opticLense, someAtom) {
+	return {
+		get value() {
+			return get(opticLense, someAtom.value)
+		},
+		set value(newVal) {
 			const transformed = set(opticLense, newVal, someAtom.value)
 			
 			if (!(transformed instanceof Error)) {
 				someAtom.value = transformed
+			} else {
+				someAtom.value = someAtom.value
+			}
+		},
+	}
+}
+
+export function mutableView(init, someAtom, equality = R.equals) {
+	let original = $state(someAtom.value)
+	let mutable = $state(init(original, undefined))
+
+	$effect(() => {
+		const newValue = someAtom.value
+
+		untrack(() => {
+			if(!equality(newValue, original)) {
+				original = newValue
+				mutable = init(newValue, mutable)
+			}
+		})
+	})
+
+	return {
+		get value() {
+			return mutable
+		},
+		set value(newVal) {
+			const transformed = newVal
+			
+			if (!(transformed instanceof Error)) {
+				mutable = transformed
 			}
 		},
 	}
@@ -398,7 +445,7 @@ export function map(fn, someAtom) {
 export function string(parts, ...args) {
 	return {
 		get value() {
-			return R.join('', R.zipWith(R.concat, parts, R.map(R.compose(R.toString, R.prop('value')), args))) + R.last(parts)
+			return R.join('', R.zipWith(R.concat, parts, R.map(R.compose(x=>""+x, R.prop('value')), args))) + R.last(parts)
 		},
 	}
 }

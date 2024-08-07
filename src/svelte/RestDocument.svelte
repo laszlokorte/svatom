@@ -135,9 +135,19 @@
 			{/each}
 		{/if}
 	</svg>
-	<pre>
+	<details>
+		<summary>JSON</summary>
+
+		<pre>
 		{JSON.stringify(doc)}
 	</pre>
+	</details>
+{:else}
+	<svg viewBox="-500 -500 1000 1000">
+		<text font-size="80" cx="0" cy="0" text-anchor="middle"
+			>No Document Selected</text
+		>
+	</svg>
 {/if}
 
 <style>
