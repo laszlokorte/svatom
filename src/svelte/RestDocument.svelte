@@ -51,6 +51,10 @@
 						doc.value,
 					);
 				});
+
+				// channel.on("phx_reply", (resp) => {
+				// 	console.log("pong", resp);
+				// });
 				//alert("joinedA");
 			}
 		}
@@ -86,12 +90,45 @@
 		<button type="submit">Delete</button>
 	</form>
 
+	<form
+		onsubmit={(e) => {
+			e.preventDefault();
+			channel.push("ping", { bar: "foo" });
+		}}
+	>
+		<button type="submit">Text</button>
+	</form>
+
 	<svg
 		viewBox="-500 -500 1000 1000"
+		onpointermove={(e) => {
+			if (!e.isPrimary) {
+				return;
+			}
+			if (!e.currentTarget.hasPointerCapture(e.pointerId)) {
+				return;
+			}
+
+			const pt = e.currentTarget.createSVGPoint();
+			pt.x = e.clientX;
+			pt.y = e.clientY;
+			var cursorpt = pt.matrixTransform(
+				e.currentTarget.getScreenCTM().inverse(),
+			);
+
+			channel.push("create_element", {
+				element: {
+					z_index: 42,
+					position_x: cursorpt.x,
+					position_y: cursorpt.y,
+				},
+			});
+		}}
 		onpointerdown={(e) => {
 			if (!e.isPrimary) {
 				return;
 			}
+			e.currentTarget.setPointerCapture(e.pointerId);
 			e.preventDefault();
 
 			const pt = e.currentTarget.createSVGPoint();
@@ -155,5 +192,6 @@
 		display: block;
 		width: 100%;
 		max-height: 20em;
+		touch-action: none;
 	}
 </style>

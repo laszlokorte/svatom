@@ -155,7 +155,9 @@ API:
 				});
 		}}
 	>
-		<div style="display: flex;flex-direction: row;gap:5px;margin: 5px 0">
+		<div
+			style="display: flex;flex-wrap: wrap;flex-direction: row;gap:5px;margin: 5px 0"
+		>
 			<select name="kind" required>
 				<option value="drawing">Type: drawing</option>
 			</select>
@@ -231,7 +233,9 @@ API:
 		{#if error.value}
 			<div style="color:#aa0000">{error.value}</div>
 		{/if}
-		<div style="display: flex;flex-direction: row;gap:5px;margin:5px 0">
+		<div
+			style="display: flex;flex-direction: row;gap:5px;margin:5px 0; flex-wrap: wrap;"
+		>
 			<input type="text" name="email" />
 			<input type="password" name="password" required />
 			<button type="submit">Login</button>
