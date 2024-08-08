@@ -336,7 +336,7 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 	node.addEventListener('getpointercapture', onPointerGotCapture, true)
 	node.addEventListener('pointerup', onPointerEnd, true)
 
-	const nativeGestureEvents =  false && (typeof window.GestureEvent) !== "undefined"
+	const nativeGestureEvents = (typeof window.GestureEvent) !== "undefined"
 	const nativeTouchEvents = (typeof window.TouchEvent) !== "undefined"
 
 	if(nativeGestureEvents) {
