@@ -139,7 +139,6 @@
 		flex-basis: 0.5em;
 		flex-shrink: 0;
 		flex-grow: 0;
-		touch-action: none;
 		user-select: none;
 
 		-webkit-touch-callout: none;
@@ -162,11 +161,13 @@
 		border-left: 1px solid #ccc;
 		border-right: 1px solid #ccc;
 		cursor: col-resize;
+		touch-action: pan-y;
 	}
 	.split-divider.dir-column {
 		border-top: 1px solid #ccc;
 		border-bottom: 1px solid #ccc;
 		cursor: row-resize;
+		touch-action: pan-x;
 	}
 
 	.split-content {

@@ -71,13 +71,11 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 	let gestureBaseRot
 	let gestureBaseScale
 	let gestureBasePivot = null
+	let gestureBasePivotWorld = null
 	let prevTouchCount
 	function onGestureChange(evt) {
-		const worldPos = L.get(eventWorld, evt)
-
-
 		const dw = Math.atan2(Math.sin((evt.rotation - gestureBaseRot)/180*Math.PI), Math.cos((evt.rotation - gestureBaseRot)/180*Math.PI))*180/Math.PI
-		const dz = Math.log(evt.scale / gestureBaseScale)
+		const dz = Math.log(evt.scale) - Math.log(gestureBaseScale)
 		const dx = gestureBasePivot.x - evt.clientX
 		const dy = gestureBasePivot.y - evt.clientY
 
@@ -85,21 +83,23 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 		const suddenZoom = Math.abs(dz) > 0.2
 		const suddenPan = Math.hypot(dx, dy) > 15 * window.devicePixelRatio
 
-		if(!suddenAngle && !suddenZoom && !suddenPan) {
+		if(!suddenAngle /*&& !suddenZoom*/ && !suddenPan) {
 			zoomDelta.value = {
-				px: worldPos.x,
-				py: worldPos.y,
+				px: gestureBasePivotWorld.x,
+				py: gestureBasePivotWorld.y,
 				dz: dz,
 			}
 			rotationDelta.value = {
-				px: worldPos.x,
-				py: worldPos.y,
+				px: gestureBasePivotWorld.x,
+				py: gestureBasePivotWorld.y,
 				dw: dw,
 			}
 			panScreenDelta.value = {
 				dx,
 				dy,
 			}
+		} else {
+			gestureBasePivotWorld = L.get(eventWorld, evt)
 		}
 
 		gestureBaseScale = evt.scale
@@ -119,6 +119,7 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 			x: evt.clientX,
 			y: evt.clientY,
 		}
+		gestureBasePivotWorld = L.get(eventWorld, evt)
 	};
 
 	function onGestureEnd(evt) {
@@ -206,6 +207,7 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 	let touchBaseRot
 	let touchBaseScale
 	let touchBasePivot = null
+	let touchBasePivotWorld = null
 
 	function touchesCenter(touches) {
 		let sumX = 0;
@@ -248,6 +250,7 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 		localTouches = evt.targetTouches
 
 		touchBasePivot = touchesCenter(evt.touches)
+		touchBasePivotWorld = L.get(eventWorld, {clientX: touchBasePivot.x, clientY: touchBasePivot.y})
 		touchBaseScale = touchesDistance(touchBasePivot, evt.touches)
 		touchBaseRot = touchesAngle(touchBasePivot, evt.touches)
 	}
@@ -257,6 +260,7 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 
 		if(evt.touches.length < 2 || localTouches.length < 1) {
 			touchBasePivot = null
+			touchBasePivotWorld = null
 			touchBaseScale = null
 			touchBaseRot = null
 		}
@@ -296,19 +300,18 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 
 			const dx = touchBasePivot.x - newPivot.x
 			const dy = touchBasePivot.y - newPivot.y
-			const dz = Math.log(newScale / touchBaseScale)
+			const dz = Math.log(newScale) - Math.log(touchBaseScale)
 			const dw = Math.atan2(Math.sin((newAngle - touchBaseRot)), Math.cos((newAngle - touchBaseRot)))*180/Math.PI
 
-			const worldPos = L.get(eventWorld, {clientX: newPivot.x, clientY: newPivot.y})
 
 			zoomDelta.value = {
-				px: worldPos.x,
-				py: worldPos.y,
+				px: touchBasePivotWorld.x,
+				py: touchBasePivotWorld.y,
 				dz: dz,
 			}
 			rotationDelta.value = {
-				px: worldPos.x,
-				py: worldPos.y,
+				px: touchBasePivotWorld.x,
+				py: touchBasePivotWorld.y,
 				dw: dw / evt.touches.length,
 			}
 			panScreenDelta.value = {
@@ -333,7 +336,7 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 	node.addEventListener('getpointercapture', onPointerGotCapture, true)
 	node.addEventListener('pointerup', onPointerEnd, true)
 
-	const nativeGestureEvents =  (typeof window.GestureEvent) !== "undefined"
+	const nativeGestureEvents =  false && (typeof window.GestureEvent) !== "undefined"
 	const nativeTouchEvents = (typeof window.TouchEvent) !== "undefined"
 
 	if(nativeGestureEvents) {
