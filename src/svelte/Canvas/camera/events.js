@@ -329,54 +329,54 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 
 
 	node.addEventListener('wheel', onWheel, { passive:false, capture: false })
-	node.addEventListener('pointerdown', onPointerStart, true)
-	node.addEventListener('pointermove', onPointerMove, true)
-	node.addEventListener('pointercancel', onPointerEnd, true)
-	node.addEventListener('lostpointercapture', onPointerLostCapture, true)
-	node.addEventListener('getpointercapture', onPointerGotCapture, true)
-	node.addEventListener('pointerup', onPointerEnd, true)
+	node.addEventListener('pointerdown', onPointerStart, {capture: true})
+	node.addEventListener('pointermove', onPointerMove, {capture: true})
+	node.addEventListener('pointercancel', onPointerEnd, {capture: true})
+	node.addEventListener('lostpointercapture', onPointerLostCapture, {capture: true})
+	node.addEventListener('getpointercapture', onPointerGotCapture, {capture: true})
+	node.addEventListener('pointerup', onPointerEnd, {capture: true})
 
 	const nativeGestureEvents = (typeof window.GestureEvent) !== "undefined"
 	const nativeTouchEvents = (typeof window.TouchEvent) !== "undefined"
 
 	if(nativeGestureEvents) {
-		node.addEventListener('gesturestart', onGestureStart, false)
-		node.addEventListener('gestureend', onGestureEnd, false)
-		node.addEventListener('gesturechange', onGestureChange, false)
+		node.addEventListener('gesturestart', onGestureStart, {capture: true})
+		node.addEventListener('gestureend', onGestureEnd, {capture: true})
+		node.addEventListener('gesturechange', onGestureChange, {capture: true})
 	} else if(nativeTouchEvents) {
-		node.addEventListener('touchstart', onTouchStartLocal, true)
-		node.addEventListener('touchmove', onTouchMoveLocal, true)
-		node.addEventListener('touchend', onTouchStopLocal, true)
-		node.addEventListener('touchcancel', onTouchStopLocal, true)
-		window.addEventListener('touchmove', onTouchMoveGlobal, true)
-		window.addEventListener('touchstart', onTouchStartGlobal, true)
-		window.addEventListener('touchend', onTouchStopGlobal, true)
-		window.addEventListener('touchcancel', onTouchStopGlobal, true)
+		node.addEventListener('touchstart', onTouchStartLocal, {capture: true})
+		node.addEventListener('touchmove', onTouchMoveLocal, {capture: true})
+		node.addEventListener('touchend', onTouchStopLocal, {capture: true})
+		node.addEventListener('touchcancel', onTouchStopLocal, {capture: true})
+		window.addEventListener('touchmove', onTouchMoveGlobal, {capture: true})
+		window.addEventListener('touchstart', onTouchStartGlobal, {capture: true})
+		window.addEventListener('touchend', onTouchStopGlobal, {capture: true})
+		window.addEventListener('touchcancel', onTouchStopGlobal, {capture: true})
 	}
 
 
 	return () => {
 		if(nativeGestureEvents) {
-			node.removeEventListener('gesturechange', onGestureStart, false)
-			node.removeEventListener('gesturestart', onGestureChange, false)
-			node.removeEventListener('gestureend', onGestureEnd, false)
+			node.removeEventListener('gesturechange', onGestureStart, {capture: true})
+			node.removeEventListener('gesturestart', onGestureChange, {capture: true})
+			node.removeEventListener('gestureend', onGestureEnd, {capture: true})
 		} else if(nativeTouchEvents) {
-			window.removeEventListener('touchcancel', onTouchStopGlobal, true)
-			window.removeEventListener('touchend', onTouchStopGlobal, true)
-			window.removeEventListener('touchstart', onTouchStartGlobal, true)
-			window.removeEventListener('touchmove', onTouchMoveGlobal, true)
-			node.removeEventListener('touchcancel', onTouchStopLocal, true)
-			node.removeEventListener('touchend', onTouchStopLocal, true)
-			node.removeEventListener('touchmove', onTouchMoveLocal, true)
-			node.removeEventListener('touchstart', onTouchStartLocal, true)
+			window.removeEventListener('touchcancel', onTouchStopGlobal, {capture: true})
+			window.removeEventListener('touchend', onTouchStopGlobal, {capture: true})
+			window.removeEventListener('touchstart', onTouchStartGlobal, {capture: true})
+			window.removeEventListener('touchmove', onTouchMoveGlobal, {capture: true})
+			node.removeEventListener('touchcancel', onTouchStopLocal, {capture: true})
+			node.removeEventListener('touchend', onTouchStopLocal, {capture: true})
+			node.removeEventListener('touchmove', onTouchMoveLocal, {capture: true})
+			node.removeEventListener('touchstart', onTouchStartLocal, {capture: true})
 		}
 		
-		node.removeEventListener('pointerup', onPointerEnd, true)
-		node.removeEventListener('pointermove', onPointerMove, true)
-		node.removeEventListener('lostpointercapture', onPointerLostCapture, true)
-		node.removeEventListener('getpointercapture', onPointerGotCapture, true)
-		node.removeEventListener('pointercancel', onPointerEnd, true)
-		node.removeEventListener('pointerdown', onPointerStart, true)
+		node.removeEventListener('pointerup', onPointerEnd, {capture: true})
+		node.removeEventListener('pointermove', onPointerMove, {capture: true})
+		node.removeEventListener('lostpointercapture', onPointerLostCapture, {capture: true})
+		node.removeEventListener('getpointercapture', onPointerGotCapture, {capture: true})
+		node.removeEventListener('pointercancel', onPointerEnd, {capture: true})
+		node.removeEventListener('pointerdown', onPointerStart, {capture: true})
 		node.removeEventListener('wheel', onWheel, { passive:false, capture: false })
 
 		window.addEventListener('error', onError)

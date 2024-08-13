@@ -17,8 +17,10 @@
 
 	import { Socket } from "phoenix";
 
-	const prod = true;
-	const secure = atom(true);
+	const importError = atom(null);
+
+	const prod = false;
+	const secure = atom(prod);
 	const securePrefix = view(
 		L.reread((b) => (b ? "s" : "")),
 		secure,
@@ -143,7 +145,13 @@ API:
 					Authorization: `Bearer ${token.value}`,
 				},
 			})
-				.then((r) => r.json())
+				.then((r) => {
+					if (r.ok) {
+						return r.json();
+					} else {
+						throw r.json();
+					}
+				})
 				.then((j) => {
 					form.reset();
 					documents.value = L.set(
@@ -152,6 +160,9 @@ API:
 						documents.value,
 					);
 					currentDocumentId.value = j.data.href;
+				})
+				.catch((e) => {
+					console.error(e);
 				});
 		}}
 	>
@@ -181,6 +192,44 @@ API:
 				}}>Logout</button
 			>
 		</div>
+	</form>
+	<form
+		action=""
+		method="post"
+		accept-charset="utf-8"
+		onsubmit={(evt) => {
+			evt.preventDefault();
+			const form = evt.currentTarget;
+			importError.value = undefined;
+			fetch(documentsUrl.value + "/import", {
+				method: "post",
+				body: new FormData(evt.currentTarget),
+				headers: {
+					Authorization: `Bearer ${token.value}`,
+				},
+			})
+				.then((r) => {
+					if (r.ok) {
+						return r.json();
+					} else {
+						return r.json().then((e) => {
+							throw e;
+						});
+					}
+				})
+				.then((j) => {
+					form.reset();
+				})
+				.catch((e) => {
+					importError.value = e.error;
+				});
+		}}
+	>
+		{#if importError.value}
+			<div style="color:#aa0000">{importError.value}</div>
+		{/if}
+		<input type="file" name="renew_file" required />
+		<button type="submit">Import</button>
 	</form>
 	<ul
 		style="display: flex; flex-wrap: wrap;gap: 2px; margin: 0; margin: 0.2em 0; flex-direction: row;"
