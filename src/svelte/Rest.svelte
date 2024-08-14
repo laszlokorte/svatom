@@ -218,7 +218,7 @@ API:
 					}
 				})
 				.then((j) => {
-					form.reset();
+					//form.reset();
 				})
 				.catch((e) => {
 					importError.value = e.error;
