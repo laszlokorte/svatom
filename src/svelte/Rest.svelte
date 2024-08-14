@@ -115,17 +115,25 @@
 			}
 		}
 	});
+
+	function findById(id) {
+		return L.find((l) => l.href == id);
+	}
 </script>
 
 API:
 <div class="url-form">
 	<label class="checkbox-toggle"
-		><input type="checkbox" bind:checked={securePrefix.value} />
+		><input
+			type="checkbox"
+			name="api_https"
+			bind:checked={securePrefix.value}
+		/>
 		<span class="checkbox-yes">https://</span><span class="checkbox-no"
 			>http://</span
 		></label
 	>
-	<input type="text" bind:value={domain.value} />
+	<input type="text" name="api_domain" bind:value={domain.value} />
 </div>
 
 {#if token.value}
@@ -225,6 +233,7 @@ API:
 				});
 		}}
 	>
+		<strong>Import:</strong><br />
 		{#if importError.value}
 			<div style="color:#aa0000">{importError.value}</div>
 		{/if}
@@ -292,14 +301,20 @@ API:
 	</form>
 {/if}
 <hr />
-<RestDocument
-	doc={view(
-		L.find((l) => l.href == currentDocumentId.value),
-		documentItems,
-	)}
-	{token}
-	socket={socket.value}
-/>
+
+{#key currentDocumentId.value}
+	<RestDocument
+		doc={view(
+			L.choose(({ id, list }) => ["list", findById(id)]),
+			combine(
+				{ id: currentDocumentId, list: documentItems },
+				{ list: true },
+			),
+		)}
+		{token}
+		socket={socket.value}
+	/>
+{/key}
 
 <style>
 	.active,

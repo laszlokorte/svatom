@@ -1,8 +1,13 @@
 <script>
+	import { tick } from "svelte";
 	import * as L from "partial.lenses";
 	import * as R from "ramda";
 	import * as Geo from "./geometry";
+	import * as U from "./utils";
 	import Scroller from "./Scroller.svelte";
+	import RenewText from "./RenewText.svelte";
+	import RenewConnection from "./RenewConnection.svelte";
+	import RenewBox from "./RenewBox.svelte";
 	import Navigator from "./Canvas/camera/Navigator.svelte";
 
 	import { frameBoxLens } from "./Canvas/camera/lenses";
@@ -31,6 +36,8 @@
 		useGrouping: false,
 	});
 
+	let cameraFit = $state(false);
+
 	$effect(() => {
 		if (doc.value && doc.value.href !== prevHref) {
 			prevHref = doc.value.href;
@@ -42,8 +49,11 @@
 			})
 				.then((r) => r.json())
 				.then((j) => {
-					prevHref = j.data.href;
-					doc.value = j.data;
+					if (j.data.href === prevHref) {
+						cameraFit = false;
+						doc.value = j.data;
+						refitCamera();
+					}
 				})
 				.catch((e) => {
 					prevHref = undefined;
@@ -72,7 +82,12 @@
 
 				channel.on("element:new", (resp) => {
 					doc.value = L.set(
-						["elements", "items", L.appendTo],
+						[
+							"elements",
+							"items",
+							L.normalize(R.sortBy(R.prop("z_index"))),
+							L.appendTo,
+						],
 						resp,
 						doc.value,
 					);
@@ -197,14 +212,72 @@
 
 	const preserveAspectRatio = read(preserveAspectRatioLens, camera);
 
-	const extension = atom({ minX: 0, maxX: 0, minY: 0, maxY: 0 });
+	const boundsLens = [
+		"elements",
+		L.prop("items"),
+		L.elems,
+		L.pick({
+			minX: "position_x",
+			maxX: L.reread((r) => 1 * r.position_x + 1 * (r.box?.width ?? 0)),
+			minY: "position_y",
+			maxY: L.reread((r) => 1 * r.position_y + 1 * (r.box?.height ?? 0)),
+		}),
+	];
 
-	const cameraBounds = read(
-		({ c, e }) => {
+	const extension = view(
+		[
+			L.pick({
+				minX: [
+					L.foldTraversalLens(L.minimum, [boundsLens, "minX"]),
+					L.reread((x) => (isNaN(x) ? -100 : x)),
+					L.defaults(-500),
+				],
+				maxX: [
+					L.foldTraversalLens(L.maximum, [boundsLens, "maxX"]),
+					L.reread((x) => (isNaN(x) ? 100 : x)),
+					L.defaults(500),
+				],
+				minY: [
+					L.foldTraversalLens(L.minimum, [boundsLens, "minY"]),
+					L.reread((x) => (isNaN(x) ? -100 : x)),
+					L.defaults(-100),
+				],
+				maxY: [
+					L.foldTraversalLens(L.maximum, [boundsLens, "maxY"]),
+					L.reread((x) => (isNaN(x) ? 100 : x)),
+					L.defaults(100),
+				],
+			}),
+		],
+		doc,
+	);
+
+	const cameraBounds = view(
+		L.reread(({ c, e }) => {
 			return rotatedBounds(c.focus.w, e);
-		},
+		}),
 		combine({ c: camera, e: extension }),
 	);
+
+	function refitCamera() {
+		const bounds = cameraBounds.value;
+		const cam = camera.value;
+		update(
+			L.set(["focus", L.props("z", "x", "y", "w")], {
+				x: (bounds.maxX + bounds.minX) / 2,
+				y: (bounds.maxY + bounds.minY) / 2,
+				z: -Math.max(
+					Math.log(Math.max(1, bounds.maxX - bounds.minX + 100)) -
+						Math.log(cam.plane.x),
+					Math.log(Math.max(1, bounds.maxY - bounds.minY + 100)) -
+						Math.log(cam.plane.y),
+				),
+				w: bounds.angle,
+			}),
+			camera,
+		);
+		cameraFit = true;
+	}
 
 	const cameraInBounds = view(
 		L.lens(
@@ -294,6 +367,24 @@
 		[frameBoxLens, "screenSpaceAligned", boxPathLens],
 		camera,
 	);
+
+	const cameraRotationTransformLens = L.reread(
+		(c) => `rotate(${c.focus.w}, ${c.focus.x}, ${c.focus.y})`,
+	);
+
+	const cameraRotationInverseTransformLens = L.reread(
+		(c) => `rotate(${-c.focus.w}, ${c.focus.x}, ${c.focus.y})`,
+	);
+
+	const rotationTransform = read(cameraRotationTransformLens, camera);
+	const rotationInverseTransform = read(
+		cameraRotationInverseTransformLens,
+		camera,
+	);
+
+	const jsonOpen = atom(false);
+
+	let rotator = $state();
 </script>
 
 {#if doc.value}
@@ -322,147 +413,138 @@
 				});
 		}}
 	>
-		<button type="submit">Delete</button>
+		<button type="submit">Delete Drawing</button>
 	</form>
+	<div class="loader" class:loading={!cameraFit}>
+		<Scroller
+			allowOverscroll={false}
+			alignment="center"
+			extraScrollPadding={atom(true)}
+			{scrollPosition}
+			contentSize={scrollContentSize}
+			{scrollWindowSize}
+		>
+			<svg
+				class="canvas"
+				viewBox={viewBox.value}
+				preserveAspectRatio={preserveAspectRatio.value}
+				tabindex="-1"
+				role="button"
+				onpointermove={(e) => {
+					if (!e.currentTarget.hasPointerCapture(e.pointerId)) {
+						return;
+					}
+					if (!e.isPrimary || !U.isLeftButton(e)) {
+						return;
+					}
 
-	<form
-		onsubmit={(e) => {
-			e.preventDefault();
-			channel.push("ping", { bar: "foo" });
-		}}
-	>
-		<button type="submit">Text</button>
-	</form>
-
-	<Scroller
-		allowOverscroll={false}
-		alignment="center"
-		extraScrollPadding={atom(true)}
-		{scrollPosition}
-		contentSize={scrollContentSize}
-		{scrollWindowSize}
-	>
-		<svg
-			class="canvas"
-			viewBox={viewBox.value}
-			preserveAspectRatio={preserveAspectRatio.value}
-			tabindex="-1"
-			role="button"
-			onpointermove={(e) => {
-				if (!e.isPrimary) {
-					return;
-				}
-				if (!e.currentTarget.hasPointerCapture(e.pointerId)) {
-					return;
-				}
-
-				const pt = e.currentTarget.createSVGPoint();
-				pt.x = e.clientX;
-				pt.y = e.clientY;
-				var cursorpt = pt.matrixTransform(
-					e.currentTarget.getScreenCTM().inverse(),
-				);
-				channel.push("create_element", {
-					element: {
-						z_index: 42,
-						position_x: cursorpt.x,
-						position_y: cursorpt.y,
-					},
-				});
-			}}
-			onpointerdown={(e) => {
-				if (!e.isPrimary) {
-					return;
-				}
-				e.currentTarget.setPointerCapture(e.pointerId);
-				e.preventDefault();
-				const pt = e.currentTarget.createSVGPoint();
-				pt.x = e.clientX;
-				pt.y = e.clientY;
-				var cursorpt = pt.matrixTransform(
-					e.currentTarget.getScreenCTM().inverse(),
-				);
-
-				fetch(doc.value.elements.href, {
-					method: "post",
-					body: JSON.stringify({
+					e.preventDefault();
+					const pt = e.currentTarget.createSVGPoint();
+					pt.x = e.clientX;
+					pt.y = e.clientY;
+					var cursorpt = pt.matrixTransform(
+						rotator.getScreenCTM().inverse(),
+					);
+					channel.push("create_element", {
 						element: {
-							z_index: 42,
+							z_index: -1,
 							position_x: cursorpt.x,
 							position_y: cursorpt.y,
 						},
-					}),
-					headers: {
-						"Content-Type": "application/json",
-						Authorization: `Bearer ${token.value}`,
-					},
-				})
-					.then((r) => r.json())
-					.then((j) => {
-						// doc.value = L.set(
-						//      ["elements", "items", L.appendTo],
-						//      j.data,
-						//      doc.value,
-						// );
 					});
-			}}
-		>
-			<Navigator {camera} {frameBoxPath}>
-				{#if doc.value.elements}
-					{#each doc.value.elements.items as e}
-						{#if e.text}
-							<text fill="black" x={e.position_x} y={e.position_y}
-								>{e.text.body}</text
-							>
-						{/if}
+				}}
+				onpointerdown={(e) => {
+					if (e.shiftKey || e.altKey || e.ctrlKey) {
+						return;
+					}
+					if (!e.isPrimary || !U.isLeftButton(e)) {
+						return;
+					}
+					e.currentTarget.setPointerCapture(e.pointerId);
+					e.preventDefault();
+					const pt = e.currentTarget.createSVGPoint();
+					pt.x = e.clientX;
+					pt.y = e.clientY;
+					var cursorpt = pt.matrixTransform(
+						rotator.getScreenCTM().inverse(),
+					);
 
-						{#if e.box}
-							<rect
-								x={e.position_x}
-								y={e.position_y}
-								width={e.box.width}
-								height={e.box.height}
-								stroke-width="3"
-								stroke="black"
-								fill="rgb(112, 219, 147)"
-							></rect>
-						{/if}
+					fetch(doc.value.elements.href, {
+						method: "post",
+						body: JSON.stringify({
+							element: {
+								z_index: -1,
+								position_x: cursorpt.x,
+								position_y: cursorpt.y,
+							},
+						}),
+						headers: {
+							"Content-Type": "application/json",
+							Authorization: `Bearer ${token.value}`,
+						},
+					})
+						.then((r) => r.json())
+						.then((j) => {
+							// doc.value = L.set(
+							//      ["elements", "items", L.appendTo],
+							//      j.data,
+							//      doc.value,
+							// );
+						});
+				}}
+			>
+				<Navigator {camera} {frameBoxPath}>
+					<g
+						bind:this={rotator}
+						pointer-events="none"
+						transform={rotationTransform.value}
+					>
+						{#if doc.value.elements}
+							{#each doc.value.elements.items as e (e.id)}
+								{#if e.text}
+									<RenewText element={e} />
+								{/if}
 
-						{#if e.connection}
-							<path
-								stroke-width="3"
-								stroke="black"
-								fill="none"
-								d="M{e.connection.source_x},{e.connection
-									.source_y}
-						{e.connection.waypoints.map(({ x, y }) => `L ${x},${y}`).join(' ')}
-							L{e.connection.target_x},{e.connection.target_y}"
-							/>
-						{/if}
+								{#if e.box}
+									<RenewBox element={e} />
+								{/if}
 
-						{#if !e.connection && !e.box && !e.text}
-							<circle
-								r="3"
-								cx={e.position_x}
-								cy={e.position_y}
-								fill="red"
-							></circle>
+								{#if e.connection}
+									<RenewConnection element={e} />
+								{/if}
+
+								{#if !e.connection && !e.box && !e.text}
+									<circle
+										r="3"
+										cx={e.position_x}
+										cy={e.position_y}
+										fill="red"
+									></circle>
+								{/if}
+							{:else}
+								<text
+									font-size="20"
+									x="0"
+									y="10"
+									text-anchor="middle"
+									dominant-baseline="text-top"
+									>Click to Place a circle</text
+								>
+							{/each}
 						{/if}
-					{:else}
-						<text font-size="80" x="0" y="0" text-anchor="middle"
-							>Click to Place a circle</text
-						>
-					{/each}
-				{/if}
-			</Navigator>
-		</svg>
-	</Scroller>
-	<details>
+					</g>
+				</Navigator>
+			</svg>
+		</Scroller>
+	</div>
+	<details bind:open={jsonOpen.value}>
 		<summary>JSON</summary>
 
-		<pre>
+		{#if jsonOpen.value}
+			<pre>
 		{JSON.stringify(doc)}
 	</pre>
+		{/if}
 	</details>
 {:else}
 	<div
@@ -477,6 +559,17 @@
 		display: block;
 		width: 100%;
 		touch-action: none;
+	}
+
+	.loader :global(> *) {
+		transition: opacity 0.2s ease;
+	}
+
+	.loader {
+		border: 1px solid #333;
+	}
+	.loading :global(> *) {
+		opacity: 0;
 	}
 
 	.canvas {
@@ -502,5 +595,21 @@
 		-webkit-user-drag: none;
 		-webkit-user-modify: none;
 		-webkit-highlight: none;
+	}
+
+	summary {
+		display: block;
+		background: #eee;
+		padding: 1em;
+		cursor: pointer;
+		text-decoration: underline;
+	}
+
+	details {
+		margin: 1em 0;
+	}
+
+	details[open] > summary {
+		background: #ccc;
 	}
 </style>

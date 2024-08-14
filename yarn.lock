@@ -470,9 +470,9 @@ svelte-hmr@^0.16.0:
   integrity sha512-Gyc7cOS3VJzLlfj7wKS0ZnzDVdv3Pn2IuVeJPk9m2skfhcu5bq3wtIZyQGggr7/Iim5rH5cncyQft/kRLupcnA==
 
 svelte@^5.0.0-next.175:
-  version "5.0.0-next.210"
-  resolved "https://registry.yarnpkg.com/svelte/-/svelte-5.0.0-next.210.tgz#c20f9e8a6be9cbfd4b911f263c50c0caa3b7c521"
-  integrity sha512-6QZpzr31weKDyAKifOdXJHK9oEeBE2Z/z/h1IX4tmJRuWPE/2Wc7Lzpfxl+0irS19GZH6V5YZnZLNTRJKjGzfg==
+  version "5.0.0-next.221"
+  resolved "https://registry.yarnpkg.com/svelte/-/svelte-5.0.0-next.221.tgz#80efe74fcada660e0b08ebad83525f7691bbe961"
+  integrity sha512-Cen/f3FLWI9C2z6fwPZmopD609+eMGkdwsf010EyGQeB+vyuree7bgaGxSVUbN0yMGx+2ztYw2RfjIji+YiBgA==
   dependencies:
     "@ampproject/remapping" "^2.2.1"
     "@jridgewell/sourcemap-codec" "^1.4.15"
@@ -505,9 +505,9 @@ vitefu@^0.2.5:
   integrity sha512-SgHtMLoqaeeGnd2evZ849ZbACbnwQCIwRH57t18FxcXoZop0uQu0uzlIhJBlF/eWVzuce0sHeqPcDo+evVcg8Q==
 
 xstate@^5.14.0:
-  version "5.17.1"
-  resolved "https://registry.yarnpkg.com/xstate/-/xstate-5.17.1.tgz#58f047e51c6418d3b6ebee0c4bd6c62cde7ca4ad"
-  integrity sha512-RNwcXdth+kboWZg+Zhf6f6iNP6CtAAiS4z4qwyTd/fWBH9PHXRqko6OdW3xOTwP62f0mVD+jsPOSqY4Ar8nZKQ==
+  version "5.17.3"
+  resolved "https://registry.yarnpkg.com/xstate/-/xstate-5.17.3.tgz#7f7e1642f3714fd1b8f41b46101d8cb7fa70acc6"
+  integrity sha512-HIBmnvqoOBxY1dEOo/ewwTDfCfDPn7fbjbvL/YrAaNPqnUd+LehkbaofwHt4xKnv15fZ9xhbyHAxm3FvLMA8PA==
 
 zimmerframe@^1.1.2:
   version "1.1.2"

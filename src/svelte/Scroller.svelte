@@ -159,7 +159,6 @@
 		bottom: 0;
 		display: block;
 		pointer-events: none;
-		border: 1px solid lime;
 		z-index: 10000;
 		place-self: stretch;
 		pointer-events: none;

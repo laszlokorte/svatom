@@ -8,7 +8,7 @@ export function fsm(machineDef) {
 
 	const machineActor = createActor(machineDef).start();
 
-	let machineState = $state.frozen({value: machineActor.getSnapshot()});
+	let machineState = $state.raw({value: machineActor.getSnapshot()});
 
 	machineActor.subscribe((newState) => {
 		machineState = {value: newState}
@@ -47,7 +47,7 @@ export function fsm(machineDef) {
 
 
 export function atom(init) {
-	let root = $state.frozen({
+	let root = $state.raw({
 		value: init
 	})
 
@@ -74,14 +74,14 @@ export function combine(mapOfAtoms, writables = null) {
 	return {
 		get value() {
 			return R.map((v) => {
-				const s = $state.snapshot(v.value);
+				const s = v.value;
 
 				return s
 			}, mapOfAtoms)
 		},
 		set value(newVal) {
 			const oldValues = R.map((v) => {
-				return $state.snapshot(v.value)
+				return (v.value)
 			}, mapOfAtoms)
 
 			R.forEachObjIndexed((v, k) => {
@@ -110,7 +110,7 @@ export function combineWithRest(mapOfAtoms, rest = atom({}), writables = null) {
 		},
 		set value(newVal) {
 			const oldValues = R.map((v) => {
-				return $state.snapshot(v.value)
+				return (v.value)
 			}, mapOfAtoms)
 
 			R.forEachObjIndexed((v, k) => {
@@ -127,14 +127,14 @@ export function combineArray(listOfAtoms) {
 	return {
 		get value() {
 			return R.map((v) => {
-				const s = $state.snapshot(v.value);
+				const s = (v.value);
 
 				return s
 			}, listOfAtoms)
 		},
 		set value(newVal) {
 			const oldValues = R.map((v) => {
-				return $state.snapshot(v.value)
+				return (v.value)
 			}, listOfAtoms)
 
 			R.addIndex(R.forEach)((v, i) => {

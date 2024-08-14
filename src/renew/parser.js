@@ -95,7 +95,7 @@ export function makeParser(reader, grammar, autoDeref = true, metaKeys = {}) {
 
 					parseInto(newObject, className);
 
-					if(forceDeref === false) {
+					if(forceDeref !== true) {
 						const ref = {[refKey]: true, ref: newObject[metaKeys.self]}
 						if(metaKeys.ref) {
 							ref[metaKeys.ref] = newObject[metaKeys.self]
