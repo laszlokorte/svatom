@@ -11,6 +11,7 @@
 		cameraScale,
 		rotationTransform,
 		newDrawing,
+		createDrawing,
 	} = $props();
 
 	const pen = atom({});
@@ -131,6 +132,11 @@
 		}
 		if (newDrawing) {
 			newDrawing.value = path.value;
+			if (path.value.length > 1) {
+				preventNextClick = true;
+			}
+		} else if (createDrawing) {
+			createDrawing(path.value);
 			if (path.value.length > 1) {
 				preventNextClick = true;
 			}

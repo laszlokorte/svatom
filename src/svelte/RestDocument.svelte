@@ -10,7 +10,10 @@
 	import RenewBox from "./RenewBox.svelte";
 	import Navigator from "./Canvas/camera/Navigator.svelte";
 
+	import Pen from "./Canvas/tools/Pen.svelte";
+
 	import { frameBoxLens } from "./Canvas/camera/lenses";
+	import { constructLenses } from "./Canvas/camera/live.js";
 	const { doc, token, socket } = $props();
 
 	import {
@@ -384,52 +387,28 @@
 	const jsonOpen = atom(false);
 
 	let rotator = $state();
+	const svgElement = atom();
+	const {
+		clientToCanvas,
+		canvasToClient,
+		clientToPage,
+		pageToClient,
+		worldPageIso,
+		worldClientIso,
+	} = constructLenses(svgElement, camera);
+
+	function createDrawing(e) {
+		channel.push("draw_line", {
+			element: {
+				z_index: -1,
+				points: e,
+			},
+		});
+	}
 </script>
 
-{#if doc.value}
-	<form
-		onsubmit={(e) => {
-			e.preventDefault();
-
-			fetch(doc.value.href, {
-				method: "DELETE",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${token.value}`,
-				},
-			})
-				.then((r) => {
-					if (r.ok) {
-						return r.text();
-					}
-					throw new Error("Deletion failed");
-				})
-				.then((j) => {
-					doc.value = undefined;
-				})
-				.catch(() => {
-					console.log("deletion failed");
-				});
-		}}
-	>
-		<button type="submit">Delete Drawing</button>
-	</form>
-	<div class="loader" class:loading={!cameraFit}>
-		<Scroller
-			allowOverscroll={false}
-			alignment="center"
-			extraScrollPadding={atom(true)}
-			{scrollPosition}
-			contentSize={scrollContentSize}
-			{scrollWindowSize}
-		>
-			<svg
-				class="canvas"
-				viewBox={viewBox.value}
-				preserveAspectRatio={preserveAspectRatio.value}
-				tabindex="-1"
-				role="button"
-				onpointermove={(e) => {
+<!--
+onpointermove={(e) => {
 					if (!e.currentTarget.hasPointerCapture(e.pointerId)) {
 						return;
 					}
@@ -491,6 +470,52 @@
 							// );
 						});
 				}}
+ -->
+
+{#if doc.value}
+	<form
+		onsubmit={(e) => {
+			e.preventDefault();
+
+			fetch(doc.value.href, {
+				method: "DELETE",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${token.value}`,
+				},
+			})
+				.then((r) => {
+					if (r.ok) {
+						return r.text();
+					}
+					throw new Error("Deletion failed");
+				})
+				.then((j) => {
+					doc.value = undefined;
+				})
+				.catch(() => {
+					console.log("deletion failed");
+				});
+		}}
+	>
+		<button type="submit">Delete Drawing</button>
+	</form>
+	<div class="loader" class:loading={!cameraFit}>
+		<Scroller
+			allowOverscroll={false}
+			alignment="center"
+			extraScrollPadding={atom(true)}
+			{scrollPosition}
+			contentSize={scrollContentSize}
+			{scrollWindowSize}
+		>
+			<svg
+				bind:this={svgElement.value}
+				class="canvas"
+				viewBox={viewBox.value}
+				preserveAspectRatio={preserveAspectRatio.value}
+				tabindex="-1"
+				role="button"
 			>
 				<Navigator {camera} {frameBoxPath}>
 					<g
@@ -534,6 +559,14 @@
 							{/each}
 						{/if}
 					</g>
+
+					<Pen
+						{clientToCanvas}
+						{frameBoxPath}
+						{cameraScale}
+						{rotationTransform}
+						{createDrawing}
+					/>
 				</Navigator>
 			</svg>
 		</Scroller>
