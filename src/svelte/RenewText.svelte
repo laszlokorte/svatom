@@ -31,9 +31,9 @@
 		height={measureValue.height + 2}
 		x={e.position_x - 1}
 		y={e.position_y - 1}
-		stroke-width={e.style.border_width}
-		stroke={e.style.border_color}
-		fill={e.style.background_color}
+		stroke-width={e.style.border_width || 0}
+		stroke={e.style.border_color || "none"}
+		fill={e.style.background_color || "none"}
 	/>
 {/if}
 

@@ -131,13 +131,13 @@
 			return;
 		}
 		if (newDrawing) {
-			newDrawing.value = path.value;
 			if (path.value.length > 1) {
+				newDrawing.value = path.value;
 				preventNextClick = true;
 			}
 		} else if (createDrawing) {
-			createDrawing(path.value);
 			if (path.value.length > 1) {
+				createDrawing(path.value);
 				preventNextClick = true;
 			}
 		}

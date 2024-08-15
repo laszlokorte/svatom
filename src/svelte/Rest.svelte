@@ -146,6 +146,7 @@
 					});
 
 				channel.on("document:new", (resp) => {
+					console.log("x");
 					documents.value = L.set(
 						["items", L.find((l) => l.href == resp.href)],
 						resp,
