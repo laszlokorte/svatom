@@ -3,6 +3,7 @@
 	import * as R from "ramda";
 	import RestDocument from "./RestDocument.svelte";
 	import {
+		storedAtom,
 		atom,
 		view,
 		read,
@@ -20,18 +21,41 @@
 	const importError = atom(null);
 
 	const prod = false;
-	const secure = atom(prod);
+
+	const resetter = (key, reset) =>
+		L.lens(
+			(r) => (r ? r[key] : undefined),
+			(newValue, old) => ({
+				...old,
+				[key]: newValue,
+				[reset]: undefined,
+			}),
+		);
+
+	const store = storedAtom("apiDomain");
+	const storeJson = view([L.json()], store);
+	const domain = view(
+		[
+			L.removable("domain"),
+			resetter("domain", "token"),
+			L.valueOr(prod ? "renewcollab.laszlokorte.de" : "127.0.0.1:4000"),
+		],
+		storeJson,
+	);
+	const secure = view(
+		[resetter("ssl", "token"), L.valueOr(prod ? true : false)],
+		storeJson,
+	);
 	const securePrefix = view(
 		L.reread((b) => (b ? "s" : "")),
 		secure,
 	);
-	const domain = atom(prod ? "renewcollab.laszlokorte.de" : "127.0.0.1:4000");
 	const baseUrl = string`${securePrefix}://${domain}`;
 	const loginUrl = string`http${baseUrl}/api/auth/login`;
 	const documentsUrl = string`http${baseUrl}/api/documents`;
 	const socketUrl = string`ws${baseUrl}/collaboration`;
 
-	const token = mutableView(R.always(undefined), baseUrl);
+	const token = view("token", storeJson);
 	const error = atom(null);
 	const socketParams = mutableView(
 		(t) =>
@@ -69,9 +93,35 @@
 					Authorization: `Bearer ${currentToken}`,
 				},
 			})
-				.then((r) => r.json())
+				.then((r) => {
+					if (r.ok) {
+						return r.json();
+					} else {
+						return r
+							.json()
+							.catch((e) => {
+								throw {
+									status: r.status,
+									error: e,
+								};
+							})
+							.then((e) => {
+								throw {
+									status: r.status,
+									error: e,
+								};
+							});
+					}
+				})
 				.then((j) => {
 					documents.value = j.data;
+				})
+				.catch((e) => {
+					if (e.status === 401) {
+						token.value = null;
+						error.value = "Not Authed";
+					}
+					console.error(e);
 				});
 		}
 	});
@@ -121,21 +171,6 @@
 	}
 </script>
 
-API:
-<div class="url-form">
-	<label class="checkbox-toggle"
-		><input
-			type="checkbox"
-			name="api_https"
-			bind:checked={securePrefix.value}
-		/>
-		<span class="checkbox-yes">https://</span><span class="checkbox-no"
-			>http://</span
-		></label
-	>
-	<input type="text" name="api_domain" bind:value={domain.value} />
-</div>
-
 {#if token.value}
 	<form
 		onsubmit={(e) => {
@@ -157,7 +192,20 @@ API:
 					if (r.ok) {
 						return r.json();
 					} else {
-						throw r.json();
+						return r
+							.json()
+							.catch((e) => {
+								throw {
+									status: r.status,
+									error: e,
+								};
+							})
+							.then((e) => {
+								throw {
+									status: r.status,
+									error: e,
+								};
+							});
 					}
 				})
 				.then((j) => {
@@ -170,6 +218,10 @@ API:
 					currentDocumentId.value = j.data.href;
 				})
 				.catch((e) => {
+					if (e.status === 401) {
+						error.value = "Not Authed";
+						token.value = null;
+					}
 					console.error(e);
 				});
 		}}
@@ -220,15 +272,29 @@ API:
 					if (r.ok) {
 						return r.json();
 					} else {
-						return r.json().then((e) => {
-							throw e;
-						});
+						r.json()
+							.catch((e) => {
+								throw {
+									status: r.status,
+									error: e,
+								};
+							})
+							.then((e) => {
+								throw {
+									status: r.status,
+									error: e,
+								};
+							});
 					}
 				})
 				.then((j) => {
 					//form.reset();
 				})
 				.catch((e) => {
+					if (e.status === 401) {
+						error.value = "Not Authed";
+						token.value = null;
+					}
 					importError.value = e.error;
 				});
 		}}
@@ -265,7 +331,12 @@ API:
 			fetch(loginUrl.value, {
 				method: "post",
 				body: JSON.stringify(
-					Object.fromEntries(new FormData(e.currentTarget).entries()),
+					R.pick(
+						["email", "password"],
+						Object.fromEntries(
+							new FormData(e.currentTarget).entries(),
+						),
+					),
 				),
 				headers: {
 					"Content-Type": "application/json",
@@ -288,6 +359,20 @@ API:
 				});
 		}}
 	>
+		API:
+		<div class="url-form">
+			<label class="checkbox-toggle"
+				><input
+					type="checkbox"
+					name="api_https"
+					bind:checked={securePrefix.value}
+				/>
+				<span class="checkbox-yes">https://</span><span
+					class="checkbox-no">http://</span
+				></label
+			>
+			<input type="text" name="api_domain" bind:value={domain.value} />
+		</div>
 		{#if error.value}
 			<div style="color:#aa0000">{error.value}</div>
 		{/if}

@@ -45,6 +45,38 @@ export function fsm(machineDef) {
 	}
 }
 
+export function storedAtom(id) {
+	let root = $state.raw({value: localStorage.getItem(id)})
+
+	function onChange(evt) {
+		if(evt.key === id) {
+			root = {
+				value: newVal
+			}
+		}
+	}
+
+	$effect(() => {
+		window.addEventListener('storage', onChange);
+		
+		return () => {
+			window.removeEventListener('storage', onChange)
+		}
+	})
+
+	return {
+		get value() {
+			return root.value
+		},
+		set value(newVal) {
+			root = {
+				value: newVal
+			}
+			localStorage.setItem(id, newVal)
+		}
+	}
+}
+
 
 export function atom(init) {
 	let root = $state.raw({

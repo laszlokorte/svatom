@@ -49,7 +49,7 @@
 			})
 				.then((r) => r.json())
 				.then((j) => {
-					if (j.data.href === prevHref) {
+					if (j.data.href === doc.value.href) {
 						cameraFit = false;
 						doc.value = j.data;
 						refitCamera();
@@ -60,7 +60,6 @@
 				});
 		}
 	});
-
 	let channel = $state(null);
 
 	$effect(() => {
@@ -85,7 +84,7 @@
 						[
 							"elements",
 							"items",
-							L.normalize(R.sortBy(R.prop("z_index"))),
+							L.setter(R.sortBy(R.prop("z_index"))),
 							L.appendTo,
 						],
 						resp,
@@ -498,6 +497,8 @@
 						bind:this={rotator}
 						pointer-events="none"
 						transform={rotationTransform.value}
+						shape-rendering="geometricPrecision"
+						text-rendering="geometricPrecision"
 					>
 						{#if doc.value.elements}
 							{#each doc.value.elements.items as e (e.id)}
