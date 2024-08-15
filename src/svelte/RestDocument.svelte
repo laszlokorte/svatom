@@ -219,11 +219,57 @@
 		L.prop("items"),
 		L.elems,
 		L.pick({
-			minX: "position_x",
-			maxX: L.reread((r) => 1 * r.position_x + 1 * (r.box?.width ?? 0)),
-			minY: "position_y",
-			maxY: L.reread((r) => 1 * r.position_y + 1 * (r.box?.height ?? 0)),
+			connection: [
+				"connection",
+				L.pick({
+					minX: [
+						L.foldTraversalLens(L.minimum, [
+							L.props("source_x", "target_x"),
+							L.values,
+						]),
+					],
+					maxX: [
+						L.foldTraversalLens(L.maximum, [
+							L.props("source_x", "target_x"),
+							L.values,
+						]),
+					],
+					minY: [
+						L.foldTraversalLens(L.minimum, [
+							L.props("source_y", "target_y"),
+							L.values,
+						]),
+					],
+					maxY: [
+						L.foldTraversalLens(L.maximum, [
+							L.props("source_y", "target_y"),
+							L.values,
+						]),
+					],
+				}),
+			],
+			waypoints: [
+				"connection",
+				"waypoints",
+				L.pick({
+					minX: [L.foldTraversalLens(L.minimum, [L.elems, "x"])],
+					maxX: [L.foldTraversalLens(L.maximum, [L.elems, "x"])],
+					minY: [L.foldTraversalLens(L.minimum, [L.elems, "y"])],
+					maxY: [L.foldTraversalLens(L.maximum, [L.elems, "y"])],
+				}),
+			],
+			pos: {
+				minX: "position_x",
+				maxX: L.reread(
+					(r) => 1 * r.position_x + 1 * (r.box?.width ?? 0),
+				),
+				minY: "position_y",
+				maxY: L.reread(
+					(r) => 1 * r.position_y + 1 * (r.box?.height ?? 0),
+				),
+			},
 		}),
+		L.values,
 	];
 
 	const extension = view(

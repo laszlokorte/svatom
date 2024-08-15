@@ -51,7 +51,7 @@ export function storedAtom(id) {
 	function onChange(evt) {
 		if(evt.key === id) {
 			root = {
-				value: newVal
+				value: evt.newValue
 			}
 		}
 	}
