@@ -470,9 +470,9 @@ svelte-hmr@^0.16.0:
   integrity sha512-Gyc7cOS3VJzLlfj7wKS0ZnzDVdv3Pn2IuVeJPk9m2skfhcu5bq3wtIZyQGggr7/Iim5rH5cncyQft/kRLupcnA==
 
 svelte@^5.0.0-next.175:
-  version "5.0.0-next.221"
-  resolved "https://registry.yarnpkg.com/svelte/-/svelte-5.0.0-next.221.tgz#80efe74fcada660e0b08ebad83525f7691bbe961"
-  integrity sha512-Cen/f3FLWI9C2z6fwPZmopD609+eMGkdwsf010EyGQeB+vyuree7bgaGxSVUbN0yMGx+2ztYw2RfjIji+YiBgA==
+  version "5.0.0-next.222"
+  resolved "https://registry.yarnpkg.com/svelte/-/svelte-5.0.0-next.222.tgz#a2b86db6d54cd008541d560d20172d0105ea7686"
+  integrity sha512-+dPkIIyoqDYVwBBJL/nu3at8oCfg5jsUx+/qLl6/l2QpLrXVN4zfe9VS4rc//qNJmA59i/TBzWGRl/KTplQVTw==
   dependencies:
     "@ampproject/remapping" "^2.2.1"
     "@jridgewell/sourcemap-codec" "^1.4.15"
