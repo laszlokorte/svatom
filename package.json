@@ -19,7 +19,7 @@
     "partial.lenses.history": "git+https://github.com/laszlokorte/partial.lenses.history#present-mut",
     "phoenix": "^1.7.14",
     "ramda": "^0.30.1",
-    "svelte": "^5.0.0-next.175",
+    "svelte": "^5.0.0-next.233",
     "xstate": "^5.14.0"
   }
 }

@@ -2002,6 +2002,8 @@
 			});
 		}
 	}
+
+	const ToolComponent = $derived(tools[tool.value].component)
 </script>
 
 <div class="container">
@@ -2577,11 +2579,10 @@
 								<Origin {rotationTransform} {cameraScale} />
 							</g>
 
-							<svelte:component
-								this={tools[tool.value].component}
+							<ToolComponent
 								bind:this={currentToolElement.value}
 								{...tools[tool.value].parameters}
-							></svelte:component>
+							></ToolComponent>
 
 							{#if currentToolElement.value?.allowAffineTransform}
 								<AffineTansformer
@@ -2753,14 +2754,14 @@
 		-webkit-highlight: none;
 	}
 
-	.bitmap-canvas {
+	/*.bitmap-canvas {
 		display: block;
 		width: 100%;
 		height: 100%;
 		pointer-events: none;
 		background: none;
 		border: none;
-	}
+	}*/
 
 	textarea {
 		min-height: 30em;

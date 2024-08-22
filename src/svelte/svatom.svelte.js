@@ -117,7 +117,7 @@ export function combine(mapOfAtoms, writables = null) {
 			}, mapOfAtoms)
 
 			R.forEachObjIndexed((v, k) => {
-				if(writables[k] && !$state.is(oldValues[k], newVal[k])) {
+				if(writables[k] && oldValues[k] != newVal[k]) {
 					v.value = newVal[k]
 				}
 			}, mapOfAtoms)
@@ -146,7 +146,7 @@ export function combineWithRest(mapOfAtoms, rest = atom({}), writables = null) {
 			}, mapOfAtoms)
 
 			R.forEachObjIndexed((v, k) => {
-				if(writables[k] && !$state.is(oldValues[k], newVal[k])) {
+				if(writables[k] && oldValues[k] != newVal[k]) {
 					v.value = newVal[k]
 				}
 			}, mapOfAtoms)
@@ -170,7 +170,7 @@ export function combineArray(listOfAtoms) {
 			}, listOfAtoms)
 
 			R.addIndex(R.forEach)((v, i) => {
-				if(!$state.is(oldValues[i], newVal[i])) {
+				if(oldValues[i] != newVal[i]) {
 					v.value = newVal[i]
 				}
 			}, listOfAtoms)
@@ -345,7 +345,7 @@ export function failableView(opticLense, someAtom, autoReset = true, errorAtom =
 
 	return {
 		get value() {
-			return !$state.is(errorAtom.value, null) ? transientAtom.value : get(opticLense, someAtom.value)
+			return errorAtom.value !== null ? transientAtom.value : get(opticLense, someAtom.value)
 		},
 		set value(newVal) {
 			const transformed = set(opticLense, newVal, someAtom.value)
@@ -590,7 +590,7 @@ export function bindScroll(node, someAtom) {
 		const nodeScrollLeft = node.scrollLeft
 		const nodeScrollTop = node.scrollTop
 
-	 	if((!$state.is(newValue.x, nodeScrollLeft) || !$state.is(newValue.y, nodeScrollTop))) {
+	 	if((newValue.x != nodeScrollLeft || newValue.y != nodeScrollTop)) {
 
 	 		const leftMax = node.scrollLeftMax ?? (node.scrollWidth - node.offsetWidth)
 	 		const topMax =  node.scrollTopMax ?? (node.scrollHeight - node.offsetHeight)
@@ -642,7 +642,7 @@ export function readScroll(node, someAtom) {
 	 	const newValue = someAtom.value
 		const nodeScrollLeft = node.scrollLeft
 		const nodeScrollTop = node.scrollTop
-	 	if((!$state.is(newValue.x, nodeScrollLeft) || !$state.is(newValue.y, nodeScrollTop))) {
+	 	if(newValue.x != nodeScrollLeft || newValue.y != nodeScrollTop) {
 			someAtom.value = {
 				x: nodeScrollLeft,
 				y: nodeScrollTop,
