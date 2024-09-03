@@ -1,7 +1,8 @@
 <script>
-	import { tick } from "svelte";
+	import { tick, onMount } from "svelte";
 	import * as L from "partial.lenses";
 	import * as R from "ramda";
+	import { Presence } from "phoenix";
 	import * as Geo from "./geometry";
 	import * as U from "./utils";
 	import Scroller from "./Scroller.svelte";
@@ -64,43 +65,68 @@
 		}
 	});
 	let channel = $state(null);
+	let presence = $derived(channel ? new Presence(channel) : null);
+	let user_list = $state([]);
 
 	$effect(() => {
-		if (socket && doc.value && doc.value.channel) {
-			if (channel && channel.topic !== doc.value.channel) {
+		if (presence) {
+			presence.onSync((a) => {
+				const newList = [];
+
+				presence.list(
+					(id, { metas: [{ color, username }, ...rest] }) => {
+						newList.push({
+							id,
+							data: { color, username },
+							count: rest.length + 1,
+						});
+					},
+				);
+				user_list = newList;
+			});
+		}
+	});
+
+	onMount(() => {
+		$effect(() => {
+			if (socket && doc.value && doc.value.channel) {
+				if (channel && channel.topic !== doc.value.channel) {
+					channel.leave();
+					channel = null;
+				}
+				if (!channel) {
+					channel = socket.channel(doc.value.channel, {});
+					channel
+						.join()
+						.receive("ok", (resp) => {
+							//alert("joined ok");
+						})
+						.receive("error", (resp) => {
+							//alert(resp);
+						});
+
+					channel.on("element:new", (resp) => {
+						console.log("x");
+						doc.value = L.set(
+							[
+								"elements",
+								"items",
+								L.setter(R.sortBy(R.prop("z_index"))),
+								L.appendTo,
+							],
+							resp,
+							doc.value,
+						);
+					});
+				}
+			}
+		});
+		return () => {
+			if (channel) {
 				channel.leave();
 				channel = null;
 			}
-			if (!channel) {
-				channel = socket.channel(doc.value.channel, {});
-				channel
-					.join()
-					.receive("ok", (resp) => {
-						//alert("joined ok");
-					})
-					.receive("error", (resp) => {
-						//alert(resp);
-					});
-
-				channel.on("element:new", (resp) => {
-					doc.value = L.set(
-						[
-							"elements",
-							"items",
-							L.setter(R.sortBy(R.prop("z_index"))),
-							L.appendTo,
-						],
-						resp,
-						doc.value,
-					);
-				});
-
-				// channel.on("phx_reply", (resp) => {
-				// 	console.log("pong", resp);
-				// });
-				//alert("joinedA");
-			}
-		}
+		};
 	});
 
 	function rotatedBounds(degree, rect) {
@@ -444,12 +470,15 @@
 	} = constructLenses(svgElement, camera);
 
 	function createDrawing(e) {
-		channel.push("draw_line", {
-			element: {
-				z_index: -1,
-				points: e,
-			},
-		});
+		channel
+			.push("draw_line", {
+				element: {
+					z_index: -1,
+					points: e,
+				},
+			})
+			.receive("ok", (reply) => console.log("got reply", reply))
+			.receive("error", (reply) => console.log("got reply", reply));
 	}
 </script>
 
@@ -519,33 +548,49 @@ onpointermove={(e) => {
  -->
 
 {#if doc.value}
-	<form
-		onsubmit={(e) => {
-			e.preventDefault();
-
-			fetch(doc.value.href, {
-				method: "DELETE",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${token.value}`,
-				},
-			})
-				.then((r) => {
-					if (r.ok) {
-						return r.text();
-					}
-					throw new Error("Deletion failed");
-				})
-				.then((j) => {
-					doc.value = undefined;
-				})
-				.catch(() => {
-					console.log("deletion failed");
-				});
-		}}
+	<div
+		style="display: flex; align-items: center; justify-content: space-between;"
 	>
-		<button type="submit">Delete Drawing</button>
-	</form>
+		<form
+			onsubmit={(e) => {
+				e.preventDefault();
+
+				fetch(doc.value.href, {
+					method: "DELETE",
+					headers: {
+						"Content-Type": "application/json",
+						Authorization: `Bearer ${token.value}`,
+					},
+				})
+					.then((r) => {
+						if (r.ok) {
+							return r.text();
+						}
+						throw new Error("Deletion failed");
+					})
+					.then((j) => {
+						doc.value = undefined;
+					})
+					.catch(() => {
+						console.log("deletion failed");
+					});
+			}}
+		>
+			<button type="submit">Delete Drawing</button>
+		</form>
+
+		<ul class="presence">
+			{#each user_list as { data }}
+				<li
+					style:--presence-color={data.color}
+					data-letter={data.username.slice(0, 1)}
+				>
+					<span>{data.username}</span>
+				</li>
+			{/each}
+		</ul>
+	</div>
+
 	<div class="loader" class:loading={!cameraFit}>
 		<Scroller
 			allowOverscroll={false}
@@ -691,5 +736,56 @@ onpointermove={(e) => {
 
 	details[open] > summary {
 		background: #ccc;
+	}
+
+	.presence {
+		display: grid;
+		grid-auto-columns: 1em;
+		grid-auto-flow: column;
+		padding: 0.5ex 1ex;
+		transition: gap 0.2s ease;
+		gap: 0;
+		margin-right: 1em;
+		min-height: 3em;
+	}
+
+	.presence:hover {
+		gap: 1.75em;
+	}
+
+	.presence li {
+		width: 2em;
+		height: 2em;
+		display: block;
+		background: var(--presence-color, darkred);
+		border: 0.5ex solid pink;
+		color: transparent;
+		border-radius: 100%;
+		outline: 2px solid white;
+		cursor: default;
+		display: grid;
+		align-content: center;
+		justify-content: center;
+		align-items: center;
+		justify-items: center;
+		padding: 0;
+		margin: 0;
+		grid-template-columns: auto;
+		grid-template-rows: auto;
+	}
+
+	.presence li::before {
+		color: #fff;
+		content: attr(data-letter);
+		grid-row: 1 / span 1;
+		grid-column: 1 / span 1;
+		font-weight: bold;
+		line-height: 1;
+		text-transform: uppercase;
+	}
+
+	.presence li > * {
+		grid-row: 1 / span 1;
+		grid-column: 1 / span 1;
 	}
 </style>
