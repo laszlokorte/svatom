@@ -106,7 +106,6 @@
 						});
 
 					channel.on("element:new", (resp) => {
-						console.log("x");
 						doc.value = L.set(
 							[
 								"elements",
@@ -633,16 +632,18 @@ onpointermove={(e) => {
 					>
 						{#if doc.value.elements}
 							{#each doc.value.elements.items as e (e.id)}
-								{#if e.text}
-									<RenewText element={e} />
-								{/if}
+								{#if !e.hidden}
+									{#if e.text}
+										<RenewText element={e} />
+									{/if}
 
-								{#if e.box}
-									<RenewBox element={e} />
-								{/if}
+									{#if e.box}
+										<RenewBox element={e} />
+									{/if}
 
-								{#if e.edge}
-									<RenewEdge element={e} />
+									{#if e.edge}
+										<RenewEdge element={e} />
+									{/if}
 								{/if}
 							{:else}
 								<text

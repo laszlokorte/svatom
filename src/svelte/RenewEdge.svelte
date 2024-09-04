@@ -62,15 +62,17 @@
 
 	const lineDecorations = {
 		"de.renew.gui.AssocArrowTip": {
-			path: (to, dir) => {
+			path: (to, dir, style) => {
 				const dxn = -dir.x;
 				const dyn = -dir.y;
 				const orthoX = -dyn;
 				const orthoY = dxn;
 
-				const size = 5;
+				const size = 4 + 1 * (style?.stroke_width ?? 1);
 				const width = 0.7;
-				return `M${to.x},${to.y}l${(-dxn + orthoX * width) * size},${(-dyn + orthoY * width) * size}M${to.x},${to.y}l${(-dxn - orthoX * width) * size},${(-dyn - orthoY * width) * size}`;
+				return `M${to.x},${to.y}m${(-dxn + orthoX * width) * size},${(-dyn + orthoY * width) * size}
+				l${-(-dxn + orthoX * width) * size},${-(-dyn + orthoY * width) * size}
+				l${(-dxn - orthoX * width) * size},${(-dyn - orthoY * width) * size}`;
 			},
 			attributes: () => ({
 				fill: "none",
@@ -78,13 +80,13 @@
 			}),
 		},
 		"de.renew.diagram.AssocArrowTip": {
-			path: (to, dir) => {
+			path: (to, dir, style) => {
 				const dxn = -dir.x;
 				const dyn = -dir.y;
 				const orthoX = -dyn;
 				const orthoY = dxn;
 
-				const size = 5;
+				const size = 4 + 1 * (style?.stroke_width ?? 1);
 				const width = 0.7;
 
 				return `M${to.x},${to.y}l${(-dxn + orthoX * width) * size},${(-dyn + orthoY * width) * size}M${to.x},${to.y}l${(-dxn - orthoX * width) * size},${(-dyn - orthoY * width) * size}`;
@@ -94,14 +96,36 @@
 				stroke: "black",
 			}),
 		},
-		"de.renew.gui.IsaArrowTip": {
-			path: (to, dir) => {
+		"de.renew.gui.CompositionArrowTip": {
+			path: (to, dir, style) => {
 				const dxn = -dir.x;
 				const dyn = -dir.y;
 				const orthoX = -dyn;
 				const orthoY = dxn;
 
-				const size = 10;
+				const size = 11 + 1 * (style?.stroke_width ?? 1);
+				const width = 0.4;
+				const indent = -1;
+
+				return `M${to.x},${to.y}
+				l${(-dxn + orthoX * width) * size},${(-dyn + orthoY * width) * size}
+				l${-orthoX * width * size + dxn * indent * size},${-orthoY * width * size + dyn * indent * size}
+				l${-orthoX * width * size - dxn * indent * size},${-orthoY * width * size - dyn * indent * size}
+				z`;
+			},
+			attributes: (e) => ({
+				fill: e.style.background_color,
+				stroke: e.edge.style.stroke_color,
+			}),
+		},
+		"de.renew.gui.IsaArrowTip": {
+			path: (to, dir, style) => {
+				const dxn = -dir.x;
+				const dyn = -dir.y;
+				const orthoX = -dyn;
+				const orthoY = dxn;
+
+				const size = 9 + 1 * (style?.stroke_width ?? 1);
 				const width = 0.7;
 
 				return `M${to.x},${to.y}l${(-dxn + orthoX * width) * size},${(-dyn + orthoY * width) * size}l${-2 * orthoX * width * size},${-2 * orthoY * width * size}z`;
@@ -112,13 +136,13 @@
 			}),
 		},
 		"de.renew.gui.fs.IsaArrowTip": {
-			path: (to, dir) => {
+			path: (to, dir, style) => {
 				const dxn = -dir.x;
 				const dyn = -dir.y;
 				const orthoX = -dyn;
 				const orthoY = dxn;
 
-				const size = 10;
+				const size = 9 + 1 * (style?.stroke_width ?? 1);
 				const width = 0.7;
 
 				return `M${to.x},${to.y}l${(-dxn + orthoX * width) * size},${(-dyn + orthoY * width) * size}l${-2 * orthoX * width * size},${-2 * orthoY * width * size}z`;
@@ -129,13 +153,13 @@
 			}),
 		},
 		"de.renew.gui.fs.AssocArrowTip": {
-			path: (to, dir) => {
+			path: (to, dir, style) => {
 				const dxn = -dir.x;
 				const dyn = -dir.y;
 				const orthoX = -dyn;
 				const orthoY = dxn;
 
-				const size = 6;
+				const size = 5 + 1 * (style?.stroke_width ?? 1);
 				const width = 0.7;
 
 				return `M${to.x},${to.y}l${(-dxn + orthoX * width) * size},${(-dyn + orthoY * width) * size}M${to.x},${to.y}l${(-dxn - orthoX * width) * size},${(-dyn - orthoY * width) * size}`;
@@ -146,13 +170,13 @@
 			}),
 		},
 		"de.renew.diagram.SynchronousMessageArrowTip": {
-			path: (to, dir) => {
+			path: (to, dir, style) => {
 				const dxn = -dir.x;
 				const dyn = -dir.y;
 				const orthoX = -dyn;
 				const orthoY = dxn;
 
-				const size = 6;
+				const size = 5 + 1 * (style?.stroke_width ?? 1);
 				const width = 0.7;
 
 				return `M${to.x},${to.y}l${(-dxn + orthoX * width) * size},${(-dyn + orthoY * width) * size}M${to.x},${to.y}l${(-dxn - orthoX * width) * size},${(-dyn - orthoY * width) * size}`;
@@ -163,13 +187,13 @@
 			}),
 		},
 		"de.renew.gui.CircleDecoration": {
-			path: (to, dir) => {
+			path: (to, dir, style) => {
 				const dxn = -dir.x;
 				const dyn = -dir.y;
 				const orthoX = -dyn;
 				const orthoY = dxn;
 
-				const size = 4;
+				const size = 3 + 1 * (style?.stroke_width ?? 1);
 				const width = 1;
 				const angle = (180 / Math.PI) * Math.atan2(dy, dx);
 
@@ -190,13 +214,13 @@
 			}),
 		},
 		"CH.ifa.draw.figures.ArrowTip": {
-			path: (to, dir) => {
+			path: (to, dir, style) => {
 				const dxn = -dir.x;
 				const dyn = -dir.y;
 				const orthoX = -dyn;
 				const orthoY = dxn;
 
-				const size = 6;
+				const size = 5 + 1 * (style?.stroke_width ?? 1);
 				const width = 0.4;
 				const indent = -0.15;
 
@@ -213,13 +237,13 @@
 		},
 
 		"de.renew.gui.DoubleArrowTip": {
-			path: (to, dir) => {
+			path: (to, dir, style) => {
 				const dxn = -dir.x;
 				const dyn = -dir.y;
 				const orthoX = -dyn;
 				const orthoY = dxn;
 
-				const size = 6;
+				const size = 6 + 1 * (style?.stroke_width ?? 1);
 				const width = 0.4;
 				const indent = -0.15;
 
@@ -246,10 +270,10 @@
 	stroke-width={e.edge.style?.stroke_width ?? 1}
 	stroke-dasharray={e.edge.style?.stroke_dash_array ?? null}
 	stroke={e.edge.style?.stroke_color ?? "black"}
-	fill="none"
+	fill={e.edge.cyclic ? e.style?.background_color : "none"}
 	d="M{e.edge.source_x},{e.edge.source_y}
 						{e.edge.waypoints.map(({ x, y }) => `L ${x},${y}`).join(' ')}
-							L{e.edge.target_x},{e.edge.target_y}"
+							L{e.edge.target_x},{e.edge.target_y} {e.edge.cyclic ? 'z' : ''}"
 />
 
 <!-- <path
@@ -266,22 +290,34 @@
 	stroke-width="3"
 /> -->
 
-{#if source_tip}
+{#if source_tip && lineDecorations[source_tip.tipKind]}
 	<path
 		d={lineDecorations[source_tip.tipKind].path(
 			{ x: e.edge.source_x, y: e.edge.source_y },
 			source_direction,
+			e.edge.style,
 		)}
-		{...lineDecorations[source_tip.tipKind].attributes()}
+		{...lineDecorations[source_tip.tipKind].attributes(e)}
+		stroke-width={e.edge.style?.stroke_width ?? 1}
 	/>
+{:else if source_tip}
+	<text {...{ x: e.edge.source_x, y: e.edge.source_y }}
+		>{source_tip.tipKind}</text
+	>
 {/if}
 
-{#if target_tip}
+{#if target_tip && lineDecorations[target_tip.tipKind]}
 	<path
 		d={lineDecorations[target_tip.tipKind].path(
 			{ x: e.edge.target_x, y: e.edge.target_y },
 			target_direction,
+			e.edge.style,
 		)}
-		{...lineDecorations[target_tip.tipKind].attributes()}
+		{...lineDecorations[target_tip.tipKind].attributes(e)}
+		stroke-width={e.edge.style?.stroke_width ?? 1}
 	/>
+{:else if target_tip}
+	<text {...{ x: e.edge.target_x, y: e.edge.target_y }}
+		>{target_tip.tipKind}</text
+	>
 {/if}
