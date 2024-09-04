@@ -7,7 +7,7 @@
 	import * as U from "./utils";
 	import Scroller from "./Scroller.svelte";
 	import RenewText from "./RenewText.svelte";
-	import RenewConnection from "./RenewConnection.svelte";
+	import RenewEdge from "./RenewEdge.svelte";
 	import RenewBox from "./RenewBox.svelte";
 	import Navigator from "./Canvas/camera/Navigator.svelte";
 
@@ -245,8 +245,8 @@
 		L.prop("items"),
 		L.elems,
 		L.pick({
-			connection: [
-				"connection",
+			edge: [
+				"edge",
 				L.pick({
 					minX: [
 						L.foldTraversalLens(L.minimum, [
@@ -275,7 +275,7 @@
 				}),
 			],
 			waypoints: [
-				"connection",
+				"edge",
 				"waypoints",
 				L.pick({
 					minX: [L.foldTraversalLens(L.minimum, [L.elems, "x"])],
@@ -284,16 +284,30 @@
 					maxY: [L.foldTraversalLens(L.maximum, [L.elems, "y"])],
 				}),
 			],
-			pos: {
-				minX: "position_x",
-				maxX: L.reread(
-					(r) => 1 * r.position_x + 1 * (r.box?.width ?? 0),
-				),
-				minY: "position_y",
-				maxY: L.reread(
-					(r) => 1 * r.position_y + 1 * (r.box?.height ?? 0),
-				),
-			},
+			boxpos: [
+				"box",
+				L.inverse(L.defaults(null)),
+				L.pick({
+					minX: "position_x",
+					maxX: L.reread(
+						(r) => 1 * r.position_x + 1 * (r.width ?? 0),
+					),
+					minY: "position_y",
+					maxY: L.reread(
+						(r) => 1 * r.position_y + 1 * (r.height ?? 0),
+					),
+				}),
+			],
+			textpos: [
+				"text",
+				L.inverse(L.defaults(null)),
+				L.pick({
+					minX: "position_x",
+					maxX: "position_x",
+					minY: "position_y",
+					maxY: "position_y",
+				}),
+			],
 		}),
 		L.values,
 	];
@@ -580,10 +594,11 @@ onpointermove={(e) => {
 		</form>
 
 		<ul class="presence">
-			{#each user_list as { data }}
+			{#each user_list as { data, count }}
 				<li
 					style:--presence-color={data.color}
 					data-letter={data.username.slice(0, 1)}
+					data-count={count}
 				>
 					<span>{data.username}</span>
 				</li>
@@ -626,17 +641,8 @@ onpointermove={(e) => {
 									<RenewBox element={e} />
 								{/if}
 
-								{#if e.connection}
-									<RenewConnection element={e} />
-								{/if}
-
-								{#if !e.connection && !e.box && !e.text}
-									<circle
-										r="3"
-										cx={e.position_x}
-										cy={e.position_y}
-										fill="red"
-									></circle>
+								{#if e.edge}
+									<RenewEdge element={e} />
 								{/if}
 							{:else}
 								<text
@@ -776,12 +782,13 @@ onpointermove={(e) => {
 
 	.presence li::before {
 		color: #fff;
-		content: attr(data-letter);
+		content: attr(data-letter) "(" attr(data-count) ")";
 		grid-row: 1 / span 1;
 		grid-column: 1 / span 1;
 		font-weight: bold;
 		line-height: 1;
 		text-transform: uppercase;
+		font-size: 0.8em;
 	}
 
 	.presence li > * {

@@ -60,8 +60,8 @@
 
 {#if e.box.shape === "ellipse"}
 	<ellipse
-		cx={e.position_x + e.box.width / 2}
-		cy={e.position_y + e.box.height / 2}
+		cx={e.box.position_x + e.box.width / 2}
+		cy={e.box.position_y + e.box.height / 2}
 		rx={e.box.width / 2}
 		ry={e.box.height / 2}
 		stroke-width={e.style?.border_width ?? "1"}
@@ -72,8 +72,8 @@
 	{@const rotation = parseInt(10, e.box.shape.slice("triangle".length + 1))}
 	<polygon
 		points={triangleRotation(
-			e.position_x,
-			e.position_y,
+			e.box.position_x,
+			e.box.position_y,
 			e.box.width,
 			e.box.height,
 			rotation,
@@ -84,10 +84,35 @@
 		stroke={e.style?.border_color ?? "black"}
 		fill={e.style?.background_color ?? "green"}
 	></polygon>
+{:else if e.box.shape && e.box.shape.slice(0, "roundrect".length) === "roundrect"}
+	{@const [_, rx, ry] = e.box.shape.split(":", 3)}
+
+	<rect
+		x={e.box.position_x}
+		y={e.box.position_y}
+		{rx}
+		{ry}
+		width={e.box.width}
+		height={e.box.height}
+		stroke-width={e.style?.border_width ?? "1"}
+		stroke={e.style?.border_color ?? "black"}
+		fill={e.style?.background_color ?? "green"}
+	></rect>
+{:else if e.box.shape === "diamond"}
+	{@const rotation = parseInt(10, e.box.shape.slice("triangle".length + 1))}
+	<polygon
+		points="{e.box.position_x + e.box.width / 2} {e.box.position_y}
+						{e.box.position_x + e.box.width} {e.box.position_y + e.box.height / 2}
+						{e.box.position_x + e.box.width / 2} {e.box.position_y + e.box.height}
+						{e.box.position_x} {e.box.position_y + e.box.height / 2}"
+		stroke-width={e.style?.border_width ?? "1"}
+		stroke={e.style?.border_color ?? "black"}
+		fill={e.style?.background_color ?? "green"}
+	></polygon>
 {:else}
 	<rect
-		x={e.position_x}
-		y={e.position_y}
+		x={e.box.position_x}
+		y={e.box.position_y}
 		width={e.box.width}
 		height={e.box.height}
 		stroke-width={e.style?.border_width ?? "1"}
