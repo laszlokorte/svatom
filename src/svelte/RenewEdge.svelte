@@ -69,7 +69,7 @@
 				const orthoY = dxn;
 
 				const size = 4 + 1 * (style?.stroke_width ?? 1);
-				const width = 0.7;
+				const width = 0.5;
 				return `M${to.x},${to.y}m${(-dxn + orthoX * width) * size},${(-dyn + orthoY * width) * size}
 				l${-(-dxn + orthoX * width) * size},${-(-dyn + orthoY * width) * size}
 				l${(-dxn - orthoX * width) * size},${(-dyn - orthoY * width) * size}`;
@@ -130,9 +130,9 @@
 
 				return `M${to.x},${to.y}l${(-dxn + orthoX * width) * size},${(-dyn + orthoY * width) * size}l${-2 * orthoX * width * size},${-2 * orthoY * width * size}z`;
 			},
-			attributes: () => ({
-				fill: "white",
-				stroke: "black",
+			attributes: (e) => ({
+				fill: e.style.background_color,
+				stroke: e.edge.style.stroke_color,
 			}),
 		},
 		"de.renew.gui.fs.IsaArrowTip": {
@@ -147,9 +147,9 @@
 
 				return `M${to.x},${to.y}l${(-dxn + orthoX * width) * size},${(-dyn + orthoY * width) * size}l${-2 * orthoX * width * size},${-2 * orthoY * width * size}z`;
 			},
-			attributes: () => ({
-				fill: "white",
-				stroke: "black",
+			attributes: (e) => ({
+				fill: e.style.background_color,
+				stroke: e.edge.style.stroke_color,
 			}),
 		},
 		"de.renew.gui.fs.AssocArrowTip": {
@@ -160,7 +160,7 @@
 				const orthoY = dxn;
 
 				const size = 5 + 1 * (style?.stroke_width ?? 1);
-				const width = 0.7;
+				const width = 0.5;
 
 				return `M${to.x},${to.y}l${(-dxn + orthoX * width) * size},${(-dyn + orthoY * width) * size}M${to.x},${to.y}l${(-dxn - orthoX * width) * size},${(-dyn - orthoY * width) * size}`;
 			},
@@ -222,7 +222,7 @@
 
 				const size = 5 + 1 * (style?.stroke_width ?? 1);
 				const width = 0.4;
-				const indent = -0.15;
+				const indent = 0; // -0.15;
 
 				return `M${to.x},${to.y}
 				l${(-dxn + orthoX * width) * size},${(-dyn + orthoY * width) * size}
@@ -245,7 +245,7 @@
 
 				const size = 6 + 1 * (style?.stroke_width ?? 1);
 				const width = 0.4;
-				const indent = -0.15;
+				const indent = 0; //-0.15;
 
 				return `M${to.x},${to.y}
 				l${(-dxn + orthoX * width) * size},${(-dyn + orthoY * width) * size}
@@ -270,6 +270,8 @@
 	stroke-width={e.edge.style?.stroke_width ?? 1}
 	stroke-dasharray={e.edge.style?.stroke_dash_array ?? null}
 	stroke={e.edge.style?.stroke_color ?? "black"}
+	stroke-linejoin={e.edge.style?.stroke_join ?? "round"}
+	stroke-linecap={e.edge.style?.stroke_cap ?? "round"}
 	fill={e.edge.cyclic ? e.style?.background_color : "none"}
 	d="M{e.edge.source_x},{e.edge.source_y}
 						{e.edge.waypoints.map(({ x, y }) => `L ${x},${y}`).join(' ')}
@@ -300,6 +302,14 @@
 		{...lineDecorations[source_tip.tipKind].attributes(e)}
 		stroke-width={e.edge.style?.stroke_width ?? 1}
 	/>
+	<text
+		transform="rotate(30)"
+		font-size="5"
+		transform-origin="{e.edge.source_x} {e.edge.source_y}"
+		text-anchor="middle"
+		{...{ x: e.edge.source_x, y: e.edge.source_y }}
+		>{source_tip.tipKind}</text
+	>
 {:else if source_tip}
 	<text {...{ x: e.edge.source_x, y: e.edge.source_y }}
 		>{source_tip.tipKind}</text
@@ -316,6 +326,14 @@
 		{...lineDecorations[target_tip.tipKind].attributes(e)}
 		stroke-width={e.edge.style?.stroke_width ?? 1}
 	/>
+	<text
+		transform="rotate(30)"
+		font-size="5"
+		transform-origin="{e.edge.target_x} {e.edge.target_y}"
+		text-anchor="middle"
+		{...{ x: e.edge.target_x, y: e.edge.target_y }}
+		>{target_tip.tipKind}</text
+	>
 {:else if target_tip}
 	<text {...{ x: e.edge.target_x, y: e.edge.target_y }}
 		>{target_tip.tipKind}</text

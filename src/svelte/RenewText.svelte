@@ -34,6 +34,7 @@
 		stroke-width={e.style.border_width || 0}
 		stroke={e.style.border_color || "none"}
 		fill={e.style.background_color || "none"}
+		stroke-dasharray={e.style.border_dash_array || "none"}
 	/>
 {/if}
 
