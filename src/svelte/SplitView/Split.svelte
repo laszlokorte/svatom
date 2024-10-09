@@ -108,7 +108,7 @@
 			></div>
 		{/if}
 		<div class="split-content" style:--split-size={c.size}>
-			{@render children()}
+			{@render children?.()}
 		</div>
 	{/each}
 </div>

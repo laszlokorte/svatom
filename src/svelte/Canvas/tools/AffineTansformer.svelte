@@ -244,7 +244,7 @@ onkeydown={evt => {
 </g>
 </g>
 {/if}
-{@render children()}
+{@render children?.()}
 
 <style>
 	.box {

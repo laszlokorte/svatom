@@ -19,7 +19,6 @@
 	import Scroller from "./Scroller.svelte";
 	import Canvas from "./Canvas/Root.svelte";
 	import Split from "./SplitView/Split.svelte";
-	import Rest from "./Rest.svelte";
 	import RenewImport from "./Renew/Import.svelte";
 	import asciiLogo from "./asciiLogo.txt?raw";
 	import { clamp, lerp } from "./utils.js";
@@ -662,10 +661,6 @@
 			<Split></Split>
 		</Split>
 	</div>
-
-	<h2>Rest API</h2>
-
-	<Rest />
 </section>
 
 <style>
