@@ -2003,7 +2003,7 @@
 		}
 	}
 
-	const ToolComponent = $derived(tools[tool.value].component)
+	const ToolComponent = $derived(tools[tool.value].component);
 </script>
 
 <div class="container">
@@ -2983,6 +2983,7 @@
 	.fullPageFill :global(.scroller) {
 		resize: none !important;
 		height: 100% !important;
+		width: 100% !important;
 		border: 0;
 	}
 
