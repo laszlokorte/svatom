@@ -242,6 +242,20 @@
 	</h1>
 
 	<p>
+		This is an experiment to apply the <a
+			href="https://github.com/calmm-js/documentation/blob/master/introduction-to-calmm.md"
+			target="_blank">CalmmJs</a
+		>
+		architecture to
+		<a href="https://svelte.dev/" target="_blank">Svelte (version 5)</a>.
+	</p>
+	<p>
+		The core idea is to compose <a
+			href="https://github.com/calmm-js/partial.lenses">lenses</a
+		> to construct a bidirectional data flow between UI components.
+	</p>
+
+	<p>
 		Size: {clampedSize.value} (clamped to 10&lt;v&lt;30)<br />
 		CSS: {fontSize.value}<br />
 		<label class="number-picker"

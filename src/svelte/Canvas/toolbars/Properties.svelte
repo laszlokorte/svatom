@@ -197,7 +197,7 @@
 						font-weight="bold"
 						x="16"
 						y="28"
-						dominant-baseline="bottom"
+						dominant-baseline="auto"
 						text-anchor="middle"
 						fill="currentColor"
 						font-size="36">B</text
@@ -213,7 +213,7 @@
 						font-style="italic"
 						x="16"
 						y="28"
-						dominant-baseline="bottom"
+						dominant-baseline="auto"
 						text-anchor="middle"
 						fill="currentColor"
 						font-size="36">I</text
@@ -229,7 +229,7 @@
 						text-decoration="underline"
 						x="16"
 						y="28"
-						dominant-baseline="bottom"
+						dominant-baseline="auto"
 						text-anchor="middle"
 						fill="currentColor"
 						font-size="36">U</text
@@ -245,7 +245,7 @@
 						text-decoration="line-through"
 						x="16"
 						y="28"
-						dominant-baseline="bottom"
+						dominant-baseline="auto"
 						text-anchor="middle"
 						fill="currentColor"
 						font-size="36">S</text

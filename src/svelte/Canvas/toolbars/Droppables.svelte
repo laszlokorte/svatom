@@ -157,7 +157,7 @@
 				stroke={path.stroke}
 				stroke-width="2px"
 				vector-effect="non-scaling-stroke"
-				fill-rule="non-zero"
+				fill-rule="nonzero"
 			/>
 		{/each}
 	</svg>

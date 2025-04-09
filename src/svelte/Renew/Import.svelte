@@ -157,6 +157,11 @@
 	const lineTypes = hierarchyV11.implementorsOf(
 		"CH.ifa.draw.figures.PolyLineable",
 	);
+
+	const polygonTypes = hierarchyV11.descendantsOf(
+		"CH.ifa.draw.contrib.PolygonFigure",
+	);
+
 	const textTypes = hierarchyV11.descendantsOf(
 		"CH.ifa.draw.figures.TextFigure",
 	);
@@ -764,7 +769,7 @@
 		ArrowMode: 0,
 		FontName: "Helvetica",
 		LineWidth: 1,
-		LineStyle: "",
+		LineStyle: "none",
 		FontSize: 12,
 		FontStyle: 0,
 		LineShape: 0,
@@ -773,8 +778,19 @@
 		ArcScale: false,
 	};
 
+	const emptyAttributes = {
+		LineStyle: "none",
+	};
+
 	function readAttribute(obj, attr) {
-		return obj.attributes?.attrs[attr] ?? defaultsAttributes[attr] ?? null;
+		const value =
+			obj.attributes?.attrs[attr] ?? defaultsAttributes[attr] ?? null;
+
+		if (!value && emptyAttributes[attr]) {
+			return emptyAttributes[attr];
+		} else {
+			return value;
+		}
 	}
 
 	const textLineStyles = {
@@ -790,8 +806,7 @@
 				return {
 					"font-weight": lineIndex == 0 ? "bold" : "normal",
 					"font-style": firstChar == "\\" ? "italic" : "normal",
-					"text-decoration":
-						firstChar == "_" ? "underline" : "normal",
+					"text-decoration": firstChar == "_" ? "underline" : "none",
 				};
 			},
 			backgroundAttributes: (
@@ -1371,6 +1386,10 @@
 								currentRefMap,
 								["owner"],
 							)}
+							{@const elType =
+								polygonTypes.indexOf(line[kindKey]) > -1
+									? "polygon"
+									: "polyline"}
 							<g
 								class:selected={currentSelection.indexOf(
 									line[selfKey],
@@ -1378,7 +1397,8 @@
 								id={/*line.attributes?.attrs.FigureWithID ??*/
 								"ref-" + line[selfKey]}
 							>
-								<polyline
+								<svelte:element
+									this={elType}
 									points={R.join(
 										" ",
 										R.map(
@@ -1393,12 +1413,13 @@
 									class="clickarea"
 									pointer-events="stroke"
 									stroke={"transparent"}
-									stroke-linecap="none"
+									stroke-linecap="butt"
 									stroke-width={15}
 									vector-effect="non-scaling-stroke"
 								/>
 
-								<polyline
+								<svelte:element
+									this={elType}
 									points={R.join(
 										" ",
 										R.map(
@@ -1538,7 +1559,7 @@
 											class="clickarea"
 											pointer-events="all"
 											stroke={"transparent"}
-											stroke-linecap="none"
+											stroke-linecap="butt"
 											stroke-width={15}
 											vector-effect="non-scaling-stroke"
 										/>
@@ -1594,7 +1615,7 @@
 											class="clickarea"
 											pointer-events="all"
 											stroke={"transparent"}
-											stroke-linecap="none"
+											stroke-linecap="butt"
 											stroke-width={15}
 											vector-effect="non-scaling-stroke"
 										/>

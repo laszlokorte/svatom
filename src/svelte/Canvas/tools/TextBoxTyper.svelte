@@ -370,12 +370,6 @@
 		-webkit-text-size-adjust: none;
 	}
 
-	@supports (caret-shape: bar) {
-		textarea {
-			caret-shape: bar;
-		}
-	}
-
 	.dim {
 		fill: #ffffff33;
 		cursor: default;
