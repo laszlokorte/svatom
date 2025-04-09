@@ -129,7 +129,7 @@ input[type=range]::-webkit-slider-runnable-track {
     background: #ddd;
     border: none;
     border-radius: 0.25em;
-    margin: 0.2em0;
+    margin: 0.2em;
 	-webkit-tap-highlight-color: transparent;
   	-webkit-tap-highlight-color: none;
 }

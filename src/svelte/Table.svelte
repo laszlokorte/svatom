@@ -693,7 +693,7 @@
 		-webkit-appearance: none;
 		appearance: none;
 		-webkit-border-radius: 0px;
-		border-radius: none;
+		border-radius: 0;
 	}
 	.grid-pinned-column .cell-input {
 		background: #fafafa;

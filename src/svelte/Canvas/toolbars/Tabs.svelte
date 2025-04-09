@@ -195,7 +195,7 @@
 		-webkit-appearance: none;
 		appearance: none;
 		-webkit-border-radius: 0px;
-		border-radius: none;
+		border-radius: 0;
 		box-sizing: border-box;
 		border: 2px solid transparent;
 		border-bottom-width: 0;
@@ -249,7 +249,7 @@
 		align-self: stretch;
 		font-weight: bold;
 		visibility: hidden;
-		border-radius: none;
+		border-radius: 0;
 	}
 
 	.doc-tab-del > svg {

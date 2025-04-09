@@ -214,12 +214,11 @@ export function strictView(opticLense, someAtom) {
 }
 
 export function mutableView(init, someAtom, equality = R.equals) {
-	let original = $state(someAtom.value)
+	let original = someAtom.value
 	let mutable = $state(init(original, undefined))
 
 	$effect(() => {
 		const newValue = someAtom.value
-
 		untrack(() => {
 			if(!equality(newValue, original)) {
 				original = newValue
@@ -234,7 +233,7 @@ export function mutableView(init, someAtom, equality = R.equals) {
 		},
 		set value(newVal) {
 			const transformed = newVal
-			
+
 			if (!(transformed instanceof Error)) {
 				mutable = transformed
 			}

@@ -11,8 +11,10 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@budarin/vite-plugin-webmanifest": "^1.0.12",
     "@sveltejs/vite-plugin-svelte": "^3.1.1",
-    "vite": "^5.3.1"
+    "vite": "^5.3.1",
+    "vite-plugin-pwa": "^1.0.0"
   },
   "dependencies": {
     "partial.lenses": "^14.17.0",

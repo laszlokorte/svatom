@@ -22,7 +22,7 @@
 	import RenewImport from "./Renew/Import.svelte";
 	import asciiLogo from "./asciiLogo.txt?raw";
 	import { clamp, lerp } from "./utils.js";
-	import favicon from "../../favicon.svg";
+	import favicon from "../../assets/favicon.svg";
 
 	const numberFormat = new Intl.NumberFormat("en-US", {
 		minimumFractionDigits: 2,
@@ -189,7 +189,10 @@
 		}),
 	);
 	const scrollerPositionYClampedSoft = read(
-		({ v, max, w }) => lerp(R.clamp(0, Math.max(0, max - w.y), v), v, 0.8),
+		[
+			({ v, max, w }) =>
+				lerp(R.clamp(0, Math.max(0, max - w.y), v), v, 0.8),
+		],
 		combine({
 			v: scrollerPositionY,
 			max: scrollerSizeY,
@@ -197,11 +200,16 @@
 		}),
 	);
 
+	const bgOffsetX = view([R.negate], scrollerPositionXClampedSoft);
+	const bgOffsetY = view([R.negate], scrollerPositionYClampedSoft);
+
 	const scrollerOutside = read(
 		({ x, y, xc, yc, win }) =>
 			Math.pow(
-				Math.hypot(Math.abs(x - xc) / win.x, Math.abs(y - yc) / win.y) /
-					1.4,
+				Math.hypot(
+					Math.abs(x - xc) / (win.x || 1),
+					Math.abs(y - yc) / (win.y || 1),
+				) / 1.4,
 				1,
 			),
 		combine({
@@ -212,6 +220,16 @@
 			win: scrollerWindow,
 		}),
 	);
+
+	const formatedGreeting = string`${read(["greeting", L.valueOr("Hi")], currentTranslation)}${read(
+		[
+			"name",
+			L.inverse(L.dropPrefix(" ")),
+			L.inverse(L.dropSuffix("!")),
+			L.valueOr(", whats your name?"),
+		],
+		settings,
+	)}`;
 </script>
 
 <section>
@@ -255,15 +273,7 @@
 	<h3>Language</h3>
 
 	<h4>
-		{read(["greeting", L.valueOr("Hi")], currentTranslation).value}{read(
-			[
-				"name",
-				L.inverse(L.dropPrefix(" ")),
-				L.inverse(L.dropSuffix("!")),
-				L.valueOr(", whats your name?"),
-			],
-			settings,
-		).value}
+		{formatedGreeting.value}
 	</h4>
 
 	<div class="simple-form">
@@ -566,8 +576,9 @@
 		<div class="stack">
 			<div
 				class="checker-pattern"
-				style={string`--bg-offset-x: ${read(R.negate, scrollerPositionXClampedSoft)}px; --bg-offset-y: ${read(R.negate, scrollerPositionYClampedSoft)}px;--fade:${scrollerOutside}`
-					.value}
+				style:--bg-offset-x="{bgOffsetX.value}px"
+				style:--bg-offset-y="{bgOffsetY.value}px"
+				style:--fade={scrollerOutside.value}
 			></div>
 			<div
 				style="padding: 3em; margin: auto; max-width: 20em; background: white; box-shadow: 0 0.5em 1.5em -.5em #0007;"

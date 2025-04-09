@@ -29,8 +29,8 @@
 		stroke: #f0f0f0;
 		stroke-width: 3px;
 		vector-effect: non-scaling-stroke;
-		stroke-linecap: none;
-		stroke-linejoin: none;
+		stroke-linecap: round;
+		stroke-linejoin: round;
 	}
 	.clamp-bounds {
 		fill: none;

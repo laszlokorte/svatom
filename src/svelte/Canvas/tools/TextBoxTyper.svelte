@@ -366,9 +366,14 @@
 		scrollbar-gutter: stable;
 		scrollbar-width: thin;*/
 		scrollbar-gutter: auto;
-		caret-shape: bar;
 		font-family: monospace;
 		-webkit-text-size-adjust: none;
+	}
+
+	@supports (caret-shape: bar) {
+		textarea {
+			caret-shape: bar;
+		}
 	}
 
 	.dim {

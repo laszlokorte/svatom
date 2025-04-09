@@ -2573,6 +2573,13 @@
 									pointer-events="none"
 									transform={rotationTransform.value}
 								>
+									<!-- <image
+										x="-250"
+										y="-250"
+										width="500"
+										height="500"
+										xlink:href="https://renew-editor.laszlokorte.de/db_schema.svg"
+									/> -->
 									<LayeredUse {zLayers} {rotationTransform} />
 								</g>
 
