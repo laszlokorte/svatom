@@ -42,7 +42,7 @@
 		>
 			<foreignObject
 				shape-rendering="crispEdges"
-				text-rendering="crispEdges"
+				text-rendering="geometricPrecision"
 				vector-effect="non-scaling-stroke"
 				width={Math.abs(t.size.x)}
 				height={Math.abs(t.size.y)}
@@ -58,7 +58,7 @@
 			<rect
 				class="text-box"
 				shape-rendering="crispEdges"
-				text-rendering="crispEdges"
+				text-rendering="geometricPrecision"
 				vector-effect="non-scaling-stroke"
 				width={Math.abs(t.size.x)}
 				height={Math.abs(t.size.y)}

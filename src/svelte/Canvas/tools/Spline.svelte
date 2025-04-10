@@ -18,7 +18,7 @@
 		clientToCanvas,
 		cameraScale,
 		rotationTransform,
-		newSpline = atom(undefined),
+		createSpline = null,
 	} = $props();
 
 	const snapRadius = 8;
@@ -354,8 +354,8 @@
 	);
 
 	machine.on("COMPLETED", (event) => {
-		if (newSpline) {
-			newSpline.value = event.path;
+		if (createSpline) {
+			createSpline(event.path);
 		}
 	});
 

@@ -10,7 +10,7 @@
 		clientToCanvas,
 		cameraScale,
 		rotationTransform,
-		newDrawing,
+		createDrawing,
 	} = $props();
 
 	const snapRadius = 8;
@@ -179,7 +179,7 @@
 		if (dragging.value) {
 			dragging.value = false;
 		} else if (pathCanFinish.value) {
-			newDrawing.value = path.value;
+			createDrawing(path.value);
 			path.value = [];
 		}
 	}}
@@ -303,13 +303,13 @@
 		if (draftSnappedFinish.value) {
 			finishDraft.value = pathHead.value;
 			currentPath.value = pathHead.value;
-			newDrawing.value = path.value;
+			createDrawing(path.value);
 			path.value = [];
 		} else if (draftSnappedClose.value) {
 			if (pathCanClose.value) {
 				closeDraft.value = pathRoot.value;
 				currentPath.value = pathRoot.value;
-				newDrawing.value = path.value;
+				createDrawing(path.value);
 				path.value = [];
 			}
 		} else if (draftSnappedPop.value) {

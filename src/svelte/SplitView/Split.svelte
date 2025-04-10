@@ -58,7 +58,7 @@
 			},
 		);
 
-	let offset = $state({x:0,y:0})
+	let offset = $state({ x: 0, y: 0 });
 </script>
 
 <div
@@ -67,6 +67,7 @@
 	class:dir-row={direction === "row"}
 >
 	{#each content.value as c, i (i)}
+		{@const size = view([i, "size"], content)}
 		{#if i > 0}
 			{@const s = view(
 				[
@@ -84,30 +85,40 @@
 				onpointerdown={(e) => {
 					e.currentTarget.setPointerCapture(e.pointerId);
 					offset = {
-						x: e.pageX - e.currentTarget.offsetLeft - e.currentTarget.offsetWidth / 2,
-						y: e.pageY - e.currentTarget.offsetTop - e.currentTarget.offsetHeight / 2,
-					}
+						x:
+							e.pageX -
+							e.currentTarget.offsetLeft -
+							e.currentTarget.offsetWidth / 2,
+						y:
+							e.pageY -
+							e.currentTarget.offsetTop -
+							e.currentTarget.offsetHeight / 2,
+					};
 				}}
 				onpointermove={(e) => {
 					if (e.currentTarget.hasPointerCapture(e.pointerId)) {
 						s.value +=
 							(dir[direction].x *
 								(100 *
-									(e.pageX - offset.x -
+									(e.pageX -
+										offset.x -
 										e.currentTarget.offsetLeft -
 										e.currentTarget.offsetWidth / 2))) /
 								e.currentTarget.parentElement.offsetWidth +
 							(dir[direction].y *
 								(100 *
-									(e.pageY - offset.y -
+									(e.pageY -
+										offset.y -
 										e.currentTarget.offsetTop -
 										e.currentTarget.offsetHeight / 2))) /
 								e.currentTarget.parentElement.offsetHeight;
 					}
 				}}
+				style:--split-size={s.value}
 			></div>
 		{/if}
-		<div class="split-content" style:--split-size={c.size}>
+
+		<div class="split-content" style:--split-size={size.value}>
 			{@render children?.()}
 		</div>
 	{/each}
@@ -151,10 +162,9 @@
 	}
 
 	.split-divider::after {
-		content: ' ';
+		content: " ";
 		position: absolute;
 		inset: -1em;
-
 	}
 
 	.split-divider.dir-row {
@@ -172,7 +182,7 @@
 
 	.split-content {
 		flex-basis: 1px;
-		flex-grow: var(--split-size, 1);
+		flex-grow: var(--split-size, 0);
 		flex-shrink: 1;
 		min-width: 0;
 		min-height: 0;

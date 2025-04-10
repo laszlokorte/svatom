@@ -17,7 +17,7 @@
 		cameraOrientation,
 		frameBoxPath,
 		clientToCanvas,
-		newText = atom(undefined),
+		createText,
 	} = $props();
 
 	const typer = atom({});
@@ -77,12 +77,12 @@
 			if (isEditing.value) {
 				if (text.value) {
 					evt.preventDefault();
-					newText.value = {
+					createText({
 						x: position.value.x,
 						y: position.value.y,
 						fontSize: fontSize.value,
 						content: text.value,
-					};
+					});
 					isActive.value = false;
 
 					return;
@@ -130,19 +130,19 @@
 		onfocus={(evt) => {
 			evt.preventDefault();
 			if (text.value) {
-				newText.value = {
+				createText({
 					x: position.value.x,
 					y: position.value.y,
 					content: text.value,
 					fontSize: fontSize.value,
-				};
+				});
 				position.value = undefined;
 			}
 		}}
 	/>
 
 	{#if position.value}
-		<g transform={rotationTransform.value} vector-effect="non-rotation">
+		<g transform={rotationTransform.value}>
 			<g
 				transform="translate({position.value.x}, {position.value
 					.y}) rotate({-cameraOrientation.value}) scale({fontSize.value}) translate({-position
@@ -161,12 +161,12 @@
 						onsubmit={(evt) => {
 							evt.preventDefault();
 							if (text.value) {
-								newText.value = {
+								createText({
 									x: position.value.x,
 									y: position.value.y,
 									content: text.value,
 									fontSize: fontSize.value,
-								};
+								});
 							}
 							position.value = undefined;
 						}}
@@ -185,7 +185,7 @@
 				</foreignObject>
 				<rect
 					shape-rendering="crispEdges"
-					text-rendering="crispEdges"
+					text-rendering="geometricPrecision"
 					width="200"
 					height="50"
 					x={position.value.x - 100}

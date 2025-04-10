@@ -7,7 +7,7 @@
 	const {
 		frameBoxPath,
 		clientToCanvas,
-		newNode,
+		createNode,
 		rotationTransform,
 		cameraScale,
 		cameraTow,
@@ -76,7 +76,7 @@
 		if (!isActive.value) {
 			return;
 		}
-		newNode.value = draft.value;
+		createNode(draft.value);
 
 		isActive.value = false;
 		cameraTow.value = false;

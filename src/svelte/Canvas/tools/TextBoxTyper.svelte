@@ -31,7 +31,7 @@
 		rotationTransform,
 		cameraOrientation,
 		cameraScale,
-		newTextBox = atom(undefined),
+		createTextBox,
 	} = $props();
 
 	const textBox = atom(undefined);
@@ -142,7 +142,7 @@
 			}
 
 			if (text.value) {
-				newTextBox.value = {
+				createTextBox({
 					start: {
 						x: textBoxStart.value.x,
 						y: textBoxStart.value.y,
@@ -154,7 +154,7 @@
 					content: text.value,
 					angle: textBoxAngle.value,
 					fontSize: textBoxFontSize.value,
-				};
+				});
 
 				text.value = undefined;
 				return;
@@ -254,7 +254,7 @@
 						onsubmit={(evt) => {
 							evt.preventDefault();
 							if (text.value) {
-								newTextBox.value = {
+								createTextBox({
 									start: {
 										x: textBoxStart.value.x,
 										y: textBoxStart.value.y,
@@ -266,7 +266,7 @@
 									content: text.value,
 									angle: textBoxAngle.value,
 									fontSize: textBoxFontSize.value,
-								};
+								});
 							}
 							textBoxStart.value = undefined;
 						}}

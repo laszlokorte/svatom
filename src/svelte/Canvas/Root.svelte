@@ -738,12 +738,10 @@
 	const nodes = view(["nodes", L.define([])], currentDocumentContent);
 	const edges = view(["edges", L.define([])], currentDocumentContent);
 	const textes = view(["textes", L.defaults([])], currentDocumentContent);
-	const newText = view(L.appendTo, textes);
 	const textBoxes = view(
 		["textBoxes", L.defaults([])],
 		currentDocumentContent,
 	);
-	const newTextBox = view(L.appendTo, textBoxes);
 	const guides = view(["guides", L.defaults([])], currentDocumentContent);
 	const axis = view(["axis"], currentDocumentContent);
 	const drawings = view(["drawings", L.defaults([])], currentDocumentContent);
@@ -752,16 +750,6 @@
 	const plots = view(["plots", L.defaults([])], currentDocumentContent);
 	const alerts = view(["alerts", L.defaults([])], currentDocumentContent);
 	const rubberBand = atom(undefined);
-	const newAlert = view([L.appendTo], alerts);
-	const newNode = view([L.appendTo, L.required("x", "y")], nodes);
-	const newEdge = view([L.appendTo, L.required("x", "y")], edges);
-	const newEdgeNode = view(
-		L.setter(({ source, newTarget }, { e, n }) => ({
-			e: [...e, { source, target: n.length }],
-			n: [...n, newTarget],
-		})),
-		combine({ e: edges, n: nodes }),
-	);
 
 	const zLayers = view(
 		[
@@ -1345,6 +1333,55 @@
 	const newGuide = view([L.appendTo], guides);
 	const newAxis = view(L.identity, axis);
 	const newPlot = view([L.appendTo], plots);
+	const newText = view(L.appendTo, textes);
+	const newTextBox = view(L.appendTo, textBoxes);
+	const newAlert = view([L.appendTo], alerts);
+	const newNode = view([L.appendTo, L.required("x", "y")], nodes);
+	const newEdge = view([L.appendTo, L.required("x", "y")], edges);
+	const newEdgeNode = view(
+		L.setter(({ source, newTarget }, { e, n }) => ({
+			e: [...e, { source, target: n.length }],
+			n: [...n, newTarget],
+		})),
+		combine({ e: edges, n: nodes }),
+	);
+
+	const createDrawing = (val) => {
+		newDrawing.value = val;
+	};
+	const createSpline = (val) => {
+		newSpline.value = val;
+	};
+	const createShape = (val) => {
+		newShape.value = val;
+	};
+	const createGuide = (val) => {
+		newGuide.value = val;
+	};
+	const createAxis = (val) => {
+		newAxis.value = val;
+	};
+	const createPlot = (val) => {
+		newPlot.value = val;
+	};
+	const createText = (val) => {
+		newText.value = val;
+	};
+	const createTextBox = (val) => {
+		newTextBox.value = val;
+	};
+	const createAlert = (val) => {
+		newAlert.value = val;
+	};
+	const createNode = (val) => {
+		newNode.value = val;
+	};
+	const createEdge = (val) => {
+		newEdge.value = val;
+	};
+	const createEdgeNode = (val) => {
+		newEdgeNode.value = val;
+	};
 
 	function calculateBoundingBox(padding, allEntities, lens) {
 		const branch = L.branch(lens);
@@ -1597,7 +1634,7 @@
 			parameters: {
 				clientToCanvas,
 				frameBoxPath,
-				newNode,
+				createNode,
 				rotationTransform,
 				cameraScale,
 				cameraTow,
@@ -1613,15 +1650,15 @@
 				cameraScale,
 				cameraTow,
 				nodes,
-				newEdge,
-				newEdgeNode,
+				createEdge,
+				createEdgeNode,
 			},
 		},
 		text: {
 			name: "Text Line",
 			component: TextLineTyper,
 			parameters: {
-				newText,
+				createText,
 				clientToCanvas,
 				frameBoxPath,
 				rotationTransform,
@@ -1639,7 +1676,7 @@
 				rotationTransform,
 				cameraScale,
 				cameraOrientation,
-				newTextBox,
+				createTextBox,
 			},
 		},
 		lasso: {
@@ -1674,7 +1711,7 @@
 				frameBoxPath,
 				cameraScale,
 				rotationTransform,
-				newDrawing,
+				createDrawing,
 			},
 		},
 		polygon: {
@@ -1685,7 +1722,7 @@
 				frameBoxPath,
 				cameraScale,
 				rotationTransform,
-				newDrawing,
+				createDrawing,
 			},
 		},
 		spline: {
@@ -1696,7 +1733,7 @@
 				frameBoxPath,
 				cameraScale,
 				rotationTransform,
-				newSpline,
+				createSpline,
 			},
 		},
 		shape: {
@@ -1708,7 +1745,7 @@
 				cameraScale,
 				rotationTransform,
 				cameraOrientation,
-				newShape,
+				createShape,
 			},
 		},
 		magnifier: {
@@ -1733,7 +1770,7 @@
 				clientToCanvas,
 				rotationTransform,
 				frameBoxObject,
-				newGuide,
+				createGuide,
 				cameraScale,
 				cameraOrientation,
 			},
@@ -1745,7 +1782,7 @@
 				frameBoxPath,
 				clientToCanvas,
 				rotationTransform,
-				newAxis,
+				createAxis,
 				cameraScale,
 				cameraOrientation,
 			},
@@ -1757,7 +1794,7 @@
 				frameBoxPath,
 				clientToCanvas,
 				rotationTransform,
-				newPlot,
+				createPlot,
 				cameraScale,
 				cameraOrientation,
 			},
@@ -2401,7 +2438,7 @@
 				type="button"
 				class="button tool-button"
 				onclick={() =>
-					(newAlert.value = {
+					createAlert({
 						...cameraFocus.value,
 						msg: "Test Error",
 					})}>Error</button
@@ -2439,12 +2476,12 @@
 		class:fullPageFill={fullPageCanvas.value || isFullScreen.value}
 	>
 		<Dropper
-			{newText}
 			{clientToCanvas}
 			{cameraScale}
 			{cameraOrientation}
-			{newNode}
-			{newShape}
+			{createText}
+			{createNode}
+			{createShape}
 		>
 			<Scroller
 				allowOverscroll={false}
@@ -2471,7 +2508,7 @@
 						{camera}
 						{frameBoxPath}
 						{cameraTow}
-						errorHandler={newAlert}
+						errorHandler={createAlert}
 					>
 						<ClickPicker
 							{hitAreas}

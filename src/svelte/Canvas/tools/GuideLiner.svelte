@@ -16,7 +16,7 @@
 		frameBoxPath,
 		clientToCanvas,
 		rotationTransform,
-		newGuide,
+		createGuide,
 		frameBoxObject,
 		cameraScale,
 		cameraOrientation,
@@ -197,10 +197,10 @@
 		}
 
 		if (newGuideValid.value) {
-			newGuide.value = {
+			createGuide({
 				angle: guideAngle.value,
 				distance: guideDistance.value,
-			};
+			});
 		}
 
 		isActive.value = false;

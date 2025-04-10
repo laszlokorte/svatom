@@ -10,8 +10,8 @@
 		frameBoxPath,
 		clientToCanvas,
 		cameraTow,
-		newEdge,
-		newEdgeNode,
+		createEdge,
+		createEdgeNode,
 	} = $props();
 
 	const snapRadius = 30;
@@ -189,14 +189,14 @@
 		}
 		cameraTow.value = undefined;
 
-		if (validConnection.value && newEdge) {
-			newEdge.value = connection.value;
+		if (validConnection.value && createEdge) {
+			createEdge(connection.value);
 			preventNextClick = true;
-		} else if (newEdgeNode) {
-			newEdgeNode.value = {
+		} else if (createEdgeNode) {
+			createEdgeNode({
 				source: draftSourceId.value,
 				newTarget: draftTargetPosition.value,
-			};
+			});
 			preventNextClick = true;
 		}
 

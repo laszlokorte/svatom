@@ -10,7 +10,7 @@
 		rotationTransform,
 		cameraOrientation,
 		cameraScale,
-		newPlot,
+		createPlot,
 	} = $props();
 
 	let seqNumber = 0;
@@ -144,11 +144,11 @@
 			return;
 		}
 		if (plotSize.value.x != 0 && plotSize.value.y != 0) {
-			newPlot.value = {
+			createPlot({
 				...plot.value,
 				...examplesFns[seqNumber % examplesFns.length],
 				color: `hsl(${180 + ((seqNumber * 1.6180339887499) % 1) * 360}, 40%, 60%)`,
-			};
+			});
 			seqNumber++;
 			isActive.value = false;
 		}

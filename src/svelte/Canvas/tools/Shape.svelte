@@ -16,7 +16,7 @@
 		rotationTransform,
 		cameraOrientation,
 		cameraScale,
-		newShape,
+		createShape,
 	} = $props();
 
 	const minSize = 15;
@@ -139,11 +139,11 @@
 			return;
 		}
 
-		if (newShape) {
-			newShape.value = {
+		if (createShape) {
+			createShape({
 				placement: shape.value,
 				content: template.value,
-			};
+			});
 		}
 		isActive.value = false;
 	}}

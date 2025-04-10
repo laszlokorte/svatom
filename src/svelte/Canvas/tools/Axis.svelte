@@ -10,7 +10,7 @@
 		rotationTransform,
 		cameraOrientation,
 		cameraScale,
-		newAxis,
+		createAxis,
 	} = $props();
 
 	const axis = atom(undefined);
@@ -109,7 +109,7 @@
 		if (!isActive.value) {
 			return;
 		}
-		newAxis.value = axis.value;
+		createAxis(axis.value);
 		isActive.value = false;
 	}}
 	onpointercancel={(evt) => {

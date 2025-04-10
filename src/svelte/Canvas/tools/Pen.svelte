@@ -10,7 +10,6 @@
 		clientToCanvas,
 		cameraScale,
 		rotationTransform,
-		newDrawing,
 		createDrawing,
 	} = $props();
 
@@ -130,12 +129,7 @@
 		if (!evt.isPrimary) {
 			return;
 		}
-		if (newDrawing) {
-			if (path.value.length > 1) {
-				newDrawing.value = path.value;
-				preventNextClick = true;
-			}
-		} else if (createDrawing) {
+		if (createDrawing) {
 			if (path.value.length > 1) {
 				createDrawing(path.value);
 				preventNextClick = true;

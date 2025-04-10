@@ -190,7 +190,7 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 	const onError = (e) => {
 		if(errorHandler) {
 			const pos = L.get(eventWorld, {clientX: window.innerWidth / 2, clientY: window.innerHeight / 2})
-			errorHandler.value = { msg: e.message, ...pos }
+			errorHandler({ msg: e.message, ...pos })
 		} else {
 			alert(e.message)
 		}
@@ -198,7 +198,7 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 
 	if(typeof window.DragEvent === "undefined") {
 		const pos = L.get(eventWorld, {clientX: window.innerWidth / 2, clientY: window.innerHeight / 2})
-		errorHandler.value = { msg: "DragEvent not supported", ...pos }
+		errorHandler({ msg: "DragEvent not supported", ...pos })
 	}
 
 	//let c = 0
