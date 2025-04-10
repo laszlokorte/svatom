@@ -1,19 +1,7 @@
 <script>
 	import * as L from "partial.lenses";
 	import * as R from "ramda";
-	import {
-		atom,
-		view,
-		read,
-		combine,
-		combineWithRest,
-		failableView,
-		bindValue,
-		bindScroll,
-		bindScrollMax,
-		bindSize,
-		string,
-	} from "../svatom.svelte.js";
+	import { atom, view, read, update } from "../svatom.svelte.js";
 
 	const {
 		content = atom([
@@ -67,22 +55,31 @@
 	class:dir-row={direction === "row"}
 >
 	{#each content.value as c, i (i)}
-		{@const size = view([i, "size"], content)}
+		{@const size = view(
+			[
+				L.partsOf([L.elems, "size"]),
+				percentListLens,
+				summingLens(i),
+				L.normalize(R.clamp(0, 100)),
+			],
+			content,
+		)}
+		{@const s = view(
+			[
+				L.partsOf([L.elems, "size"]),
+				percentListLens,
+				summingLens(i - 1),
+				L.normalize(R.clamp(0, 100)),
+			],
+			content,
+		)}
 		{#if i > 0}
-			{@const s = view(
-				[
-					L.partsOf(L.elems, "size"),
-					percentListLens,
-					summingLens(i - 1),
-					L.normalize(R.clamp(0, 100)),
-				],
-				content,
-			)}
 			<div
 				class="split-divider"
 				class:dir-column={direction === "column"}
 				class:dir-row={direction === "row"}
 				onpointerdown={(e) => {
+					e.preventDefault();
 					e.currentTarget.setPointerCapture(e.pointerId);
 					offset = {
 						x:
@@ -96,8 +93,9 @@
 					};
 				}}
 				onpointermove={(e) => {
+					e.preventDefault();
 					if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-						s.value +=
+						const delta =
 							(dir[direction].x *
 								(100 *
 									(e.pageX -
@@ -112,6 +110,7 @@
 										e.currentTarget.offsetTop -
 										e.currentTarget.offsetHeight / 2))) /
 								e.currentTarget.parentElement.offsetHeight;
+						update(R.add(delta), s);
 					}
 				}}
 				style:--split-size={s.value}
@@ -119,7 +118,7 @@
 		{/if}
 
 		<div class="split-content" style:--split-size={size.value}>
-			{@render children?.()}
+			{@render children?.(i, content.content)}
 		</div>
 	{/each}
 </div>
@@ -187,5 +186,10 @@
 		min-width: 0;
 		min-height: 0;
 		overflow: hidden;
+		display: grid;
+		align-content: stretch;
+		justify-content: stretch;
+		align-items: stretch;
+		justify-items: stretch;
 	}
 </style>

@@ -17,6 +17,10 @@
 		adjustSize,
 	} from "../../svatom.svelte.js";
 	const { newTab, tabIds, closeTab, currentTabId, allTabs } = $props();
+
+	const HISTORY_SETTINGS = {
+		replacePeriod: 1000,
+	};
 </script>
 
 <fieldset>
@@ -46,7 +50,7 @@
 					"tabs",
 					d,
 					"document",
-					L.defaults(H.init({}, {})),
+					L.valueOr(H.init(HISTORY_SETTINGS, {})),
 					H.present,
 					"title",
 					L.defaults(""),
@@ -58,14 +62,14 @@
 					"tabs",
 					d,
 					"document",
-					L.defaults(H.init({}, {})),
+					L.valueOr(H.init(HISTORY_SETTINGS, {})),
 					H.present,
 					"content",
 					L.choices(
 						["textes", L.first, "content"],
 						["textBoxes", L.first, "content"],
 					),
-					L.valueOr(""),
+					L.defaults(""),
 					L.ifElse(
 						R.isEmpty,
 						L.inverse(L.dropPrefix("untitled")),

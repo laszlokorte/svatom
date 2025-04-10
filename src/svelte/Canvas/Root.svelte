@@ -1,4 +1,5 @@
 <script>
+	import { tick } from "svelte";
 	import * as L from "partial.lenses";
 	import * as H from "partial.lenses.history";
 	import * as R from "ramda";
@@ -691,15 +692,24 @@
 		[
 			L.choose(({ current, docs }) => [
 				"tabs",
-				current,
+				current || 0,
 				"document",
-				L.defaults(H.init(HISTORY_SETTINGS, {})),
+				L.define(
+					H.init(HISTORY_SETTINGS, {
+						content: {
+							axis: undefined,
+							nodes: [],
+							textes: [],
+							drawings: [],
+						},
+					}),
+				),
 			]),
 		],
 		allTabs,
 	);
 
-	const canvasDocument = view(H.present, canvasDocumentHistory);
+	const canvasDocument = view([H.present], canvasDocumentHistory);
 
 	const canvasDocumentMut = view(H.presentMut, canvasDocumentHistory);
 
@@ -709,21 +719,35 @@
 
 	const newTab = view(
 		L.setter((n, prev) => ({
-			tabs: [...prev.tabs, n],
-			current: prev.tabs.length,
+			tabs: [
+				...prev.tabs,
+				{
+					document: H.init(HISTORY_SETTINGS, n),
+					camera: { x: 100, y: -50, z: 0, w: 20 },
+				},
+				{
+					document: H.init(HISTORY_SETTINGS, n),
+					camera: { x: 100, y: -50, z: 0, w: 20 },
+				},
+			].slice(0, Math.max(prev.tabs.length, 1) + 1),
+			current: Math.max(prev.tabs.length, 1),
 		})),
 		allTabs,
 	);
 
 	const tabIds = read(
-		["tabs", L.valueOr([]), L.reread(R.compose(R.range(0), R.length))],
+		[
+			"tabs",
+			L.valueOr([0]),
+			L.reread(R.compose(R.range(0), R.max(1), R.length)),
+		],
 		allTabs,
 	);
 
 	const closeTab = view(
 		L.setter((r, old) => ({
 			current:
-				old.current > r ? Math.max(0, old.current - 1) : old.current,
+				old.current >= r ? Math.max(0, old.current - 1) : old.current,
 			tabs: R.addIndex(R.filter)((v, i) => i !== r, old.tabs),
 		})),
 		allTabs,
@@ -874,14 +898,15 @@
 				);
 			}),
 		],
-		currentDocumentContent,
+		currentDocumentContentMut,
 	);
 
+	// TODO FIX Layers
 	const zValues = view(L.partsOf([L.elems, "zIndex"]), zLayers);
 	const layerCount = $derived(zValues.value.length);
 	let layerCountPrev = $state(0);
 
-	$effect(() => {
+	$effect.pre(() => {
 		if (layerCount !== layerCountPrev) {
 			zValues.value = R.range(0, layerCount);
 			layerCountPrev = layerCount;
@@ -1339,11 +1364,15 @@
 	const newNode = view([L.appendTo, L.required("x", "y")], nodes);
 	const newEdge = view([L.appendTo, L.required("x", "y")], edges);
 	const newEdgeNode = view(
-		L.setter(({ source, newTarget }, { e, n }) => ({
-			e: [...e, { source, target: n.length }],
-			n: [...n, newTarget],
+		L.setter(({ source, newTarget }, content) => ({
+			...content,
+			edges: [
+				...(content.edges ?? []),
+				{ source, target: content.nodes.length },
+			],
+			nodes: [...(content.nodes ?? []), newTarget],
 		})),
-		combine({ e: edges, n: nodes }),
+		currentDocumentContent,
 	);
 
 	const createDrawing = (val) => {
@@ -1410,7 +1439,7 @@
 	const extension = calculateBoundingBox(100, currentDocumentContent, {
 		nodes: L.elems,
 		alerts: L.elems,
-		drawings: [L.elems, "path", L.elems],
+		drawings: [L.partsOf(L.elems, "path"), L.elems],
 		axis: [
 			L.ifElse(
 				R.is(Object),

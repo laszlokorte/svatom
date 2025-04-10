@@ -678,21 +678,48 @@
 	<div
 		style="display: grid; grid-template-columns: 1fr; grid-auto-rows: 20em;gap: 1em"
 	>
-		<Split></Split>
-		<Split direction="column"></Split>
+		<Split>
+			{#snippet children(i, c)}
+				<div class="split-content">A{i}</div>
+			{/snippet}
+		</Split>
+		<Split direction="column">
+			{#snippet children(i, c)}
+				<div class="split-content">B{i}</div>
+			{/snippet}
+		</Split>
 
 		<Split direction="column">
-			<Split></Split>
+			{#snippet children(i, c)}
+				<Split>
+					{#snippet children(j, d)}
+						<div class="split-content">C{i}/D{j}</div>
+					{/snippet}
+				</Split>
+			{/snippet}
 		</Split>
 
 		<Split>
-			<Split></Split>
+			{#snippet children(i, e)}
+				<Split>
+					{#snippet children(j, f)}
+						<div class="split-content">E{i}/F{j}</div>
+					{/snippet}
+				</Split>{/snippet}
 		</Split>
 	</div>
 </section>
 
 <style>
 	@import url("app.css");
+
+	.split-content {
+		display: grid;
+		align-content: center;
+		justify-content: center;
+		font-size: 1.3em;
+		color: #eee;
+	}
 
 	.stack {
 		display: grid;
