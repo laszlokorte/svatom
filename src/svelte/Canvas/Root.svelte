@@ -731,7 +731,7 @@
 
 	const currentTabId = view("current", allTabs);
 
-	const tool = atom("select");
+	const tool = atom("none");
 	const currentDocumentContent = view(["content"], canvasDocument);
 	const currentDocumentContentMut = view(["content"], canvasDocumentMut);
 
@@ -1575,6 +1575,11 @@
 	const zoomMovement = view(zoomMovementLens, camera);
 
 	const tools = {
+		none: {
+			name: "None",
+			component: () => {},
+			parameters: {},
+		},
 		select: {
 			name: "Select",
 			component: RubberBand,
@@ -2367,6 +2372,16 @@
 						camera,
 					);
 				}}>Clear</button
+			>
+			<hr class="tool-bar-sep" />
+			<label class="button tool-button"
+				><input
+					class="tool-button-radio"
+					type="radio"
+					bind:group={tool.value}
+					value={"none"}
+				/>
+				None</label
 			>
 			{#each toolGroups as g}
 				<hr class="tool-bar-sep" />

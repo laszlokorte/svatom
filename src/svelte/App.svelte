@@ -17,12 +17,13 @@
 	import Nested from "./Nested.svelte";
 	import Table from "./Table.svelte";
 	import Scroller from "./Scroller.svelte";
+	import SplashScreen from "./SplashScreen.svelte";
 	import Canvas from "./Canvas/Root.svelte";
 	import Split from "./SplitView/Split.svelte";
 	import RenewImport from "./Renew/Import.svelte";
 	import asciiLogo from "./asciiLogo.txt?raw";
 	import { clamp, lerp } from "./utils.js";
-	import favicon from "../../assets/favicon.svg";
+	import favicon from "/favicon.svg";
 
 	const numberFormat = new Intl.NumberFormat("en-US", {
 		minimumFractionDigits: 2,
@@ -231,6 +232,8 @@
 		settings,
 	)}`;
 </script>
+
+<SplashScreen icon={favicon} color="#fef0f0" />
 
 <section>
 	<h1>

@@ -5,7 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
   base: '',
-  publicDir: 'assets',
+  publicDir: 'public',
   plugins: [svelte(), VitePWA({
     injectRegister: false,
     registerType: 'autoUpdate',

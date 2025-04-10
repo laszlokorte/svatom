@@ -12,7 +12,7 @@
   },
   "devDependencies": {
     "@budarin/vite-plugin-webmanifest": "^1.0.12",
-    "@sveltejs/vite-plugin-svelte": "^3.1.1",
+    "@sveltejs/vite-plugin-svelte": "^4.0.0",
     "vite": "^5.3.1",
     "vite-plugin-pwa": "^1.0.0"
   },
@@ -21,7 +21,7 @@
     "partial.lenses.history": "git+https://github.com/laszlokorte/partial.lenses.history#present-mut",
     "phoenix": "^1.7.14",
     "ramda": "^0.30.1",
-    "svelte": "^5.0.0-next.233",
+    "svelte": "^5.0.0",
     "xstate": "^5.14.0"
   }
 }
