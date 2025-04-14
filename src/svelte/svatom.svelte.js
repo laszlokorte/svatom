@@ -760,11 +760,15 @@ export function readTextreaScrollSize(node, someAtom) {
 export function autofocusIf(node, yes) {
 	if(yes) {
 		if(yes && document.activeElement !== node) {
-			node.focus({
-			  preventScroll: true
+			$effect(() => {
+				node.focus({
+				  preventScroll: true
+				})
 			})
 		} else if(!yes && document.activeElement === node) {
-			node.blur()
+			$effect(() => {
+				node.blur()
+			})
 		}
 	}
 
@@ -772,11 +776,15 @@ export function autofocusIf(node, yes) {
 	return {
 		update(yes) {
 			if(yes && document.activeElement !== node) {
-				node.focus({
-				  preventScroll: true
+				$effect(() => {
+					node.focus({
+					  preventScroll: true
+					})
 				})
 			} else if(!yes && document.activeElement === node) {
-				node.blur()
+				$effect(() => {
+					node.blur()
+				})
 			}
 		},
 

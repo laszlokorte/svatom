@@ -129,10 +129,10 @@
 		justify-items: stretch;
 		width: 100%;
 		height: 100%;
+		max-width: 100%;
 		overflow: hidden;
 		flex-direction: var(--direction, row);
 		user-select: none;
-		min-width: min-content;
 		outline: 1px solid #ccc;
 	}
 
@@ -181,6 +181,8 @@
 
 	.split-content {
 		flex-basis: 1px;
+		min-width: 0;
+		width: auto;
 		flex-grow: var(--split-size, 0);
 		flex-shrink: 1;
 		min-width: 0;
