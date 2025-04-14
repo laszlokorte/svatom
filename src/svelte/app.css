@@ -27,6 +27,7 @@ pre, textarea[readonly] {
 	padding: 1em;
 	box-sizing: border-box;
 	margin: 0;
+	font: inherit;
 }
 
 textarea {
@@ -40,6 +41,7 @@ textarea {
 	padding: 1em;
 	box-sizing: border-box;
 	scrollbar-gutter: stable;
+	font: inherit;
 }
 
 .number-picker {
@@ -100,16 +102,16 @@ input[type=range]::-moz-range-track {
 input[type=range]::-moz-range-thumb {
     border: none;
     border: none;
-    height: 1em;
-    width: 1em;
+    height: 1rem;
+    width: 1rem;
     border-radius: 50%;
     background: var(--accent-color, #dd4e40);
     margin-top: calc(-0.5em + 2px);
     border: 2px solid var(--accent-color-light, #ffe0ee);
 }
 
-input[type=range]:not(:disabled):hover::-moz-range-thumb,
-input[type=range]:not(:disabled):active::-moz-range-thumb {
+input[type=range]:not(:disabled)::-moz-range-thumb:hover,
+input[type=range]:not(:disabled)::-moz-range-thumb:active {
 	outline: 1px solid var(--accent-color, #dd4e40);
 }
 
@@ -120,8 +122,9 @@ input[type=range]:-moz-focusring{
 }
 
 input[type=range]:focus::-moz-range-track {
-    background: #aaa;
+    background: var(--track-color, #aaa);
 }
+
 
 input[type=range]::-webkit-slider-runnable-track {
     width: 100%;
@@ -146,9 +149,29 @@ input[type=range]::-webkit-slider-thumb {
 	-webkit-tap-highlight-color: transparent;
   	-webkit-tap-highlight-color: none;
 }
-input[type=range]:not(:disabled):hover::-webkit-slider-thumb,
-input[type=range]:not(:disabled):active::-webkit-slider-thumb {
+input[type=range]:not(:disabled)::-webkit-slider-thumb:hover,
+input[type=range]:not(:disabled)::-webkit-slider-thumb:active {
 	outline: 1px solid var(--accent-color, #dd4e40);
+}
+
+
+@media (pointer:coarse) {
+	input[type=range]::-webkit-slider-thumb {
+	    height: 2rem;
+	    width: 2rem;
+    	margin-top: calc(-1rem + 2px);
+	}
+
+	input[type=range]::-moz-range-thumb {
+	    height: 2rem;
+	    width: 2rem;
+    	margin-top: calc(-1rem + 2px);
+	}
+
+	input[type=range]{
+  	min-height: 3rem;
+
+	}
 }
 
 input[type=range]:focus {
@@ -156,7 +179,7 @@ input[type=range]:focus {
 }
 
 input[type=range]:focus::-webkit-slider-runnable-track {
-    background: #aaa;
+    background: var(--track-color, #aaa);
 }
 
 input[type=range]:disabled::-moz-range-thumb, 

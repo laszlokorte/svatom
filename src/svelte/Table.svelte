@@ -93,77 +93,77 @@
 		columnHeadWidths,
 	);
 
-	const columnHeadWidthSum = view((x) => endAccum(0, x)[0], columnHeadWidths);
-	const rowHeadStarts = view(
+	const columnHeadWidthSum = read((x) => endAccum(0, x)[0], columnHeadWidths);
+	const rowHeadStarts = read(
 		(rhh) => R.last(startAccum(0, rhh)),
 		rowHeadHeights,
 	);
-	const rowHeadHeightSum = view((rhh) => endAccum(0, rhh)[0], rowHeadHeights);
+	const rowHeadHeightSum = read((rhh) => endAccum(0, rhh)[0], rowHeadHeights);
 
-	const columnPinnedIndices = view(extractIndices(), columnPins);
-	const rowPinnedIndices = view(extractIndices(), rowPins);
-	const columnNotPinnedIndices = view(extractIndices(R.not), columnPins);
-	const rowNotPinnedIndices = view(extractIndices(R.not), rowPins);
+	const columnPinnedIndices = read(extractIndices(), columnPins);
+	const rowPinnedIndices = read(extractIndices(), rowPins);
+	const columnNotPinnedIndices = read(extractIndices(R.not), columnPins);
+	const rowNotPinnedIndices = read(extractIndices(R.not), rowPins);
 
-	const columnPinnedSizes = view(
+	const columnPinnedSizes = read(
 		({ s, is }) => R.map((i) => s[i], is),
 		combine({ s: columnSizes, is: columnPinnedIndices }),
 	);
-	const rowPinnedSizes = view(
+	const rowPinnedSizes = read(
 		({ s, is }) => R.map((i) => s[i], is),
 		combine({ s: rowSizes, is: rowPinnedIndices }),
 	);
-	const columnNotPinnedSizes = view(
+	const columnNotPinnedSizes = read(
 		({ s, is }) => R.map((i) => s[i], is),
 		combine({ s: columnSizes, is: columnNotPinnedIndices }),
 	);
-	const rowNotPinnedSizes = view(
+	const rowNotPinnedSizes = read(
 		({ s, is }) => R.map((i) => s[i], is),
 		combine({ s: rowSizes, is: rowNotPinnedIndices }),
 	);
 
-	const columnPinnedStarts = view(
+	const columnPinnedStarts = read(
 		({ a, b }) => R.last(startAccum(a, b)),
 		combine({ a: columnHeadWidthSum, b: columnPinnedSizes }),
 	);
-	const columnPinnedSizeSum_columnPinnedEnds = view(
+	const columnPinnedSizeSum_columnPinnedEnds = read(
 		({ a, b }) => endAccum(a, b),
 		combine({ a: columnHeadWidthSum, b: columnPinnedSizes }),
 	);
-	const columnPinnedSizeSum = view(
+	const columnPinnedSizeSum = read(
 		R.nth(0),
 		columnPinnedSizeSum_columnPinnedEnds,
 	);
-	const columnPinnedEnds = view(
+	const columnPinnedEnds = read(
 		R.nth(1),
 		columnPinnedSizeSum_columnPinnedEnds,
 	);
 
-	const rowPinnedStarts = view(
+	const rowPinnedStarts = read(
 		({ a, b }) => R.last(startAccum(a, b)),
 		combine({ a: rowHeadHeightSum, b: rowPinnedSizes }),
 	);
-	const rowPinnedSizeSum_rowPinnedEnds = view(
+	const rowPinnedSizeSum_rowPinnedEnds = read(
 		({ a, b }) => endAccum(a, b),
 		combine({ a: rowHeadHeightSum, b: rowPinnedSizes }),
 	);
 
-	const rowPinnedSizeSum = view(R.nth(0), rowPinnedSizeSum_rowPinnedEnds);
-	const rowPinnedEnds = view(R.nth(1), rowPinnedSizeSum_rowPinnedEnds);
+	const rowPinnedSizeSum = read(R.nth(0), rowPinnedSizeSum_rowPinnedEnds);
+	const rowPinnedEnds = read(R.nth(1), rowPinnedSizeSum_rowPinnedEnds);
 
-	const firstPinnedColumn = view(
+	const firstPinnedColumn = read(
 		({ chw, cpe }) => R.findIndex(R.lte(chw), cpe),
 		combine({ cpe: columnPinnedEnds, chw: columnHeadWidthSum }),
 	);
-	const lastPinnedColumn = view(
+	const lastPinnedColumn = read(
 		({ ws, cps }) => R.findLastIndex(R.gte(ws.x), cps),
 		combine({ ws: scrollWindowSize, cps: columnPinnedStarts }),
 	);
-	const firstPinnedRow = view(
+	const firstPinnedRow = read(
 		({ rhs, rpe }) => R.findIndex(R.lte(rhs), rpe),
 		combine({ rhs: rowHeadHeightSum, rpe: rowPinnedEnds }),
 	);
-	const lastPinnedRow = view(
+	const lastPinnedRow = read(
 		({ rps, sw }) => R.findLastIndex(R.gte(sw.y), rps),
 		combine({
 			rps: rowPinnedStarts,
@@ -171,39 +171,43 @@
 		}),
 	);
 
-	const visiblePinnedColumns = view(
-		({ fpc, lpc }) => Array.from(G.range(fpc, R.inc(lpc))),
+	const visiblePinnedColumns = read(
+		({ fpc, lpc }) =>
+			() =>
+				G.range(fpc, R.inc(lpc)),
 		combine({ fpc: firstPinnedColumn, lpc: lastPinnedColumn }),
 	);
-	const visiblePinnedRows = view(
-		({ fpr, lpr }) => Array.from(G.range(fpr, R.inc(lpr))),
+	const visiblePinnedRows = read(
+		({ fpr, lpr }) =>
+			() =>
+				G.range(fpr, R.inc(lpr)),
 		combine({ fpr: firstPinnedRow, lpr: lastPinnedRow }),
 	);
 
-	const columnStarts = view(
+	const columnStarts = read(
 		({ a, b }) => R.last(startAccum(a, b)),
 		combine({ a: columnPinnedSizeSum, b: columnNotPinnedSizes }),
 	);
-	const columnSizeSum_columnEnds = view(
+	const columnSizeSum_columnEnds = read(
 		({ a, b }) => endAccum(a, b),
 		combine({ a: columnPinnedSizeSum, b: columnNotPinnedSizes }),
 	);
-	const columnSizeSum = view(R.nth(0), columnSizeSum_columnEnds);
-	const columnEnds = view(R.nth(1), columnSizeSum_columnEnds);
+	const columnSizeSum = read(R.nth(0), columnSizeSum_columnEnds);
+	const columnEnds = read(R.nth(1), columnSizeSum_columnEnds);
 
-	const rowStarts = view(
+	const rowStarts = read(
 		({ a, b }) => R.last(startAccum(a, b)),
 		combine({ a: rowPinnedSizeSum, b: rowNotPinnedSizes }),
 	);
-	const rowSizeSum_rowEnds = view(
+	const rowSizeSum_rowEnds = read(
 		({ a, b }) => endAccum(a, b),
 		combine({ a: rowPinnedSizeSum, b: rowNotPinnedSizes }),
 	);
 
-	const rowSizeSum = view(R.nth(0), rowSizeSum_rowEnds);
-	const rowEnds = view(R.nth(1), rowSizeSum_rowEnds);
+	const rowSizeSum = read(R.nth(0), rowSizeSum_rowEnds);
+	const rowEnds = read(R.nth(1), rowSizeSum_rowEnds);
 
-	const firstColumn = view(
+	const firstColumn = read(
 		({ sp, cps, ce }) => R.findIndex(R.lte(sp.x + cps), ce),
 		combine({
 			sp: scrollPosition,
@@ -211,7 +215,7 @@
 			ce: columnEnds,
 		}),
 	);
-	const lastColumn = view(
+	const lastColumn = read(
 		({ sp, sw, cs }) => R.findLastIndex(R.gte(sp.x + sw.x), cs),
 		combine({
 			sp: scrollPosition,
@@ -219,7 +223,7 @@
 			cs: columnStarts,
 		}),
 	);
-	const firstRow = view(
+	const firstRow = read(
 		({ a, b, c }) => R.findIndex(R.lte(a.y + b), c),
 		combine({
 			a: scrollPosition,
@@ -227,7 +231,7 @@
 			c: rowEnds,
 		}),
 	);
-	const lastRow = view(
+	const lastRow = read(
 		({ a, b, c }) => R.findLastIndex(R.gte(a.y + b.y), c),
 		combine({
 			a: scrollPosition,
@@ -236,29 +240,33 @@
 		}),
 	);
 
-	const visibleColumns = view(
-		({ a, b }) => Array.from(G.range(a, R.inc(b))),
+	const visibleColumns = read(
+		({ a, b }) =>
+			() =>
+				G.range(a, R.inc(b)),
 		combine({ a: firstColumn, b: lastColumn }),
 	);
-	const visibleRows = view(
-		({ a, b }) => Array.from(G.range(a, R.inc(b))),
+	const visibleRows = read(
+		({ a, b }) =>
+			() =>
+				G.range(a, R.inc(b)),
 		combine({ a: firstRow, b: lastRow }),
 	);
 
-	const lastHeadColumn = view(
+	const lastHeadColumn = read(
 		({ a, b }) => R.findLastIndex(R.gte(a.x), b),
 		combine({ a: scrollWindowSize, b: columnHeadStarts }),
 	);
-	const lastHeadRow = view(
+	const lastHeadRow = read(
 		({ a, b }) => R.findLastIndex(R.gte(a.y), b),
 		combine({ a: scrollWindowSize, b: rowHeadStarts }),
 	);
-	const visibleHeadColumns = view(
-		(x) => Array.from(G.range(0, R.inc(x))),
+	const visibleHeadColumns = read(
+		(x) => () => G.range(0, R.inc(x)),
 		lastHeadColumn,
 	);
-	const visibleHeadRows = view(
-		(lhr) => Array.from(G.range(0, R.inc(lhr))),
+	const visibleHeadRows = read(
+		(lhr) => () => G.range(0, R.inc(lhr)),
 		lastHeadRow,
 	);
 
@@ -315,7 +323,7 @@
 		<span>y: {numberFormat.format(scrollPosition.value.y)}</span>
 	</div>
 	<div key="head-rows">
-		{#each visibleHeadRows.value as y, i (i)}
+		{#each visibleHeadRows.value() as y, i (i)}
 			<div
 				name="virtual-{i}"
 				class="grid-head-row"
@@ -323,7 +331,7 @@
 				style:--row-start={rowHeadStarts.value[y]}
 			>
 				<div key="pinned">
-					{#each visiblePinnedColumns.value as x, j (j)}
+					{#each visiblePinnedColumns.value() as x, j (j)}
 						<label
 							name="virtual-{j}"
 							class="grid-head-cell grid-pinned-column"
@@ -355,7 +363,7 @@
 				</div>
 
 				<div key="not-pinned">
-					{#each visibleColumns.value as x, j (j)}
+					{#each visibleColumns.value() as x, j (j)}
 						<label
 							name="virtual-{j}"
 							class="grid-head-cell"
@@ -390,7 +398,7 @@
 	</div>
 
 	<div key="pinned-rows">
-		{#each visiblePinnedRows.value as y, i (i)}
+		{#each visiblePinnedRows.value() as y, i (i)}
 			{@const pinnedRow = view(
 				[rowPinnedIndices.value[y], L.valueOr(false)],
 				rowPins,
@@ -402,7 +410,7 @@
 				style:--row-start={rowPinnedStarts.value[y]}
 			>
 				<div key="heads">
-					{#each visibleHeadColumns.value as x, j (j)}
+					{#each visibleHeadColumns.value() as x, j (j)}
 						<label
 							name="virtual-{j}"
 							class="grid-head-column"
@@ -424,7 +432,7 @@
 				</div>
 
 				<div key="pinned">
-					{#each visiblePinnedColumns.value as x, j (j)}
+					{#each visiblePinnedColumns.value() as x, j (j)}
 						{@const val = view(
 							[
 								`val-${rowPinnedIndices.value[y]}-${columnPinnedIndices.value[x]}`,
@@ -458,7 +466,7 @@
 				</div>
 
 				<div key="not-pinned">
-					{#each visibleColumns.value as x, j (j)}
+					{#each visibleColumns.value() as x, j (j)}
 						{@const val = view(
 							[
 								`val-${rowPinnedIndices.value[y]}-${columnNotPinnedIndices.value[x]}`,
@@ -495,7 +503,7 @@
 	</div>
 
 	<div key="not-pinned">
-		{#each visibleRows.value as y, i (i)}
+		{#each visibleRows.value() as y, i (i)}
 			{@const pinnedRow = view(
 				[rowNotPinnedIndices.value[y], L.valueOr(false)],
 				rowPins,
@@ -507,7 +515,7 @@
 				style:--row-start={rowStarts.value[y]}
 			>
 				<div key="heads">
-					{#each visibleHeadColumns.value as x, j (j)}
+					{#each visibleHeadColumns.value() as x, j (j)}
 						<label
 							name="virtual-{j}"
 							class="grid-head-column"
@@ -531,7 +539,7 @@
 				</div>
 
 				<div key="pinned">
-					{#each visiblePinnedColumns.value as x, j (j)}
+					{#each visiblePinnedColumns.value() as x, j (j)}
 						{@const val = view(
 							[
 								`val-${rowNotPinnedIndices.value[y]}-${columnPinnedIndices.value[x]}`,
@@ -565,7 +573,7 @@
 				</div>
 
 				<div key="not-pinned">
-					{#each visibleColumns.value as x, j (j)}
+					{#each visibleColumns.value() as x, j (j)}
 						{@const val = view(
 							[
 								`val-${rowNotPinnedIndices.value[y]}-${columnNotPinnedIndices.value[x]}`,

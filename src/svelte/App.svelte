@@ -156,6 +156,7 @@
 		extraPadding: true,
 	});
 	const scrollerPosition = view("pos", scrollerState);
+	const scrollerDebug = view(["debug", L.defaults(true)], scrollerState);
 	const scrollerWindow = view("window", scrollerState);
 	const extraScrollPadding = view("extraPadding", scrollerState);
 	const scrollerSize = view("content", scrollerState);
@@ -207,9 +208,12 @@
 	const scrollerOutside = read(
 		({ x, y, xc, yc, win }) =>
 			Math.pow(
-				Math.hypot(
-					Math.abs(x - xc) / (win.x || 1),
-					Math.abs(y - yc) / (win.y || 1),
+				Math.min(
+					2,
+					Math.hypot(
+						Math.abs(x - xc) / (win.x || 1),
+						Math.abs(y - yc) / (win.y || 1),
+					),
 				) / 1.4,
 				1,
 			),
@@ -267,6 +271,12 @@
 				bind:value={size.value}
 				min="5"
 				max="50"
+				style:--accent-color={clampedSize.value != size.value
+					? "#c00"
+					: "unset"}
+				style:--track-color={clampedSize.value != size.value
+					? "#a00"
+					: "unset"}
 			/>
 
 			<output>({size.value})</output>
@@ -584,7 +594,7 @@
 	<h3>Scroller</h3>
 
 	<Scroller
-		debug="true"
+		debug={scrollerDebug.value}
 		scrollPosition={scrollerPosition}
 		scrollWindowSize={scrollerWindow}
 		contentSize={scrollerSize}
@@ -626,17 +636,28 @@
 					/>
 				</label>
 
-				<label
-					class="number-picker"
-					style="gap: 1em 0.5em; margin: 1em 0"
-					>Extra Scroll Padding: <span
-						>{extraScrollPadding.value ? "Yes" : "No"}</span
+				<label class="checkbox-control"
+					><span class="checkbox-control-titel"
+						>Extra Scroll Padding:</span
 					>
-					<span>
+					<span>{extraScrollPadding.value ? "Yes" : "No"}</span>
+					<span class="checkbox-control-body">
 						<input
 							type="checkbox"
 							bind:checked={extraScrollPadding.value}
 						/> Allow to scroll outsize the content
+					</span>
+				</label>
+				<br />
+				<label class="checkbox-control"
+					><span class="checkbox-control-titel">Debug:</span>
+					<span>{scrollerDebug.value ? "Visible" : "Hidden"}</span>
+					<span class="checkbox-control-body">
+						<input
+							type="checkbox"
+							bind:checked={scrollerDebug.value}
+						/>
+						Show Debug Panel
 					</span>
 				</label>
 			</div>
@@ -764,5 +785,19 @@
 		background-size: calc(2 * (var(--band-width) + var(--gap-width)))
 			calc(2 * (var(--band-width) + var(--gap-width)));
 		background-color: hsl(120, 0%, calc(100% - 20% * var(--fade, 1)));
+	}
+
+	.checkbox-control {
+		display: grid;
+		grid-template-columns: 1fr auto;
+		margin: 0;
+	}
+
+	.checkbox-control-titel {
+		font-weight: bold;
+	}
+
+	.checkbox-control-body {
+		grid-column: 1 / span 2;
 	}
 </style>
