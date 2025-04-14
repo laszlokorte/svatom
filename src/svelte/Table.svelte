@@ -88,119 +88,179 @@
 		}),
 	);
 
-	const columnHeadStarts = $derived(
-		R.last(startAccum(0, columnHeadWidths.value)),
-	);
-	const [columnHeadWidthSum, _columnHeadEnds] = $derived(
-		endAccum(0, columnHeadWidths.value),
-	);
-	const rowHeadStarts = $derived(R.last(startAccum(0, rowHeadHeights.value)));
-	const [rowHeadHeightSum, _rowHeadEnds] = $derived(
-		endAccum(0, rowHeadHeights.value),
+	const columnHeadStarts = read(
+		(hw) => R.last(startAccum(0, hw)),
+		columnHeadWidths,
 	);
 
-	const columnPinnedIndices = $derived(extractIndices()(columnPins.value));
-	const rowPinnedIndices = $derived(extractIndices()(rowPins.value));
-	const columnNotPinnedIndices = $derived(
-		extractIndices(R.not)(columnPins.value),
+	const columnHeadWidthSum = view((x) => endAccum(0, x)[0], columnHeadWidths);
+	const rowHeadStarts = view(
+		(rhh) => R.last(startAccum(0, rhh)),
+		rowHeadHeights,
 	);
-	const rowNotPinnedIndices = $derived(extractIndices(R.not)(rowPins.value));
+	const rowHeadHeightSum = view((rhh) => endAccum(0, rhh)[0], rowHeadHeights);
 
-	const columnPinnedSizes = $derived(
-		R.map((i) => columnSizes.value[i], columnPinnedIndices),
-	);
-	const rowPinnedSizes = $derived(
-		R.map((i) => rowSizes.value[i], rowPinnedIndices),
-	);
-	const columnNotPinnedSizes = $derived(
-		R.map((i) => columnSizes.value[i], columnNotPinnedIndices),
-	);
-	const rowNotPinnedSizes = $derived(
-		R.map((i) => rowSizes.value[i], rowNotPinnedIndices),
-	);
+	const columnPinnedIndices = view(extractIndices(), columnPins);
+	const rowPinnedIndices = view(extractIndices(), rowPins);
+	const columnNotPinnedIndices = view(extractIndices(R.not), columnPins);
+	const rowNotPinnedIndices = view(extractIndices(R.not), rowPins);
 
-	const columnPinnedStarts = $derived(
-		R.last(startAccum(columnHeadWidthSum, columnPinnedSizes)),
+	const columnPinnedSizes = view(
+		({ s, is }) => R.map((i) => s[i], is),
+		combine({ s: columnSizes, is: columnPinnedIndices }),
 	);
-	const [columnPinnedSizeSum, columnPinnedEnds] = $derived(
-		endAccum(columnHeadWidthSum, columnPinnedSizes),
+	const rowPinnedSizes = view(
+		({ s, is }) => R.map((i) => s[i], is),
+		combine({ s: rowSizes, is: rowPinnedIndices }),
 	);
-	const rowPinnedStarts = $derived(
-		R.last(startAccum(rowHeadHeightSum, rowPinnedSizes)),
+	const columnNotPinnedSizes = view(
+		({ s, is }) => R.map((i) => s[i], is),
+		combine({ s: columnSizes, is: columnNotPinnedIndices }),
 	);
-	const [rowPinnedSizeSum, rowPinnedEnds] = $derived(
-		endAccum(rowHeadHeightSum, rowPinnedSizes),
-	);
-	const firstPinnedColumn = $derived(
-		R.findIndex(R.lte(columnHeadWidthSum), columnPinnedEnds),
-	);
-	const lastPinnedColumn = $derived(
-		R.findLastIndex(R.gte(scrollWindowSize.value.x), columnPinnedStarts),
-	);
-	const firstPinnedRow = $derived(
-		R.findIndex(R.lte(rowHeadHeightSum), rowPinnedEnds),
-	);
-	const lastPinnedRow = $derived(
-		R.findLastIndex(R.gte(scrollWindowSize.value.y), rowPinnedStarts),
+	const rowNotPinnedSizes = view(
+		({ s, is }) => R.map((i) => s[i], is),
+		combine({ s: rowSizes, is: rowNotPinnedIndices }),
 	);
 
-	const visiblePinnedColumns = $derived(() =>
-		G.range(firstPinnedColumn, R.inc(lastPinnedColumn)),
+	const columnPinnedStarts = view(
+		({ a, b }) => R.last(startAccum(a, b)),
+		combine({ a: columnHeadWidthSum, b: columnPinnedSizes }),
 	);
-	const visiblePinnedRows = $derived(() =>
-		G.range(firstPinnedRow, R.inc(lastPinnedRow)),
+	const columnPinnedSizeSum_columnPinnedEnds = view(
+		({ a, b }) => endAccum(a, b),
+		combine({ a: columnHeadWidthSum, b: columnPinnedSizes }),
 	);
-
-	const columnStarts = $derived(
-		R.last(startAccum(columnPinnedSizeSum, columnNotPinnedSizes)),
+	const columnPinnedSizeSum = view(
+		R.nth(0),
+		columnPinnedSizeSum_columnPinnedEnds,
 	);
-	const [columnSizeSum, columnEnds] = $derived(
-		endAccum(columnPinnedSizeSum, columnNotPinnedSizes),
-	);
-	const rowStarts = $derived(
-		R.last(startAccum(rowPinnedSizeSum, rowNotPinnedSizes)),
-	);
-	const [rowSizeSum, rowEnds] = $derived(
-		endAccum(rowPinnedSizeSum, rowNotPinnedSizes),
+	const columnPinnedEnds = view(
+		R.nth(1),
+		columnPinnedSizeSum_columnPinnedEnds,
 	);
 
-	const firstColumn = $derived(
-		R.findIndex(
-			R.lte(scrollPosition.value.x + columnPinnedSizeSum),
-			columnEnds,
-		),
+	const rowPinnedStarts = view(
+		({ a, b }) => R.last(startAccum(a, b)),
+		combine({ a: rowHeadHeightSum, b: rowPinnedSizes }),
 	);
-	const lastColumn = $derived(
-		R.findLastIndex(
-			R.gte(scrollPosition.value.x + scrollWindowSize.value.x),
-			columnStarts,
-		),
-	);
-	const firstRow = $derived(
-		R.findIndex(R.lte(scrollPosition.value.y + rowPinnedSizeSum), rowEnds),
-	);
-	const lastRow = $derived(
-		R.findLastIndex(
-			R.gte(scrollPosition.value.y + scrollWindowSize.value.y),
-			rowStarts,
-		),
+	const rowPinnedSizeSum_rowPinnedEnds = view(
+		({ a, b }) => endAccum(a, b),
+		combine({ a: rowHeadHeightSum, b: rowPinnedSizes }),
 	);
 
-	const visibleColumns = $derived(() =>
-		G.range(firstColumn, R.inc(lastColumn)),
-	);
-	const visibleRows = $derived(() => G.range(firstRow, R.inc(lastRow)));
+	const rowPinnedSizeSum = view(R.nth(0), rowPinnedSizeSum_rowPinnedEnds);
+	const rowPinnedEnds = view(R.nth(1), rowPinnedSizeSum_rowPinnedEnds);
 
-	const lastHeadColumn = $derived(
-		R.findLastIndex(R.gte(scrollWindowSize.value.x), columnHeadStarts),
+	const firstPinnedColumn = view(
+		({ chw, cpe }) => R.findIndex(R.lte(chw), cpe),
+		combine({ cpe: columnPinnedEnds, chw: columnHeadWidthSum }),
 	);
-	const lastHeadRow = $derived(
-		R.findLastIndex(R.gte(scrollWindowSize.value.y), rowHeadStarts),
+	const lastPinnedColumn = view(
+		({ ws, cps }) => R.findLastIndex(R.gte(ws.x), cps),
+		combine({ ws: scrollWindowSize, cps: columnPinnedStarts }),
 	);
-	const visibleHeadColumns = $derived(() =>
-		G.range(0, R.inc(lastHeadColumn)),
+	const firstPinnedRow = view(
+		({ rhs, rpe }) => R.findIndex(R.lte(rhs), rpe),
+		combine({ rhs: rowHeadHeightSum, rpe: rowPinnedEnds }),
 	);
-	const visibleHeadRows = $derived(() => G.range(0, R.inc(lastHeadRow)));
+	const lastPinnedRow = view(
+		({ rps, sw }) => R.findLastIndex(R.gte(sw.y), rps),
+		combine({
+			rps: rowPinnedStarts,
+			sw: scrollWindowSize,
+		}),
+	);
+
+	const visiblePinnedColumns = view(
+		({ fpc, lpc }) => Array.from(G.range(fpc, R.inc(lpc))),
+		combine({ fpc: firstPinnedColumn, lpc: lastPinnedColumn }),
+	);
+	const visiblePinnedRows = view(
+		({ fpr, lpr }) => Array.from(G.range(fpr, R.inc(lpr))),
+		combine({ fpr: firstPinnedRow, lpr: lastPinnedRow }),
+	);
+
+	const columnStarts = view(
+		({ a, b }) => R.last(startAccum(a, b)),
+		combine({ a: columnPinnedSizeSum, b: columnNotPinnedSizes }),
+	);
+	const columnSizeSum_columnEnds = view(
+		({ a, b }) => endAccum(a, b),
+		combine({ a: columnPinnedSizeSum, b: columnNotPinnedSizes }),
+	);
+	const columnSizeSum = view(R.nth(0), columnSizeSum_columnEnds);
+	const columnEnds = view(R.nth(1), columnSizeSum_columnEnds);
+
+	const rowStarts = view(
+		({ a, b }) => R.last(startAccum(a, b)),
+		combine({ a: rowPinnedSizeSum, b: rowNotPinnedSizes }),
+	);
+	const rowSizeSum_rowEnds = view(
+		({ a, b }) => endAccum(a, b),
+		combine({ a: rowPinnedSizeSum, b: rowNotPinnedSizes }),
+	);
+
+	const rowSizeSum = view(R.nth(0), rowSizeSum_rowEnds);
+	const rowEnds = view(R.nth(1), rowSizeSum_rowEnds);
+
+	const firstColumn = view(
+		({ sp, cps, ce }) => R.findIndex(R.lte(sp.x + cps), ce),
+		combine({
+			sp: scrollPosition,
+			cps: columnPinnedSizeSum,
+			ce: columnEnds,
+		}),
+	);
+	const lastColumn = view(
+		({ sp, sw, cs }) => R.findLastIndex(R.gte(sp.x + sw.x), cs),
+		combine({
+			sp: scrollPosition,
+			sw: scrollWindowSize,
+			cs: columnStarts,
+		}),
+	);
+	const firstRow = view(
+		({ a, b, c }) => R.findIndex(R.lte(a.y + b), c),
+		combine({
+			a: scrollPosition,
+			b: rowPinnedSizeSum,
+			c: rowEnds,
+		}),
+	);
+	const lastRow = view(
+		({ a, b, c }) => R.findLastIndex(R.gte(a.y + b.y), c),
+		combine({
+			a: scrollPosition,
+			b: scrollWindowSize,
+			c: rowStarts,
+		}),
+	);
+
+	const visibleColumns = view(
+		({ a, b }) => Array.from(G.range(a, R.inc(b))),
+		combine({ a: firstColumn, b: lastColumn }),
+	);
+	const visibleRows = view(
+		({ a, b }) => Array.from(G.range(a, R.inc(b))),
+		combine({ a: firstRow, b: lastRow }),
+	);
+
+	const lastHeadColumn = view(
+		({ a, b }) => R.findLastIndex(R.gte(a.x), b),
+		combine({ a: scrollWindowSize, b: columnHeadStarts }),
+	);
+	const lastHeadRow = view(
+		({ a, b }) => R.findLastIndex(R.gte(a.y), b),
+		combine({ a: scrollWindowSize, b: rowHeadStarts }),
+	);
+	const visibleHeadColumns = view(
+		(x) => Array.from(G.range(0, R.inc(x))),
+		lastHeadColumn,
+	);
+	const visibleHeadRows = view(
+		(lhr) => Array.from(G.range(0, R.inc(lhr))),
+		lastHeadRow,
+	);
 
 	const cellValues = atom({});
 
@@ -248,35 +308,40 @@
 <Scroller {scrollPosition} {scrollWindowSize} {contentSize}>
 	<div
 		class="grid-corner"
-		style:--row-height={rowHeadHeightSum}
-		style:--column-width={columnHeadWidthSum}
+		style:--row-height={rowHeadHeightSum.value}
+		style:--column-width={columnHeadWidthSum.value}
 	>
 		<span>x: {numberFormat.format(scrollPosition.value.x)}</span>
 		<span>y: {numberFormat.format(scrollPosition.value.y)}</span>
 	</div>
 	<div key="head-rows">
-		{#each visibleHeadRows() as y, i (i)}
+		{#each visibleHeadRows.value as y, i (i)}
 			<div
 				name="virtual-{i}"
 				class="grid-head-row"
 				style:--row-height={rowHeadHeights.value[y]}
-				style:--row-start={rowHeadStarts[y]}
+				style:--row-start={rowHeadStarts.value[y]}
 			>
 				<div key="pinned">
-					{#each visiblePinnedColumns() as x, j (j)}
+					{#each visiblePinnedColumns.value as x, j (j)}
 						<label
 							name="virtual-{j}"
 							class="grid-head-cell grid-pinned-column"
-							style:--column-width={columnPinnedSizes[x]}
-							style:--column-start={columnPinnedStarts[x]}
+							style:--column-width={columnPinnedSizes.value[x]}
+							style:--column-start={columnPinnedStarts.value[x]}
 						>
 							{#if i == 1}
 								{String.fromCharCode(
-									65 + (columnPinnedIndices[x] % 26),
-								)}{Math.floor(columnPinnedIndices[x] / 26)}
+									65 + (columnPinnedIndices.value[x] % 26),
+								)}{Math.floor(
+									columnPinnedIndices.value[x] / 26,
+								)}
 							{:else}
 								{@const pinnedColumn = view(
-									[columnPinnedIndices[x], L.valueOr(false)],
+									[
+										columnPinnedIndices.value[x],
+										L.valueOr(false),
+									],
 									columnPins,
 								)}
 
@@ -290,21 +355,23 @@
 				</div>
 
 				<div key="not-pinned">
-					{#each visibleColumns() as x, j (j)}
+					{#each visibleColumns.value as x, j (j)}
 						<label
 							name="virtual-{j}"
 							class="grid-head-cell"
-							style:--column-width={columnNotPinnedSizes[x]}
-							style:--column-start={columnStarts[x]}
+							style:--column-width={columnNotPinnedSizes.value[x]}
+							style:--column-start={columnStarts.value[x]}
 						>
 							{#if i == 1}
 								{String.fromCharCode(
-									65 + (columnNotPinnedIndices[x] % 26),
-								)}{Math.floor(columnNotPinnedIndices[x] / 26)}
+									65 + (columnNotPinnedIndices.value[x] % 26),
+								)}{Math.floor(
+									columnNotPinnedIndices.value[x] / 26,
+								)}
 							{:else}
 								{@const pinnedColumn = view(
 									[
-										columnNotPinnedIndices[x],
+										columnNotPinnedIndices.value[x],
 										L.valueOr(false),
 									],
 									columnPins,
@@ -323,29 +390,29 @@
 	</div>
 
 	<div key="pinned-rows">
-		{#each visiblePinnedRows() as y, i (i)}
+		{#each visiblePinnedRows.value as y, i (i)}
 			{@const pinnedRow = view(
-				[rowPinnedIndices[y], L.valueOr(false)],
+				[rowPinnedIndices.value[y], L.valueOr(false)],
 				rowPins,
 			)}
 			<div
 				name="virtual-{i}"
 				class="grid-row grid-pinned-row"
-				style:--row-height={rowPinnedSizes[y]}
-				style:--row-start={rowPinnedStarts[y]}
+				style:--row-height={rowPinnedSizes.value[y]}
+				style:--row-start={rowPinnedStarts.value[y]}
 			>
 				<div key="heads">
-					{#each visibleHeadColumns() as x, j (j)}
+					{#each visibleHeadColumns.value as x, j (j)}
 						<label
 							name="virtual-{j}"
 							class="grid-head-column"
 							style:--column-width={columnHeadWidths.value[x]}
-							style:--column-start={columnHeadStarts[x]}
+							style:--column-start={columnHeadStarts.value[x]}
 						>
 							{#if j == 1}
 								{String.fromCharCode(
-									65 + (rowPinnedIndices[y] % 26),
-								)}{Math.floor(rowPinnedIndices[y] / 26)}
+									65 + (rowPinnedIndices.value[y] % 26),
+								)}{Math.floor(rowPinnedIndices.value[y] / 26)}
 							{:else}
 								<input
 									type="checkbox"
@@ -357,10 +424,10 @@
 				</div>
 
 				<div key="pinned">
-					{#each visiblePinnedColumns() as x, j (j)}
+					{#each visiblePinnedColumns.value as x, j (j)}
 						{@const val = view(
 							[
-								`val-${rowPinnedIndices[y]}-${columnPinnedIndices[x]}`,
+								`val-${rowPinnedIndices.value[y]}-${columnPinnedIndices.value[x]}`,
 								L.defaults(""),
 							],
 							cellValues,
@@ -368,8 +435,8 @@
 						<div
 							name="virtual-{j}"
 							class="grid-cell grid-pinned-column"
-							style:--column-width={columnPinnedSizes[x]}
-							style:--column-start={columnPinnedStarts[x]}
+							style:--column-width={columnPinnedSizes.value[x]}
+							style:--column-start={columnPinnedStarts.value[x]}
 						>
 							<input
 								class="cell-input"
@@ -378,11 +445,11 @@
 								bind:value={val.value}
 								use:autofocusIf={isFocused(
 									focus,
-									columnPinnedIndices[x],
-									rowPinnedIndices[y],
+									columnPinnedIndices.value[x],
+									rowPinnedIndices.value[y],
 								)}
-								data-cell-x={columnPinnedIndices[x]}
-								data-cell-y={rowPinnedIndices[y]}
+								data-cell-x={columnPinnedIndices.value[x]}
+								data-cell-y={rowPinnedIndices.value[y]}
 								onfocus={onFocus}
 								onblur={onBlur}
 							/>
@@ -391,10 +458,10 @@
 				</div>
 
 				<div key="not-pinned">
-					{#each visibleColumns() as x, j (j)}
+					{#each visibleColumns.value as x, j (j)}
 						{@const val = view(
 							[
-								`val-${rowPinnedIndices[y]}-${columnNotPinnedIndices[x]}`,
+								`val-${rowPinnedIndices.value[y]}-${columnNotPinnedIndices.value[x]}`,
 								L.defaults(""),
 							],
 							cellValues,
@@ -402,8 +469,8 @@
 						<div
 							name="virtual-{j}"
 							class="grid-cell"
-							style:--column-width={columnNotPinnedSizes[x]}
-							style:--column-start={columnStarts[x]}
+							style:--column-width={columnNotPinnedSizes.value[x]}
+							style:--column-start={columnStarts.value[x]}
 						>
 							<input
 								class="cell-input"
@@ -412,11 +479,11 @@
 								bind:value={val.value}
 								use:autofocusIf={isFocused(
 									focus,
-									columnNotPinnedIndices[x],
-									rowPinnedIndices[y],
+									columnNotPinnedIndices.value[x],
+									rowPinnedIndices.value[y],
 								)}
-								data-cell-x={columnNotPinnedIndices[x]}
-								data-cell-y={rowPinnedIndices[y]}
+								data-cell-x={columnNotPinnedIndices.value[x]}
+								data-cell-y={rowPinnedIndices.value[y]}
 								onfocus={onFocus}
 								onblur={onBlur}
 							/>
@@ -428,29 +495,31 @@
 	</div>
 
 	<div key="not-pinned">
-		{#each visibleRows() as y, i (i)}
+		{#each visibleRows.value as y, i (i)}
 			{@const pinnedRow = view(
-				[rowNotPinnedIndices[y], L.valueOr(false)],
+				[rowNotPinnedIndices.value[y], L.valueOr(false)],
 				rowPins,
 			)}
 			<div
 				name="virtual-{i}"
 				class="grid-row"
-				style:--row-height={rowNotPinnedSizes[y]}
-				style:--row-start={rowStarts[y]}
+				style:--row-height={rowNotPinnedSizes.value[y]}
+				style:--row-start={rowStarts.value[y]}
 			>
 				<div key="heads">
-					{#each visibleHeadColumns() as x, j (j)}
+					{#each visibleHeadColumns.value as x, j (j)}
 						<label
 							name="virtual-{j}"
 							class="grid-head-column"
 							style:--column-width={columnHeadWidths.value[x]}
-							style:--column-start={columnHeadStarts[x]}
+							style:--column-start={columnHeadStarts.value[x]}
 						>
 							{#if j == 1}
 								{String.fromCharCode(
-									65 + (rowNotPinnedIndices[y] % 26),
-								)}{Math.floor(rowNotPinnedIndices[y] / 26)}
+									65 + (rowNotPinnedIndices.value[y] % 26),
+								)}{Math.floor(
+									rowNotPinnedIndices.value[y] / 26,
+								)}
 							{:else}
 								<input
 									type="checkbox"
@@ -462,10 +531,10 @@
 				</div>
 
 				<div key="pinned">
-					{#each visiblePinnedColumns() as x, j (j)}
+					{#each visiblePinnedColumns.value as x, j (j)}
 						{@const val = view(
 							[
-								`val-${rowNotPinnedIndices[y]}-${columnPinnedIndices[x]}`,
+								`val-${rowNotPinnedIndices.value[y]}-${columnPinnedIndices.value[x]}`,
 								L.defaults(""),
 							],
 							cellValues,
@@ -473,8 +542,8 @@
 						<div
 							name="virtual-{j}"
 							class="grid-cell grid-pinned-column"
-							style:--column-width={columnPinnedSizes[x]}
-							style:--column-start={columnPinnedStarts[x]}
+							style:--column-width={columnPinnedSizes.value[x]}
+							style:--column-start={columnPinnedStarts.value[x]}
 						>
 							<input
 								class="cell-input"
@@ -483,11 +552,11 @@
 								bind:value={val.value}
 								use:autofocusIf={isFocused(
 									focus,
-									columnPinnedIndices[x],
-									rowNotPinnedIndices[y],
+									columnPinnedIndices.value[x],
+									rowNotPinnedIndices.value[y],
 								)}
-								data-cell-x={columnPinnedIndices[x]}
-								data-cell-y={rowNotPinnedIndices[y]}
+								data-cell-x={columnPinnedIndices.value[x]}
+								data-cell-y={rowNotPinnedIndices.value[y]}
 								onfocus={onFocus}
 								onblur={onBlur}
 							/>
@@ -496,10 +565,10 @@
 				</div>
 
 				<div key="not-pinned">
-					{#each visibleColumns() as x, j (j)}
+					{#each visibleColumns.value as x, j (j)}
 						{@const val = view(
 							[
-								`val-${rowNotPinnedIndices[y]}-${columnNotPinnedIndices[x]}`,
+								`val-${rowNotPinnedIndices.value[y]}-${columnNotPinnedIndices.value[x]}`,
 								L.defaults(""),
 							],
 							cellValues,
@@ -507,8 +576,8 @@
 						<div
 							name="virtual-{j}"
 							class="grid-cell"
-							style:--column-width={columnNotPinnedSizes[x]}
-							style:--column-start={columnStarts[x]}
+							style:--column-width={columnNotPinnedSizes.value[x]}
+							style:--column-start={columnStarts.value[x]}
 						>
 							<input
 								class="cell-input"
@@ -517,11 +586,11 @@
 								bind:value={val.value}
 								use:autofocusIf={isFocused(
 									focus,
-									columnNotPinnedIndices[x],
-									rowNotPinnedIndices[y],
+									columnNotPinnedIndices.value[x],
+									rowNotPinnedIndices.value[y],
 								)}
-								data-cell-x={columnNotPinnedIndices[x]}
-								data-cell-y={rowNotPinnedIndices[y]}
+								data-cell-x={columnNotPinnedIndices.value[x]}
+								data-cell-y={rowNotPinnedIndices.value[y]}
 								onfocus={onFocus}
 								onblur={onBlur}
 							/>
