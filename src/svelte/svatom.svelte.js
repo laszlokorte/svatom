@@ -584,7 +584,6 @@ export function throttled(fn) {
 
 export function bindScroll(node, someAtom) {
 	 const onScrollThrottled = throttled(function onscroll(e) {
-	
 	 	const newValue = someAtom.value
 		const nodeScrollLeft = node.scrollLeft
 		const nodeScrollTop = node.scrollTop
@@ -611,7 +610,7 @@ export function bindScroll(node, someAtom) {
 
 	$effect.pre(() => {
 		const newPos = someAtom.value
-		tick().then(function bindScrollEffect() {
+		return tick().then(function bindScrollEffect() {
 			const scrollMaxX = Math.max(0, node.scrollLeftMax  ?? node.scrollWidth - node.offsetWidth)
 			const scrollMaxY = Math.max(0, node.scrollTopMax  ?? node.scrollHeight - node.offsetHeight)
 			const newX =  R.clamp(0, scrollMaxX, newPos.x)
@@ -619,7 +618,7 @@ export function bindScroll(node, someAtom) {
 			const oldX = R.clamp(0, scrollMaxX, node.scrollLeft)
 			const oldY = R.clamp(0, scrollMaxY, node.scrollTop)
 
-			if(oldX != newX | oldY != newY) {
+			if(oldX != newX || oldY != newY) {
 				node.scrollTo({
 					left: newX,
 					top: newY,

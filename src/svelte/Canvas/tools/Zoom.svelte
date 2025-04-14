@@ -20,11 +20,12 @@
 		zoomMovement,
 		rotationTransform,
 		cameraScale,
+		state = atom({}),
 	} = $props();
 
 	const minRadius = 3;
 
-	const zoom = atom({});
+	const zoom = state;
 	const zoomPivotClient = view(
 		[
 			L.props("pivotClient", "pivotWorld", "refClient"),

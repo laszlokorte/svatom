@@ -1639,6 +1639,19 @@
 	const panMovement = view(panMovementLens, camera);
 	const rotateMovement = view(rotateMovementLens, camera);
 	const zoomMovement = view(zoomMovementLens, camera);
+	const rotationState = atom({});
+	const zoomState = atom({});
+	const lockScroll = view(
+		[
+			L.choices(["rot", "pivot"], ["zoom", "pivotWorld"]),
+			R.compose(R.not, R.isNil),
+			L.log("lock"),
+		],
+		combine({
+			rot: rotationState,
+			zoom: zoomState,
+		}),
+	);
 
 	const tools = {
 		none: {
@@ -1846,6 +1859,7 @@
 				rotateMovement,
 				rotationTransform,
 				cameraScale,
+				state: rotationState,
 			},
 		},
 		zoom: {
@@ -1857,6 +1871,7 @@
 				zoomMovement,
 				rotationTransform,
 				cameraScale,
+				state: zoomState,
 			},
 		},
 	};
@@ -1978,7 +1993,7 @@
 
 	const cameraInBounds = view(
 		L.lens(
-			({ x, y, s, w, b }) => {
+			({ x, y, s, w, b, ls }) => {
 				const rot = Geo.rotatePivotXYDegree(
 					(b.minX + b.maxX) / 2,
 					(b.minY + b.maxY) / 2,
@@ -1989,9 +2004,10 @@
 				return {
 					x: (rot.x - b.minX) / s - w.x / 2,
 					y: (rot.y - b.minY) / s - w.y / 2,
+					ls,
 				};
 			},
-			({ x, y }, { s, w, b }) => {
+			({ x, y }, { s, w, b, ls }) => {
 				const rot = Geo.rotatePivotXYDegree(
 					(b.minX + b.maxX) / 2,
 					(b.minY + b.maxY) / 2,
@@ -2005,6 +2021,7 @@
 				return {
 					x: rot.x,
 					y: rot.y,
+					ls,
 				};
 			},
 		),
@@ -2015,6 +2032,7 @@
 				s: cameraScale,
 				w: scrollWindowSize,
 				b: cameraBounds,
+				ls: lockScroll,
 			},
 			{ x: true, y: true },
 		),
@@ -2028,19 +2046,23 @@
 
 	const scrollPosition = view(
 		[
-			L.pick({ x: ["x", integerLens], y: ["y", integerLens] }),
-			L.setter((newScroll, old) => ({
-				x:
-					(newScroll.atMinX && old.x < newScroll.x) ||
-					(newScroll.atMaxX && old.x > newScroll.x)
-						? old.x
-						: newScroll.x,
-				y:
-					(newScroll.atMinY && old.y < newScroll.y) ||
-					(newScroll.atMaxY && old.y > newScroll.y)
-						? old.y
-						: newScroll.y,
-			})),
+			L.pick({ x: ["x", integerLens], y: ["y", integerLens], ls: "ls" }),
+			L.setter((newScroll, old) =>
+				old.ls
+					? old
+					: {
+							x:
+								(newScroll.atMinX && old.x < newScroll.x) ||
+								(newScroll.atMaxX && old.x > newScroll.x)
+									? old.x
+									: newScroll.x,
+							y:
+								(newScroll.atMinY && old.y < newScroll.y) ||
+								(newScroll.atMaxY && old.y > newScroll.y)
+									? old.y
+									: newScroll.y,
+						},
+			),
 		],
 		cameraInBounds,
 	);

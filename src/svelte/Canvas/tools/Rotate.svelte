@@ -17,11 +17,12 @@
 		rotateMovement,
 		rotationTransform,
 		cameraScale,
+		state = atom({}),
 	} = $props();
 
 	const minRadius = read(R.multiply(40), cameraScale);
 
-	const rotation = atom({});
+	const rotation = state;
 	const rotationPivot = view(
 		[
 			L.props("pivot", "ref"),
