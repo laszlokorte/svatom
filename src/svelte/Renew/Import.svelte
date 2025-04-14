@@ -29,7 +29,10 @@
 		serializerV11,
 		stringify,
 		hierarchyV11,
-		tryDeref,
+		tryDeref as tryDerefInternal,
+		kindKey as kindKeySymbol,
+		selfKey as selfKeySymbol,
+		refKey as refKeySymbol,
 	} from "../../renew/index.js";
 	import Scroller from "../Scroller.svelte";
 
@@ -63,6 +66,14 @@
 	const kindKey = "__kind";
 	const selfKey = "__self";
 	const refKey = "__ref";
+
+	function tryDeref(...args) {
+		return tryDerefInternal(...args, {
+			kindKey,
+			selfKey,
+			refKey,
+		});
+	}
 
 	const renewDocument = atom({ string: undefined, json: undefined });
 	const renewSerialized = failableView(
@@ -1212,6 +1223,7 @@
 									"fOriginY",
 									"rotation",
 								].indexOf(prop) > -1}
+							{@const isJson = ["points"].indexOf(prop) > -1}
 							{@const propValue = view(
 								[
 									s,
@@ -1221,7 +1233,22 @@
 										: L.identity,
 									isNumeric
 										? [L.setter((x) => parseFloat(x) || 0)]
-										: L.identity,
+										: L.choose((v) =>
+												typeof v === "object"
+													? [
+															L.define(null),
+															L.rewrite((e) =>
+																e instanceof
+																Error
+																	? null
+																	: e,
+															),
+															L.log("json"),
+															L.inverse(L.json()),
+															L.defaults(""),
+														]
+													: L.identity,
+											),
 								],
 								refMap,
 							)}

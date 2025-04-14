@@ -19,7 +19,7 @@ export const tokenizer = makeTokenizer([
 	{name: "string", pattern: /\"(?:(?:\\\\)*\\\"|[^\"])*\"/, cast: (v) => eval(v)},
 ])
 
-export {kindKey, selfKey}
+export {kindKey, selfKey, refKey}
 
 export const reader = makeReader(tokenizer)
 
@@ -27,7 +27,9 @@ export const parserV11 = makeParser(reader, makeGrammar(11))
 export const serializerV11 = makeSerializer(makeGrammar(11))
 export const hierarchyV11 = makeHierarchy(makeGrammar(11))
 
-export const parserAutoDetect = function(inputString, autoDeref = true, metaKeys = {}) {
+export const parserAutoDetect = function(inputString, autoDeref = true, metaKeys = {kindKey,
+selfKey,
+refKey}) {
 	const tokenStream = tokenizer(inputString);
 	const r = reader(inputString)
 	const version = r.readAny(["int","className"], true);
@@ -42,7 +44,7 @@ export const parserAutoDetect = function(inputString, autoDeref = true, metaKeys
 		p.parseWindowPositionMaybe();
 		p.expectFinish()
 
-		return {version: p.version, doctype: tryDeref(drawing, p.refMap, [kindKey]), drawing, refMap: p.refMap};
+		return {version: p.version, doctype: tryDeref(drawing, p.refMap, [metaKeys.kindKey], metaKeys), drawing, refMap: p.refMap};
 	} else {
 		const parser = makeParser(reader, makeGrammar(-1), autoDeref, metaKeys)
 		const p = parser(inputString)
@@ -51,14 +53,16 @@ export const parserAutoDetect = function(inputString, autoDeref = true, metaKeys
 		p.parseWindowPositionMaybe();
 		p.expectFinish()
 
-		return {version: p.version, doctype: tryDeref(drawing, p.refMap, [kindKey]), drawing, refMap: p.refMap};
+		return {version: p.version, doctype: tryDeref(drawing, p.refMap, [metaKeys.kindKey], metaKeys), drawing, refMap: p.refMap};
 	}
 }
 
 export const stringify = (x) => JSON.stringify(decycle(x), null, 2);
 
-export function tryDeref(refOrObject, refMap, path = []) {
-	const object = (refOrObject && refOrObject[refKey]) ? refMap[refOrObject.ref] : refOrObject
+export function tryDeref(refOrObject, refMap, path = [], metaKeys = {kindKey,
+selfKey,
+refKey}) {
+	const object = (refOrObject && refOrObject[metaKeys.refKey]) ? refMap[refOrObject.ref] : refOrObject
 
-	return path.reduce((o, k) => o ? tryDeref(o[k], refMap) : null, object)
+	return path.reduce((o, k) => o ? tryDeref(o[k], refMap, [], metaKeys) : null, object)
 }
