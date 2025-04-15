@@ -1456,9 +1456,9 @@ ejs@^3.1.6:
     jake "^10.8.5"
 
 electron-to-chromium@^1.5.73:
-  version "1.5.136"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.5.136.tgz#854b45e6a892137762cb026ed6ec77391fc5c07b"
-  integrity sha512-kL4+wUTD7RSA5FHx5YwWtjDnEEkIIikFgWHR4P6fqjw1PPLlqYkxeOb++wAauAssat0YClCy8Y3C5SxgSkjibQ==
+  version "1.5.137"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.5.137.tgz#53a7fef3ea9f7eb5fcf704454050ff930c43ed92"
+  integrity sha512-/QSJaU2JyIuTbbABAo/crOs+SuAZLS+fVVS10PVrIT9hrRkmZl8Hb0xPSkKRUUWHQtYzXHpQUW3Dy5hwMzGZkA==
 
 es-abstract@^1.23.5, es-abstract@^1.23.6, es-abstract@^1.23.9:
   version "1.23.9"
@@ -2212,9 +2212,9 @@ own-keys@^1.0.1:
     object-keys "^1.1.1"
     safe-push-apply "^1.0.0"
 
-"partial.lenses.history@git+https://github.com/laszlokorte/partial.lenses.history#present-mut":
-  version "1.2.3"
-  resolved "git+https://github.com/laszlokorte/partial.lenses.history#bcef6d4a04fa8ae98ff3888899b24b8844a0e448"
+"partial.lenses.history@git+https://github.com/laszlokorte/partial.lenses.history#initialdate":
+  version "1.4.0"
+  resolved "git+https://github.com/laszlokorte/partial.lenses.history#73b490a3be7d4b8f36860db1ad803d45d7ee64d2"
   dependencies:
     infestines "^0.4.10"
     partial.lenses ">=2.2.0"
@@ -2659,9 +2659,9 @@ supports-preserve-symlinks-flag@^1.0.0:
   integrity sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==
 
 svelte@^5.0.0:
-  version "5.26.3"
-  resolved "https://registry.yarnpkg.com/svelte/-/svelte-5.26.3.tgz#fdf5075d0257a8075487e7c4230d323e5406f37e"
-  integrity sha512-SgDfx70CmW8Rev9XRu5sN/3Paa/mSh3DGxDDEgtecdjbhLrmgK18McanP+gNE8HYGm8tXiXZN3Fn31NcqBML+Q==
+  version "5.27.0"
+  resolved "https://registry.yarnpkg.com/svelte/-/svelte-5.27.0.tgz#76be44a04780c6b1b21124c14a965ee376cb866a"
+  integrity sha512-Uai13Ydt1ZE+bUHme6b9U38PCYVNCqBRoBMkUKbFbKiD7kHWjdUUrklYAQZJxyKK81qII4mrBwe/YmvEMSlC9w==
   dependencies:
     "@ampproject/remapping" "^2.3.0"
     "@jridgewell/sourcemap-codec" "^1.5.0"

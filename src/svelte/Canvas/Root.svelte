@@ -118,6 +118,7 @@
 
 	const HISTORY_SETTINGS = {
 		replacePeriod: 1000,
+		initialTime: () => Date.now() - 10000,
 	};
 	animateWith(
 		read(
@@ -907,7 +908,7 @@
 	let layerCountPrev = $state(0);
 
 	$effect.pre(() => {
-		if (layerCount !== layerCountPrev) {
+		if (layerCount !== layerCountPrev && canvasRedoIndex.value === 0) {
 			zValues.value = R.range(0, layerCount);
 			layerCountPrev = layerCount;
 		}
