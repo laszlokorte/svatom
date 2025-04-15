@@ -266,8 +266,10 @@
 		Size: {clampedSize.value} (clamped to 10&lt;v&lt;30)<br />
 		CSS: {fontSize.value}<br />
 		<label class="number-picker"
-			>Slider A: <input
+			><span class="number-picker-label">Slider A:</span>
+			<input
 				type="range"
+				class="number-picker-slider"
 				bind:value={size.value}
 				min="5"
 				max="50"
@@ -279,21 +281,27 @@
 					: "unset"}
 			/>
 
-			<output>({size.value})</output>
+			<output class="number-picker-value">({size.value})</output>
 
-			<span>This slider can move outside the range</span>
+			<span class="number-picker-help"
+				>This slider can move outside the range</span
+			>
 		</label>
 		<label class="number-picker"
-			>Slider B: <input
+			><span class="number-picker-label">Slider B:</span>
+			<input
 				type="range"
+				class="number-picker-slider"
 				use:bindValue={clampedSize}
 				min="5"
 				max="50"
 			/>
 
-			<output>({clampedSize.value})</output>
+			<output class="number-picker-value">({clampedSize.value})</output>
 
-			<span>This slider is forced into the range</span>
+			<span class="number-picker-help"
+				>This slider is forced into the range</span
+			>
 		</label>
 	</p>
 
@@ -458,27 +466,45 @@
 		</p>
 
 		<div class="number-picker">
-			<input type="range" use:bindValue={theNumberClamped} max="100" />
+			<span class="number-picker-label">Slider A</span>
+			<input
+				type="range"
+				class="number-picker-slider"
+				use:bindValue={theNumberClamped}
+				max="100"
+			/>
 			<input
 				class="number-picker-numberfield"
 				type="text"
 				use:bindValue={theNumberClamped}
 				max="100"
 			/>
-			<output>({theNumberClamped.value})</output>
-			The input is bound synchronously
+			<output class="number-picker-value"
+				>({theNumberClamped.value})</output
+			>
+			<span class="number-picker-help"
+				>The input is bound synchronously</span
+			>
 		</div>
 
 		<div class="number-picker">
-			<input type="range" bind:value={theNumberDoubled.value} max="200" />
+			<span class="number-picker-label">Slider B</span>
+			<input
+				type="range"
+				class="number-picker-slider"
+				bind:value={theNumberDoubled.value}
+				max="200"
+			/>
 			<input
 				class="number-picker-numberfield"
 				type="text"
 				bind:value={theNumberDoubled.value}
 				max="200"
 			/>
-			<output>({theNumberDoubled.value})</output>
-			The input is bound deferred
+			<output class="number-picker-value"
+				>({theNumberDoubled.value})</output
+			>
+			<span class="number-picker-help">The input is bound deferred</span>
 		</div>
 	</div>
 
@@ -493,8 +519,10 @@
 	</p>
 
 	<label class="number-picker"
-		>Horizontal: <input
+		><span class="number-picker-label">Horizontal:</span>
+		<input
 			type="range"
+			class="number-picker-slider"
 			use:bindValue={textScrollerX}
 			min="0"
 			max={textScrollerMax.value.x}
@@ -502,6 +530,7 @@
 			step="1"
 		/><input
 			type="number"
+			class="number-picker-numberfield"
 			use:bindValue={textScrollerX}
 			min="0"
 			max={textScrollerMax.value.x}
@@ -510,8 +539,10 @@
 		/></label
 	>
 	<label class="number-picker">
-		Vertical: <input
+		<span class="number-picker-label">Vertical:</span>
+		<input
 			type="range"
+			class="number-picker-slider"
 			use:bindValue={textScrollerY}
 			min="0"
 			max={textScrollerMax.value.y}
@@ -519,6 +550,7 @@
 			step="1"
 		/><input
 			type="number"
+			class="number-picker-numberfield"
 			use:bindValue={textScrollerY}
 			min="0"
 			max={textScrollerMax.value.y}
@@ -575,15 +607,20 @@
 		)}
 
 		<label class="number-picker"
-			>Value {String.fromCharCode(65 + i)}:
+			><span class="number-picker-label"
+				>Value {String.fromCharCode(65 + i)}:</span
+			>
 			<input
 				type="range"
+				class="number-picker-slider"
 				bind:value={entry.value}
 				max={R.sum(summingValues.value)}
 				step="0.01"
 			/>
 
-			<output>({numberFormat.format(entry.value)})</output>
+			<output class="number-picker-value"
+				>({numberFormat.format(entry.value)})</output
+			>
 		</label>
 	{/each}
 
@@ -610,26 +647,28 @@
 			<div
 				style="padding: 3em; margin: auto; max-width: 20em; background: white; box-shadow: 0 0.5em 1.5em -.5em #0007;"
 			>
-				<label
-					class="number-picker"
-					style="gap: 1em 0.5em; margin: 1em 0"
-					>Content Width:
-					<output>({scrollerSizeX.value})</output>
+				<label class="number-picker"
+					><span class="number-picker-label">Content Width:</span>
+					<output class="number-picker-value"
+						>({scrollerSizeX.value})</output
+					>
 					<input
 						type="range"
+						class="number-picker-slider"
 						min="0"
 						max="5000"
 						bind:value={scrollerSizeX.value}
 					/>
 				</label>
 
-				<label
-					class="number-picker"
-					style="gap: 1em 0.5em; margin: 1em 0"
-					>Content Height:
-					<output>({scrollerSizeY.value})</output>
+				<label class="number-picker"
+					><span class="number-picker-label">Content Height:</span>
+					<output class="number-picker-value"
+						>({scrollerSizeY.value})</output
+					>
 					<input
 						type="range"
+						class="number-picker-slider"
 						min="0"
 						max="5000"
 						bind:value={scrollerSizeY.value}
@@ -799,5 +838,42 @@
 
 	.checkbox-control-body {
 		grid-column: 1 / span 2;
+	}
+
+	.number-picker {
+		display: grid;
+		grid-template-columns: 1fr auto auto;
+		gap: 0.5ex 1em;
+		align-items: baseline;
+		margin: 1em 0;
+	}
+
+	.number-picker-label {
+		grid-column: 1 / span 1;
+		grid-row: 1 / span 1;
+		font-weight: bold;
+	}
+
+	.number-picker-numberfield {
+		grid-column: 3 / span 1;
+		grid-row: 1 / span 1;
+		padding: 0.5ex;
+		min-width: 10ch;
+		text-align: right;
+	}
+
+	.number-picker-value {
+		grid-column: 2 / span 1;
+		grid-row: 1 / span 1;
+	}
+
+	.number-picker-slider {
+		grid-column: 1 / span 3;
+		grid-row: 2 / span 1;
+	}
+
+	.number-picker-help {
+		grid-column: 1 / span 3;
+		grid-row: 3 / span 1;
 	}
 </style>

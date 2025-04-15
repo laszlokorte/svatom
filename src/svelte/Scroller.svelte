@@ -205,7 +205,7 @@
 		min-height: 10em;
 		resize: both;
 		overflow: scroll;
-		height: 30em;
+		height: 80vh;
 		position: relative;
 		display: grid;
 		grid-template-columns: 1fr;
