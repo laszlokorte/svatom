@@ -379,6 +379,6 @@ export function bindEvents(node, {camera, worldClientIso, errorHandler}) {
 		node.removeEventListener('pointerdown', onPointerStart, {capture: true})
 		node.removeEventListener('wheel', onWheel, { passive:false, capture: false })
 
-		window.addEventListener('error', onError)
+		window.removeEventListener('error', onError)
 	}
 }

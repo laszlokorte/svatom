@@ -55,12 +55,14 @@
 		exampleDoubleArrow,
 		exampleColors,
 	];
-	const moreExamples = fetch("https://renew.laszlokorte.de/").then((x) =>
-		x.json(),
-	);
+	const moreExamples = fetch("https://renew.laszlokorte.de/")
+		.then((x) => x.json())
+		.catch((e) => {});
 
 	function loadExample(href) {
-		return fetch(href).then((x) => x.json());
+		return fetch(href)
+			.then((x) => x.json())
+			.catch((e) => {});
 	}
 
 	const kindKey = "__kind";
@@ -1104,7 +1106,7 @@
 	{/each}
 	{#await moreExamples then { files }}
 		<select
-			oninput={(e) => {
+			onchange={(e) => {
 				if (e.currentTarget.value) {
 					loadExample(e.currentTarget.value).then((x) => {
 						renewSerialized.value = x.content;
@@ -1178,7 +1180,7 @@
 	<label><input type="checkbox" bind:checked={debug.value} /> Debug</label>
 	<div
 		class:hidden={selection.value.length == 0}
-		style=" position: fixed; top: 1em; left: 1em;z-index: 10000; max-height: 70vh; overflow: auto; color: #fff; "
+		style=" position: fixed; top: 1em; left: 1em;z-index: 10000; overflow: auto; color: #fff; "
 	>
 		<div
 			style="display: flex; flex-direction: column; background: #333d; gap: 1em; padding: 0.5em"
@@ -2057,7 +2059,7 @@
 					<use href="#{id}" use:bindBoundingBox={measuredSize} />
 				{/each} -->
 
-			<Navigator {camera} {frameBoxPath}>
+			<Navigator {camera} {frameBoxPath} errorHandler={() => {}}>
 				<g pointer-events="none" transform={rotationTransform.value}>
 					{#if extensionCurrentValue}
 						<rect

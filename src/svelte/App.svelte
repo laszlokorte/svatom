@@ -32,6 +32,13 @@
 
 	// Atoms
 	const summingValues = atom([10, 10, 10]);
+	const summingValuesSum = view(
+		L.lens(R.sum, (n, o) => {
+			const factor = n / R.sum(o);
+			return R.map(R.multiply(factor), o);
+		}),
+		summingValues,
+	);
 	const textScroller = atom({ x: 0, y: 0 });
 	const textScrollerMax = atom({ x: 0, y: 0 });
 	const textScrollerY = view(
@@ -156,6 +163,11 @@
 		extraPadding: true,
 	});
 	const scrollerPosition = view("pos", scrollerState);
+	const rawScrollPos = view("rawPos", scrollerState);
+	const browserChromeOverscroll = view(
+		["overscroll", L.define({ x: 0, y: 0 })],
+		scrollerState,
+	);
 	const scrollerDebug = view(["debug", L.defaults(true)], scrollerState);
 	const scrollerWindow = view("window", scrollerState);
 	const extraScrollPadding = view("extraPadding", scrollerState);
@@ -226,6 +238,11 @@
 		}),
 	);
 
+	const browserChromeOverscrollSum = view(
+		({ x, y }) => Math.hypot(x, y) / 100,
+		browserChromeOverscroll,
+	);
+
 	const formatedGreeting = string`${read(["greeting", L.valueOr("Hi")], currentTranslation)}${read(
 		[
 			"name",
@@ -281,7 +298,7 @@
 					: "unset"}
 			/>
 
-			<output class="number-picker-value">({size.value})</output>
+			<output class="number-picker-value ro">({size.value})</output>
 
 			<span class="number-picker-help"
 				>This slider can move outside the range</span
@@ -297,7 +314,8 @@
 				max="50"
 			/>
 
-			<output class="number-picker-value">({clampedSize.value})</output>
+			<output class="number-picker-value ro">({clampedSize.value})</output
+			>
 
 			<span class="number-picker-help"
 				>This slider is forced into the range</span
@@ -602,7 +620,7 @@
 
 	{#each [0, 1, 2, 3, 4, 5] as i}
 		{@const entry = view(
-			[summingLens(i, 30), L.valueOr(0), L.getter(numberFormat.format)],
+			[summingLens(i), L.valueOr(0), L.getter(numberFormat.format)],
 			summingValues,
 		)}
 
@@ -618,15 +636,27 @@
 				step="0.01"
 			/>
 
-			<output class="number-picker-value"
+			<output class="number-picker-value ro"
 				>({numberFormat.format(entry.value)})</output
 			>
 		</label>
 	{/each}
 
-	<div>
-		Sum: {numberFormat.format(R.sum(summingValues.value))}
-	</div>
+	<label class="number-picker"
+		><span class="number-picker-label">Sum:</span>
+		<input
+			type="range"
+			class="number-picker-slider"
+			bind:value={summingValuesSum.value}
+			min="10"
+			max="50"
+			step="0.01"
+		/>
+
+		<output class="number-picker-value ro"
+			>({numberFormat.format(summingValuesSum.value)})</output
+		>
+	</label>
 
 	<h3>Scroller</h3>
 
@@ -635,9 +665,23 @@
 		scrollPosition={scrollerPosition}
 		scrollWindowSize={scrollerWindow}
 		contentSize={scrollerSize}
+		raw={rawScrollPos}
+		{browserChromeOverscroll}
 		{extraScrollPadding}
 	>
-		<div class="stack">
+		<div
+			class="stack"
+			class:dropshadow={browserChromeOverscrollSum.value > 0}
+			style:--shadow-x="{Math.round(browserChromeOverscroll.value.x) /
+				3}px"
+			style:--shadow-y="{Math.round(browserChromeOverscroll.value.y) /
+				3}px"
+			style:--shadow-sum="{browserChromeOverscrollSum.value * 40}px"
+			style:--shadow-opacity={Math.min(
+				browserChromeOverscrollSum.value,
+				4,
+			) / 4}
+		>
 			<div
 				class="checker-pattern"
 				style:--bg-offset-x="{bgOffsetX.value}px"
@@ -649,7 +693,7 @@
 			>
 				<label class="number-picker"
 					><span class="number-picker-label">Content Width:</span>
-					<output class="number-picker-value"
+					<output class="number-picker-value ro"
 						>({scrollerSizeX.value})</output
 					>
 					<input
@@ -663,7 +707,7 @@
 
 				<label class="number-picker"
 					><span class="number-picker-label">Content Height:</span>
-					<output class="number-picker-value"
+					<output class="number-picker-value ro"
 						>({scrollerSizeY.value})</output
 					>
 					<input
@@ -787,6 +831,11 @@
 		place-items: stretch;
 	}
 
+	.dropshadow {
+		box-shadow: var(--shadow-x, 0) var(--shadow-y, 0) var(--shadow-sum, 0) 0
+			rgba(20, 10, 0, var(--shadow-opacity, 0));
+	}
+
 	.stack > * {
 		grid-column: 1/1;
 		grid-row: 1/1;
@@ -846,6 +895,8 @@
 		gap: 0.5ex 1em;
 		align-items: baseline;
 		margin: 1em 0;
+		max-width: 20em;
+		width: 100%;
 	}
 
 	.number-picker-label {
@@ -865,6 +916,10 @@
 	.number-picker-value {
 		grid-column: 2 / span 1;
 		grid-row: 1 / span 1;
+	}
+
+	.number-picker-value.ro {
+		grid-column: 2 / span 2;
 	}
 
 	.number-picker-slider {

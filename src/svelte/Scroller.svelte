@@ -23,11 +23,11 @@
 		scrollPosition = atom({ x: 0, y: 0 }),
 		contentSize = atom({ x: 0, y: 0 }),
 		scrollWindowSize = atom({ x: 0, y: 0 }),
+		raw = atom({ x: 0, y: 0 }),
+		browserChromeOverscroll = atom({ x: 0, y: 0 }),
 		extraScrollPadding = atom(false),
 		allowOverscroll = true,
 	} = $props();
-
-	const browserChromeOverscroll = atom({ x: 0, y: 0 });
 
 	const scrollPadding = read(
 		L.reread(({ auto, winSize, conSize }) =>
@@ -124,6 +124,7 @@
 						x: pos.x - pad.left - clampedX,
 						y: pos.y - pad.top - clampedY,
 					},
+					raw: pos,
 				};
 			},
 		),
@@ -132,12 +133,14 @@
 				pos: scrollPosition,
 				windowSize: scrollWindowSize,
 				conSize: paddedContentSize,
-				o: browserChromeOverscroll,
+				o: view(L.defaults({ x: 0, y: 0 }), browserChromeOverscroll),
 				pad: scrollPadding,
+				raw: raw,
 			},
 			{
 				pos: true,
 				o: true,
+				raw: true,
 			},
 		),
 	);
@@ -205,7 +208,7 @@
 		min-height: 10em;
 		resize: both;
 		overflow: scroll;
-		height: 80vh;
+		height: 40em;
 		position: relative;
 		display: grid;
 		grid-template-columns: 1fr;
