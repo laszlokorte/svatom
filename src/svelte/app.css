@@ -51,17 +51,6 @@ textarea {
 	font: inherit;
 }
 
-.number-picker {
-	display: flex;
-	align-items: center;
-	flex-wrap: wrap;
-	gap: 1em;
-}
-
-.number-picker-numberfield {
-	width: 3em;
-}
-
 fieldset {
 	margin-inline: 0;
 	border: 1px solid #aaa;
@@ -71,8 +60,9 @@ fieldset {
 }
 
 input[type=range]{
+	border-radius: 0;
     -webkit-appearance: none;
-    width: 100%;
+    appearance: none;
     font: inherit;
 
     flex-basis: 15em;
@@ -291,12 +281,14 @@ button:not(:disabled):focus-visible, .button:not(:disabled):focus-visible {
 
 .number-picker {
 	display: grid;
-	grid-template-columns: 1fr auto auto;
-	gap: 0.5ex 1em;
+	grid-template-columns: 10fr 1fr 1fr;
+	grid-auto-columns: auto;
+	gap: 0.2ex 1em;
 	align-items: baseline;
-	margin: 1em 0;
-	max-width: 40em;
+	margin: 1ex 0;
+	max-width: 40rem;
 	width: 100%;
+	justify-items: stretch;
 	justify-content: stretch;
 }
 
@@ -310,6 +302,7 @@ button:not(:disabled):focus-visible, .button:not(:disabled):focus-visible {
 	grid-column: 1 / span 1;
 	grid-row: 1 / span 1;
 	font-weight: bold;
+	display: block;
 }
 
 .number-picker-numberfield {
@@ -323,6 +316,7 @@ button:not(:disabled):focus-visible, .button:not(:disabled):focus-visible {
 .number-picker-value {
 	grid-column: 2 / span 1;
 	grid-row: 1 / span 1;
+	text-align: right;
 }
 
 .number-picker-value.ro {
@@ -333,7 +327,14 @@ button:not(:disabled):focus-visible, .button:not(:disabled):focus-visible {
 	grid-column: 1 / -1;
 	grid-row: 2 / span 1;
 	width: 100%;
+	justify-self: stretch;
+	align-self: stretch; 
 	box-sizing: border-box;
+	display: block;
+	margin: 0;
+	padding: 0;
+	-webkit-text-size-adjust:none;
+	font-size-adjust: none;
 }
 
 .number-picker-help {
@@ -363,13 +364,6 @@ button:not(:disabled):focus-visible, .button:not(:disabled):focus-visible {
 	overflow: hidden;
 	padding: 2px 0.5em 0.5em 2px;
 	min-height: 3em;
-}
-
-@media (max-width: 40em) {
-
-	.beside {
-		min-height: 30em;
-	}
 }
 
 .beside > * {

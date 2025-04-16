@@ -758,34 +758,37 @@
 				style:--fade={scrollerOutside.value}
 			></div>
 			<div
-				style="padding: 3em; margin: auto; max-width: 20em; background: white; box-shadow: 0 0.5em 1.5em -.5em #0007;"
+				style="padding: 3em; align-self: center; justify-self: center; background: white; box-shadow: 0 0.5em 1.5em -.5em #0007;"
 			>
-				<label class="number-picker"
-					><span class="number-picker-label">Content Width:</span>
-					<output class="number-picker-value ro"
-						>({scrollerSizeX.value})</output
-					>
+				<div class="number-picker">
+					<span class="number-picker-label">Content Width:</span>
+
 					<input
 						type="range"
 						class="number-picker-slider"
 						min="0"
+						step="1"
 						max="5000"
 						bind:value={scrollerSizeX.value}
 					/>
-				</label>
+					<output class="number-picker-value ro"
+						>({scrollerSizeX.value})</output
+					>
+				</div>
 
 				<label class="number-picker"
 					><span class="number-picker-label">Content Height:</span>
-					<output class="number-picker-value ro"
-						>({scrollerSizeY.value})</output
-					>
 					<input
 						type="range"
 						class="number-picker-slider"
 						min="0"
+						step="1"
 						max="5000"
 						bind:value={scrollerSizeY.value}
 					/>
+					<output class="number-picker-value ro"
+						>({scrollerSizeY.value})</output
+					>
 				</label>
 
 				<label class="checkbox-control"

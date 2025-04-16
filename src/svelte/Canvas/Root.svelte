@@ -3005,30 +3005,6 @@
 		font-family: monospace;
 	}
 
-	.form-grid {
-		display: grid;
-		grid-template-columns: max-content max-content max-content max-content;
-		grid-auto-rows: 1fr;
-		gap: 0.25em;
-	}
-
-	.form-grid > hr {
-		grid-column: 1 / -1;
-		width: 100%;
-		height: 0;
-		height: 0;
-		align-self: center;
-		border: none;
-		border-top: 1px solid #aaa;
-	}
-
-	.form-grid > .number-picker {
-		grid-column: span 4;
-		display: grid;
-		grid-template-columns: subgrid;
-		grid-template-rows: 1fr;
-	}
-
 	.tool-bar {
 		display: flex;
 		flex-wrap: wrap;
