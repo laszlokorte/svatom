@@ -51,7 +51,8 @@
 	);
 	const inputFields = atom([]);
 	const size = atom(15);
-	const allNames = atom([{ name: "Laszlo" }]);
+	const allNamesInternal = atom([{ name: "Laszlo" }]);
+	const allNames = view(L.define([]), allNamesInternal);
 	const wins = atom({ x: 100, y: 100 });
 	const theNumber = atom(2);
 	const settings = atom({ local: "de" });
@@ -280,6 +281,18 @@
 	</p>
 
 	<p>
+		All the interactive elements below are connected to each other in
+		various interesting ways that you might find cumbersome to achieve using
+		popular state management solutions like <code>useState</code>,
+		<code>RxJS</code>, <code>Flux</code> or <code>Redux</code>. For each
+		component observe the detailed behavior and think about how you would
+		replicate the exact behavior in your favourite JavaScript frontend
+		toolkit.
+	</p>
+
+	<hr />
+
+	<p>
 		Size: {clampedSize.value} (clamped to 10&lt;v&lt;30)<br />
 		CSS: {fontSize.value}<br />
 		<label class="number-picker"
@@ -330,22 +343,30 @@
 	</h4>
 
 	<div class="simple-form">
-		<label
-			><span>Your Name:</span>
-			<input type="text" bind:value={yourName.value} /></label
+		<label class="simple-form-field"
+			><span class="simple-form-field-label">Your Name:</span>
+			<input
+				class="simple-form-field-input"
+				type="text"
+				bind:value={yourName.value}
+			/></label
 		>
-		<label
-			><span>Your language:</span>
-			<select bind:value={lang.value}>
+		<label class="simple-form-field"
+			><span class="simple-form-field-label">Your language:</span>
+			<select class="simple-form-field-input" bind:value={lang.value}>
 				{#each allLangs.all as l}
 					<option value={l}>{l}</option>
 				{/each}
 			</select></label
 		>
 
-		<label
-			><span>Preferred Greeting:</span>
-			<input type="text" bind:value={currentGreeting.value} /></label
+		<label class="simple-form-field"
+			><span class="simple-form-field-label">Preferred Greeting:</span>
+			<input
+				class="simple-form-field-input"
+				type="text"
+				bind:value={currentGreeting.value}
+			/></label
 		>
 	</div>
 	<p>
@@ -384,23 +405,44 @@
 		<button type="button" onclick={() => (newName.value = "New")}>
 			Add Person
 		</button>
+		<button
+			style:--button-color="#a00"
+			type="button"
+			onclick={() => (allNames.value = [])}
+		>
+			Remove all
+		</button>
 	</div>
 
-	<ul>
+	<ul
+		style="display: grid; grid-template-columns: auto repeat(2, auto 1fr); align-items: baseline;"
+	>
 		{#each indices.value as i (i)}
 			{@const thisEntry = view(i, allNames)}
 			{@const thisInputName = view([i, "name"], inputFields)}
+			{@const prevInputName = view(
+				[(i - 1 + indices.value.length) % indices.value.length, "name"],
+				inputFields,
+			)}
 			{@const nextInputName = view([i + 1, "name"], inputFields)}
 			{@const thisInputGreet = view([i, "greet"], inputFields)}
+			{@const prevInputGreet = view(
+				[
+					(i - 1 + indices.value.length) % indices.value.length,
+					"greet",
+				],
+				inputFields,
+			)}
 			{@const nextInputGreet = view([i + 1, "greet"], inputFields)}
 			{@const thisName = view(indexedName(i), allNames)}
 			{@const thisGreeting = view(
 				[i, "greeting", L.defaults("Hello")],
 				allNames,
 			)}
-			<li>
+			<li style="display: contents;">
 				<button
 					class:phantom={!thisEntry.value}
+					class="simple-form-button"
 					type="button"
 					onclick={() => (thisName.value = "")}
 					aria-label="Delete"
@@ -415,14 +457,28 @@
 						/>
 					</svg></button
 				>
-				<label
-					>Name: <input
+				<label class="simple-form-field"
+					><span class="simple-form-field-label">Name:</span>
+					<input
 						bind:this={thisInputName.value}
 						type="text"
+						class="simple-form-field-input"
 						bind:value={thisName.value}
 						onkeydown={(evt) => {
-							if (evt.key === "Enter" && nextInputName.value) {
+							if (
+								evt.key === "Enter" &&
+								!evt.shiftKey &&
+								nextInputName.value
+							) {
 								nextInputName.value.focus();
+							}
+
+							if (
+								evt.key === "Enter" &&
+								evt.shiftKey &&
+								prevInputName.value
+							) {
+								prevInputName.value.focus();
 							}
 						}}
 					/></label
@@ -432,13 +488,26 @@
 						greeting={thisGreeting}
 						bind:this={thisInputGreet.value}
 						onkeydown={(evt) => {
-							if (evt.key === "Enter" && nextInputGreet.value) {
+							if (
+								evt.key === "Enter" &&
+								!evt.shiftKey &&
+								nextInputGreet.value
+							) {
 								nextInputGreet.value.focus();
+							}
+							if (
+								evt.key === "Enter" &&
+								evt.shiftKey &&
+								prevInputGreet.value
+							) {
+								prevInputGreet.value.focus();
 							}
 						}}
 					/>
 				{:else}
-					<span>Press enter to jump to the next field.</span>
+					<span class="simple-form-help"
+						>Press enter to jump to the next field.</span
+					>
 				{/if}
 			</li>
 		{/each}
@@ -887,48 +956,5 @@
 
 	.checkbox-control-body {
 		grid-column: 1 / span 2;
-	}
-
-	.number-picker {
-		display: grid;
-		grid-template-columns: 1fr auto auto;
-		gap: 0.5ex 1em;
-		align-items: baseline;
-		margin: 1em 0;
-		max-width: 20em;
-		width: 100%;
-	}
-
-	.number-picker-label {
-		grid-column: 1 / span 1;
-		grid-row: 1 / span 1;
-		font-weight: bold;
-	}
-
-	.number-picker-numberfield {
-		grid-column: 3 / span 1;
-		grid-row: 1 / span 1;
-		padding: 0.5ex;
-		min-width: 10ch;
-		text-align: right;
-	}
-
-	.number-picker-value {
-		grid-column: 2 / span 1;
-		grid-row: 1 / span 1;
-	}
-
-	.number-picker-value.ro {
-		grid-column: 2 / span 2;
-	}
-
-	.number-picker-slider {
-		grid-column: 1 / span 3;
-		grid-row: 2 / span 1;
-	}
-
-	.number-picker-help {
-		grid-column: 1 / span 3;
-		grid-row: 3 / span 1;
 	}
 </style>

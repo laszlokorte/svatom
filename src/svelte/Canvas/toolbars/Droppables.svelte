@@ -2,6 +2,7 @@
 	import * as L from "partial.lenses";
 	import * as R from "ramda";
 	import { string, view, read } from "../../svatom.svelte";
+	import { polyfillDragDrop } from "../lib/drag-drop-poly.svelte.js";
 
 	const { properties } = $props();
 
@@ -185,7 +186,13 @@
 <fieldset>
 	<legend>Droppables</legend>
 
-	<div class="template-bar">
+	<div
+		class="template-bar"
+		use:polyfillDragDrop={{
+			dropArea: document,
+			options: { dragThresholdPixels: 0 },
+		}}
+	>
 		{#each droppables as d}
 			{@const content = d.dynamicContent
 				? d.dynamicContent(properties.value)

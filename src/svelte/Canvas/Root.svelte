@@ -67,6 +67,7 @@
 
 	import RubberBand from "./tools/RubberBand.svelte";
 	import NodesDef from "./tools/NodesDef.svelte";
+	import Blocker from "./tools/Blocker.svelte";
 	//import NodesUse from "./tools/NodesUse.svelte";
 	import EdgesDef from "./tools/EdgesDef.svelte";
 	import DrawingsDef from "./tools/DrawingsDef.svelte";
@@ -1646,7 +1647,6 @@
 		[
 			L.choices(["rot", "pivot"], ["zoom", "pivotWorld"]),
 			R.compose(R.not, R.isNil),
-			L.log("lock"),
 		],
 		combine({
 			rot: rotationState,
@@ -1657,8 +1657,10 @@
 	const tools = {
 		none: {
 			name: "None",
-			component: () => {},
-			parameters: {},
+			component: Blocker,
+			parameters: {
+				frameBoxPath,
+			},
 		},
 		select: {
 			name: "Select",
@@ -2105,77 +2107,95 @@
 		<fieldset>
 			<legend>Frame</legend>
 
-			<div>
-				<label
+			<div class="checkbox-list">
+				<label class="checkbox-list-item"
 					><input
+						class="checkbox-list-control"
 						type="checkbox"
 						bind:checked={autosize.value}
-					/>Autofit</label
+					/><span class="checkbox-list-item-label">Autofit</span
+					></label
 				>
 
-				<label
+				<label class="checkbox-list-item"
 					><input
+						class="checkbox-list-control"
 						type="checkbox"
 						value={true}
 						bind:checked={debugFrames.value}
-					/> Show Debug Frames</label
+					/>
+					<span class="checkbox-list-item-label"
+						>Show Debug Frames</span
+					></label
 				>
 
-				<label
+				<label class="checkbox-list-item"
 					><input
+						class="checkbox-list-control"
 						type="checkbox"
 						value={true}
 						bind:checked={showBounds.value}
-					/> Show Paper Bounds</label
+					/>
+					<span class="checkbox-list-item-label"
+						>Show Paper Bounds</span
+					></label
 				>
 			</div>
 
 			<div>
 				<label class="number-picker"
-					>Camera Width:<input
+					><span class="number-picker-label">Camera Width:</span
+					><input
 						type="range"
 						min="100"
 						max="1500"
+						class="number-picker-slider"
 						bind:value={planeWidth.value}
 						disabled={autosize.value}
 					/></label
-				><br />
+				>
 				<label class="number-picker"
-					>Camera Height:<input
+					><span class="number-picker-label">Camera Height:</span
+					><input
 						type="range"
 						min="100"
 						max="1500"
+						class="number-picker-slider"
 						bind:value={planeHeight.value}
 						disabled={autosize.value}
 					/></label
 				>
 			</div>
 
-			<div>
-				Aspect:
-				<label
+			<div class="checkbox-list">
+				<span class="checkbox-list-label">Aspect:</span>
+				<label class="checkbox-list-item"
 					><input
 						type="radio"
 						value="meet"
+						class="checkbox-list-control"
 						bind:group={aspect.value}
 						disabled={autosize.value}
-					/> meet</label
+					/> <span class="checkbox-list-item-label">meet</span></label
 				>
-				<label
+				<label class="checkbox-list-item"
 					><input
 						type="radio"
 						value="slice"
+						class="checkbox-list-control"
 						bind:group={aspect.value}
 						disabled={autosize.value}
-					/> slice</label
+					/>
+					<span class="checkbox-list-item-label">slice</span></label
 				>
-				<label
+				<label class="checkbox-list-item"
 					><input
 						type="radio"
 						value="none"
+						class="checkbox-list-control"
 						bind:group={aspect.value}
 						disabled={autosize.value}
-					/> none</label
+					/> <span class="checkbox-list-item-label">none</span></label
 				>
 			</div>
 			<!-- <div>
@@ -2244,10 +2264,11 @@
 		<fieldset>
 			<legend>Focus</legend>
 
-			<div class="form-grid">
+			<div>
 				<label class="number-picker"
-					><span>X:</span>
+					><span class="number-picker-label">X:</span>
 					<input
+						class="number-picker-slider"
 						type="range"
 						bind:value={cameraXFormatted.value}
 						min={cameraBounds.value.minX}
@@ -2256,15 +2277,19 @@
 					/>
 					<button
 						type="button"
+						class="number-picker-button"
 						onclick={(_) => {
 							cameraXFormatted.value = 0;
 						}}>reset</button
 					>
-					<output>{cameraXFormatted.value}</output>
+					<output class="number-picker-value"
+						>{cameraXFormatted.value}</output
+					>
 				</label>
 				<label class="number-picker"
-					><span>Y:</span>
+					><span class="number-picker-label">Y:</span>
 					<input
+						class="number-picker-slider"
 						type="range"
 						bind:value={cameraYFormatted.value}
 						min={cameraBounds.value.minY}
@@ -2273,15 +2298,19 @@
 					/>
 					<button
 						type="button"
+						class="number-picker-button"
 						onclick={(_) => {
 							cameraYFormatted.value = 0;
 						}}>reset</button
 					>
-					<output>{cameraYFormatted.value}</output>
+					<output class="number-picker-value"
+						>{cameraYFormatted.value}</output
+					>
 				</label>
 				<label class="number-picker"
-					><span>Zoom:</span>
+					><span class="number-picker-label">Zoom:</span>
 					<input
+						class="number-picker-slider"
 						type="range"
 						bind:value={cameraZoomFormatted.value}
 						min="-5"
@@ -2290,15 +2319,19 @@
 					/>
 					<button
 						type="button"
+						class="number-picker-button"
 						onclick={(_) => {
 							cameraZoomFormatted.value = 0;
 						}}>reset</button
 					>
-					<output>{cameraZoomFormatted.value}</output>
+					<output class="number-picker-value"
+						>{cameraZoomFormatted.value}</output
+					>
 				</label>
 				<label class="number-picker"
-					><span>Rotation:</span>
+					><span class="number-picker-label">Rotation:</span>
 					<input
+						class="number-picker-slider"
 						type="range"
 						bind:value={cameraAngleFormatted.value}
 						min="-180"
@@ -2307,17 +2340,21 @@
 					/>
 					<button
 						type="button"
+						class="number-picker-button"
 						onclick={(_) => {
 							cameraAngleFormatted.value = 0;
 						}}>reset</button
 					>
-					<output>{cameraAngleFormatted.value}</output>
+					<output class="number-picker-value"
+						>{cameraAngleFormatted.value}</output
+					>
 				</label>
 
-				<hr />
+				<hr class="form-ruler" />
 				<label class="number-picker"
-					><span>Scroll X:</span>
+					><span class="number-picker-label">Scroll X:</span>
 					<input
+						class="number-picker-slider"
 						type="range"
 						bind:value={cameraXScreenFormatted.value}
 						min={cameraBounds.value.minX - cameraBounds.value.maxX}
@@ -2326,15 +2363,19 @@
 					/>
 					<button
 						type="button"
+						class="number-picker-button"
 						onclick={(_) => {
 							cameraXScreenFormatted.value = 0;
 						}}>reset</button
 					>
-					<output>{cameraXScreenFormatted.value}</output>
+					<output class="number-picker-value"
+						>{cameraXScreenFormatted.value}</output
+					>
 				</label>
 				<label class="number-picker"
-					><span>Scroll Y:</span>
+					><span class="number-picker-label">Scroll Y:</span>
 					<input
+						class="number-picker-slider"
 						type="range"
 						bind:value={cameraYScreenFormatted.value}
 						min={cameraBounds.value.minY - cameraBounds.value.maxY}
@@ -2343,15 +2384,18 @@
 					/>
 					<button
 						type="button"
+						class="number-picker-button"
 						onclick={(_) => {
 							cameraYScreenFormatted.value = 0;
 						}}>reset</button
 					>
-					<output>{cameraYScreenFormatted.value}</output>
+					<output class="number-picker-value"
+						>{cameraYScreenFormatted.value}</output
+					>
 				</label>
 			</div>
 
-			<hr />
+			<hr class="form-ruler" />
 			<div class="button-bar">
 				<button
 					type="button"
@@ -2412,13 +2456,14 @@
 					}}>re-Fit to Content</button
 				>
 			</div>
-			<hr />
+			<hr class="form-ruler" />
 
 			<div>
 				<label class="number-picker"
-					><span>Grid Size:</span>
+					><span class="number-picker-label">Grid Size:</span>
 					<input
 						type="range"
+						class="number-picker-slider"
 						bind:value={gridDistance.value}
 						min={0}
 						max={512}
@@ -2426,11 +2471,14 @@
 					/>
 					<button
 						type="button"
+						class="number-picker-button"
 						onclick={(_) => {
 							gridDistance.value = 32;
 						}}>reset</button
 					>
-					<output>{gridDistance.value}</output>
+					<output class="number-picker-value"
+						>{gridDistance.value}</output
+					>
 				</label>
 			</div>
 		</fieldset>
@@ -2995,7 +3043,7 @@
 	.button-bar {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 2px;
+		gap: 0.5ex 1ex;
 	}
 
 	.tool-bar-sep {

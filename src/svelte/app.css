@@ -2,6 +2,13 @@ body {
   touch-action: pan-y pan-x;
 }
 
+a,
+a:visited,
+a:focus-visible,
+a:active,
+a:hover {
+	color: #aa1010;
+}
 
 section {
 	margin: 3em auto;
@@ -200,11 +207,12 @@ input[type="text"] {
 .controls {
 	display: flex;
 	margin: 1em 0;
+	gap: 1ex;
 }
 
 .button, button {
 	border: none;
-	background: #222;
+	background: var(--button-color, #222);
 	color: #fff;
 	padding: 0.3em 0.5em;
 	display: inline-block;
@@ -218,7 +226,7 @@ button:disabled {
 }
 
 button:not(:disabled):hover, .button:not(:disabled):hover {
-	background: #333;
+	background: var(--button-color, #333);
 	color: #fff;
 }
 
@@ -231,17 +239,106 @@ button:not(:disabled):focus-visible, .button:not(:disabled):focus-visible {
 	outline: 3px solid #00ccdd;
 }
 
-.simple-form {
-	display: grid;
-	grid-template-columns: auto auto;
-	gap: 0.5em;
-	justify-content: start;
+.checkbox-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.2ex;
+	align-items: center;
 }
 
-.simple-form > label {
+.checkbox-list-label {
+	margin-right: 1ex;
+}
+
+.checkbox-list-item {
+	display: flex;
+	gap: 1ex;
+	padding: 1ex;
+	background: #f0f0f0;
+	align-items: center;
+}
+
+.checkbox-list-control  {
+	margin: 0;
+}
+
+.form-ruler {
+	border: none;
+	height: 2px;
+	background: #eee;
+}
+
+.simple-form {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 1ex 2em;
+	justify-content: start;
+	max-width: 40em;
+}
+
+.simple-form-field {
 	display: grid;
 	grid-template-columns: subgrid;
-	grid-column: 1 / span 2;
+	grid-column: span 2;
+	align-items: baseline;
+}
+
+.simple-form-field-input {
+	padding: 1ex;
+	box-sizing: border-box;
+	min-width: 4em;
+}
+
+.number-picker {
+	display: grid;
+	grid-template-columns: 1fr auto auto;
+	gap: 0.5ex 1em;
+	align-items: baseline;
+	margin: 1em 0;
+	max-width: 40em;
+	width: 100%;
+	justify-content: stretch;
+}
+
+.simple-form-help {
+	grid-column: span 2;
+	color: #555;
+	text-align: right;
+}
+
+.number-picker-label {
+	grid-column: 1 / span 1;
+	grid-row: 1 / span 1;
+	font-weight: bold;
+}
+
+.number-picker-numberfield {
+	grid-column: 3 / span 1;
+	grid-row: 1 / span 1;
+	padding: 0.5ex;
+	min-width: 10ch;
+	text-align: right;
+}
+
+.number-picker-value {
+	grid-column: 2 / span 1;
+	grid-row: 1 / span 1;
+}
+
+.number-picker-value.ro {
+	grid-column: 2 / span 2;
+}
+
+.number-picker-slider {
+	grid-column: 1 / -1;
+	grid-row: 2 / span 1;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.number-picker-help {
+	grid-column: 1 / -1;
+	grid-row: 3 / span 1;
 }
 
 .error-message {

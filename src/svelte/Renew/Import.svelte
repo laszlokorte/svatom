@@ -1245,7 +1245,6 @@
 																	? null
 																	: e,
 															),
-															L.log("json"),
 															L.inverse(L.json()),
 															L.defaults(""),
 														]
