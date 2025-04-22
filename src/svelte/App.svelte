@@ -20,6 +20,7 @@
 	import SplashScreen from "./SplashScreen.svelte";
 	import Canvas from "./Canvas/Root.svelte";
 	import Split from "./SplitView/Split.svelte";
+	import ThreeDee from "./ThreeDee.svelte";
 	import RenewImport from "./Renew/Import.svelte";
 	import asciiLogo from "./asciiLogo.txt?raw";
 	import { clamp, lerp } from "./utils.js";
@@ -884,6 +885,10 @@
 				</Split>{/snippet}
 		</Split>
 	</div>
+
+	<h2>Three Dimensional</h2>
+
+	<ThreeDee />
 </section>
 
 <style>
