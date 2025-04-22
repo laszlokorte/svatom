@@ -12,6 +12,7 @@
 		bindValue,
 		autofocusIf,
 	} from "./svatom.svelte.js";
+	import ThreeDeeModel from "./ThreeDeeModel.svelte";
 
 	const numf = new Intl.NumberFormat("en-US", {
 		maximumFractionDigits: 2,
@@ -29,13 +30,24 @@
 		},
 	);
 
-	const project = (np, fp, scale) =>
+	const viewTransform = (np, fp, w, h) =>
 		L.reread(({ x, y, z }) => {
-			const f = (z - np) / (fp - np);
+			const s = (z - np) / (fp - np);
 			return {
-				x: (scale * x) / f,
-				y: -(scale * y) / f,
-				s: f,
+				x: x / w,
+				y: -y / h,
+				z: s,
+				s,
+			};
+		});
+
+	const project = (scale) =>
+		L.reread(({ x, y, z, s }) => {
+			return {
+				x: (x * scale) / 2 / s,
+				y: (y * scale) / 2 / s,
+				z: z / 2 / s,
+				s,
 			};
 		});
 
@@ -177,57 +189,16 @@
 	});
 	const projectAll = L.reread(({ camera, ps }) => {
 		return ps.map((p) =>
-			L.get(project(camera.np, camera.fp, camera.scale), p),
+			L.get(
+				[
+					viewTransform(camera.np, camera.fp, camera.w, camera.h),
+					project(camera.scale),
+				],
+				p,
+			),
 		);
 	});
 
-	const geo = atom({
-		vertices: [
-			{ x: 10, y: 10, z: 10 },
-			{ x: 10, y: -10, z: 10 },
-			{ x: -10, y: -10, z: 10 },
-			{ x: -10, y: 10, z: 10 },
-			{ x: 10, y: 10, z: -10 },
-			{ x: 10, y: -10, z: -10 },
-			{ x: -10, y: -10, z: -10 },
-			{ x: -10, y: 10, z: -10 },
-			{ x: 0, y: 20, z: 0 },
-			{ x: 0, y: 0, z: 0 },
-		],
-		edges: [
-			{ from: 0, to: 1 },
-			{ from: 1, to: 2 },
-			{ from: 2, to: 3 },
-			{ from: 3, to: 0 },
-			{ from: 4, to: 5 },
-			{ from: 5, to: 6 },
-			{ from: 6, to: 7 },
-			{ from: 7, to: 4 },
-			{ from: 0, to: 4 },
-			{ from: 1, to: 5 },
-			{ from: 2, to: 6 },
-			{ from: 3, to: 7 },
-			{ from: 0, to: 8 },
-			{ from: 3, to: 8 },
-			{ from: 4, to: 8 },
-			{ from: 7, to: 8 },
-		],
-		faces: [
-			{ a: 0, b: 1, c: 2 },
-			{ a: 2, b: 3, c: 0 },
-			{ a: 4, b: 5, c: 1 },
-			{ a: 1, b: 0, c: 4 },
-			{ a: 7, b: 6, c: 5 },
-			{ a: 5, b: 4, c: 7 },
-			{ a: 6, b: 7, c: 3 },
-			{ a: 3, b: 2, c: 6 },
-			{ a: 1, b: 6, c: 2 },
-			{ a: 1, b: 5, c: 6 },
-		],
-	});
-	const points3d = view("vertices", geo);
-	const edges = view("edges", geo);
-	const faces = view("faces", geo);
 	const trans = atom({
 		rx: 0,
 		ry: 0,
@@ -240,19 +211,13 @@
 		sz: 1,
 	});
 	const camera = atom({
+		w: 50,
+		h: 50,
 		np: 10,
 		fp: 100,
-		scale: 5,
+		scale: 1000,
 	});
-
-	const transformedPoints = view(
-		transformAll,
-		combine({ ps: points3d, mat: trans }),
-	);
-	const projectedPoints = view(
-		projectAll,
-		combine({ ps: transformedPoints, camera }),
-	);
+	const selected = atom();
 
 	const radToDeg = [L.multiply(180), L.divide(Math.PI)];
 	const rx = view(["rx", radToDeg], trans);
@@ -283,9 +248,6 @@
 		camera,
 	);
 	const scale = view(["scale"], camera);
-	const pointIndices = view(indices, points3d);
-	const edgeIndices = view(indices, edges);
-	const faceIndices = view(indices, faces);
 </script>
 
 <svg
@@ -303,71 +265,35 @@
 		stroke-dasharray="10 10"
 		opacity="0.2"
 	/>
-	{#each edgeIndices.value as i (i)}
-		{@const e = view(i, edges)}
-		{@const pp1 = view([e.value.from], projectedPoints)}
-		{@const pp2 = view([e.value.to], projectedPoints)}
-		{@const line = view(
-			svgLine({ color: "red", width: 3 }),
-			combine({ from: pp1, to: pp2 }),
+	<ThreeDeeModel {trans} {camera} {selected} debug={true} />
+
+	<ThreeDeeModel
+		trans={view(
+			L.iso(
+				(c) => ({
+					...c,
+					tx: c.tx + 30,
+					ty: c.ty + 8,
+					sx: 0.4,
+					sy: 0.4,
+					sz: 0.4,
+					rz: 0,
+				}),
+				(c, o) => ({
+					...c,
+					tx: c.tx - 20,
+					ty: c.ty - 8,
+					sx: o.sx,
+					sy: o.sy,
+					sz: o.sz,
+					rz: o.rz,
+				}),
+			),
+			trans,
 		)}
-
-		<line {...line.value}></line>
-	{/each}
-
-	{#each faceIndices.value as i (i)}
-		{@const e = view(i, faces)}
-		{@const ppA = view([e.value.a], projectedPoints)}
-		{@const ppB = view([e.value.b], projectedPoints)}
-		{@const ppC = view([e.value.c], projectedPoints)}
-
-		{@const triangle = view(
-			svgTriangle({ color: "#aa1010", opacity: 0.1 }),
-			combine({ a: ppA, b: ppB, c: ppC }),
-		)}
-		{@const triangleTip1 = view(
-			svgTriangleTip({ color: "#aa1010", opacity: 1, r: 2 }),
-			combine({ a: ppA, b: ppB, c: ppC }),
-		)}
-		{@const triangleTip2 = view(
-			svgTriangleTip({ color: "#aa1010", opacity: 1, r: 2 }),
-			combine({ b: ppA, c: ppB, a: ppC }),
-		)}
-		{@const triangleTip3 = view(
-			svgTriangleTip({ color: "#aa1010", opacity: 1, r: 2 }),
-			combine({ c: ppA, a: ppB, b: ppC }),
-		)}
-
-		<polygon {...triangle.value}></polygon>
-		<circle {...triangleTip1.value}></circle>
-		<circle {...triangleTip2.value}></circle>
-		<circle {...triangleTip3.value}></circle>
-	{/each}
-
-	{#each pointIndices.value as i (i)}
-		{@const ptr = view([i, "s"], projectedPoints)}
-		{@const pt = view([i], projectedPoints)}
-		{@const pp = view([svgCircle(1)], pt)}
-		{@const text = view([svgText], pt)}
-
-		{#if ptr.value > 0}
-			<circle {...pp.value} opacity="0.5"></circle>
-			<text
-				{...text.value}
-				transform="translate(0,{-(30 + pp.value.r)})"
-				font-size="20"
-				text-anchor="middle"
-				dominant-baseline="central">{i}</text
-			><text
-				{...text.value}
-				transform="translate(0,{30 + pp.value.r})"
-				fill="red"
-				font-size="20"
-				text-anchor="middle"
-				dominant-baseline="central">{numf.format(ptr.value)}</text
-			>
-		{/if}
-	{/each}
+		{camera}
+		{selected}
+	/>
 </svg>
 
 <fieldset>
@@ -445,14 +371,19 @@
 	>
 	<label
 		>scale: <output>{numf.format(scale.value)}</output>
-		<input type="range" bind:value={scale.value} min="0" max="40" /></label
+		<input
+			type="range"
+			bind:value={scale.value}
+			min="0"
+			max="2000"
+		/></label
 	>
 </fieldset>
 
 <style>
 	.viewport {
 		width: 100%;
-		height: 80vh;
+		height: 50vh;
 	}
 
 	polygon[clockwise="true"] {
