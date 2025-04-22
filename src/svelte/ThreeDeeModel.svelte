@@ -20,6 +20,7 @@
 	});
 
 	const {
+		id,
 		debug = false,
 		camera = atom({
 			w: 50,
@@ -75,6 +76,14 @@
 				{ a: 4, b: 0, c: 8 },
 				{ a: 7, b: 4, c: 8 },
 				{ a: 3, b: 7, c: 8 },
+			],
+			quads: [
+				{ a: 0, b: 1, c: 2, d: 3 },
+				{ a: 2, b: 6, c: 7, d: 3 },
+				{ a: 6, b: 5, c: 4, d: 7 },
+				{ a: 5, b: 1, c: 0, d: 4 },
+				{ a: 1, b: 5, c: 6, d: 2 },
+				{ a: 4, b: 0, c: 3, d: 7 },
 			],
 		}),
 		trans = atom({
@@ -200,6 +209,34 @@
 			},
 		);
 
+	const svgQuad = () =>
+		L.reread(
+			({
+				a: { x: x1, y: y1, s: s1 },
+				b: { x: x2, y: y2, s: s2 },
+				c: { x: x3, y: y3, s: s3 },
+				d: { x: x4, y: y4, s: s4 },
+			}) => {
+				if (s1 < 0 || s2 < 0 || s3 < 0 || s4 < 0) {
+					return {
+						points: ``,
+						fill: "none",
+						stroke: "none",
+						"stroke-width": "0",
+						opacity: "0",
+						behind: true,
+					};
+				}
+				return {
+					points: `${x1} ${y1} ${x2} ${y2} ${x3} ${y3} ${x4} ${y4}`,
+					clockwise:
+						clockwise(x1, y1, x2, y2, x3, y3) &&
+						clockwise(x1, y1, x3, y3, x4, y4),
+					behind: false,
+				};
+			},
+		);
+
 	const svgTriangleTip = ({ r = 10, width, color, opacity }) =>
 		L.reread(
 			({
@@ -309,6 +346,7 @@
 	const points3d = view("vertices", geo);
 	const edges = view("edges", geo);
 	const faces = view("faces", geo);
+	const quads = view("quads", geo);
 
 	const transformedPoints = view(
 		transformAll,
@@ -351,6 +389,7 @@
 	const pointIndices = view(indices, points3d);
 	const edgeIndices = view(indices, edges);
 	const faceIndices = view(indices, faces);
+	const quadIndices = view(indices, quads);
 
 	function getIndices(idx) {
 		return idx ? L.reread((arr) => idx.map((i) => arr[i])) : L.zero;
@@ -362,6 +401,15 @@
 						Object.fromEntries(
 							Object.entries(idx).map(([i, v]) => [i, obj[v]]),
 						),
+					)
+				: undefined,
+		);
+	}
+	function getEntry(idx) {
+		return L.reread((obj) =>
+			idx
+				? Object.fromEntries(
+						Object.entries(idx).map(([i, v]) => [i, obj[v]]),
 					)
 				: undefined,
 		);
@@ -453,6 +501,22 @@
 	{/each}
 {/if}
 
+{#if id}
+	<defs>
+		{#each quadIndices.value as i (i)}
+			{@const e = view(i, quads)}
+			{@const corners = view([getEntry(e.value)], projectedPoints)}
+
+			{@const quad = view(svgQuad({}), corners)}
+
+			<clipPath id={id + "-quad-" + i}>
+				<polygon cursor="pointer" class="clip" {...quad.value}
+				></polygon>
+			</clipPath>
+		{/each}
+	</defs>
+{/if}
+
 <style>
 	.viewport {
 		width: 100%;
@@ -470,17 +534,26 @@
 		pointer-events: none;
 	}
 
+	polygon.clip[clockwise="false"] {
+		display: none;
+	}
+
 	polygon.selected {
 		stroke: magenta;
 		stroke-linejoin: round;
 		stroke-linecap: round;
-		stroke-width: 3;
+		stroke-width: 4;
 		stroke-opacity: 1;
 		vector-effect: non-scaling-stroke;
+		fill: magenta;
+		fill-opacity: 0.2;
 	}
 
 	polygon[clockwise="false"].selected {
 		stroke: cyan;
+		stroke-width: 2;
+		fill: cyan;
+		fill-opacity: 0.2;
 	}
 
 	circle[clockwise="false"] {

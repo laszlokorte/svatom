@@ -218,6 +218,7 @@
 		scale: 1000,
 	});
 	const selected = atom();
+	const debug = atom(false);
 
 	const radToDeg = [L.multiply(180), L.divide(Math.PI)];
 	const rx = view(["rx", radToDeg], trans);
@@ -265,7 +266,41 @@
 		stroke-dasharray="10 10"
 		opacity="0.2"
 	/>
-	<ThreeDeeModel {trans} {camera} {selected} debug={true} />
+	<ThreeDeeModel
+		id="model-a"
+		{trans}
+		{camera}
+		{selected}
+		debug={debug.value}
+	/>
+
+	<g clip-path="url(#model-a-quad-0)">
+		<ThreeDeeModel
+			id="model-b"
+			trans={view(
+				L.iso(
+					(c) => ({
+						...c,
+						sx: 0.4,
+						sy: 0.4,
+						sz: 0.4,
+						rz: -0.3 * c.rz + c.ry * 0.1,
+						rx: -0.3 * c.rx + c.ry * 0.1,
+					}),
+					(c, o) => ({
+						...c,
+						sx: o.sx,
+						sy: o.sy,
+						sz: o.sz,
+						ry: -c.ry,
+					}),
+				),
+				trans,
+			)}
+			{camera}
+			{selected}
+		/>
+	</g>
 
 	<ThreeDeeModel
 		trans={view(
@@ -294,10 +329,86 @@
 		{camera}
 		{selected}
 	/>
+
+	<g clip-path="url(#model-a-quad-0)">
+		<circle
+			stroke="white"
+			stroke-width="10"
+			stroke-linejoin="round"
+			cx="0"
+			cy="0"
+			r="60"
+			fill="red"
+			clip-path="url(#model-b-quad-0)"
+		/>
+	</g>
+
+	<polygon
+		stroke="white"
+		stroke-width="10"
+		stroke-linejoin="round"
+		points="-80 -90 80 -90 0 100"
+		fill="blue"
+		clip-path="url(#model-a-quad-1)"
+	/>
+
+	<rect
+		stroke="white"
+		stroke-width="10"
+		stroke-linejoin="round"
+		x="-50"
+		y="-70"
+		width="200"
+		height="200"
+		fill="yellow"
+		clip-path="url(#model-a-quad-2)"
+	/>
+
+	<polygon
+		stroke="white"
+		stroke-width="10"
+		stroke-linejoin="round"
+		points="-80 90 80 90 0 -100"
+		fill="purple"
+		clip-path="url(#model-a-quad-3)"
+	/>
+
+	<rect
+		stroke="white"
+		stroke-width="10"
+		stroke-linejoin="round"
+		x="-50"
+		y="-50"
+		width="200"
+		height="200"
+		rx="40"
+		ry="40"
+		fill="orange"
+		clip-path="url(#model-a-quad-4)"
+	/>
+
+	<rect
+		stroke="white"
+		stroke-width="10"
+		stroke-linejoin="round"
+		x="-75"
+		y="-75"
+		width="150"
+		height="150"
+		rx="40"
+		ry="40"
+		fill="darkred"
+		clip-path="url(#model-a-quad-5)"
+	/>
 </svg>
 
 <fieldset>
 	<legend>Controls</legend>
+
+	<div>
+		<label><input type="checkbox" bind:checked={debug.value} /> Debug</label
+		>
+	</div>
 
 	<label
 		>rx: <output>{numf.format(rx.value)}</output>
@@ -381,6 +492,11 @@
 </fieldset>
 
 <style>
+	svg {
+		user-select: none;
+		font-family: inherit;
+	}
+
 	.viewport {
 		width: 100%;
 		height: 50vh;
