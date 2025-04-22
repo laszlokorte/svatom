@@ -13,6 +13,11 @@
 		autofocusIf,
 	} from "./svatom.svelte.js";
 
+	const numf = new Intl.NumberFormat("en-US", {
+		maximumFractionDigits: 2,
+		minimumFractionDigits: 2,
+	});
+
 	const indices = L.lens(
 		(a) => {
 			return Array(a.length)
@@ -26,17 +31,18 @@
 
 	const project = (np, fp, scale) =>
 		L.reread(({ x, y, z }) => {
-			const f = (np - z) / (np - fp);
+			const f = (z - np) / (fp - np);
 			return {
 				x: (scale * x) / f,
 				y: -(scale * y) / f,
-				s: 1 / f,
+				s: f,
 			};
 		});
 
-	const svgCircle = L.reread(({ x, y, s }) => {
-		return { cx: x, cy: y, r: 3 + 10 * s };
-	});
+	const svgCircle = (r) =>
+		L.reread(({ x, y, s }) => {
+			return { cx: x, cy: y, r: r + r / s };
+		});
 
 	const svgText = L.reread(({ x, y, s }) => {
 		return { x: x, y: y };
@@ -48,6 +54,20 @@
 				from: { x: x1, y: y1, s: s1 },
 				to: { x: x2, y: y2, s: s2 },
 			}) => {
+				if (s1 < 0 || s2 < 0) {
+					return {
+						x1: 0,
+						y1: 0,
+						x2: 0,
+						y2: 0,
+						fill: "none",
+						stroke: "none",
+						"stroke-width": "0",
+						opacity: "0",
+						behind: true,
+					};
+				}
+
 				return {
 					x1,
 					y1,
@@ -70,20 +90,67 @@
 				b: { x: x2, y: y2, s: s2 },
 				c: { x: x3, y: y3, s: s3 },
 			}) => {
+				if (s1 < 0 || s2 < 0 || s3 < 0) {
+					return {
+						points: ``,
+						fill: "none",
+						stroke: "none",
+						"stroke-width": "0",
+						opacity: "0",
+						behind: true,
+					};
+				}
 				return {
 					points: `${x1} ${y1} ${x2} ${y2} ${x3} ${y3}`,
 					fill: color ?? "black",
 					opacity: opacity ?? "1",
 					clockwise: clockwise(x1, y1, x2, y2, x3, y3),
+					behind: false,
+				};
+			},
+		);
+
+	const svgTriangleTip = ({ r = 10, width, color, opacity }) =>
+		L.reread(
+			({
+				a: { x: x1, y: y1, s: s1 },
+				b: { x: x2, y: y2, s: s2 },
+				c: { x: x3, y: y3, s: s3 },
+			}) => {
+				if (s2 < 0) {
+					return {
+						cx: 0,
+						cy: 0,
+						fill: "none",
+						stroke: "none",
+						"stroke-width": "0",
+						opacity: "0",
+						behind: true,
+					};
+				}
+				return {
+					cx: x2,
+					cy: y2,
+					r: r + r / s2,
+					fill: color ?? "black",
+					opacity: opacity ?? "1",
+					clockwise: clockwise(x1, y1, x2, y2, x3, y3),
+					behind: false,
 				};
 			},
 		);
 
 	const transform = L.reread(({ p, mat }) => {
+		const p0 = {
+			x: p.x * mat.sx,
+			y: p.y * mat.sy,
+			z: p.z * mat.sz,
+		};
+
 		const p1 = {
-			x: Math.cos(mat.ry) * p.x - Math.sin(mat.ry) * p.z,
-			y: p.y,
-			z: Math.sin(mat.ry) * p.x + Math.cos(mat.ry) * p.z,
+			x: Math.cos(mat.ry) * p0.x - Math.sin(mat.ry) * p0.z,
+			y: p0.y,
+			z: Math.sin(mat.ry) * p0.x + Math.cos(mat.ry) * p0.z,
 		};
 
 		const p2 = {
@@ -148,12 +215,12 @@
 		faces: [
 			{ a: 0, b: 1, c: 2 },
 			{ a: 2, b: 3, c: 0 },
-			{ a: 5, b: 1, c: 4 },
-			{ a: 4, b: 1, c: 0 },
-			{ a: 6, b: 4, c: 7 },
-			{ a: 4, b: 6, c: 5 },
-			{ a: 7, b: 3, c: 2 },
-			{ a: 2, b: 6, c: 7 },
+			{ a: 4, b: 5, c: 1 },
+			{ a: 1, b: 0, c: 4 },
+			{ a: 7, b: 6, c: 5 },
+			{ a: 5, b: 4, c: 7 },
+			{ a: 6, b: 7, c: 3 },
+			{ a: 3, b: 2, c: 6 },
 			{ a: 1, b: 6, c: 2 },
 			{ a: 1, b: 5, c: 6 },
 		],
@@ -168,11 +235,14 @@
 		tx: 0,
 		ty: 0,
 		tz: 60,
+		sx: 1,
+		sy: 1,
+		sz: 1,
 	});
 	const camera = atom({
 		np: 10,
 		fp: 100,
-		scale: 30,
+		scale: 5,
 	});
 
 	const transformedPoints = view(
@@ -190,32 +260,49 @@
 	const rz = view(["rz", radToDeg], trans);
 	const tx = view(["tx"], trans);
 	const ty = view(["ty"], trans);
-	const tz = view(["tz", L.subtract(60)], trans);
-	const np = view(["np", L.subtract(60)], camera);
-	const fp = view(["fp", L.subtract(60)], camera);
+	const tz = view(["tz"], trans);
+	const sx = view(["sx"], trans);
+	const sy = view(["sy"], trans);
+	const sz = view(["sz"], trans);
+	const np = view(
+		L.lens(
+			({ np, fp }) => np,
+			(n, { fp, np, ...rest }) => ({
+				...rest,
+				fp: n + (fp - np),
+				np: n,
+			}),
+		),
+		camera,
+	);
+	const fp = view(
+		L.lens(
+			({ np, fp }) => fp - np,
+			(n, { np, ...rest }) => ({ ...rest, np, fp: np + n }),
+		),
+		camera,
+	);
 	const scale = view(["scale"], camera);
 	const pointIndices = view(indices, points3d);
 	const edgeIndices = view(indices, edges);
 	const faceIndices = view(indices, faces);
 </script>
 
-<input type="range" bind:value={rx.value} min="-360" max="360" />
-<input type="range" bind:value={ry.value} min="-360" max="360" />
-<input type="range" bind:value={rz.value} min="-360" max="360" />
-
-<input type="range" bind:value={tx.value} min="-100" max="100" />
-<input type="range" bind:value={ty.value} min="-100" max="100" />
-<input type="range" bind:value={tz.value} min="0" max="300" />
-
-<input type="range" bind:value={np.value} min="-20" max="200" />
-<input type="range" bind:value={fp.value} min="-20" max="200" />
-<input type="range" bind:value={scale.value} min="0" max="40" />
-
 <svg
 	preserveAspectRatio="xMidYMid meet"
 	viewBox="-500 -500 1000 1000"
 	class="viewport"
 >
+	<rect
+		x="-500"
+		y="-500"
+		width="1000"
+		height="1000"
+		fill="none"
+		stroke="black"
+		stroke-dasharray="10 10"
+		opacity="0.2"
+	/>
 	{#each edgeIndices.value as i (i)}
 		{@const e = view(i, edges)}
 		{@const pp1 = view([e.value.from], projectedPoints)}
@@ -238,33 +325,141 @@
 			svgTriangle({ color: "#aa1010", opacity: 0.1 }),
 			combine({ a: ppA, b: ppB, c: ppC }),
 		)}
+		{@const triangleTip1 = view(
+			svgTriangleTip({ color: "#aa1010", opacity: 1, r: 2 }),
+			combine({ a: ppA, b: ppB, c: ppC }),
+		)}
+		{@const triangleTip2 = view(
+			svgTriangleTip({ color: "#aa1010", opacity: 1, r: 2 }),
+			combine({ b: ppA, c: ppB, a: ppC }),
+		)}
+		{@const triangleTip3 = view(
+			svgTriangleTip({ color: "#aa1010", opacity: 1, r: 2 }),
+			combine({ c: ppA, a: ppB, b: ppC }),
+		)}
 
 		<polygon {...triangle.value}></polygon>
+		<circle {...triangleTip1.value}></circle>
+		<circle {...triangleTip2.value}></circle>
+		<circle {...triangleTip3.value}></circle>
 	{/each}
 
 	{#each pointIndices.value as i (i)}
+		{@const ptr = view([i, "s"], projectedPoints)}
 		{@const pt = view([i], projectedPoints)}
-		{@const pp = view([svgCircle], pt)}
+		{@const pp = view([svgCircle(1)], pt)}
 		{@const text = view([svgText], pt)}
 
-		<circle {...pp.value}></circle>
-		<text
-			{...text.value}
-			transform="translate(0,-30)"
-			font-size="40"
-			text-anchor="middle"
-			dominant-baseline="central">{i}</text
-		>
+		{#if ptr.value > 0}
+			<circle {...pp.value} opacity="0.5"></circle>
+			<text
+				{...text.value}
+				transform="translate(0,{-(30 + pp.value.r)})"
+				font-size="20"
+				text-anchor="middle"
+				dominant-baseline="central">{i}</text
+			><text
+				{...text.value}
+				transform="translate(0,{30 + pp.value.r})"
+				fill="red"
+				font-size="20"
+				text-anchor="middle"
+				dominant-baseline="central">{numf.format(ptr.value)}</text
+			>
+		{/if}
 	{/each}
 </svg>
+
+<fieldset>
+	<legend>Controls</legend>
+
+	<label
+		>rx: <output>{numf.format(rx.value)}</output>
+		<input type="range" bind:value={rx.value} min="-360" max="360" /></label
+	>
+	<label
+		>ry: <output>{numf.format(ry.value)}</output>
+		<input type="range" bind:value={ry.value} min="-360" max="360" /></label
+	>
+	<label
+		>rz: <output>{numf.format(rz.value)}</output>
+		<input type="range" bind:value={rz.value} min="-360" max="360" /></label
+	>
+
+	<label
+		>sx: <output>{numf.format(sx.value)}</output>
+		<input
+			type="range"
+			bind:value={sx.value}
+			step="0.01"
+			min="0"
+			max="10"
+		/></label
+	>
+	<label
+		>sy: <output>{numf.format(sy.value)}</output>
+		<input
+			type="range"
+			bind:value={sy.value}
+			step="0.01"
+			min="0"
+			max="10"
+		/></label
+	>
+	<label
+		>sz: <output>{numf.format(sz.value)}</output>
+		<input
+			type="range"
+			bind:value={sz.value}
+			step="0.01"
+			min="0"
+			max="10"
+		/></label
+	>
+
+	<label
+		>tx: <output>{numf.format(tx.value)}</output>
+		<input type="range" bind:value={tx.value} min="-100" max="100" /></label
+	>
+	<label
+		>ty: <output>{numf.format(ty.value)}</output>
+		<input type="range" bind:value={ty.value} min="-100" max="100" /></label
+	>
+	<label
+		>tz: <output>{numf.format(tz.value)}</output>
+		<input type="range" bind:value={tz.value} min="0" max="300" />
+	</label>
+	<label
+		>np: <output>{numf.format(np.value)}</output>
+		<input
+			type="range"
+			bind:value={np.value}
+			min="0.1"
+			step="0.1"
+			max="200"
+		/></label
+	>
+	<label
+		>fp: <output>{numf.format(fp.value)}</output>
+		<input type="range" bind:value={fp.value} min="0" max="200" /></label
+	>
+	<label
+		>scale: <output>{numf.format(scale.value)}</output>
+		<input type="range" bind:value={scale.value} min="0" max="40" /></label
+	>
+</fieldset>
 
 <style>
 	.viewport {
 		width: 100%;
-		height: 30vh;
+		height: 80vh;
 	}
 
-	polygon[clockwise="false"] {
+	polygon[clockwise="true"] {
 		fill: blue;
+	}
+
+	circle[clockwise="false"] {
+		display: none;
 	}
 </style>
