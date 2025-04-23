@@ -461,9 +461,13 @@
 	<polygon
 		stroke="none"
 		cursor="pointer"
-		class:selected={selected.value === i}
+		class:clickable={selected}
+		class:selected={selected && selected.value === i}
 		onclick={(evt) => {
-			selected.value = i;
+			if (selected) {
+				evt.stopPropagation();
+				selected.value = i;
+			}
 		}}
 		{...triangle.value}
 	></polygon>
@@ -525,10 +529,11 @@
 	}
 
 	polygon[clockwise="true"] {
-		fill: blue; /*
-		stroke: black;
-		stroke-width: 3;
-		vector-effect: non-scaling-stroke;*/
+		fill: none;
+	}
+
+	polygon.clickable[clockwise="true"] {
+		pointer-events: all;
 	}
 
 	polygon[clockwise="false"] {
@@ -548,13 +553,13 @@
 		vector-effect: non-scaling-stroke;
 		fill: magenta;
 		fill-opacity: 0.2;
+		stroke-opacity: 0.4;
 	}
 
 	polygon[clockwise="false"].selected {
 		stroke: cyan;
 		stroke-width: 2;
 		fill: cyan;
-		fill-opacity: 0.2;
 	}
 
 	circle[clockwise="false"] {

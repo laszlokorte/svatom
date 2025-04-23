@@ -216,7 +216,7 @@
 		h: 50,
 		np: 10,
 		fp: 100,
-		scale: 1000,
+		scale: 1200,
 	});
 	const selected = atom();
 	const debug = atom(false);
@@ -295,11 +295,20 @@
 	const pointerDelta = view(L.props("dx", "dy"), pointer);
 </script>
 
+<p>
+	The Scene below is rendered as SVG graphic. The faces of the cube house can
+	be selected by clicking / tapping. The hause can be rotated by dragging with
+	your mouse or your finger.
+</p>
+
 <svg
 	preserveAspectRatio="xMidYMid meet"
 	viewBox="-500 -500 1000 1000"
 	class="viewport"
 	stroke="red"
+	onclick={(evt) => {
+		selected.value = undefined;
+	}}
 	use:activeTouchMove={(evt) => {
 		evt.preventDefault();
 	}}
@@ -350,6 +359,7 @@
 	<g clip-path="url(#model-a-quad-0)" pointer-events="none">
 		<ThreeDeeModel
 			id="model-b"
+			selected={false}
 			trans={view(
 				L.iso(
 					(c) => ({
@@ -505,16 +515,19 @@
 	</g>
 </svg>
 
-<fieldset>
-	<legend>Controls</legend>
-
+<div>
+	<h3>Controls</h3>
 	<div>
 		<label><input type="checkbox" bind:checked={debug.value} /> Debug</label
 		>
 	</div>
+</div>
+
+<fieldset>
+	<legend>Frequency</legend>
 
 	<label
-		>freq: <output>{numf.format(freq.value)}</output>
+		>Frequency: <output>{numf.format(freq.value)}</output>
 		<input
 			type="range"
 			bind:value={freq.value}
@@ -524,7 +537,7 @@
 		/></label
 	>
 	<label
-		>amp: <output>{numf.format(amp.value)}</output>
+		>Amplitude: <output>{numf.format(amp.value)}</output>
 		<input
 			type="range"
 			bind:value={amp.value}
@@ -534,7 +547,7 @@
 		/></label
 	>
 	<label
-		>phase: <output>{numf.format(phase.value)}</output>
+		>Phase: <output>{numf.format(phase.value)}</output>
 		<input
 			type="range"
 			bind:value={phase.value}
@@ -544,7 +557,7 @@
 		/></label
 	>
 	<label
-		>damp: <output>{numf.format(damp.value)}</output>
+		>Damping: <output>{numf.format(damp.value)}</output>
 		<input
 			type="range"
 			bind:value={damp.value}
@@ -553,21 +566,25 @@
 			max="6"
 		/></label
 	>
+</fieldset>
+
+<fieldset>
+	<legend>Model Transform</legend>
 	<label
-		>rx: <output>{numf.format(rx.value)}</output>
+		>X-Rotation: <output>{numf.format(rx.value)}</output>
 		<input type="range" bind:value={rx.value} min="-360" max="360" /></label
 	>
 	<label
-		>ry: <output>{numf.format(ry.value)}</output>
+		>Y-Rotation: <output>{numf.format(ry.value)}</output>
 		<input type="range" bind:value={ry.value} min="-360" max="360" /></label
 	>
 	<label
-		>rz: <output>{numf.format(rz.value)}</output>
+		>Z-Rotation: <output>{numf.format(rz.value)}</output>
 		<input type="range" bind:value={rz.value} min="-360" max="360" /></label
 	>
 
 	<label
-		>sx: <output>{numf.format(sx.value)}</output>
+		>X-Scale: <output>{numf.format(sx.value)}</output>
 		<input
 			type="range"
 			bind:value={sx.value}
@@ -577,7 +594,7 @@
 		/></label
 	>
 	<label
-		>sy: <output>{numf.format(sy.value)}</output>
+		>Y-Scale: <output>{numf.format(sy.value)}</output>
 		<input
 			type="range"
 			bind:value={sy.value}
@@ -587,7 +604,7 @@
 		/></label
 	>
 	<label
-		>sz: <output>{numf.format(sz.value)}</output>
+		>Z-Scale: <output>{numf.format(sz.value)}</output>
 		<input
 			type="range"
 			bind:value={sz.value}
@@ -598,19 +615,23 @@
 	>
 
 	<label
-		>tx: <output>{numf.format(tx.value)}</output>
+		>X-Translation: <output>{numf.format(tx.value)}</output>
 		<input type="range" bind:value={tx.value} min="-100" max="100" /></label
 	>
 	<label
-		>ty: <output>{numf.format(ty.value)}</output>
+		>Y-Translation: <output>{numf.format(ty.value)}</output>
 		<input type="range" bind:value={ty.value} min="-100" max="100" /></label
 	>
 	<label
-		>tz: <output>{numf.format(tz.value)}</output>
+		>Z-Translation: <output>{numf.format(tz.value)}</output>
 		<input type="range" bind:value={tz.value} min="0" max="300" />
 	</label>
+</fieldset>
+
+<fieldset>
+	<legend>Camera</legend>
 	<label
-		>np: <output>{numf.format(np.value)}</output>
+		>Near Plane: <output>{numf.format(np.value)}</output>
 		<input
 			type="range"
 			bind:value={np.value}
@@ -620,11 +641,11 @@
 		/></label
 	>
 	<label
-		>fp: <output>{numf.format(fp.value)}</output>
+		>Far Plane: <output>{numf.format(fp.value)}</output>
 		<input type="range" bind:value={fp.value} min="0" max="200" /></label
 	>
 	<label
-		>scale: <output>{numf.format(scale.value)}</output>
+		>Scale: <output>{numf.format(scale.value)}</output>
 		<input
 			type="range"
 			bind:value={scale.value}
@@ -644,6 +665,7 @@
 	.viewport {
 		width: 100%;
 		height: 50vh;
+		cursor: move;
 	}
 
 	polygon[clockwise="true"] {
