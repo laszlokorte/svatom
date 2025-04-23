@@ -211,6 +211,19 @@
 		sy: 1,
 		sz: 1,
 	});
+
+	const trans2 = atom({
+		rx: -Math.PI / 15,
+		ry: (3.1 * Math.PI) / 2,
+		rz: Math.PI / 15,
+		tx: 0,
+		ty: 0,
+		tz: 60,
+		sx: 0.4,
+		sy: 0.4,
+		sz: 0.4,
+	});
+
 	const camera = atom({
 		w: 50,
 		h: 50,
@@ -225,6 +238,9 @@
 	const rx = view(["rx", radToDeg], trans);
 	const ry = view(["ry", radToDeg], trans);
 	const rz = view(["rz", radToDeg], trans);
+	const rx2 = view(["rx", radToDeg], trans2);
+	const ry2 = view(["ry", radToDeg], trans2);
+	const rz2 = view(["rz", radToDeg], trans2);
 	const tx = view(["tx"], trans);
 	const ty = view(["ty"], trans);
 	const tz = view(["tz"], trans);
@@ -330,6 +346,15 @@
 				((((rx.value + 720) % 720) - pointerDelta.value.dy / 2 + 360) %
 					720) -
 				360;
+
+			ry2.value =
+				((((ry2.value + 720) % 720) - pointerDelta.value.dx / 4 + 360) %
+					720) -
+				360;
+			rx2.value =
+				((((rx2.value + 720) % 720) + pointerDelta.value.dy / 4 + 360) %
+					720) -
+				360;
 			evt.preventDefault();
 		}
 	}}
@@ -357,31 +382,7 @@
 	/>
 
 	<g clip-path="url(#model-a-quad-0)" pointer-events="none">
-		<ThreeDeeModel
-			id="model-b"
-			selected={false}
-			trans={view(
-				L.iso(
-					(c) => ({
-						...c,
-						sx: 0.4,
-						sy: 0.4,
-						sz: 0.4,
-						rz: -0.3 * c.rz + c.ry * 0.1,
-						rx: -0.3 * c.rx + c.ry * 0.1,
-					}),
-					(c, o) => ({
-						...c,
-						sx: o.sx,
-						sy: o.sy,
-						sz: o.sz,
-						ry: -c.ry,
-					}),
-				),
-				trans,
-			)}
-			{camera}
-		/>
+		<ThreeDeeModel id="model-b" selected={false} trans={trans2} {camera} />
 	</g>
 	<g pointer-events="none">
 		<ThreeDeeModel
@@ -437,6 +438,9 @@
 		/>
 
 		<g clip-path="url(#model-a-quad-2)" stroke-width="3">
+			<text text-anchor="middle" y="70" x="0" font-size="40" stroke="none"
+				>y = e<tspan dy="-20" font-size="smaller">jt</tspan></text
+			>
 			<g stroke="gray">
 				<ThreeDeeModel
 					geo={view(
