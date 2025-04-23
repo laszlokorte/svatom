@@ -11,6 +11,7 @@
 		failableView,
 		bindValue,
 		autofocusIf,
+		activeTouchMove,
 	} from "./svatom.svelte.js";
 	import ThreeDeeModel from "./ThreeDeeModel.svelte";
 
@@ -277,6 +278,21 @@
 		}),
 		curve,
 	);
+
+	const pointer = atom({ x: 0, y: 0, dx: 0, dy: 0 });
+	const pointerPos = view(
+		L.lens(
+			({ x, y }) => ({ clientX: x, clientY: y }),
+			({ clientX: x, clientY: y }, o) => ({
+				x,
+				y,
+				dx: x - o.x,
+				dy: y - o.y,
+			}),
+		),
+		pointer,
+	);
+	const pointerDelta = view(L.props("dx", "dy"), pointer);
 </script>
 
 <svg
@@ -284,18 +300,26 @@
 	viewBox="-500 -500 1000 1000"
 	class="viewport"
 	stroke="red"
+	use:activeTouchMove={(evt) => {
+		evt.preventDefault();
+	}}
 	onpointerdown={(evt) => {
 		if (evt.isPrimary) {
+			evt.preventDefault();
 			evt.currentTarget.setPointerCapture(evt.pointerId);
+			pointerPos.value = evt;
 		}
 	}}
 	onpointermove={(evt) => {
 		if (evt.currentTarget.hasPointerCapture(evt.pointerId)) {
+			pointerPos.value = evt;
 			ry.value =
-				((((ry.value + 720) % 720) + evt.movementX / 2 + 360) % 720) -
+				((((ry.value + 720) % 720) + pointerDelta.value.dx / 2 + 360) %
+					720) -
 				360;
 			rx.value =
-				((((rx.value + 720) % 720) - evt.movementY / 2 + 360) % 720) -
+				((((rx.value + 720) % 720) - pointerDelta.value.dy / 2 + 360) %
+					720) -
 				360;
 			evt.preventDefault();
 		}
@@ -614,6 +638,7 @@
 	svg {
 		user-select: none;
 		font-family: inherit;
+		touch-action: manipulation;
 	}
 
 	.viewport {
