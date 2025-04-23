@@ -249,12 +249,61 @@
 		camera,
 	);
 	const scale = view(["scale"], camera);
+	const samples = 64;
+	const curve = atom({ freq: 5, amp: 1, phase: 0, damp: 0 });
+	const freq = view("freq", curve);
+	const amp = view("amp", curve);
+	const phase = view("phase", curve);
+	const damp = view("damp", curve);
+	const curveGeo = view(
+		({ freq, amp, phase, damp }) => ({
+			vertices: Array(samples)
+				.fill(null)
+				.map((_, i) => ({
+					x: -10 + (20 * i) / samples,
+					y:
+						Math.exp(damp * (i / samples - 0.5)) *
+						amp *
+						Math.cos(freq * (i / samples - 0.5 + phase) * Math.PI),
+					z:
+						Math.exp(damp * (i / samples - 0.5)) *
+						amp *
+						Math.sin(freq * (i / samples - 0.5 + phase) * Math.PI),
+				})),
+			edges: Array(samples)
+				.fill(null)
+				.slice(1)
+				.map((_, i) => ({ from: i, to: i + 1 })),
+		}),
+		curve,
+	);
 </script>
 
 <svg
 	preserveAspectRatio="xMidYMid meet"
 	viewBox="-500 -500 1000 1000"
 	class="viewport"
+	stroke="red"
+	onpointerdown={(evt) => {
+		if (evt.isPrimary) {
+			evt.currentTarget.setPointerCapture(evt.pointerId);
+		}
+	}}
+	onpointermove={(evt) => {
+		if (evt.currentTarget.hasPointerCapture(evt.pointerId)) {
+			ry.value =
+				((((ry.value + 720) % 720) + evt.movementX / 2 + 360) % 720) -
+				360;
+			rx.value =
+				((((rx.value + 720) % 720) - evt.movementY / 2 + 360) % 720) -
+				360;
+			evt.preventDefault();
+		}
+	}}
+	onwheel={(evt) => {
+		evt.preventDefault();
+		fp.value /= Math.exp(evt.deltaY / 800);
+	}}
 >
 	<rect
 		x="-500"
@@ -274,7 +323,7 @@
 		debug={debug.value}
 	/>
 
-	<g clip-path="url(#model-a-quad-0)">
+	<g clip-path="url(#model-a-quad-0)" pointer-events="none">
 		<ThreeDeeModel
 			id="model-b"
 			trans={view(
@@ -298,108 +347,138 @@
 				trans,
 			)}
 			{camera}
+		/>
+	</g>
+	<g pointer-events="none">
+		<ThreeDeeModel
+			trans={view(
+				L.iso(
+					(c) => ({
+						...c,
+						tx: c.tx + 30,
+						ty: c.ty + 8,
+						sx: 0.4,
+						sy: 0.4,
+						sz: 0.4,
+						rz: 0,
+					}),
+					(c, o) => ({
+						...c,
+						tx: c.tx - 20,
+						ty: c.ty - 8,
+						sx: o.sx,
+						sy: o.sy,
+						sz: o.sz,
+						rz: o.rz,
+					}),
+				),
+				trans,
+			)}
+			{camera}
 			{selected}
 		/>
-	</g>
 
-	<ThreeDeeModel
-		trans={view(
-			L.iso(
-				(c) => ({
-					...c,
-					tx: c.tx + 30,
-					ty: c.ty + 8,
-					sx: 0.4,
-					sy: 0.4,
-					sz: 0.4,
-					rz: 0,
-				}),
-				(c, o) => ({
-					...c,
-					tx: c.tx - 20,
-					ty: c.ty - 8,
-					sx: o.sx,
-					sy: o.sy,
-					sz: o.sz,
-					rz: o.rz,
-				}),
-			),
-			trans,
-		)}
-		{camera}
-		{selected}
-	/>
+		<g clip-path="url(#model-a-quad-0)">
+			<circle
+				stroke="white"
+				stroke-opacity="0.3"
+				stroke-width="10"
+				stroke-linejoin="round"
+				cx="0"
+				cy="0"
+				r="60"
+				fill="red"
+				clip-path="url(#model-b-quad-0)"
+			/>
+		</g>
 
-	<g clip-path="url(#model-a-quad-0)">
-		<circle
+		<polygon
 			stroke="white"
+			stroke-opacity="0.3"
 			stroke-width="10"
 			stroke-linejoin="round"
-			cx="0"
-			cy="0"
-			r="60"
-			fill="red"
-			clip-path="url(#model-b-quad-0)"
+			points="-80 -90 80 -90 0 100"
+			fill="blue"
+			clip-path="url(#model-a-quad-1)"
+		/>
+
+		<g clip-path="url(#model-a-quad-2)" stroke-width="3">
+			<g stroke="gray">
+				<ThreeDeeModel
+					geo={view(
+						L.reread((geo) => ({
+							...geo,
+							vertices: geo.vertices.map((v) => ({
+								...v,
+								z: 10,
+							})),
+						})),
+						curveGeo,
+					)}
+					{camera}
+					{trans}
+					{selected}
+				/>
+
+				<ThreeDeeModel
+					geo={view(
+						L.reread((geo) => ({
+							...geo,
+							vertices: geo.vertices.map((v) => ({
+								...v,
+								y: -10,
+							})),
+						})),
+						curveGeo,
+					)}
+					{camera}
+					{trans}
+					{selected}
+				/>
+			</g>
+			<ThreeDeeModel geo={curveGeo} {camera} {trans} {selected} />
+		</g>
+
+		<polygon
+			stroke="white"
+			stroke-opacity="0.3"
+			stroke-width="10"
+			stroke-linejoin="round"
+			points="-80 90 80 90 0 -100"
+			fill="purple"
+			clip-path="url(#model-a-quad-3)"
+		/>
+
+		<rect
+			stroke="white"
+			stroke-opacity="0.3"
+			stroke-width="10"
+			stroke-linejoin="round"
+			x="-50"
+			y="-50"
+			width="200"
+			height="200"
+			rx="40"
+			ry="40"
+			fill="orange"
+			clip-path="url(#model-a-quad-4)"
+		/>
+
+		<rect
+			stroke="white"
+			stroke-opacity="0.3"
+			stroke-width="10"
+			stroke-linejoin="round"
+			x="-75"
+			y="-75"
+			width="150"
+			height="150"
+			rx="40"
+			ry="40"
+			fill="darkred"
+			clip-path="url(#model-a-quad-5)"
 		/>
 	</g>
-
-	<polygon
-		stroke="white"
-		stroke-width="10"
-		stroke-linejoin="round"
-		points="-80 -90 80 -90 0 100"
-		fill="blue"
-		clip-path="url(#model-a-quad-1)"
-	/>
-
-	<rect
-		stroke="white"
-		stroke-width="10"
-		stroke-linejoin="round"
-		x="-50"
-		y="-70"
-		width="200"
-		height="200"
-		fill="yellow"
-		clip-path="url(#model-a-quad-2)"
-	/>
-
-	<polygon
-		stroke="white"
-		stroke-width="10"
-		stroke-linejoin="round"
-		points="-80 90 80 90 0 -100"
-		fill="purple"
-		clip-path="url(#model-a-quad-3)"
-	/>
-
-	<rect
-		stroke="white"
-		stroke-width="10"
-		stroke-linejoin="round"
-		x="-50"
-		y="-50"
-		width="200"
-		height="200"
-		rx="40"
-		ry="40"
-		fill="orange"
-		clip-path="url(#model-a-quad-4)"
-	/>
-
-	<rect
-		stroke="white"
-		stroke-width="10"
-		stroke-linejoin="round"
-		x="-75"
-		y="-75"
-		width="150"
-		height="150"
-		rx="40"
-		ry="40"
-		fill="darkred"
-		clip-path="url(#model-a-quad-5)"
-	/>
 </svg>
 
 <fieldset>
@@ -410,6 +489,46 @@
 		>
 	</div>
 
+	<label
+		>freq: <output>{numf.format(freq.value)}</output>
+		<input
+			type="range"
+			bind:value={freq.value}
+			step="0.1"
+			min="-7"
+			max="7"
+		/></label
+	>
+	<label
+		>amp: <output>{numf.format(amp.value)}</output>
+		<input
+			type="range"
+			bind:value={amp.value}
+			step="0.1"
+			min="0"
+			max="9"
+		/></label
+	>
+	<label
+		>phase: <output>{numf.format(phase.value)}</output>
+		<input
+			type="range"
+			bind:value={phase.value}
+			step="0.01"
+			min="-2"
+			max="2"
+		/></label
+	>
+	<label
+		>damp: <output>{numf.format(damp.value)}</output>
+		<input
+			type="range"
+			bind:value={damp.value}
+			step="0.01"
+			min="-6"
+			max="6"
+		/></label
+	>
 	<label
 		>rx: <output>{numf.format(rx.value)}</output>
 		<input type="range" bind:value={rx.value} min="-360" max="360" /></label

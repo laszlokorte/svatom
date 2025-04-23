@@ -167,7 +167,7 @@
 					x2,
 					y2,
 					stroke: color ?? "black",
-					"stroke-width": width ?? 1,
+					"stroke-width": width ?? "inherit",
 					clockwise: facePoints
 						? !facePoints.every(
 								({ a, b, c }) =>
@@ -343,10 +343,10 @@
 		);
 	});
 
-	const points3d = view("vertices", geo);
-	const edges = view("edges", geo);
-	const faces = view("faces", geo);
-	const quads = view("quads", geo);
+	const points3d = view(["vertices", L.defaults([])], geo);
+	const edges = view(["edges", L.defaults([])], geo);
+	const faces = view(["faces", L.defaults([])], geo);
+	const quads = view(["quads", L.defaults([])], geo);
 
 	const transformedPoints = view(
 		transformAll,
@@ -424,7 +424,7 @@
 	{@const facs = view([getIndices(facidx.value)], faces)}
 	{@const facePoints = view([getEntries(facs.value)], projectedPoints)}
 	{@const line = view(
-		svgLine({ color: "red", width: 1.5 }),
+		svgLine({ color: "inherit" }),
 		combine({ from: pp1, to: pp2, facePoints }),
 	)}
 
@@ -438,7 +438,7 @@
 	{@const ppC = view([e.value.c], projectedPoints)}
 
 	{@const triangle = view(
-		svgTriangle({ color: "#aa1010", opacity: 0.1 }),
+		svgTriangle({ opacity: 0.1 }),
 		combine({ a: ppA, b: ppB, c: ppC }),
 	)}
 	{@const triangleTip1 = view(
@@ -459,6 +459,7 @@
 	)}
 
 	<polygon
+		stroke="none"
 		cursor="pointer"
 		class:selected={selected.value === i}
 		onclick={(evt) => {
