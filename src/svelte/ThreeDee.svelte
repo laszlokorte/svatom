@@ -270,11 +270,11 @@
 		h: 50,
 		np: 10,
 		fp: 100,
-		cp: 5,
+		cp: 50,
 		scale: 1400,
 		aspect: 1,
-		fov: (2 * Math.PI) / 3,
-		backoff: 1,
+		fov: (2 * Math.PI) / 6,
+		orthogonality: 0,
 	});
 	const selected = atom();
 	const debug = atom(false);
@@ -328,7 +328,7 @@
 	const clamp = (min, max) => L.normalize(R.clamp(min, max));
 	const scale = view(["scale"], camera);
 	const fov = view(["fov", radToDeg, clamp(0.01, 160)], camera);
-	const backoff = view(["backoff"], camera);
+	const orthogonality = view(["orthogonality", clamp(0, 1)], camera);
 	const aspect = view(["aspect", clamp(0.1, 10)], camera);
 	const samples = 64;
 	const curve = atom({ freq: 5, amp: 1, phase: 0, damp: 0 });
@@ -428,7 +428,18 @@
 	}}
 	onwheel={(evt) => {
 		evt.preventDefault();
-		fov.value *= Math.exp(evt.deltaY / 800);
+
+		if (evt.ctrlKey) {
+			cp.value -= evt.deltaY / 20;
+		}
+		if (evt.shiftKey) {
+			orthogonality.value += evt.deltaY / 2000;
+		}
+
+		if (!evt.ctrlKey && !evt.shiftKey) {
+			//fov.value *= Math.exp(evt.deltaY / 800);
+			fov.value += evt.deltaY / 20;
+		}
 	}}
 >
 	<rect
@@ -638,10 +649,12 @@
 						/></label
 					>
 					<label
-						>Backoff: <output>{numf.format(backoff.value)}</output>
+						>orthogonality: <output
+							>{numf.format(orthogonality.value)}</output
+						>
 						<input
 							type="range"
-							bind:value={backoff.value}
+							bind:value={orthogonality.value}
 							min="0"
 							max="1"
 							step="0.001"

@@ -32,7 +32,7 @@
 			scale: 1200,
 			aspect: 1,
 			fov: Math.PI / 5,
-			backoff: 10,
+			orthogonality: 0,
 		}),
 		selected = atom(),
 		geo = atom({
@@ -214,13 +214,15 @@
 			};
 		});
 
-	const project = (scale) =>
+	const lerp = (a, b, t) => b * t + (1 - t) * a;
+
+	const project = (scale, orthogonality, cp) =>
 		L.reread(({ x, y, z, s }) => {
 			return {
-				x: (x * scale) / 2 / s,
-				y: (y * scale) / 2 / s,
+				x: (x * scale) / 2 / lerp(s, cp, orthogonality),
+				y: (y * scale) / 2 / lerp(s, cp, orthogonality),
 				z: z / 2 / s,
-				s,
+				s: lerp(s, 1, orthogonality),
 			};
 		});
 
@@ -440,26 +442,13 @@
 		return ps.map((p) =>
 			L.get(
 				[
-					({ z, ...rest }) => ({
-						...rest,
-						z:
-							z +
-							(camera.backoff * camera.scale) /
-								2 /
-								Math.tan(camera.fov / 2),
-					}),
 					viewTransform(
 						camera.np,
 						camera.fp,
 						camera.aspect * Math.tan(camera.fov / 2),
 						Math.tan(camera.fov / 2),
 					),
-					project(
-						Math.pow(
-							camera.scale,
-							1 + Math.sqrt(camera.backoff / 4),
-						),
-					),
+					project(camera.scale, camera.orthogonality, camera.cp),
 				],
 				p,
 			),
