@@ -271,10 +271,10 @@
 		np: 10,
 		fp: 100,
 		cp: 5,
-		scale: 1200,
+		scale: 1400,
 		aspect: 1,
-		fov: Math.PI / 5,
-		backoff: 0,
+		fov: (2 * Math.PI) / 3,
+		backoff: 1,
 	});
 	const selected = atom();
 	const debug = atom(false);
@@ -643,8 +643,8 @@
 							type="range"
 							bind:value={backoff.value}
 							min="0"
-							max="400"
-							step="0.01"
+							max="1"
+							step="0.001"
 						/></label
 					>
 					<label

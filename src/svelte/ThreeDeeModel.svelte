@@ -32,7 +32,7 @@
 			scale: 1200,
 			aspect: 1,
 			fov: Math.PI / 5,
-			backoff: 0,
+			backoff: 10,
 		}),
 		selected = atom(),
 		geo = atom({
@@ -442,7 +442,11 @@
 				[
 					({ z, ...rest }) => ({
 						...rest,
-						z: z + camera.backoff / Math.tan(camera.fov / 2),
+						z:
+							z +
+							(camera.backoff * camera.scale) /
+								2 /
+								Math.tan(camera.fov / 2),
 					}),
 					viewTransform(
 						camera.np,
@@ -450,7 +454,12 @@
 						camera.aspect * Math.tan(camera.fov / 2),
 						Math.tan(camera.fov / 2),
 					),
-					project(camera.scale * Math.log(20 + camera.backoff)),
+					project(
+						Math.pow(
+							camera.scale,
+							1 + Math.sqrt(camera.backoff / 4),
+						),
+					),
 				],
 				p,
 			),
