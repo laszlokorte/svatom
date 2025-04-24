@@ -22,6 +22,7 @@
 	const {
 		id,
 		debug = false,
+		corners = false,
 		camera = atom({
 			w: 50,
 			h: 50,
@@ -44,38 +45,126 @@
 				{ x: 0, y: 0, z: 0 },
 			],
 			edges: [
-				{ from: 0, to: 1, faces: [0, 3] },
-				{ from: 1, to: 2, faces: [0, 8] },
-				{ from: 2, to: 3, faces: [1, 7] },
-				{ from: 3, to: 0, faces: [1, 10] },
-				{ from: 4, to: 5, faces: [2, 5] },
-				{ from: 5, to: 6, faces: [4, 9] },
-				{ from: 6, to: 7, faces: [6, 4] },
-				{ from: 7, to: 4, faces: [5, 12] },
-				{ from: 0, to: 4, faces: [3, 11] },
-				{ from: 1, to: 5, faces: [2, 9] },
-				{ from: 2, to: 6, faces: [7, 8] },
-				{ from: 3, to: 7, faces: [6, 13] },
-				{ from: 0, to: 8, faces: [10, 11] },
-				{ from: 3, to: 8, faces: [10, 13] },
-				{ from: 4, to: 8, faces: [11, 12] },
-				{ from: 7, to: 8, faces: [12, 13] },
+				{
+					from: 0,
+					to: 1,
+					faces: [0, 3],
+					/*attrs: { color: "red" }*/
+				},
+				{
+					from: 1,
+					to: 2,
+					faces: [0, 8],
+					/*attrs: { color: "green" }*/
+				},
+				{
+					from: 2,
+					to: 3,
+					faces: [1, 7],
+					/*attrs: { color: "blue" }*/
+				},
+				{
+					from: 3,
+					to: 0,
+					faces: [1, 10],
+					/*attrs: { color: "red" }*/
+				},
+				{
+					from: 4,
+					to: 5,
+					faces: [2, 5],
+					/*attrs: { color: "green" }*/
+				},
+				{
+					from: 5,
+					to: 6,
+					faces: [4, 9],
+					/*attrs: { color: "blue" }*/
+				},
+				{
+					from: 6,
+					to: 7,
+					faces: [6, 4],
+					/*attrs: { color: "red" }*/
+				},
+				{
+					from: 7,
+					to: 4,
+					faces: [5, 12],
+					/*attrs: { color: "green" }*/
+				},
+				{
+					from: 0,
+					to: 4,
+					faces: [3, 11],
+					/*attrs: { color: "blue" }*/
+				},
+				{
+					from: 1,
+					to: 5,
+					faces: [2, 9],
+					/*attrs: { color: "red" }*/
+				},
+				{
+					from: 2,
+					to: 6,
+					faces: [7, 8],
+					/*attrs: { color: "green" }*/
+				},
+				{
+					from: 3,
+					to: 7,
+					faces: [6, 13],
+					/*attrs: { color: "blue" }*/
+				},
+				{
+					from: 0,
+					to: 8,
+					faces: [10, 11],
+					/*attrs: { color: "red" }*/
+				},
+				{
+					from: 3,
+					to: 8,
+					faces: [10, 13],
+					/*attrs: { color: "green" }*/
+				},
+				{
+					from: 4,
+					to: 8,
+					faces: [11, 12],
+					/*attrs: { color: "blue" }*/
+				},
+				{
+					from: 7,
+					to: 8,
+					faces: [12, 13],
+					/*attrs: { color: "red" }*/
+				},
 			],
 			faces: [
-				{ a: 0, b: 1, c: 2 },
-				{ a: 2, b: 3, c: 0 },
-				{ a: 4, b: 5, c: 1 },
-				{ a: 1, b: 0, c: 4 },
-				{ a: 7, b: 6, c: 5 },
-				{ a: 5, b: 4, c: 7 },
-				{ a: 6, b: 7, c: 3 },
-				{ a: 3, b: 2, c: 6 },
-				{ a: 1, b: 6, c: 2 },
-				{ a: 1, b: 5, c: 6 },
-				{ a: 0, b: 3, c: 8 },
-				{ a: 4, b: 0, c: 8 },
-				{ a: 7, b: 4, c: 8 },
-				{ a: 3, b: 7, c: 8 },
+				{ a: 0, b: 1, c: 2, attrs: { color: "red" } },
+				{ a: 2, b: 3, c: 0, attrs: { color: "red" } },
+				{ a: 4, b: 5, c: 1, attrs: { color: "red" } },
+				{ a: 1, b: 0, c: 4, attrs: { color: "red" } },
+				{ a: 7, b: 6, c: 5, attrs: { color: "red" } },
+				{ a: 5, b: 4, c: 7, attrs: { color: "red" } },
+				{ a: 6, b: 7, c: 3, attrs: { color: "red" } },
+				{ a: 3, b: 2, c: 6, attrs: { color: "red" } },
+				{ a: 1, b: 6, c: 2, attrs: { color: "red" } },
+				{ a: 1, b: 5, c: 6, attrs: { color: "red" } },
+				{ a: 0, b: 3, c: 8, attrs: { color: "red" } },
+				{ a: 4, b: 0, c: 8, attrs: { color: "red" } },
+				{ a: 7, b: 4, c: 8, attrs: { color: "red" } },
+				{ a: 3, b: 7, c: 8, attrs: { color: "red" } },
+			],
+			masks: [
+				{ quads: [0] },
+				{ quads: [1] },
+				{ quads: [2] },
+				{ quads: [3] },
+				{ quads: [4] },
+				{ faces: [10, 11, 12, 13] },
 			],
 			quads: [
 				{ a: 0, b: 1, c: 2, d: 3 },
@@ -83,7 +172,6 @@
 				{ a: 6, b: 5, c: 4, d: 7 },
 				{ a: 5, b: 1, c: 0, d: 4 },
 				{ a: 1, b: 5, c: 6, d: 2 },
-				{ a: 4, b: 0, c: 3, d: 7 },
 			],
 		}),
 		trans = atom({
@@ -140,12 +228,13 @@
 		return { x: x, y: y };
 	});
 
-	const svgLine = ({ width, color }) =>
+	const svgLine = (baseAttrs) =>
 		L.reread(
 			({
 				from: { x: x1, y: y1, s: s1 },
 				to: { x: x2, y: y2, s: s2 },
 				facePoints,
+				attrs,
 			}) => {
 				if (s1 < 0 || s2 < 0) {
 					return {
@@ -160,6 +249,8 @@
 						behind: true,
 					};
 				}
+
+				const { width, color } = { ...baseAttrs, ...attrs };
 
 				return {
 					x1,
@@ -182,12 +273,13 @@
 		return (y2 - y1) * (x3 - x2) - (y3 - y2) * (x2 - x1) >= 0;
 	}
 
-	const svgTriangle = ({ width, color, opacity }) =>
+	const svgTriangle = (baseAttrs) =>
 		L.reread(
 			({
 				a: { x: x1, y: y1, s: s1 },
 				b: { x: x2, y: y2, s: s2 },
 				c: { x: x3, y: y3, s: s3 },
+				attrs,
 			}) => {
 				if (s1 < 0 || s2 < 0 || s3 < 0) {
 					return {
@@ -199,11 +291,19 @@
 						behind: true,
 					};
 				}
+
+				const {
+					width,
+					color,
+					opacity,
+					flip = false,
+				} = { ...baseAttrs, ...attrs };
+
 				return {
 					points: `${x1} ${y1} ${x2} ${y2} ${x3} ${y3}`,
 					fill: color ?? "black",
 					"fill-opacity": opacity ?? "1",
-					clockwise: clockwise(x1, y1, x2, y2, x3, y3),
+					clockwise: flip != clockwise(x1, y1, x2, y2, x3, y3),
 					behind: false,
 				};
 			},
@@ -346,6 +446,7 @@
 	const points3d = view(["vertices", L.defaults([])], geo);
 	const edges = view(["edges", L.defaults([])], geo);
 	const faces = view(["faces", L.defaults([])], geo);
+	const masks = view(["masks", L.defaults([])], geo);
 	const quads = view(["quads", L.defaults([])], geo);
 
 	const transformedPoints = view(
@@ -389,7 +490,7 @@
 	const pointIndices = view(indices, points3d);
 	const edgeIndices = view(indices, edges);
 	const faceIndices = view(indices, faces);
-	const quadIndices = view(indices, quads);
+	const maskIndices = view(indices, masks);
 
 	function getIndices(idx) {
 		return idx ? L.reread((arr) => idx.map((i) => arr[i])) : L.zero;
@@ -418,6 +519,7 @@
 
 {#each edgeIndices.value as i (i)}
 	{@const e = view(i, edges)}
+	{@const attrs = view("attrs", e)}
 	{@const pp1 = view([e.value.from], projectedPoints)}
 	{@const pp2 = view([e.value.to], projectedPoints)}
 	{@const facidx = view([getIndices(e.value.faces)], edgeIndices)}
@@ -425,7 +527,7 @@
 	{@const facePoints = view([getEntries(facs.value)], projectedPoints)}
 	{@const line = view(
 		svgLine({ color: "inherit" }),
-		combine({ from: pp1, to: pp2, facePoints }),
+		combine({ from: pp1, to: pp2, facePoints, attrs }),
 	)}
 
 	<line {...line.value}></line>
@@ -436,45 +538,48 @@
 	{@const ppA = view([e.value.a], projectedPoints)}
 	{@const ppB = view([e.value.b], projectedPoints)}
 	{@const ppC = view([e.value.c], projectedPoints)}
+	{@const attrs = view("attrs", e)}
 
 	{@const triangle = view(
 		svgTriangle({ opacity: 0.1 }),
-		combine({ a: ppA, b: ppB, c: ppC }),
+		combine({ a: ppA, b: ppB, c: ppC, attrs }),
 	)}
-	{@const triangleTip1 = view(
-		svgTriangleTip({ color: "#aa1010", opacity: 1, r: 3 }),
-		combine({ a: ppA, b: ppB, c: ppC }),
-	)}
-	{@const triangleTip2 = view(
-		svgTriangleTip({ color: "#aa1010", opacity: 1, r: 3 }),
-		combine({ b: ppA, c: ppB, a: ppC }),
-	)}
-	{@const triangleTip3 = view(
-		svgTriangleTip({ color: "#aa1010", opacity: 1, r: 3 }),
-		combine({ c: ppA, a: ppB, b: ppC }),
-	)}
-	{@const triangleCenter = view(
-		svgTriangleCenter({ color: "magenta", opacity: 1 }),
-		combine({ a: ppA, b: ppB, c: ppC }),
-	)}
-
 	<polygon
 		stroke="none"
-		cursor="pointer"
 		class:clickable={selected}
 		class:selected={selected && selected.value === i}
 		onclick={(evt) => {
-			if (selected) {
+			if ((evt.ctrlKey || evt.altKey) && selected) {
 				evt.stopPropagation();
 				selected.value = i;
 			}
 		}}
 		{...triangle.value}
 	></polygon>
-	<circle pointer-events="none" {...triangleTip1.value}></circle>
-	<circle pointer-events="none" {...triangleTip2.value}></circle>
-	<circle pointer-events="none" {...triangleTip3.value}></circle>
+
+	{#if corners}
+		{@const triangleTip1 = view(
+			svgTriangleTip({ color: "#aa1010", opacity: 1, r: 3 }),
+			combine({ a: ppA, b: ppB, c: ppC }),
+		)}
+		{@const triangleTip2 = view(
+			svgTriangleTip({ color: "#aa1010", opacity: 1, r: 3 }),
+			combine({ b: ppA, c: ppB, a: ppC }),
+		)}
+		{@const triangleTip3 = view(
+			svgTriangleTip({ color: "#aa1010", opacity: 1, r: 3 }),
+			combine({ c: ppA, a: ppB, b: ppC }),
+		)}
+		<circle pointer-events="none" {...triangleTip1.value}></circle>
+		<circle pointer-events="none" {...triangleTip2.value}></circle>
+		<circle pointer-events="none" {...triangleTip3.value}></circle>
+	{/if}
+
 	{#if debug}
+		{@const triangleCenter = view(
+			svgTriangleCenter({ color: "magenta", opacity: 1 }),
+			combine({ a: ppA, b: ppB, c: ppC }),
+		)}
 		<text font-size="20" {...triangleCenter.value}>{i}</text>
 	{/if}
 {/each}
@@ -508,15 +613,36 @@
 
 {#if id}
 	<defs>
-		{#each quadIndices.value as i (i)}
-			{@const e = view(i, quads)}
-			{@const corners = view([getEntry(e.value)], projectedPoints)}
-
-			{@const quad = view(svgQuad({}), corners)}
+		{#each maskIndices.value as i (i)}
+			{@const fs = view([i, "faces"], masks)}
+			{@const qs = view([i, "quads"], masks)}
 
 			<clipPath id={id + "-quad-" + i}>
-				<polygon cursor="pointer" class="clip" {...quad.value}
-				></polygon>
+				{#each fs.value as i (i)}
+					{@const e = view(i, faces)}
+					{@const ppA = view([e.value.a], projectedPoints)}
+					{@const ppB = view([e.value.b], projectedPoints)}
+					{@const ppC = view([e.value.c], projectedPoints)}
+					{@const attrs = view("attrs", e)}
+
+					{@const triangle = view(
+						svgTriangle({ opacity: 0.1 }),
+						combine({ a: ppA, b: ppB, c: ppC, attrs }),
+					)}
+					<polygon stroke="none" class="clip" {...triangle.value}
+					></polygon>
+				{/each}
+
+				{#each qs.value as i (i)}
+					{@const q = view(i, quads)}
+					{@const corners = view(
+						[getEntry(q.value)],
+						projectedPoints,
+					)}
+					{@const quad = view(svgQuad({}), corners)}
+					<polygon stroke="none" class="clip" {...quad.value}
+					></polygon>
+				{/each}
 			</clipPath>
 		{/each}
 	</defs>

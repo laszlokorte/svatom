@@ -224,6 +224,47 @@
 		sz: 0.4,
 	});
 
+	const geo2 = atom({
+		vertices: [
+			{ x: 10, y: 10, z: 10 },
+			{ x: 10, y: -10, z: 10 },
+			{ x: -10, y: -10, z: 10 },
+			{ x: -10, y: 10, z: 10 },
+			{ x: 10, y: 10, z: -10 },
+			{ x: 10, y: -10, z: -10 },
+			{ x: -10, y: -10, z: -10 },
+			{ x: -10, y: 10, z: -10 },
+		],
+		edges: [
+			{ from: 0, to: 1, faces: [0, 3] },
+			{ from: 1, to: 2, faces: [0, 8] },
+			{ from: 2, to: 3, faces: [1, 7] },
+			{ from: 3, to: 0, faces: [1, 11] },
+			{ from: 4, to: 5, faces: [2, 5] },
+			{ from: 5, to: 6, faces: [4, 9] },
+			{ from: 6, to: 7, faces: [6, 4] },
+			{ from: 7, to: 4, faces: [5, 10] },
+			{ from: 0, to: 4, faces: [3, 11] },
+			{ from: 1, to: 5, faces: [2, 9] },
+			{ from: 2, to: 6, faces: [7, 8] },
+			{ from: 3, to: 7, faces: [6, 10] },
+		],
+		faces: [
+			{ a: 0, b: 1, c: 2, attrs: { color: "red", flip: true } },
+			{ a: 2, b: 3, c: 0, attrs: { color: "red", flip: true } },
+			{ a: 4, b: 5, c: 1, attrs: { color: "blue", flip: true } },
+			{ a: 1, b: 0, c: 4, attrs: { color: "blue", flip: true } },
+			{ a: 7, b: 6, c: 5, attrs: { color: "green", flip: true } },
+			{ a: 5, b: 4, c: 7, attrs: { color: "green", flip: true } },
+			{ a: 6, b: 7, c: 3, attrs: { color: "magenta", flip: true } },
+			{ a: 3, b: 2, c: 6, attrs: { color: "magenta", flip: true } },
+			{ a: 1, b: 6, c: 2, attrs: { color: "cyan", flip: true } },
+			{ a: 1, b: 5, c: 6, attrs: { color: "cyan", flip: true } },
+			{ a: 4, b: 3, c: 7, attrs: { color: "yellow", flip: true } },
+			{ a: 3, b: 4, c: 0, attrs: { color: "yellow", flip: true } },
+		],
+	});
+
 	const camera = atom({
 		w: 50,
 		h: 50,
@@ -279,11 +320,15 @@
 				.map((_, i) => ({
 					x: -10 + (20 * i) / samples,
 					y:
-						Math.exp(damp * (i / samples - 0.5)) *
+						Math.exp(
+							(-damp / Math.max(1, amp)) * (i / samples - 0.5),
+						) *
 						amp *
 						Math.cos(freq * (i / samples - 0.5 + phase) * Math.PI),
 					z:
-						Math.exp(damp * (i / samples - 0.5)) *
+						Math.exp(
+							(-damp / Math.max(1, amp)) * (i / samples - 0.5),
+						) *
 						amp *
 						Math.sin(freq * (i / samples - 0.5 + phase) * Math.PI),
 				})),
@@ -375,6 +420,7 @@
 	/>
 	<ThreeDeeModel
 		id="model-a"
+		corners={true}
 		{trans}
 		{camera}
 		{selected}
@@ -395,7 +441,6 @@
 						sx: 0.4,
 						sy: 0.4,
 						sz: 0.4,
-						rz: 0,
 					}),
 					(c, o) => ({
 						...c,
@@ -404,13 +449,13 @@
 						sx: o.sx,
 						sy: o.sy,
 						sz: o.sz,
-						rz: o.rz,
 					}),
 				),
 				trans,
 			)}
+			geo={geo2}
+			selected={false}
 			{camera}
-			{selected}
 		/>
 
 		<g clip-path="url(#model-a-quad-0)">
@@ -526,137 +571,180 @@
 		>
 	</div>
 </div>
+<div style="display: flex; gap: 1em; flex-wrap: wrap;">
+	<div style="flex-grow: 1; flex-shrink: 1; flex-basis: 15em;">
+		<fieldset>
+			<legend>Camera</legend>
+			<label
+				>Near Plane: <output>{numf.format(np.value)}</output>
+				<input
+					type="range"
+					bind:value={np.value}
+					min="0.1"
+					step="0.1"
+					max="200"
+				/></label
+			>
+			<label
+				>Far Plane: <output>{numf.format(fp.value)}</output>
+				<input
+					type="range"
+					bind:value={fp.value}
+					min="0"
+					max="200"
+				/></label
+			>
+			<label
+				>Scale: <output>{numf.format(scale.value)}</output>
+				<input
+					type="range"
+					bind:value={scale.value}
+					min="0"
+					max="2000"
+				/></label
+			>
+		</fieldset>
+	</div>
 
-<fieldset>
-	<legend>Frequency</legend>
+	<div style="flex-grow: 1; flex-shrink: 1; flex-basis: 15em;">
+		<fieldset>
+			<legend>Frequency</legend>
 
-	<label
-		>Frequency: <output>{numf.format(freq.value)}</output>
-		<input
-			type="range"
-			bind:value={freq.value}
-			step="0.1"
-			min="-7"
-			max="7"
-		/></label
-	>
-	<label
-		>Amplitude: <output>{numf.format(amp.value)}</output>
-		<input
-			type="range"
-			bind:value={amp.value}
-			step="0.1"
-			min="0"
-			max="9"
-		/></label
-	>
-	<label
-		>Phase: <output>{numf.format(phase.value)}</output>
-		<input
-			type="range"
-			bind:value={phase.value}
-			step="0.01"
-			min="-2"
-			max="2"
-		/></label
-	>
-	<label
-		>Damping: <output>{numf.format(damp.value)}</output>
-		<input
-			type="range"
-			bind:value={damp.value}
-			step="0.01"
-			min="-6"
-			max="6"
-		/></label
-	>
-</fieldset>
+			<label
+				>Frequency: <output>{numf.format(freq.value)}</output>
+				<input
+					type="range"
+					bind:value={freq.value}
+					step="0.1"
+					min="-7"
+					max="7"
+				/></label
+			>
+			<label
+				>Amplitude: <output>{numf.format(amp.value)}</output>
+				<input
+					type="range"
+					bind:value={amp.value}
+					step="0.1"
+					min="0"
+					max="9"
+				/></label
+			>
+			<label
+				>Phase: <output>{numf.format(phase.value)}</output>
+				<input
+					type="range"
+					bind:value={phase.value}
+					step="0.01"
+					min="-2"
+					max="2"
+				/></label
+			>
+			<label
+				>Damping: <output>{numf.format(damp.value)}</output>
+				<input
+					type="range"
+					bind:value={damp.value}
+					step="0.01"
+					min="-6"
+					max="6"
+				/></label
+			>
+		</fieldset>
+	</div>
+</div>
 
 <fieldset>
 	<legend>Model Transform</legend>
-	<label
-		>X-Rotation: <output>{numf.format(rx.value)}</output>
-		<input type="range" bind:value={rx.value} min="-360" max="360" /></label
-	>
-	<label
-		>Y-Rotation: <output>{numf.format(ry.value)}</output>
-		<input type="range" bind:value={ry.value} min="-360" max="360" /></label
-	>
-	<label
-		>Z-Rotation: <output>{numf.format(rz.value)}</output>
-		<input type="range" bind:value={rz.value} min="-360" max="360" /></label
-	>
+	<div style="display: flex; gap: 1em; flex-wrap: wrap;">
+		<div style="flex-grow: 1; flex-shrink: 1; flex-basis: 15em;">
+			<label
+				>X-Rotation: <output>{numf.format(rx.value)}</output>
+				<input
+					type="range"
+					bind:value={rx.value}
+					min="-360"
+					max="360"
+				/></label
+			>
+			<label
+				>Y-Rotation: <output>{numf.format(ry.value)}</output>
+				<input
+					type="range"
+					bind:value={ry.value}
+					min="-360"
+					max="360"
+				/></label
+			>
+			<label
+				>Z-Rotation: <output>{numf.format(rz.value)}</output>
+				<input
+					type="range"
+					bind:value={rz.value}
+					min="-360"
+					max="360"
+				/></label
+			>
+		</div>
 
-	<label
-		>X-Scale: <output>{numf.format(sx.value)}</output>
-		<input
-			type="range"
-			bind:value={sx.value}
-			step="0.01"
-			min="0"
-			max="10"
-		/></label
-	>
-	<label
-		>Y-Scale: <output>{numf.format(sy.value)}</output>
-		<input
-			type="range"
-			bind:value={sy.value}
-			step="0.01"
-			min="0"
-			max="10"
-		/></label
-	>
-	<label
-		>Z-Scale: <output>{numf.format(sz.value)}</output>
-		<input
-			type="range"
-			bind:value={sz.value}
-			step="0.01"
-			min="0"
-			max="10"
-		/></label
-	>
+		<div style="flex-grow: 1; flex-shrink: 1; flex-basis: 15em;">
+			<label
+				>X-Scale: <output>{numf.format(sx.value)}</output>
+				<input
+					type="range"
+					bind:value={sx.value}
+					step="0.01"
+					min="0"
+					max="10"
+				/></label
+			>
+			<label
+				>Y-Scale: <output>{numf.format(sy.value)}</output>
+				<input
+					type="range"
+					bind:value={sy.value}
+					step="0.01"
+					min="0"
+					max="10"
+				/></label
+			>
+			<label
+				>Z-Scale: <output>{numf.format(sz.value)}</output>
+				<input
+					type="range"
+					bind:value={sz.value}
+					step="0.01"
+					min="0"
+					max="10"
+				/></label
+			>
+		</div>
 
-	<label
-		>X-Translation: <output>{numf.format(tx.value)}</output>
-		<input type="range" bind:value={tx.value} min="-100" max="100" /></label
-	>
-	<label
-		>Y-Translation: <output>{numf.format(ty.value)}</output>
-		<input type="range" bind:value={ty.value} min="-100" max="100" /></label
-	>
-	<label
-		>Z-Translation: <output>{numf.format(tz.value)}</output>
-		<input type="range" bind:value={tz.value} min="0" max="300" />
-	</label>
-</fieldset>
-
-<fieldset>
-	<legend>Camera</legend>
-	<label
-		>Near Plane: <output>{numf.format(np.value)}</output>
-		<input
-			type="range"
-			bind:value={np.value}
-			min="0.1"
-			step="0.1"
-			max="200"
-		/></label
-	>
-	<label
-		>Far Plane: <output>{numf.format(fp.value)}</output>
-		<input type="range" bind:value={fp.value} min="0" max="200" /></label
-	>
-	<label
-		>Scale: <output>{numf.format(scale.value)}</output>
-		<input
-			type="range"
-			bind:value={scale.value}
-			min="0"
-			max="2000"
-		/></label
-	>
+		<div style="flex-grow: 1; flex-shrink: 1; flex-basis: 15em;">
+			<label
+				>X-Translation: <output>{numf.format(tx.value)}</output>
+				<input
+					type="range"
+					bind:value={tx.value}
+					min="-100"
+					max="100"
+				/></label
+			>
+			<label
+				>Y-Translation: <output>{numf.format(ty.value)}</output>
+				<input
+					type="range"
+					bind:value={ty.value}
+					min="-100"
+					max="100"
+				/></label
+			>
+			<label
+				>Z-Translation: <output>{numf.format(tz.value)}</output>
+				<input type="range" bind:value={tz.value} min="0" max="300" />
+			</label>
+		</div>
+	</div>
 </fieldset>
 
 <style>
