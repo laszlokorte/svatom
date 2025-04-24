@@ -28,7 +28,11 @@
 			h: 50,
 			np: 10,
 			fp: 100,
-			scale: 1000,
+			cp: 5,
+			scale: 1200,
+			aspect: 1,
+			fov: Math.PI / 5,
+			backoff: 0,
 		}),
 		selected = atom(),
 		geo = atom({
@@ -198,14 +202,15 @@
 		},
 	);
 
-	const viewTransform = (np, fp, w, h) =>
+	const viewTransform = (near, far, w, h) =>
 		L.reread(({ x, y, z }) => {
-			const s = (z - np) / (fp - np);
+			const A = -(far + near) / (far - near);
+			const B = (-2 * far * near) / (far - near);
 			return {
 				x: x / w,
 				y: -y / h,
-				z: s,
-				s,
+				z: -z * A + B,
+				s: z,
 			};
 		});
 
@@ -231,12 +236,12 @@
 	const svgLine = (baseAttrs) =>
 		L.reread(
 			({
-				from: { x: x1, y: y1, s: s1 },
-				to: { x: x2, y: y2, s: s2 },
+				from: { x: x1, y: y1, z: z1 },
+				to: { x: x2, y: y2, z: z2 },
 				facePoints,
 				attrs,
 			}) => {
-				if (s1 < 0 || s2 < 0) {
+				if (z1 < 0 || z2 < 0) {
 					return {
 						x1: 0,
 						y1: 0,
@@ -276,12 +281,12 @@
 	const svgTriangle = (baseAttrs) =>
 		L.reread(
 			({
-				a: { x: x1, y: y1, s: s1 },
-				b: { x: x2, y: y2, s: s2 },
-				c: { x: x3, y: y3, s: s3 },
+				a: { x: x1, y: y1, z: z1 },
+				b: { x: x2, y: y2, z: z2 },
+				c: { x: x3, y: y3, z: z3 },
 				attrs,
 			}) => {
-				if (s1 < 0 || s2 < 0 || s3 < 0) {
+				if (z1 < 0 || z2 < 0 || z3 < 0) {
 					return {
 						points: ``,
 						fill: "none",
@@ -312,12 +317,12 @@
 	const svgQuad = () =>
 		L.reread(
 			({
-				a: { x: x1, y: y1, s: s1 },
-				b: { x: x2, y: y2, s: s2 },
-				c: { x: x3, y: y3, s: s3 },
-				d: { x: x4, y: y4, s: s4 },
+				a: { x: x1, y: y1, z: z1 },
+				b: { x: x2, y: y2, z: z2 },
+				c: { x: x3, y: y3, z: z3 },
+				d: { x: x4, y: y4, z: z4 },
 			}) => {
-				if (s1 < 0 || s2 < 0 || s3 < 0 || s4 < 0) {
+				if (z1 < 0 || z2 < 0 || z3 < 0 || z4 < 0) {
 					return {
 						points: ``,
 						fill: "none",
@@ -337,14 +342,14 @@
 			},
 		);
 
-	const svgTriangleTip = ({ r = 10, width, color, opacity }) =>
+	const svgTriangleTip = ({ r = 10, rd = 30, width, color, opacity }) =>
 		L.reread(
 			({
-				a: { x: x1, y: y1, s: s1 },
-				b: { x: x2, y: y2, s: s2 },
-				c: { x: x3, y: y3, s: s3 },
+				a: { x: x1, y: y1, z: z1 },
+				b: { x: x2, y: y2, z: z2, s: s2 },
+				c: { x: x3, y: y3, z: z3 },
 			}) => {
-				if (s2 < 0) {
+				if (z2 < 0) {
 					return {
 						cx: 0,
 						cy: 0,
@@ -358,7 +363,7 @@
 				return {
 					cx: x2,
 					cy: y2,
-					r: r + r / s2,
+					r: r + rd * Math.exp(-z2),
 					fill: color ?? "black",
 					"fill-opacity": opacity ?? "1",
 					clockwise: clockwise(x1, y1, x2, y2, x3, y3),
@@ -370,11 +375,11 @@
 	const svgTriangleCenter = ({ r = 10, width, color, opacity }) =>
 		L.reread(
 			({
-				a: { x: x1, y: y1, s: s1 },
-				b: { x: x2, y: y2, s: s2 },
-				c: { x: x3, y: y3, s: s3 },
+				a: { x: x1, y: y1, z: z1 },
+				b: { x: x2, y: y2, z: z2 },
+				c: { x: x3, y: y3, z: z3 },
 			}) => {
-				if (s2 < 0) {
+				if (z2 < 0) {
 					return {
 						x: 0,
 						y: 0,
@@ -435,8 +440,17 @@
 		return ps.map((p) =>
 			L.get(
 				[
-					viewTransform(camera.np, camera.fp, camera.w, camera.h),
-					project(camera.scale),
+					({ z, ...rest }) => ({
+						...rest,
+						z: z + camera.backoff / Math.tan(camera.fov / 2),
+					}),
+					viewTransform(
+						camera.np,
+						camera.fp,
+						camera.aspect * Math.tan(camera.fov / 2),
+						Math.tan(camera.fov / 2),
+					),
+					project(camera.scale * Math.log(20 + camera.backoff)),
 				],
 				p,
 			),
@@ -586,7 +600,7 @@
 
 {#if debug}
 	{#each pointIndices.value as i (i)}
-		{@const ptr = view([i, "s"], projectedPoints)}
+		{@const ptr = view([i, "z"], projectedPoints)}
 		{@const pt = view([i], projectedPoints)}
 		{@const pp = view([svgCircle(4)], pt)}
 		{@const text = view([svgText], pt)}

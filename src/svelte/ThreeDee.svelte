@@ -270,7 +270,11 @@
 		h: 50,
 		np: 10,
 		fp: 100,
+		cp: 5,
 		scale: 1200,
+		aspect: 1,
+		fov: Math.PI / 5,
+		backoff: 0,
 	});
 	const selected = atom();
 	const debug = atom(false);
@@ -302,11 +306,30 @@
 	const fp = view(
 		L.lens(
 			({ np, fp }) => fp - np,
-			(n, { np, ...rest }) => ({ ...rest, np, fp: np + n }),
+			(n, { np, ...rest }) => ({
+				...rest,
+				np,
+				fp: np + n,
+				cp: Math.min(n, rest.cp),
+			}),
 		),
 		camera,
 	);
+	const cp = view(
+		L.lens(
+			({ cp }) => cp,
+			(n, rest) => ({
+				...rest,
+				cp: Math.min(n, rest.fp - rest.np),
+			}),
+		),
+		camera,
+	);
+	const clamp = (min, max) => L.normalize(R.clamp(min, max));
 	const scale = view(["scale"], camera);
+	const fov = view(["fov", radToDeg, clamp(0.01, 160)], camera);
+	const backoff = view(["backoff"], camera);
+	const aspect = view(["aspect", clamp(0.1, 10)], camera);
 	const samples = 64;
 	const curve = atom({ freq: 5, amp: 1, phase: 0, damp: 0 });
 	const freq = view("freq", curve);
@@ -405,7 +428,7 @@
 	}}
 	onwheel={(evt) => {
 		evt.preventDefault();
-		fp.value /= Math.exp(evt.deltaY / 800);
+		fov.value *= Math.exp(evt.deltaY / 800);
 	}}
 >
 	<rect
@@ -575,34 +598,157 @@
 	<div style="flex-grow: 1; flex-shrink: 1; flex-basis: 15em;">
 		<fieldset>
 			<legend>Camera</legend>
-			<label
-				>Near Plane: <output>{numf.format(np.value)}</output>
-				<input
-					type="range"
-					bind:value={np.value}
-					min="0.1"
-					step="0.1"
-					max="200"
-				/></label
-			>
-			<label
-				>Far Plane: <output>{numf.format(fp.value)}</output>
-				<input
-					type="range"
-					bind:value={fp.value}
-					min="0"
-					max="200"
-				/></label
-			>
-			<label
-				>Scale: <output>{numf.format(scale.value)}</output>
-				<input
-					type="range"
-					bind:value={scale.value}
-					min="0"
-					max="2000"
-				/></label
-			>
+			<div style="display: flex; flex-wrap: wrap-reverse;gap: 1em">
+				<div style="flex-basis: 16em; flex-grow: 1">
+					<label
+						>Near Plane: <output>{numf.format(np.value)}</output>
+						<input
+							type="range"
+							bind:value={np.value}
+							min="0.1"
+							step="0.1"
+							max="200"
+						/></label
+					>
+					<label
+						>Far Plane: <output>{numf.format(fp.value)}</output>
+						<input
+							type="range"
+							bind:value={fp.value}
+							min="0"
+							max="200"
+						/></label
+					>
+					<label
+						>Click Plane: <output>{numf.format(cp.value)}</output>
+						<input
+							type="range"
+							bind:value={cp.value}
+							min="0"
+							max="200"
+						/></label
+					>
+					<label
+						>Scale: <output>{numf.format(scale.value)}</output>
+						<input
+							type="range"
+							bind:value={scale.value}
+							min="0"
+							max="2000"
+						/></label
+					>
+					<label
+						>Backoff: <output>{numf.format(backoff.value)}</output>
+						<input
+							type="range"
+							bind:value={backoff.value}
+							min="0"
+							max="400"
+							step="0.01"
+						/></label
+					>
+					<label
+						>Field of View: <output>{numf.format(fov.value)}</output
+						>
+						<input
+							type="range"
+							bind:value={fov.value}
+							min="0.001"
+							max="160"
+							step="0.01"
+						/></label
+					>
+					<!-- 	<label
+						>Aspect Ratio: <output
+							>{numf.format(aspect.value)}</output
+						>
+						<input
+							type="range"
+							bind:value={aspect.value}
+							min="0"
+							step="0.01"
+							max="10"
+						/></label
+					> -->
+				</div>
+				<svg
+					style:justify-self="center"
+					style:align-self="center"
+					style="flex-basis: 10em; flex-grow: 1;"
+					viewBox="-4 
+						{-(3 * 4000) / scale.value} 
+						{np.value + fp.value + 10} 
+						{(2 * (3 * 4000)) / scale.value}"
+					width="200"
+					height="200"
+					preserveAspectRatio="xMidYMid meet"
+				>
+					<polygon
+						fill="#0001"
+						points="0 0 {np.value + fp.value} {(3 * 4000) /
+							(-1 * scale.value)} {np.value + fp.value} {(3 *
+							4000) /
+							(1 * scale.value)}"
+					/>
+
+					<line
+						x1="0"
+						y1="0"
+						x2={np.value}
+						y2="0"
+						stroke="gray"
+						stroke-dasharray="2 2"
+						vector-effect="non-scaling-stroke"
+						stroke-width="1"
+					/>
+
+					<line
+						x2={np.value}
+						y2="0"
+						x1={np.value + fp.value}
+						y1="0"
+						stroke="gray"
+						stroke-dasharray="2 2"
+						vector-effect="non-scaling-stroke"
+						stroke-width="1"
+					/>
+					<line
+						x1={np.value}
+						y1={(((3 * 4000) / (-1 * scale.value)) * np.value) /
+							(np.value + fp.value)}
+						x2={np.value}
+						y2={(((3 * 4000) / (1 * scale.value)) * np.value) /
+							(np.value + fp.value)}
+						stroke="lightblue"
+						vector-effect="non-scaling-stroke"
+						stroke-width="1"
+					/>
+					<line
+						x1={np.value + cp.value}
+						y1={(((3 * 4000) / (-1 * scale.value)) *
+							(np.value + cp.value)) /
+							(np.value + fp.value)}
+						x2={np.value + cp.value}
+						y2={(((3 * 4000) / (1 * scale.value)) *
+							(np.value + cp.value)) /
+							(np.value + fp.value)}
+						stroke="orange"
+						vector-effect="non-scaling-stroke"
+						stroke-width="1"
+					/>
+					<line
+						x1={np.value + fp.value}
+						y1={(3 * 4000) / (-1 * scale.value)}
+						x2={np.value + fp.value}
+						y2={(3 * 4000) / (1 * scale.value)}
+						stroke="lightblue"
+						vector-effect="non-scaling-stroke"
+						stroke-width="1"
+					/>
+					<circle cx="0" cy="0" r="1"></circle>
+					<circle cx={np.value + fp.value} cy="0" r="1"></circle>
+				</svg>
+			</div>
 		</fieldset>
 	</div>
 
@@ -741,7 +887,7 @@
 			>
 			<label
 				>Z-Translation: <output>{numf.format(tz.value)}</output>
-				<input type="range" bind:value={tz.value} min="0" max="300" />
+				<input type="range" bind:value={tz.value} min="0" max="900" />
 			</label>
 		</div>
 	</div>
@@ -751,13 +897,13 @@
 	svg {
 		user-select: none;
 		font-family: inherit;
-		touch-action: manipulation;
 	}
 
 	.viewport {
 		width: 100%;
 		height: 50vh;
 		cursor: move;
+		touch-action: none;
 	}
 
 	polygon[clockwise="true"] {
