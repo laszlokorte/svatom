@@ -33,6 +33,14 @@
 			aspect: 1,
 			fov: Math.PI / 5,
 			orthogonality: 0,
+			orientation: {
+				x: 0,
+				y: 0,
+				z: 0,
+				rx: 0,
+				ry: 0,
+				rz: 0,
+			},
 		}),
 		selected = atom(),
 		geo = atom({
@@ -204,23 +212,23 @@
 
 	const viewTransform = (near, far, w, h) =>
 		L.reread(({ x, y, z }) => {
-			const A = -(far + near) / (far - near);
+			const A = (far + near) / (far - near);
 			const B = (-2 * far * near) / (far - near);
 			return {
 				x: x / w,
 				y: -y / h,
-				z: -z * A + B,
+				z: z * A + B,
 				s: z,
 			};
 		});
 
 	const lerp = (a, b, t) => b * t + (1 - t) * a;
 
-	const project = (scale, orthogonality, cp) =>
+	const project = (orthogonality, cp) =>
 		L.reread(({ x, y, z, s }) => {
 			return {
-				x: (x * scale) / 2 / lerp(s, cp, orthogonality),
-				y: (y * scale) / 2 / lerp(s, cp, orthogonality),
+				x: x / 2 / lerp(s, cp, orthogonality),
+				y: y / 2 / lerp(s, cp, orthogonality),
 				z: z / 2 / s,
 				s: lerp(s, 1, orthogonality),
 			};
@@ -238,12 +246,19 @@
 	const svgLine = (baseAttrs) =>
 		L.reread(
 			({
-				from: { x: x1, y: y1, z: z1 },
-				to: { x: x2, y: y2, z: z2 },
+				from: { x: x1, y: y1, z: z1, s: s1 },
+				to: { x: x2, y: y2, z: z2, s: s2 },
 				facePoints,
 				attrs,
 			}) => {
-				if (z1 < 0 || z2 < 0) {
+				if (
+					s1 < 0 ||
+					s2 < 0 ||
+					z1 < -1 ||
+					z2 < -1 ||
+					z1 > 1 ||
+					z2 > 1
+				) {
 					return {
 						x1: 0,
 						y1: 0,
@@ -283,12 +298,22 @@
 	const svgTriangle = (baseAttrs) =>
 		L.reread(
 			({
-				a: { x: x1, y: y1, z: z1 },
-				b: { x: x2, y: y2, z: z2 },
-				c: { x: x3, y: y3, z: z3 },
+				a: { x: x1, y: y1, z: z1, s: s1 },
+				b: { x: x2, y: y2, z: z2, s: s2 },
+				c: { x: x3, y: y3, z: z3, s: s3 },
 				attrs,
 			}) => {
-				if (z1 < 0 || z2 < 0 || z3 < 0) {
+				if (
+					s1 < 0 ||
+					s2 < 0 ||
+					s3 < 0 ||
+					z1 < -1 ||
+					z2 < -1 ||
+					z3 < -1 ||
+					z1 > 1 ||
+					z2 > 1 ||
+					z3 > 1
+				) {
 					return {
 						points: ``,
 						fill: "none",
@@ -319,12 +344,25 @@
 	const svgQuad = () =>
 		L.reread(
 			({
-				a: { x: x1, y: y1, z: z1 },
-				b: { x: x2, y: y2, z: z2 },
-				c: { x: x3, y: y3, z: z3 },
-				d: { x: x4, y: y4, z: z4 },
+				a: { x: x1, y: y1, z: z1, s: s1 },
+				b: { x: x2, y: y2, z: z2, s: s2 },
+				c: { x: x3, y: y3, z: z3, s: s3 },
+				d: { x: x4, y: y4, z: z4, s: s4 },
 			}) => {
-				if (z1 < 0 || z2 < 0 || z3 < 0 || z4 < 0) {
+				if (
+					s1 < 0 ||
+					s2 < 0 ||
+					s3 < 0 ||
+					s4 < 0 ||
+					z1 < -1 ||
+					z2 < -1 ||
+					z3 < -1 ||
+					z4 < -1 ||
+					z1 > 1 ||
+					z2 > 1 ||
+					z3 > 1 ||
+					z4 > 1
+				) {
 					return {
 						points: ``,
 						fill: "none",
@@ -347,11 +385,11 @@
 	const svgTriangleTip = ({ r = 10, rd = 30, width, color, opacity }) =>
 		L.reread(
 			({
-				a: { x: x1, y: y1, z: z1 },
-				b: { x: x2, y: y2, z: z2, s: s2 },
-				c: { x: x3, y: y3, z: z3 },
+				a: { x: x1, y: y1, z: z1, s: s1 },
+				b: { x: x2, y: y2, z: z2, s: s2, s2: s },
+				c: { x: x3, y: y3, z: z3, s: s3 },
 			}) => {
-				if (z2 < 0) {
+				if (s1 < 0 || s2 < 0 || s3 < 0 || z2 < -1 || z2 > 1) {
 					return {
 						cx: 0,
 						cy: 0,
@@ -377,11 +415,11 @@
 	const svgTriangleCenter = ({ r = 10, width, color, opacity }) =>
 		L.reread(
 			({
-				a: { x: x1, y: y1, z: z1 },
-				b: { x: x2, y: y2, z: z2 },
-				c: { x: x3, y: y3, z: z3 },
+				a: { x: x1, y: y1, z: z1, s: s1 },
+				b: { x: x2, y: y2, z: z2, s: s2 },
+				c: { x: x3, y: y3, z: z3, s: s3 },
 			}) => {
-				if (z2 < 0) {
+				if (s1 < 0 || s2 < 0 || s3 < 0 || z2 < -1 || z2 > 1) {
 					return {
 						x: 0,
 						y: 0,
@@ -405,9 +443,9 @@
 
 	const transform = L.reread(({ p, mat }) => {
 		const p0 = {
-			x: p.x * mat.sx,
-			y: p.y * mat.sy,
-			z: p.z * mat.sz,
+			x: p.x * (mat.sx ?? 1),
+			y: p.y * (mat.sy ?? 1),
+			z: p.z * (mat.sz ?? 1),
 		};
 
 		const p1 = {
@@ -435,20 +473,63 @@
 		};
 	});
 
+	const inverseTransform = ({ p, mat }) => {
+		const p0 = {
+			x: p.x - mat.tx,
+			y: p.y - mat.ty,
+			z: p.z - mat.tz,
+		};
+
+		const p1 = {
+			x: Math.cos(-mat.rz) * p0.x - Math.sin(-mat.rz) * p0.y,
+			y: Math.sin(-mat.rz) * p0.x + Math.cos(-mat.rz) * p0.y,
+			z: p0.z,
+		};
+
+		const p2 = {
+			x: p1.x,
+			y: Math.cos(-mat.rx) * p1.y - Math.sin(-mat.rx) * p1.z,
+			z: Math.sin(-mat.rx) * p1.y + Math.cos(-mat.rx) * p1.z,
+		};
+
+		const p3 = {
+			x: Math.cos(-mat.ry) * p2.x - Math.sin(-mat.ry) * p2.z,
+			y: p2.y,
+			z: Math.sin(-mat.ry) * p2.x + Math.cos(-mat.ry) * p2.z,
+		};
+
+		return {
+			x: p3.x,
+			y: p3.y,
+			z: p3.z,
+		};
+	};
+
 	const transformAll = L.reread(({ ps, mat }) => {
 		return ps.map((p) => L.get(transform, { p, mat }));
 	});
+
 	const projectAll = L.reread(({ camera, ps }) => {
 		return ps.map((p) =>
 			L.get(
 				[
+					(p) =>
+						L.get(inverseTransform, { p, mat: camera.orientation }),
 					viewTransform(
 						camera.np,
 						camera.fp,
 						camera.aspect * Math.tan(camera.fov / 2),
 						Math.tan(camera.fov / 2),
 					),
-					project(camera.scale, camera.orthogonality, camera.cp),
+					project(camera.orthogonality, camera.cp),
+					(p) => ({
+						...p,
+						x: p.x * camera.scale,
+						y: p.y * camera.scale,
+						ndc_x: p.x,
+						ndc_y: p.y,
+						ndc_z: p.z,
+					}),
 				],
 				p,
 			),
@@ -598,12 +679,25 @@
 
 {#if debug}
 	{#each pointIndices.value as i (i)}
-		{@const ptr = view([i, "z"], projectedPoints)}
+		{@const ptr = view([i, "s"], projectedPoints)}
+		{@const ptrZ = view([i, "ndc_z"], projectedPoints)}
+		{@const ptrX = view([i, "ndc_x"], projectedPoints)}
+		{@const ptrY = view([i, "ndc_y"], projectedPoints)}
+		{@const inside = view(
+			[
+				i,
+				L.props("ndc_z", "ndc_x", "ndc_y"),
+				R.values,
+				R.all((a) => a > -1 && a < 1),
+			],
+			projectedPoints,
+		)}
+		{@const inFront = view([i, "s", (s) => s > 0], projectedPoints)}
 		{@const pt = view([i], projectedPoints)}
 		{@const pp = view([svgCircle(4)], pt)}
 		{@const text = view([svgText], pt)}
 
-		{#if ptr.value > 0}
+		{#if inFront.value && inside.value}
 			<circle {...pp.value} opacity="0.5"></circle>
 			<text
 				{...text.value}
@@ -617,7 +711,10 @@
 				fill="red"
 				font-size="20"
 				text-anchor="middle"
-				dominant-baseline="central">{numf.format(ptr.value)}</text
+				dominant-baseline="central"
+				>{numf.format(ptrX.value)},{numf.format(
+					ptrY.value,
+				)},{numf.format(ptrZ.value)}</text
 			>
 		{/if}
 	{/each}

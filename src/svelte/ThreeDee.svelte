@@ -275,6 +275,14 @@
 		aspect: 1,
 		fov: (2 * Math.PI) / 6,
 		orthogonality: 0,
+		orientation: {
+			tx: 0,
+			ty: 0,
+			tz: 0,
+			rx: 0,
+			ry: 0,
+			rz: 0,
+		},
 	});
 	const selected = atom();
 	const debug = atom(false);
@@ -325,6 +333,14 @@
 		),
 		camera,
 	);
+
+	const crx = view(["orientation", "rx", radToDeg], camera);
+	const cry = view(["orientation", "ry", radToDeg], camera);
+	const crz = view(["orientation", "rz", radToDeg], camera);
+	const ctx = view(["orientation", "tx"], camera);
+	const cty = view(["orientation", "ty"], camera);
+	const ctz = view(["orientation", "tz"], camera);
+
 	const clamp = (min, max) => L.normalize(R.clamp(min, max));
 	const scale = view(["scale"], camera);
 	const fov = view(["fov", radToDeg, clamp(0.01, 160)], camera);
@@ -635,7 +651,7 @@
 						<input
 							type="range"
 							bind:value={cp.value}
-							min="0"
+							min="1"
 							max="200"
 						/></label
 					>
@@ -761,6 +777,66 @@
 					<circle cx="0" cy="0" r="1"></circle>
 					<circle cx={np.value + fp.value} cy="0" r="1"></circle>
 				</svg>
+			</div>
+			<div style="display: flex; gap: 1ex">
+				<div>
+					<label
+						>X-Translation: <output>{numf.format(ctx.value)}</output
+						>
+						<input
+							type="range"
+							bind:value={ctx.value}
+							min="-50"
+							max="50"
+						/></label
+					><label
+						>Y-Translation: <output>{numf.format(cty.value)}</output
+						>
+						<input
+							type="range"
+							bind:value={cty.value}
+							min="-50"
+							max="50"
+						/></label
+					><label
+						>Z-Translation: <output>{numf.format(ctz.value)}</output
+						>
+						<input
+							type="range"
+							bind:value={ctz.value}
+							min="-50"
+							max="50"
+						/></label
+					>
+				</div>
+
+				<div>
+					<label
+						>X-Rotation: <output>{numf.format(crx.value)}</output>
+						<input
+							type="range"
+							bind:value={crx.value}
+							min="-360"
+							max="360"
+						/></label
+					><label
+						>Y-Rotation: <output>{numf.format(cry.value)}</output>
+						<input
+							type="range"
+							bind:value={cry.value}
+							min="-360"
+							max="360"
+						/></label
+					><label
+						>Z-Rotation: <output>{numf.format(crz.value)}</output>
+						<input
+							type="range"
+							bind:value={crz.value}
+							min="-360"
+							max="360"
+						/></label
+					>
+				</div>
 			</div>
 		</fieldset>
 	</div>
@@ -900,7 +976,12 @@
 			>
 			<label
 				>Z-Translation: <output>{numf.format(tz.value)}</output>
-				<input type="range" bind:value={tz.value} min="0" max="900" />
+				<input
+					type="range"
+					bind:value={tz.value}
+					min="-900"
+					max="900"
+				/>
 			</label>
 		</div>
 	</div>
