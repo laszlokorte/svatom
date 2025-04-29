@@ -15,11 +15,17 @@
 	} from "./svatom.svelte.js";
 	import exampleMesh from "./example_mesh";
 
+	const numf = new Intl.NumberFormat("en-US", {
+		maximumFractionDigits: 2,
+		minimumFractionDigits: 2,
+	});
+	const expect = (p, f) => (x) => (p(x) ? f(x) : undefined);
+
 	const {
 		geo = atom(exampleMesh),
 		camera = atom({
 			clip: {
-				near: 5,
+				near: 2,
 				far: 1000,
 			},
 			aspectRatio: 1,
@@ -32,7 +38,7 @@
 				rx: 0,
 				ry: 0,
 				rz: 0,
-				dx: 1,
+				sx: 1,
 				sy: 1,
 				sz: 1,
 			},
@@ -41,7 +47,6 @@
 			aspect: "meet",
 			alignX: "Mid",
 			alignY: "Mid",
-			autoPadding: true,
 			size: {
 				x: 100,
 				y: 100,
@@ -49,149 +54,113 @@
 		}),
 	} = $props();
 
-	const offsetRect = (o) =>
-		L.lens(
-			(value) => ({
-				...value,
-				x: value["x"] + o,
-				y: value["y"] + o,
-				width: value["width"] - 2 * o,
-				height: value["height"] - 2 * o,
-			}),
-			(value) => ({
-				...value,
-				x: value["x"] - o,
-				y: value["y"] - o,
-				width: value["width"] * 2 * o,
-				height: value["height"] * 2 * o,
-			}),
-		);
+	const offsetRect = (o) => [
+		L.applyAt("x", L.add(o)),
+		L.applyAt("y", L.add(o)),
+		L.applyAt("width", L.subtract(2 * o)),
+		L.applyAt("height", L.subtract(2 * o)),
+	];
 
-	const lens2dTranslateBuilder = (ax1, ax2) => (t1, t2) =>
-		L.lens(
-			(value) => ({
-				...value,
-				[ax1]: value[ax1] + t1,
-				[ax2]: value[ax2] + t2,
-			}),
-			(value, orig) => ({
-				...orig,
-				...value,
-				[ax1]: value[ax1] - t1,
-				[ax2]: value[ax2] - t2,
-			}),
-		);
+	const lensTranslateBuilder =
+		(...axis) =>
+		(...deltas) =>
+			R.zipWith((ax, d) => L.applyAt(ax, L.add(d)), axis, deltas);
 
-	const lens3dTranslateBuilder = (ax1, ax2, ax3) => (t1, t2, t3) =>
-		L.lens(
-			(value) => ({
-				...value,
-				[ax1]: value[ax1] + t1,
-				[ax2]: value[ax2] + t2,
-				[ax3]: value[ax3] + t3,
-			}),
-			(value, orig) => ({
-				...orig,
-				...value,
-				[ax1]: value[ax1] - t1,
-				[ax2]: value[ax2] - t2,
-				[ax3]: value[ax3] - t3,
-			}),
-		);
+	const lensScaleBuilder =
+		(...axis) =>
+		(...deltas) =>
+			R.zipWith((ax, d) => L.applyAt(ax, L.multiply(d)), axis, deltas);
 
-	const lens3dScaleBuilder = (ax1, ax2, ax3) => (s1, s2, s3) =>
-		L.lens(
-			(value) => ({
-				...value,
-				[ax1]: value[ax1] * s1,
-				[ax2]: value[ax2] * s2,
-				[ax3]: value[ax3] * s3,
-			}),
-			(value, orig) => ({
-				...orig,
-				...value,
-				[ax1]: value[ax1] / s1,
-				[ax2]: value[ax2] / s2,
-				[ax3]: value[ax3] / s3,
-			}),
-		);
+	const lensRotateBuilder = (ax1, ax2) => (angle) => [
+		L.applyAt(
+			L.pick({ ax1, ax2 }),
+			L.iso(
+				expect(R.is(Object), ({ ax1, ax2 }) => ({
+					ax1: ax1 * Math.cos(angle) - ax2 * Math.sin(angle),
+					ax2: ax1 * Math.sin(angle) + ax2 * Math.cos(angle),
+				})),
+				expect(R.is(Object), ({ ax1, ax2 }) => ({
+					ax1: ax1 * Math.cos(-angle) - ax2 * Math.sin(-angle),
+					ax2: ax1 * Math.sin(-angle) + ax2 * Math.cos(-angle),
+				})),
+			),
+		),
+	];
 
-	const lens2dScaleBuilder = (ax1, ax2) => (s1, s2) =>
-		L.lens(
-			(value) => ({
-				...value,
-				[ax1]: value[ax1] * s1,
-				[ax2]: value[ax2] * s2,
-			}),
-			(value, orig) => ({
-				...orig,
-				...value,
-				[ax1]: value[ax1] / s1,
-				[ax2]: value[ax2] / s2,
-			}),
-		);
+	const lens3dPerspectiveBuilder =
+		(ax1, ax2, ax3, ax4) => (fov, aspect, near, far) => {
+			const tanfov = 1 / Math.tan(fov / 2);
+			const fpn = -(far + near) / (far - near);
+			const ftn = -(2 * far * near) / (far - near);
 
-	const lens3dRotateBuilder = (ax1, ax2) => (angle) =>
-		L.lens(
-			(value) => ({
-				...value,
-				[ax1]:
-					value[ax1] * Math.cos(angle) - value[ax2] * Math.sin(angle),
-				[ax2]:
-					value[ax1] * Math.sin(angle) + value[ax2] * Math.cos(angle),
-			}),
-			(value, orig) => ({
-				...orig,
-				...value,
-				[ax1]:
-					value[ax1] * Math.cos(angle) - value[ax2] * Math.sin(angle),
-				[ax2]:
-					value[ax1] * Math.sin(angle) + value[ax2] * Math.cos(angle),
-			}),
-		);
-	const lens3dProjectBuilder = (ax1, ax2, ax3, ax4) =>
-		L.lens(
-			(value) => ({
-				...value,
-				[ax1]: value[ax1] / value[ax4],
-				[ax2]: value[ax2] / value[ax4],
-				[ax3]: value[ax3] / value[ax4],
-			}),
-			(value, orig) => ({
-				...orig,
-				...value,
-				[ax1]: value[ax1] / value[ax4],
-				[ax2]: value[ax2] / value[ax4],
-				[ax3]: value[ax3] / value[ax4],
-				[ax3]: value[ax4],
-			}),
-		);
+			return [
+				L.applyAt(ax1, [L.multiply(tanfov), L.multiply(aspect)]),
+				L.applyAt(ax2, L.multiply(tanfov)),
+				L.applyAt(
+					L.pick({ ax3, ax4 }),
+					L.iso(
+						({ ax3, ax4 }) => ({
+							ax3: fpn * ax3 + ftn * ax4,
+							ax4: -ax3,
+						}),
+						({ ax3, ax4 }) => ({
+							ax3: -ax4,
+							ax4: (ax3 + fpn * ax4) / ftn,
+						}),
+					),
+				),
+			];
+		};
 
-	const lens3dTranslate = lens3dTranslateBuilder("x", "y", "z");
-	const lens2dTranslate = lens2dTranslateBuilder("x", "y", "z");
-	const lens3dScale = lens3dScaleBuilder("x", "y", "z");
-	const lens2dScale = lens2dScaleBuilder("x", "y");
-	const lens3dRotateX = lens3dRotateBuilder("y", "z");
-	const lens3dRotateY = lens3dRotateBuilder("x", "z");
-	const lens3dRotateZ = lens3dRotateBuilder("x", "y");
-	const lens2dRotate = lens3dRotateBuilder("x", "y");
+	const lens3dProjectBuilder = (ax1, ax2, ax3, ax4) => [
+		L.applyAt(
+			L.pick({ ax1, ax2, ax3, ax4 }),
+			L.iso(
+				expect(R.is(Object), ({ ax1, ax2, ax3, ax4 }) => ({
+					ax1: ax1 / ax4,
+					ax2: ax2 / ax4,
+					ax3: ax3 / ax4,
+					ax4: ax4,
+				})),
+				expect(R.is(Object), ({ ax1, ax2, ax3, ax4 }) => ({
+					ax1: ax1 * ax4,
+					ax2: ax2 * ax4,
+					ax3: ax3 * ax4,
+					ax4: ax4,
+				})),
+			),
+		),
+	];
+
+	const lens3dTranslate = lensTranslateBuilder("x", "y", "z");
+	const lens2dTranslate = lensTranslateBuilder("x", "y", "z");
+	const lens3dScale = lensScaleBuilder("x", "y", "z");
+	const lens2dScale = lensScaleBuilder("x", "y");
+	const lens3dRotateX = lensRotateBuilder("y", "z");
+	const lens3dRotateY = lensRotateBuilder("x", "z");
+	const lens3dRotateZ = lensRotateBuilder("x", "y");
+	const lens2dRotate = lensRotateBuilder("x", "y");
 	const lens3dProject = lens3dProjectBuilder("x", "y", "z", "w");
+	const lens3dPerspective = lens3dPerspectiveBuilder("x", "y", "z", "w");
 
 	const coordPair = L.iso(
-		({ x, y }) => `${x},${y}`,
-		(s) => {
+		expect(R.is(Object), ({ x, y }) => `${x},${y}`),
+		expect(R.is(String), (s) => {
 			const [x, y] = s.split(",").map(Number);
 			return { x, y };
-		},
+		}),
 	);
 
 	const coordString = L.iso(
-		(points) => points.map(L.get(coordPair)).join(" "),
-		(str) =>
-			str
-				.trim()
-				.split(/\s+/)
-				.map((p) => L.set(coordPair, p, p)),
+		expect(R.is(Array), R.pipe(R.map(L.get(coordPair)), R.join(" "))),
+		expect(
+			R.is(String),
+			R.pipe(
+				R.trim,
+				R.split(/\s+/),
+				R.map((p) => L.set(coordPair, p, p)),
+			),
+		),
 	);
 
 	const viewBox = view(
@@ -253,9 +222,8 @@
 
 	const debugBoundsSvg = view(
 		[
-			L.pick({
-				points: ["points", coordString],
-
+			L.pickIn({
+				points: coordString,
 				stroke: R.always("cyan"),
 				fill: R.always("white"),
 				"fill-opacity": R.always("0.1"),
@@ -264,7 +232,7 @@
 		debugBounds,
 	);
 
-	const lensRadToPi = [L.multiply(180), L.divide(Math.PI)];
+	const lensRadToDegree = [L.multiply(180), L.divide(Math.PI)];
 
 	const offset = atom({
 		x: 0,
@@ -272,7 +240,7 @@
 	});
 	const rotation = atom(0);
 	const scale = atom({ x: 1, y: 1 });
-	const rotationAngle = view(lensRadToPi, rotation);
+	const rotationAngle = view(lensRadToDegree, rotation);
 
 	const debugCircle = view(
 		[
@@ -319,7 +287,11 @@
 		],
 	});
 
-	const mapIso = (iso) => L.iso(R.map(L.get(iso)), R.zipWith(L.set(iso)));
+	const mapIso = (iso) =>
+		L.iso(
+			expect(R.is(Array), R.map(L.get(iso))),
+			expect(R.is(Array), R.zipWith(L.set(iso))),
+		);
 
 	const transformChain = ({
 		offset: { x, y },
@@ -335,9 +307,7 @@
 	const polygon2D = view(
 		L.choose(({ offset, scale, rotation }) => [
 			"poly",
-			L.pickIn({
-				points: transformChain({ offset, scale, rotation }),
-			}),
+			L.applyAt("points", transformChain({ offset, scale, rotation })),
 		]),
 		combine({ offset, rotation, scale, poly: polygon2DShape }),
 	);
@@ -407,10 +377,10 @@
 	};
 
 	const debugPolygon = view(
-		L.pick({
+		L.pickIn({
+			points: coordString,
 			stroke: R.always("blue"),
 			"stroke-dasharray": R.always("10 10"),
-			points: ["points", coordString],
 			fill: R.always("white"),
 			"fill-opacity": R.always("0.3"),
 		}),
@@ -424,14 +394,10 @@
 			L.pick({
 				stroke: R.always("purple"),
 				points: [
-					L.pickIn({
-						bounds: [
-							offsetRect(inset),
-							lensRectEdges,
-							L.inverse(L.prop("points")),
-						],
-						poly: [],
-					}),
+					L.applyAt("bounds", [
+						offsetRect(inset),
+						L.pick({ points: lensRectEdges }),
+					]),
 					({ poly, bounds }) => clipPolygonPolygon(poly, bounds),
 					"points",
 					coordString,
@@ -473,11 +439,11 @@
 		],
 	});
 
-	const ndcTriangle = atom({
+	const worldTriangle = atom({
 		vertices: [
-			{ x: -1.4, y: 1.4, z: 0, w: 1 },
-			{ x: 0.2, y: 3.4, z: 0, w: 1 },
-			{ x: 0.3, y: -1.4, z: 0, w: 1 },
+			{ x: -1.4, y: 1.4, z: -3, w: 1 },
+			{ x: 0.2, y: 3.4, z: -4, w: 1 },
+			{ x: 0.3, y: -1.4, z: -8, w: 1 },
 		],
 		edges: [
 			{ from: 0, to: 1 },
@@ -487,23 +453,66 @@
 		faces: [{ a: 0, b: 1, c: 2 }],
 	});
 
+	const cameraTransform = (camera, screenAspect) => [
+		L.inverse([
+			lens3dScale(camera.eye.sx, camera.eye.sy, camera.eye.sz),
+			lens3dRotateX(camera.eye.rx),
+			lens3dRotateY(camera.eye.ry),
+			lens3dRotateZ(camera.eye.rz),
+			lens3dTranslate(camera.eye.tx, camera.eye.ty, camera.eye.tz),
+		]),
+
+		lens3dPerspective(
+			camera.fov,
+			camera.aspectRatio * screenAspect,
+			camera.clip.near,
+			camera.clip.far,
+		),
+	];
+
+	const ratio = (a, b) => [
+		L.pick({ a, b }),
+		L.choose(({ a }) => ["b", L.divide(a)]),
+	];
+
+	const screenAspect = view(["size", ratio("x", "y")], screen);
+
+	const ndcTriangle = view(
+		L.choose(({ camera, screenAspect, geo }) => {
+			return [
+				"geo",
+				L.applyAt(
+					"vertices",
+					mapIso(cameraTransform(camera, screenAspect)),
+				),
+			];
+		}),
+		combine({ geo: worldTriangle, camera, screenAspect }),
+	);
+
 	const coordPathString = (r) =>
-		L.lens(
-			(points) =>
-				points
-					.map(
+		L.iso(
+			expect(
+				R.is(Array),
+				R.pipe(
+					R.map(
 						({ x, y }) =>
 							`M ${x + r} ${y} A ${r} ${r} 0 1 0 ${x - r} ${y} A ${r} ${r} 0 1 0 ${x + r} ${y}`,
-					)
-					.join(" "),
-			(str, old) =>
-				str
-					.trim()
-					.split(",")
-					.map((s) => {
+					),
+					R.join(" "),
+				),
+			),
+			expect(
+				R.is(String),
+				R.pipe(
+					R.trim(),
+					R.split(","),
+					R.map((s) => {
 						const [x, y] = s.split(",").map(Number);
-						return { ...old, x, y };
+						return { x, y };
 					}),
+				),
+			),
 		);
 
 	const ndcCubeVertexPath = view(
@@ -622,11 +631,12 @@
 
 	const ndcTriangleEdgePath = view(
 		({ screen: { size }, geo: { vertices, edges } }) => {
-			const project = L.get([
+			const project = [
+				L.defaults({ x: 0, y: 0, z: 0, w: 1 }),
 				lens3dProject,
 				lens2dScale(size.x / 2, size.y / 2),
 				coordPair,
-			]);
+			];
 
 			const edgesWithCoords = R.map(({ from, to }) => {
 				return { from: vertices[from], to: vertices[to] };
@@ -636,20 +646,8 @@
 				[
 					mapIso([
 						clipEdge4D,
-						L.pickIn({
-							from: [
-								L.defaults({ x: 0, y: 0, z: 0, w: 1 }),
-								lens3dProject,
-								lens2dScale(size.x / 2, size.y / 2),
-								coordPair,
-							],
-							to: [
-								L.defaults({ x: 0, y: 0, z: 0, w: 1 }),
-								lens3dProject,
-								lens2dScale(size.x / 2, size.y / 2),
-								coordPair,
-							],
-						}),
+						L.applyAt("from", project),
+						L.applyAt("to", project),
 						({ from, to }) => `M${from} L${to}`,
 					]),
 					L.inverse(L.split(" ")),
@@ -664,7 +662,7 @@
 
 	const ndcTriangleFacePath = view(
 		({ screen: { size }, geo: { vertices, faces } }) => {
-			const project = L.get([
+			const project = mapIso([
 				lens3dProject,
 				lens2dScale(size.x / 2, size.y / 2),
 				coordPair,
@@ -676,34 +674,296 @@
 
 			const projectedVertices = L.get(
 				[
-					mapIso([
-						clipFace4D,
-						mapIso([
-							lens3dProject,
-							lens2dScale(size.x / 2, size.y / 2),
-							coordPair,
-						]),
-						L.inverse(L.split(" ")),
-					]),
+					mapIso([clipFace4D, project, L.inverse(L.split(" "))]),
 					L.inverse(L.split(" ")),
 				],
 				facesWithCoords,
 			);
-			console.log(projectedVertices);
 
 			return projectedVertices;
 		},
 		combine({ screen, geo: ndcTriangle }),
 	);
+
+	const cameraFoV = view(["fov", lensRadToDegree], camera);
+	const cameraAspectRatio = view(["aspectRatio"], camera);
+	const cameraOrtho = view(
+		["orthogonality", L.normalize(R.clamp(0, 1))],
+		camera,
+	);
+
+	const cameraEye = view(["eye"], camera);
+	const cameraEyePosX = view(["tx"], cameraEye);
+	const cameraEyePosY = view(["ty"], cameraEye);
+	const cameraEyePosZ = view(["tz"], cameraEye);
+	const cameraEyeRotX = view(["rx", lensRadToDegree], cameraEye);
+	const cameraEyeRotY = view(["ry", lensRadToDegree], cameraEye);
+	const cameraEyeRotZ = view(["rz", lensRadToDegree], cameraEye);
+	const cameraClipNear = view([["clip", "near"]], camera);
+	const cameraClipFar = view([["clip", "far"]], camera);
 </script>
 
-<input type="range" {...rangeX.value} bind:value={offsetX.value} />
-<input type="range" {...rangeY.value} bind:value={offsetY.value} />
-<input type="range" min="-360" max="360" bind:value={rotationAngle.value} />
-<input type="range" min="-4" max="4" step="0.01" bind:value={scaleX.value} />
-<input type="range" min="-4" max="4" step="0.01" bind:value={scaleY.value} />
-<input type="range" min="-10" max="50" step="1" bind:value={inset.value} />
+<div
+	style="display: grid; grid-template-columns: repeat(auto-fit, minmax(20em, 1fr)); gap: 1em; padding: 1em 0"
+>
+	<fieldset>
+		<legend>Plane Triangle</legend>
+		<label class="number-picker"
+			><span class="number-picker-label">Offset X:</span>
+			<input
+				type="range"
+				class="number-picker-slider"
+				{...rangeX.value}
+				bind:value={offsetX.value}
+			/><output class="number-picker-value ro"
+				>({numf.format(offsetX.value)})</output
+			>
+		</label>
+		<label class="number-picker"
+			><span class="number-picker-label">Offset Y:</span>
+			<input
+				type="range"
+				class="number-picker-slider"
+				{...rangeY.value}
+				bind:value={offsetY.value}
+			/><output class="number-picker-value ro"
+				>({numf.format(offsetY.value)})</output
+			>
+		</label>
+		<label class="number-picker"
+			><span class="number-picker-label">Rotation:</span>
+			<input
+				type="range"
+				class="number-picker-slider"
+				min="-360"
+				max="360"
+				bind:value={rotationAngle.value}
+			/><output class="number-picker-value ro"
+				>({numf.format(rotationAngle.value)})</output
+			>
+		</label>
 
+		<label class="number-picker"
+			><span class="number-picker-label">Scale X:</span>
+			<input
+				type="range"
+				class="number-picker-slider"
+				min="-4"
+				max="4"
+				step="0.01"
+				bind:value={scaleX.value}
+			/><output class="number-picker-value ro"
+				>({numf.format(scaleX.value)})</output
+			>
+		</label>
+
+		<label class="number-picker"
+			><span class="number-picker-label">Scale Y:</span>
+			<input
+				type="range"
+				class="number-picker-slider"
+				min="-4"
+				max="4"
+				step="0.01"
+				bind:value={scaleY.value}
+			/><output class="number-picker-value ro"
+				>({numf.format(scaleY.value)})</output
+			>
+		</label>
+	</fieldset>
+
+	<div>
+		<fieldset>
+			<legend>View</legend>
+
+			<label class="number-picker"
+				><span class="number-picker-label">Inset:</span>
+				<input
+					type="range"
+					class="number-picker-slider"
+					min="-10"
+					max="50"
+					step="1"
+					bind:value={inset.value}
+				/><output class="number-picker-value ro"
+					>({numf.format(inset.value)})</output
+				>
+			</label>
+		</fieldset>
+		<fieldset>
+			<legend>Camera</legend>
+
+			<label class="number-picker"
+				><span class="number-picker-label">Field of View:</span>
+				<input
+					type="range"
+					class="number-picker-slider"
+					min="1"
+					max="120"
+					step="1"
+					bind:value={cameraFoV.value}
+				/><output class="number-picker-value ro"
+					>({numf.format(cameraFoV.value)})</output
+				>
+			</label>
+
+			<label class="number-picker"
+				><span class="number-picker-label">Aspect Ratio:</span>
+				<input
+					type="range"
+					class="number-picker-slider"
+					min="0.1"
+					max="10"
+					step="0.1"
+					bind:value={cameraAspectRatio.value}
+				/><output class="number-picker-value ro"
+					>({numf.format(cameraAspectRatio.value)})</output
+				>
+			</label>
+
+			<label class="number-picker"
+				><span class="number-picker-label">Orthogonality:</span>
+				<input
+					type="range"
+					class="number-picker-slider"
+					min="0"
+					max="1"
+					step="0.01"
+					bind:value={cameraOrtho.value}
+				/><output class="number-picker-value ro"
+					>({numf.format(cameraOrtho.value)})</output
+				>
+			</label>
+
+			<fieldset>
+				<legend>Eye</legend>
+
+				<div
+					style="display: grid; grid-template-columns: repeat(auto-fit, minmax(10em, 1fr)); gap: 1em; "
+				>
+					<div>
+						<label class="number-picker"
+							><span class="number-picker-label">Position X:</span
+							>
+							<input
+								type="range"
+								class="number-picker-slider"
+								min="-100"
+								max="100"
+								step="0.01"
+								bind:value={cameraEyePosX.value}
+							/><output class="number-picker-value ro"
+								>({numf.format(cameraEyePosX.value)})</output
+							>
+						</label>
+						<label class="number-picker"
+							><span class="number-picker-label">Position Y:</span
+							>
+							<input
+								type="range"
+								class="number-picker-slider"
+								min="-100"
+								max="100"
+								step="0.01"
+								bind:value={cameraEyePosY.value}
+							/><output class="number-picker-value ro"
+								>({numf.format(cameraEyePosY.value)})</output
+							>
+						</label>
+						<label class="number-picker"
+							><span class="number-picker-label">Position Z:</span
+							>
+							<input
+								type="range"
+								class="number-picker-slider"
+								min="-100"
+								max="100"
+								step="0.01"
+								bind:value={cameraEyePosZ.value}
+							/><output class="number-picker-value ro"
+								>({numf.format(cameraEyePosZ.value)})</output
+							>
+						</label>
+					</div>
+					<div>
+						<label class="number-picker"
+							><span class="number-picker-label">Rotation X:</span
+							>
+							<input
+								type="range"
+								class="number-picker-slider"
+								min="-360"
+								max="360"
+								step="01"
+								bind:value={cameraEyeRotX.value}
+							/><output class="number-picker-value ro"
+								>({numf.format(cameraEyeRotX.value)})</output
+							>
+						</label>
+						<label class="number-picker"
+							><span class="number-picker-label">Rotation Y:</span
+							>
+							<input
+								type="range"
+								class="number-picker-slider"
+								min="-360"
+								max="360"
+								step="01"
+								bind:value={cameraEyeRotY.value}
+							/><output class="number-picker-value ro"
+								>({numf.format(cameraEyeRotY.value)})</output
+							>
+						</label>
+						<label class="number-picker"
+							><span class="number-picker-label">Rotation Z:</span
+							>
+							<input
+								type="range"
+								class="number-picker-slider"
+								min="-360"
+								max="360"
+								step="01"
+								bind:value={cameraEyeRotZ.value}
+							/><output class="number-picker-value ro"
+								>({numf.format(cameraEyeRotZ.value)})</output
+							>
+						</label>
+					</div>
+				</div>
+			</fieldset>
+
+			<fieldset>
+				<legend>Clip</legend>
+				<label class="number-picker"
+					><span class="number-picker-label">Near:</span>
+					<input
+						type="range"
+						class="number-picker-slider"
+						min="1"
+						max="200"
+						step="1"
+						bind:value={cameraClipNear.value}
+					/><output class="number-picker-value ro"
+						>({numf.format(cameraClipNear.value)})</output
+					>
+				</label>
+				<label class="number-picker"
+					><span class="number-picker-label">Far:</span>
+					<input
+						type="range"
+						class="number-picker-slider"
+						min="10"
+						max="1000"
+						step="1"
+						bind:value={cameraClipFar.value}
+					/><output class="number-picker-value ro"
+						>({numf.format(cameraClipFar.value)})</output
+					>
+				</label>
+			</fieldset>
+		</fieldset>
+	</div>
+</div>
 <div class="resize">
 	<svg
 		bind:clientWidth={clientWidth.value}
