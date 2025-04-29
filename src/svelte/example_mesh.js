@@ -21,7 +21,7 @@ export default {
 		{
 			from: 1,
 			to: 2,
-			faces: [0, 8],
+			faces: [0, 9],
 			/*attrs: { color: "green" }*/
 		},
 		{
@@ -45,7 +45,7 @@ export default {
 		{
 			from: 5,
 			to: 6,
-			faces: [4, 9],
+			faces: [4, 8],
 			/*attrs: { color: "blue" }*/
 		},
 		{
@@ -63,25 +63,25 @@ export default {
 		{
 			from: 0,
 			to: 4,
-			faces: [3, 11],
+			faces: [2, 11],
 			/*attrs: { color: "blue" }*/
 		},
 		{
 			from: 1,
 			to: 5,
-			faces: [2, 9],
+			faces: [3, 9],
 			/*attrs: { color: "red" }*/
 		},
 		{
 			from: 2,
 			to: 6,
-			faces: [7, 8],
+			faces: [6, 8],
 			/*attrs: { color: "green" }*/
 		},
 		{
 			from: 3,
 			to: 7,
-			faces: [6, 13],
+			faces: [7, 13],
 			/*attrs: { color: "blue" }*/
 		},
 		{
@@ -112,14 +112,14 @@ export default {
 	faces: [
 		{ a: 0, b: 1, c: 2, attrs: { color: "red" } },
 		{ a: 2, b: 3, c: 0, attrs: { color: "red" } },
-		{ a: 4, b: 5, c: 1, attrs: { color: "red" } },
-		{ a: 1, b: 0, c: 4, attrs: { color: "red" } },
+		{ a: 5, b: 0, c: 4, attrs: { color: "red" } },
+		{ a: 5, b: 1, c: 0, attrs: { color: "red" } },
 		{ a: 7, b: 6, c: 5, attrs: { color: "red" } },
 		{ a: 5, b: 4, c: 7, attrs: { color: "red" } },
-		{ a: 6, b: 7, c: 3, attrs: { color: "red" } },
-		{ a: 3, b: 2, c: 6, attrs: { color: "red" } },
-		{ a: 1, b: 6, c: 2, attrs: { color: "red" } },
-		{ a: 1, b: 5, c: 6, attrs: { color: "red" } },
+		{ a: 2, b: 6, c: 7, attrs: { color: "red" } },
+		{ a: 7, b: 3, c: 2, attrs: { color: "red" } },
+		{ a: 5, b: 6, c: 2,  attrs: { color: "red" } },
+		{ a: 2, b: 1, c: 5,  attrs: { color: "red" } },
 		{ a: 0, b: 3, c: 8, attrs: { color: "red" } },
 		{ a: 4, b: 0, c: 8, attrs: { color: "red" } },
 		{ a: 7, b: 4, c: 8, attrs: { color: "red" } },
@@ -162,23 +162,23 @@ export const cube = {
 		{ from: 5, to: 6, faces: [4, 9] },
 		{ from: 6, to: 7, faces: [6, 4] },
 		{ from: 7, to: 4, faces: [5, 10] },
-		{ from: 0, to: 4, faces: [3, 11] },
-		{ from: 1, to: 5, faces: [2, 9] },
-		{ from: 2, to: 6, faces: [7, 8] },
-		{ from: 3, to: 7, faces: [6, 10] },
+		{ from: 0, to: 4, faces: [2, 11] },
+		{ from: 1, to: 5, faces: [3, 9] },
+		{ from: 2, to: 6, faces: [6, 8] },
+		{ from: 3, to: 7, faces: [7, 10] },
 	],
 	faces: [
 		{ a: 0, b: 1, c: 2, attrs: { color: "red", flip: true } },
 		{ a: 2, b: 3, c: 0, attrs: { color: "red", flip: true } },
-		{ a: 4, b: 5, c: 1, attrs: { color: "blue", flip: true } },
-		{ a: 1, b: 0, c: 4, attrs: { color: "blue", flip: true } },
+		{ a: 5, b: 0, c: 4, attrs: { color: "blue", flip: true } },
+		{ a: 5, b: 1, c: 0, attrs: { color: "blue", flip: true } },
 		{ a: 7, b: 6, c: 5, attrs: { color: "green", flip: true } },
 		{ a: 5, b: 4, c: 7, attrs: { color: "green", flip: true } },
-		{ a: 6, b: 7, c: 3, attrs: { color: "magenta", flip: true } },
-		{ a: 3, b: 2, c: 6, attrs: { color: "magenta", flip: true } },
-		{ a: 1, b: 6, c: 2, attrs: { color: "cyan", flip: true } },
-		{ a: 1, b: 5, c: 6, attrs: { color: "cyan", flip: true } },
-		{ a: 4, b: 3, c: 7, attrs: { color: "yellow", flip: true } },
-		{ a: 3, b: 4, c: 0, attrs: { color: "yellow", flip: true } },
+		{ a: 2, b: 6, c: 7, attrs: { color: "magenta", flip: true } },
+		{ a: 7, b: 3, c: 2, attrs: { color: "magenta", flip: true } },
+		{ a: 5, b: 6, c: 2, attrs: { color: "cyan", flip: true } },
+		{ a: 2, b: 1, c: 5, attrs: { color: "cyan", flip: true } },
+		{ a: 0, b: 3, c: 7, attrs: { color: "yellow", flip: true } },
+		{ a: 7, b: 4, c: 0, attrs: { color: "yellow", flip: true } },
 	],
 }

@@ -13,7 +13,7 @@
 		bindValue,
 		autofocusIf,
 	} from "./svatom.svelte.js";
-	import exampleMesh from "./example_mesh";
+	import exampleMesh, { cube } from "./example_mesh";
 
 	const numf = new Intl.NumberFormat("en-US", {
 		maximumFractionDigits: 2,
@@ -29,12 +29,12 @@
 				far: 1000,
 			},
 			aspectRatio: 1,
-			fov: Math.PI / 5,
+			fov: Math.PI / 2,
 			orthogonality: 0,
 			eye: {
 				tx: 0,
 				ty: 0,
-				tz: 0,
+				tz: 30,
 				rx: 0,
 				ry: 0,
 				rz: 0,
@@ -443,25 +443,35 @@
 		],
 	});
 
-	const worldTriangle = atom({
-		vertices: [
-			{ x: -1.4, y: 1.4, z: -3, w: 1 },
-			{ x: 0.2, y: 3.4, z: -4, w: 1 },
-			{ x: 0.3, y: -1.4, z: -8, w: 1 },
-		],
-		edges: [
-			{ from: 0, to: 1 },
-			{ from: 1, to: 2 },
-			{ from: 2, to: 0 },
-		],
-		faces: [{ a: 0, b: 1, c: 2 }],
+	const worldGeo = atom(
+		L.set(["vertices", L.elems, "w", L.define(1)], 1, cube),
+	);
+
+	const worldTransform = atom({
+		tx: 0,
+		ty: 0,
+		tz: 0,
+		rx: 0.5,
+		ry: 0.8,
+		rz: -0.3,
+		sx: 1.1,
+		sy: 1.2,
+		sz: 1,
 	});
+
+	const lensMatrixTransform = (transform) => [
+		lens3dScale(transform.sx, transform.sy, transform.sz),
+		lens3dRotateY(transform.ry),
+		lens3dRotateX(transform.rx),
+		lens3dRotateZ(transform.rz),
+		lens3dTranslate(transform.tx, transform.ty, transform.tz),
+	];
 
 	const cameraTransform = (camera, screenAspect) => [
 		L.inverse([
 			lens3dScale(camera.eye.sx, camera.eye.sy, camera.eye.sz),
-			lens3dRotateX(camera.eye.rx),
 			lens3dRotateY(camera.eye.ry),
+			lens3dRotateX(camera.eye.rx),
 			lens3dRotateZ(camera.eye.rz),
 			lens3dTranslate(camera.eye.tx, camera.eye.ty, camera.eye.tz),
 		]),
@@ -481,17 +491,25 @@
 
 	const screenAspect = view(["size", ratio("x", "y")], screen);
 
-	const ndcTriangle = view(
-		L.choose(({ camera, screenAspect, geo }) => {
+	const ndcGeo = view(
+		L.choose(({ camera, transform, screenAspect, geo }) => {
 			return [
 				"geo",
 				L.applyAt(
 					"vertices",
-					mapIso(cameraTransform(camera, screenAspect)),
+					mapIso([
+						lensMatrixTransform(transform),
+						cameraTransform(camera, screenAspect),
+					]),
 				),
 			];
 		}),
-		combine({ geo: worldTriangle, camera, screenAspect }),
+		combine({
+			geo: worldGeo,
+			transform: worldTransform,
+			camera,
+			screenAspect,
+		}),
 	);
 
 	const coordPathString = (r) =>
@@ -646,7 +664,7 @@
 		return ndcPlanes.reduce(clipPoly4D, polygon);
 	}
 
-	const ndcTriangleEdgePath = view(
+	const ndcGeoEdgePath = view(
 		({
 			screen: { size },
 			geo: { vertices, edges },
@@ -678,10 +696,10 @@
 
 			return projectedVertices;
 		},
-		combine({ screen, geo: ndcTriangle, camera }),
+		combine({ screen, geo: ndcGeo, camera }),
 	);
 
-	const ndcTriangleFacePath = view(
+	const ndcGeoFacePaths = view(
 		({
 			screen: { size },
 			geo: { vertices, faces },
@@ -698,16 +716,13 @@
 			}, faces);
 
 			const projectedVertices = L.get(
-				[
-					mapIso([clipFace4D, project, L.inverse(L.split(" "))]),
-					L.inverse(L.split(" ")),
-				],
+				[mapIso([clipFace4D, project, L.inverse(L.split(" "))])],
 				facesWithCoords,
 			);
 
 			return projectedVertices;
 		},
-		combine({ screen, geo: ndcTriangle, camera }),
+		combine({ screen, geo: ndcGeo, camera }),
 	);
 
 	const cameraFoV = view(["fov", lensRadToDegree], camera);
@@ -726,76 +741,222 @@
 	const cameraEyeRotZ = view(["rz", lensRadToDegree], cameraEye);
 	const cameraClipNear = view([["clip", "near"]], camera);
 	const cameraClipFar = view([["clip", "far"]], camera);
+
+	const worldTransformRotX = view(["rx", lensRadToDegree], worldTransform);
+	const worldTransformRotY = view(["ry", lensRadToDegree], worldTransform);
+	const worldTransformRotZ = view(["rz", lensRadToDegree], worldTransform);
+
+	const worldTransformPosX = view(["tx"], worldTransform);
+	const worldTransformPosY = view(["ty"], worldTransform);
+	const worldTransformPosZ = view(["tz"], worldTransform);
+
+	const worldTransformScaleX = view(["sx"], worldTransform);
+	const worldTransformScaleY = view(["sy"], worldTransform);
+	const worldTransformScaleZ = view(["sz"], worldTransform);
 </script>
 
 <div
 	style="display: grid; grid-template-columns: repeat(auto-fit, minmax(20em, 1fr)); gap: 1em; padding: 1em 0"
 >
-	<fieldset>
-		<legend>Plane Triangle</legend>
-		<label class="number-picker"
-			><span class="number-picker-label">Offset X:</span>
-			<input
-				type="range"
-				class="number-picker-slider"
-				{...rangeX.value}
-				bind:value={offsetX.value}
-			/><output class="number-picker-value ro"
-				>({numf.format(offsetX.value)})</output
-			>
-		</label>
-		<label class="number-picker"
-			><span class="number-picker-label">Offset Y:</span>
-			<input
-				type="range"
-				class="number-picker-slider"
-				{...rangeY.value}
-				bind:value={offsetY.value}
-			/><output class="number-picker-value ro"
-				>({numf.format(offsetY.value)})</output
-			>
-		</label>
-		<label class="number-picker"
-			><span class="number-picker-label">Rotation:</span>
-			<input
-				type="range"
-				class="number-picker-slider"
-				min="-360"
-				max="360"
-				bind:value={rotationAngle.value}
-			/><output class="number-picker-value ro"
-				>({numf.format(rotationAngle.value)})</output
-			>
-		</label>
+	<div>
+		<fieldset>
+			<legend>Plane Triangle</legend>
+			<label class="number-picker"
+				><span class="number-picker-label">Offset X:</span>
+				<input
+					type="range"
+					class="number-picker-slider"
+					{...rangeX.value}
+					bind:value={offsetX.value}
+				/><output class="number-picker-value ro"
+					>({numf.format(offsetX.value)})</output
+				>
+			</label>
+			<label class="number-picker"
+				><span class="number-picker-label">Offset Y:</span>
+				<input
+					type="range"
+					class="number-picker-slider"
+					{...rangeY.value}
+					bind:value={offsetY.value}
+				/><output class="number-picker-value ro"
+					>({numf.format(offsetY.value)})</output
+				>
+			</label>
+			<label class="number-picker"
+				><span class="number-picker-label">Rotation:</span>
+				<input
+					type="range"
+					class="number-picker-slider"
+					min="-360"
+					max="360"
+					bind:value={rotationAngle.value}
+				/><output class="number-picker-value ro"
+					>({numf.format(rotationAngle.value)})</output
+				>
+			</label>
 
-		<label class="number-picker"
-			><span class="number-picker-label">Scale X:</span>
-			<input
-				type="range"
-				class="number-picker-slider"
-				min="-4"
-				max="4"
-				step="0.01"
-				bind:value={scaleX.value}
-			/><output class="number-picker-value ro"
-				>({numf.format(scaleX.value)})</output
-			>
-		</label>
+			<label class="number-picker"
+				><span class="number-picker-label">Scale X:</span>
+				<input
+					type="range"
+					class="number-picker-slider"
+					min="-4"
+					max="4"
+					step="0.01"
+					bind:value={scaleX.value}
+				/><output class="number-picker-value ro"
+					>({numf.format(scaleX.value)})</output
+				>
+			</label>
 
-		<label class="number-picker"
-			><span class="number-picker-label">Scale Y:</span>
-			<input
-				type="range"
-				class="number-picker-slider"
-				min="-4"
-				max="4"
-				step="0.01"
-				bind:value={scaleY.value}
-			/><output class="number-picker-value ro"
-				>({numf.format(scaleY.value)})</output
+			<label class="number-picker"
+				><span class="number-picker-label">Scale Y:</span>
+				<input
+					type="range"
+					class="number-picker-slider"
+					min="-4"
+					max="4"
+					step="0.01"
+					bind:value={scaleY.value}
+				/><output class="number-picker-value ro"
+					>({numf.format(scaleY.value)})</output
+				>
+			</label>
+		</fieldset>
+
+		<fieldset>
+			<legend>Object</legend>
+
+			<div
+				style="display: grid; grid-template-columns: repeat(auto-fit, minmax(10em, 1fr)); gap: 1em; "
 			>
-		</label>
-	</fieldset>
+				<div>
+					<label class="number-picker"
+						><span class="number-picker-label">Position X:</span>
+						<input
+							type="range"
+							class="number-picker-slider"
+							min="-30"
+							max="30"
+							step="0.001"
+							bind:value={worldTransformPosX.value}
+						/><output class="number-picker-value ro"
+							>({numf.format(worldTransformPosX.value)})</output
+						>
+					</label>
+					<label class="number-picker"
+						><span class="number-picker-label">Position Y:</span>
+						<input
+							type="range"
+							class="number-picker-slider"
+							min="-30"
+							max="30"
+							step="0.001"
+							bind:value={worldTransformPosY.value}
+						/><output class="number-picker-value ro"
+							>({numf.format(worldTransformPosY.value)})</output
+						>
+					</label>
+					<label class="number-picker"
+						><span class="number-picker-label">Position Z:</span>
+						<input
+							type="range"
+							class="number-picker-slider"
+							min="-30"
+							max="30"
+							step="0.001"
+							bind:value={worldTransformPosZ.value}
+						/><output class="number-picker-value ro"
+							>({numf.format(worldTransformPosZ.value)})</output
+						>
+					</label>
+				</div>
+				<div>
+					<label class="number-picker"
+						><span class="number-picker-label">Rotation X:</span>
+						<input
+							type="range"
+							class="number-picker-slider"
+							min="-180"
+							max="180"
+							step="1"
+							bind:value={worldTransformRotX.value}
+						/><output class="number-picker-value ro"
+							>({numf.format(worldTransformRotX.value)})</output
+						>
+					</label>
+					<label class="number-picker"
+						><span class="number-picker-label">Rotation Y:</span>
+						<input
+							type="range"
+							class="number-picker-slider"
+							min="-180"
+							max="180"
+							step="1"
+							bind:value={worldTransformRotY.value}
+						/><output class="number-picker-value ro"
+							>({numf.format(worldTransformRotY.value)})</output
+						>
+					</label>
+					<label class="number-picker"
+						><span class="number-picker-label">Rotation Z:</span>
+						<input
+							type="range"
+							class="number-picker-slider"
+							min="-180"
+							max="180"
+							step="1"
+							bind:value={worldTransformRotZ.value}
+						/><output class="number-picker-value ro"
+							>({numf.format(worldTransformRotZ.value)})</output
+						>
+					</label>
+				</div>
+				<div>
+					<label class="number-picker"
+						><span class="number-picker-label">Scale X:</span>
+						<input
+							type="range"
+							class="number-picker-slider"
+							min="-5"
+							max="5"
+							step="0.1"
+							bind:value={worldTransformScaleX.value}
+						/><output class="number-picker-value ro"
+							>({numf.format(worldTransformScaleX.value)})</output
+						>
+					</label>
+					<label class="number-picker"
+						><span class="number-picker-label">Scale Y:</span>
+						<input
+							type="range"
+							class="number-picker-slider"
+							min="-5"
+							max="5"
+							step="0.1"
+							bind:value={worldTransformScaleY.value}
+						/><output class="number-picker-value ro"
+							>({numf.format(worldTransformScaleY.value)})</output
+						>
+					</label>
+					<label class="number-picker"
+						><span class="number-picker-label">Scale Z:</span>
+						<input
+							type="range"
+							class="number-picker-slider"
+							min="-5"
+							max="5"
+							step="0.1"
+							bind:value={worldTransformScaleZ.value}
+						/><output class="number-picker-value ro"
+							>({numf.format(worldTransformScaleZ.value)})</output
+						>
+					</label>
+				</div>
+			</div>
+		</fieldset>
+	</div>
 
 	<div>
 		<fieldset>
@@ -873,9 +1034,9 @@
 							<input
 								type="range"
 								class="number-picker-slider"
-								min="-100"
-								max="100"
-								step="0.01"
+								min="-30"
+								max="30"
+								step="0.001"
 								bind:value={cameraEyePosX.value}
 							/><output class="number-picker-value ro"
 								>({numf.format(cameraEyePosX.value)})</output
@@ -887,9 +1048,9 @@
 							<input
 								type="range"
 								class="number-picker-slider"
-								min="-100"
-								max="100"
-								step="0.01"
+								min="-30"
+								max="30"
+								step="0.001"
 								bind:value={cameraEyePosY.value}
 							/><output class="number-picker-value ro"
 								>({numf.format(cameraEyePosY.value)})</output
@@ -901,9 +1062,9 @@
 							<input
 								type="range"
 								class="number-picker-slider"
-								min="-100"
-								max="100"
-								step="0.01"
+								min="-30"
+								max="30"
+								step="0.001"
 								bind:value={cameraEyePosZ.value}
 							/><output class="number-picker-value ro"
 								>({numf.format(cameraEyePosZ.value)})</output
@@ -917,9 +1078,9 @@
 							<input
 								type="range"
 								class="number-picker-slider"
-								min="-360"
-								max="360"
-								step="01"
+								min="-180"
+								max="180"
+								step="1"
 								bind:value={cameraEyeRotX.value}
 							/><output class="number-picker-value ro"
 								>({numf.format(cameraEyeRotX.value)})</output
@@ -931,9 +1092,9 @@
 							<input
 								type="range"
 								class="number-picker-slider"
-								min="-360"
-								max="360"
-								step="01"
+								min="-180"
+								max="180"
+								step="1"
 								bind:value={cameraEyeRotY.value}
 							/><output class="number-picker-value ro"
 								>({numf.format(cameraEyeRotY.value)})</output
@@ -945,9 +1106,9 @@
 							<input
 								type="range"
 								class="number-picker-slider"
-								min="-360"
-								max="360"
-								step="01"
+								min="-180"
+								max="180"
+								step="1"
 								bind:value={cameraEyeRotZ.value}
 							/><output class="number-picker-value ro"
 								>({numf.format(cameraEyeRotZ.value)})</output
@@ -1013,20 +1174,25 @@
 			stroke-dasharray="5 5"
 			d={ndcCubeEdgePath.value}
 		/>
-		<polygon
-			fill="magenta"
-			fill-opacity="0.2"
-			stroke-width="2"
-			vector-effect="non-scaling-stroke"
-			stroke="magenta"
-			points={ndcTriangleFacePath.value}
-		/>
+
+		{#each ndcGeoFacePaths.value as p}
+			<polygon
+				fill="lightblue"
+				fill-opacity="0.5"
+				stroke-width="1.2"
+				vector-effect="non-scaling-stroke"
+				stroke="darkred"
+				stroke-opacity="0.1"
+				points={p}
+			/>
+		{/each}
 		<path
-			stroke-width="4"
+			stroke-width="2"
+			stroke-opacity="1"
 			vector-effect="non-scaling-stroke"
-			stroke="white"
+			stroke="black"
 			stroke-dasharray="5 5"
-			d={ndcTriangleEdgePath.value}
+			d={ndcGeoEdgePath.value}
 		/>
 		<path fill="red" d={ndcCubeVertexPath.value} />
 	</svg>

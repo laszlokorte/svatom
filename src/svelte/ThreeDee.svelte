@@ -492,6 +492,7 @@
 			)}
 			geo={geo2}
 			selected={false}
+			debug={debug.value}
 			{camera}
 		/>
 
