@@ -149,6 +149,23 @@
 					value[ax1] * Math.sin(angle) + value[ax2] * Math.cos(angle),
 			}),
 		);
+	const lens3dProjectBuilder = (ax1, ax2, ax3, ax4) =>
+		L.lens(
+			(value) => ({
+				...value,
+				[ax1]: value[ax1] / value[ax4],
+				[ax2]: value[ax2] / value[ax4],
+				[ax3]: value[ax3] / value[ax4],
+			}),
+			(value, orig) => ({
+				...orig,
+				...value,
+				[ax1]: value[ax1] / value[ax4],
+				[ax2]: value[ax2] / value[ax4],
+				[ax3]: value[ax3] / value[ax4],
+				[ax3]: value[ax4],
+			}),
+		);
 
 	const lens3dTranslate = lens3dTranslateBuilder("x", "y", "z");
 	const lens2dTranslate = lens2dTranslateBuilder("x", "y", "z");
@@ -158,17 +175,23 @@
 	const lens3dRotateY = lens3dRotateBuilder("x", "z");
 	const lens3dRotateZ = lens3dRotateBuilder("x", "y");
 	const lens2dRotate = lens3dRotateBuilder("x", "y");
+	const lens3dProject = lens3dProjectBuilder("x", "y", "z", "w");
+
+	const coordPair = L.iso(
+		({ x, y }) => `${x},${y}`,
+		(s) => {
+			const [x, y] = s.split(",").map(Number);
+			return { x, y };
+		},
+	);
 
 	const coordString = L.iso(
-		(points) => points.map(({ x, y }) => `${x},${y}`).join(" "),
+		(points) => points.map(L.get(coordPair)).join(" "),
 		(str) =>
 			str
 				.trim()
 				.split(/\s+/)
-				.map((s) => {
-					const [x, y] = s.split(",").map(Number);
-					return { x, y };
-				}),
+				.map((p) => L.set(coordPair, p, p)),
 	);
 
 	const viewBox = view(
@@ -186,10 +209,10 @@
 		[
 			"size",
 			L.pick({
-				x: ["x", L.subtract(5), L.divide(2), L.negate],
-				y: ["y", L.subtract(5), L.divide(2), L.negate],
-				width: ["x", L.subtract(5)],
-				height: ["y", L.subtract(5)],
+				x: ["x", L.subtract(10), L.divide(2), L.negate],
+				y: ["y", L.subtract(10), L.divide(2), L.negate],
+				width: ["x", L.subtract(10)],
+				height: ["y", L.subtract(10)],
 				fill: R.always("red"),
 				opacity: R.always(0.1),
 			}),
@@ -290,9 +313,9 @@
 
 	const polygon2DShape = atom({
 		points: [
-			{ x: -100, y: 300 },
-			{ x: 300, y: -300 },
-			{ x: 600, y: 100 },
+			{ x: -400, y: 300 },
+			{ x: 0, y: -300 },
+			{ x: 300, y: 100 },
 		],
 	});
 
@@ -422,13 +445,263 @@
 		),
 		combine({ poly: polygon2D, bounds: debugRect, inset }),
 	);
+
+	const ndcCube = atom({
+		vertices: [
+			{ x: -1, y: -1, z: -1, w: 2 },
+			{ x: -1, y: -1, z: 1, w: 1 },
+			{ x: -1, y: 1, z: -1, w: 2 },
+			{ x: -1, y: 1, z: 1, w: 1 },
+			{ x: 1, y: -1, z: -1, w: 2 },
+			{ x: 1, y: -1, z: 1, w: 1 },
+			{ x: 1, y: 1, z: -1, w: 2 },
+			{ x: 1, y: 1, z: 1, w: 1 },
+		],
+		edges: [
+			{ from: 0, to: 1 },
+			{ from: 2, to: 3 },
+			{ from: 4, to: 5 },
+			{ from: 6, to: 7 },
+			{ from: 0, to: 2 },
+			{ from: 2, to: 6 },
+			{ from: 4, to: 0 },
+			{ from: 4, to: 6 },
+			{ from: 1, to: 3 },
+			{ from: 3, to: 7 },
+			{ from: 5, to: 1 },
+			{ from: 5, to: 7 },
+		],
+	});
+
+	const ndcTriangle = atom({
+		vertices: [
+			{ x: -1.4, y: 1.4, z: 0, w: 1 },
+			{ x: 0.2, y: 3.4, z: 0, w: 1 },
+			{ x: 0.3, y: -1.4, z: 0, w: 1 },
+		],
+		edges: [
+			{ from: 0, to: 1 },
+			{ from: 1, to: 2 },
+			{ from: 2, to: 0 },
+		],
+		faces: [{ a: 0, b: 1, c: 2 }],
+	});
+
+	const coordPathString = (r) =>
+		L.lens(
+			(points) =>
+				points
+					.map(
+						({ x, y }) =>
+							`M ${x + r} ${y} A ${r} ${r} 0 1 0 ${x - r} ${y} A ${r} ${r} 0 1 0 ${x + r} ${y}`,
+					)
+					.join(" "),
+			(str, old) =>
+				str
+					.trim()
+					.split(",")
+					.map((s) => {
+						const [x, y] = s.split(",").map(Number);
+						return { ...old, x, y };
+					}),
+		);
+
+	const ndcCubeVertexPath = view(
+		L.choose(({ screen: { size }, cube: { vertices } }) => {
+			return [
+				"cube",
+				"vertices",
+				mapIso([lens3dProject, lens2dScale(size.x / 2, size.y / 2)]),
+				coordPathString(3),
+			];
+		}),
+		combine({ screen, cube: ndcCube }),
+	);
+
+	const ndcCubeEdgePath = view(
+		({ screen: { size }, geo: { vertices, edges } }) => {
+			const projectedVertices = L.get(
+				[
+					mapIso([
+						lens3dProject,
+						lens2dScale(size.x / 2, size.y / 2),
+						coordPair,
+					]),
+				],
+				vertices,
+			);
+
+			return R.join(
+				" ",
+				R.map(
+					({ from, to }) =>
+						`M${projectedVertices[from]} L ${projectedVertices[to]}`,
+					edges,
+				),
+			);
+		},
+		combine({ screen, geo: ndcCube }),
+	);
+
+	const ndcPlanes = [
+		{ axis: "x", sign: +1, offset: 0.02 }, // x ≤ w
+		{ axis: "x", sign: -1, offset: 0.02 }, // -x ≤ w
+		{ axis: "y", sign: +1, offset: 0.02 }, // y ≤ w
+		{ axis: "y", sign: -1, offset: 0.02 }, // -y ≤ w
+		{ axis: "z", sign: +1, offset: 0.02 }, // z ≤ w
+		{ axis: "z", sign: -1, offset: 0.02 }, // -z ≤ w
+	];
+
+	function clipEdge4D(edge) {
+		let p0 = edge.from;
+		let p1 = edge.to;
+
+		for (const { axis, sign, offset } of ndcPlanes) {
+			const a0 = sign * p0[axis] - p0.w + offset;
+			const a1 = sign * p1[axis] - p1.w + offset;
+
+			// Both points outside → fully clipped
+			if (a0 > 0 && a1 > 0) return null;
+
+			// One point outside → clip
+			if (a0 > 0 || a1 > 0) {
+				const t = a0 / (a0 - a1);
+				const interpolate = (k) => p0[k] + (p1[k] - p0[k]) * t;
+				const pi = {
+					x: interpolate("x"),
+					y: interpolate("y"),
+					z: interpolate("z"),
+					w: interpolate("w"),
+				};
+				if (a0 > 0) p0 = pi;
+				else p1 = pi;
+			}
+		}
+
+		return { from: p0, to: p1 };
+	}
+	const interpolate = (p0, p1, t, k) => p0[k] + (p1[k] - p0[k]) * t;
+
+	function clipPoly4D(poly, { axis, sign, offset }) {
+		const result = [];
+
+		for (let i = 0; i < poly.length; i++) {
+			const j = (i + 1) % poly.length;
+
+			const a = poly[i];
+			const b = poly[j];
+
+			const aSign = sign * a[axis] - a.w + offset;
+			const bSign = sign * b[axis] - b.w + offset;
+
+			const t = aSign / (aSign - bSign);
+			const c = {
+				x: interpolate(a, b, t, "x"),
+				y: interpolate(a, b, t, "y"),
+				z: interpolate(a, b, t, "z"),
+				w: interpolate(a, b, t, "w"),
+			};
+
+			if (bSign < 0) {
+				if (aSign > 0) {
+					result.push(c);
+				}
+
+				result.push(b);
+			} else if (aSign < 0) {
+				result.push(c);
+			}
+		}
+
+		return result;
+	}
+
+	function clipFace4D(polygon) {
+		return ndcPlanes.reduce(clipPoly4D, polygon);
+	}
+
+	const ndcTriangleEdgePath = view(
+		({ screen: { size }, geo: { vertices, edges } }) => {
+			const project = L.get([
+				lens3dProject,
+				lens2dScale(size.x / 2, size.y / 2),
+				coordPair,
+			]);
+
+			const edgesWithCoords = R.map(({ from, to }) => {
+				return { from: vertices[from], to: vertices[to] };
+			}, edges);
+
+			const projectedVertices = L.get(
+				[
+					mapIso([
+						clipEdge4D,
+						L.pickIn({
+							from: [
+								L.defaults({ x: 0, y: 0, z: 0, w: 1 }),
+								lens3dProject,
+								lens2dScale(size.x / 2, size.y / 2),
+								coordPair,
+							],
+							to: [
+								L.defaults({ x: 0, y: 0, z: 0, w: 1 }),
+								lens3dProject,
+								lens2dScale(size.x / 2, size.y / 2),
+								coordPair,
+							],
+						}),
+						({ from, to }) => `M${from} L${to}`,
+					]),
+					L.inverse(L.split(" ")),
+				],
+				edgesWithCoords,
+			);
+
+			return projectedVertices;
+		},
+		combine({ screen, geo: ndcTriangle }),
+	);
+
+	const ndcTriangleFacePath = view(
+		({ screen: { size }, geo: { vertices, faces } }) => {
+			const project = L.get([
+				lens3dProject,
+				lens2dScale(size.x / 2, size.y / 2),
+				coordPair,
+			]);
+
+			const facesWithCoords = R.map(({ a, b, c }) => {
+				return [vertices[a], vertices[b], vertices[c]];
+			}, faces);
+
+			const projectedVertices = L.get(
+				[
+					mapIso([
+						clipFace4D,
+						mapIso([
+							lens3dProject,
+							lens2dScale(size.x / 2, size.y / 2),
+							coordPair,
+						]),
+						L.inverse(L.split(" ")),
+					]),
+					L.inverse(L.split(" ")),
+				],
+				facesWithCoords,
+			);
+			console.log(projectedVertices);
+
+			return projectedVertices;
+		},
+		combine({ screen, geo: ndcTriangle }),
+	);
 </script>
 
 <input type="range" {...rangeX.value} bind:value={offsetX.value} />
 <input type="range" {...rangeY.value} bind:value={offsetY.value} />
 <input type="range" min="-360" max="360" bind:value={rotationAngle.value} />
-<input type="range" min="-4" max="4" step="0.1" bind:value={scaleX.value} />
-<input type="range" min="-4" max="4" step="0.1" bind:value={scaleY.value} />
+<input type="range" min="-4" max="4" step="0.01" bind:value={scaleX.value} />
+<input type="range" min="-4" max="4" step="0.01" bind:value={scaleY.value} />
 <input type="range" min="-10" max="50" step="1" bind:value={inset.value} />
 
 <div class="resize">
@@ -439,15 +712,38 @@
 		viewBox={viewBox.value}
 		preserveAspectRatio={aspectRatio.value}
 	>
-		<circle {...debugCircle.value}>
-			<title>Debug Center</title>
-		</circle>
 		<rect {...debugRect.value}>
 			<title>Debug Rect</title>
 		</rect>
 		<polygon {...debugPolygon.value} />
 		<polygon {...debugBoundsSvg.value} />
 		<polygon {...debugPolygonClipped.value} />
+		<circle {...debugCircle.value}>
+			<title>Debug Center</title>
+		</circle>
+		<path
+			stroke-width="1"
+			vector-effect="non-scaling-stroke"
+			stroke="gray"
+			stroke-dasharray="5 5"
+			d={ndcCubeEdgePath.value}
+		/>
+		<polygon
+			fill="magenta"
+			fill-opacity="0.2"
+			stroke-width="2"
+			vector-effect="non-scaling-stroke"
+			stroke="magenta"
+			points={ndcTriangleFacePath.value}
+		/>
+		<path
+			stroke-width="4"
+			vector-effect="non-scaling-stroke"
+			stroke="white"
+			stroke-dasharray="5 5"
+			d={ndcTriangleEdgePath.value}
+		/>
+		<path fill="red" d={ndcCubeVertexPath.value} />
 	</svg>
 </div>
 
@@ -464,5 +760,10 @@
 		height: 30em;
 		border: 1px solid gray;
 		overflow: hidden;
+	}
+
+	path,
+	polygon {
+		stroke-linejoin: round;
 	}
 </style>
