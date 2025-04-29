@@ -13,6 +13,7 @@
 		bindValue,
 		autofocusIf,
 	} from "./svatom.svelte.js";
+	import exampleMesh from "./example_mesh.js";
 
 	const numf = new Intl.NumberFormat("en-US", {
 		maximumFractionDigits: 2,
@@ -43,149 +44,7 @@
 			},
 		}),
 		selected = atom(),
-		geo = atom({
-			vertices: [
-				{ x: 10, y: 10, z: 10 },
-				{ x: 10, y: -10, z: 10 },
-				{ x: -10, y: -10, z: 10 },
-				{ x: -10, y: 10, z: 10 },
-				{ x: 10, y: 10, z: -10 },
-				{ x: 10, y: -10, z: -10 },
-				{ x: -10, y: -10, z: -10 },
-				{ x: -10, y: 10, z: -10 },
-				{ x: 0, y: 20, z: 0 },
-				{ x: 0, y: 0, z: 0 },
-			],
-			edges: [
-				{
-					from: 0,
-					to: 1,
-					faces: [0, 3],
-					/*attrs: { color: "red" }*/
-				},
-				{
-					from: 1,
-					to: 2,
-					faces: [0, 8],
-					/*attrs: { color: "green" }*/
-				},
-				{
-					from: 2,
-					to: 3,
-					faces: [1, 7],
-					/*attrs: { color: "blue" }*/
-				},
-				{
-					from: 3,
-					to: 0,
-					faces: [1, 10],
-					/*attrs: { color: "red" }*/
-				},
-				{
-					from: 4,
-					to: 5,
-					faces: [2, 5],
-					/*attrs: { color: "green" }*/
-				},
-				{
-					from: 5,
-					to: 6,
-					faces: [4, 9],
-					/*attrs: { color: "blue" }*/
-				},
-				{
-					from: 6,
-					to: 7,
-					faces: [6, 4],
-					/*attrs: { color: "red" }*/
-				},
-				{
-					from: 7,
-					to: 4,
-					faces: [5, 12],
-					/*attrs: { color: "green" }*/
-				},
-				{
-					from: 0,
-					to: 4,
-					faces: [3, 11],
-					/*attrs: { color: "blue" }*/
-				},
-				{
-					from: 1,
-					to: 5,
-					faces: [2, 9],
-					/*attrs: { color: "red" }*/
-				},
-				{
-					from: 2,
-					to: 6,
-					faces: [7, 8],
-					/*attrs: { color: "green" }*/
-				},
-				{
-					from: 3,
-					to: 7,
-					faces: [6, 13],
-					/*attrs: { color: "blue" }*/
-				},
-				{
-					from: 0,
-					to: 8,
-					faces: [10, 11],
-					/*attrs: { color: "red" }*/
-				},
-				{
-					from: 3,
-					to: 8,
-					faces: [10, 13],
-					/*attrs: { color: "green" }*/
-				},
-				{
-					from: 4,
-					to: 8,
-					faces: [11, 12],
-					/*attrs: { color: "blue" }*/
-				},
-				{
-					from: 7,
-					to: 8,
-					faces: [12, 13],
-					/*attrs: { color: "red" }*/
-				},
-			],
-			faces: [
-				{ a: 0, b: 1, c: 2, attrs: { color: "red" } },
-				{ a: 2, b: 3, c: 0, attrs: { color: "red" } },
-				{ a: 4, b: 5, c: 1, attrs: { color: "red" } },
-				{ a: 1, b: 0, c: 4, attrs: { color: "red" } },
-				{ a: 7, b: 6, c: 5, attrs: { color: "red" } },
-				{ a: 5, b: 4, c: 7, attrs: { color: "red" } },
-				{ a: 6, b: 7, c: 3, attrs: { color: "red" } },
-				{ a: 3, b: 2, c: 6, attrs: { color: "red" } },
-				{ a: 1, b: 6, c: 2, attrs: { color: "red" } },
-				{ a: 1, b: 5, c: 6, attrs: { color: "red" } },
-				{ a: 0, b: 3, c: 8, attrs: { color: "red" } },
-				{ a: 4, b: 0, c: 8, attrs: { color: "red" } },
-				{ a: 7, b: 4, c: 8, attrs: { color: "red" } },
-				{ a: 3, b: 7, c: 8, attrs: { color: "red" } },
-			],
-			masks: [
-				{ quads: [0] },
-				{ quads: [1] },
-				{ quads: [2] },
-				{ quads: [3] },
-				{ quads: [4] },
-				{ faces: [10, 11, 12, 13] },
-			],
-			quads: [
-				{ a: 0, b: 1, c: 2, d: 3 },
-				{ a: 2, b: 6, c: 7, d: 3 },
-				{ a: 6, b: 5, c: 4, d: 7 },
-				{ a: 5, b: 1, c: 0, d: 4 },
-				{ a: 1, b: 5, c: 6, d: 2 },
-			],
-		}),
+		geo = atom(exampleMesh),
 		trans = atom({
 			rx: 0,
 			ry: 0,
@@ -219,14 +78,18 @@
 				y: -y / h,
 				z: z * A + B,
 				s: z,
+				o_x: x,
+				o_y: y,
+				o_z: z,
 			};
 		});
 
 	const lerp = (a, b, t) => b * t + (1 - t) * a;
 
 	const project = (orthogonality, cp) =>
-		L.reread(({ x, y, z, s }) => {
+		L.reread(({ x, y, z, s, ...rest }) => {
 			return {
+				...rest,
 				x: x / 2 / lerp(s, cp, orthogonality),
 				y: y / 2 / lerp(s, cp, orthogonality),
 				z: z / 2 / s,
@@ -235,8 +98,8 @@
 		});
 
 	const svgCircle = (r) =>
-		L.reread(({ x, y, s }) => {
-			return { cx: x, cy: y, r: r + r / s };
+		L.reread(({ x, y, s, ndc_z: z }) => {
+			return { cx: x, cy: y, r: r };
 		});
 
 	const svgText = L.reread(({ x, y, s }) => {
@@ -295,12 +158,51 @@
 		return (y2 - y1) * (x3 - x2) - (y3 - y2) * (x2 - x1) >= 0;
 	}
 
+	const cross = (a1, a2, a3, b1, b2, b3) => [
+		a2 * b3 - a3 * b2,
+		a3 * b1 - a1 * b3,
+		a1 * b2 - a2 * b1,
+	];
+
+	const normalize = (x, y, z) => {
+		const l = Math.sqrt(x * x + y * y + z * z);
+		return [x / l, y / l, z / l];
+	};
+
+	const dot = ([x1, y1, z1], [x2, y2, z2]) => {
+		return x1 * x2 + y2 * y2 + z1 * z2;
+	};
+
 	const svgTriangle = (baseAttrs) =>
 		L.reread(
 			({
-				a: { x: x1, y: y1, z: z1, s: s1 },
-				b: { x: x2, y: y2, z: z2, s: s2 },
-				c: { x: x3, y: y3, z: z3, s: s3 },
+				a: {
+					x: x1,
+					y: y1,
+					z: z1,
+					s: s1,
+					o_x: o_x1,
+					o_y: o_y1,
+					o_z: o_z1,
+				},
+				b: {
+					x: x2,
+					y: y2,
+					z: z2,
+					s: s2,
+					o_x: o_x2,
+					o_y: o_y2,
+					o_z: o_z2,
+				},
+				c: {
+					x: x3,
+					y: y3,
+					z: z3,
+					s: s3,
+					o_x: o_x3,
+					o_y: o_y3,
+					o_z: o_z3,
+				},
 				attrs,
 			}) => {
 				if (
@@ -331,10 +233,25 @@
 					flip = false,
 				} = { ...baseAttrs, ...attrs };
 
+				const light = dot(
+					normalize(
+						...cross(
+							o_x1 - o_x2,
+							o_y1 - o_y2,
+							o_z1 - o_z2,
+							o_x3 - o_x2,
+							o_y3 - o_y2,
+							o_z3 - o_z2,
+						),
+					),
+					normalize(-2, -3, -1),
+				);
+
 				return {
 					points: `${x1} ${y1} ${x2} ${y2} ${x3} ${y3}`,
 					fill: color ?? "black",
-					"fill-opacity": opacity ?? "1",
+					"fill-opacity": opacity ?? 1,
+					opacity: light,
 					clockwise: flip != clockwise(x1, y1, x2, y2, x3, y3),
 					behind: false,
 				};
@@ -382,11 +299,11 @@
 			},
 		);
 
-	const svgTriangleTip = ({ r = 10, rd = 30, width, color, opacity }) =>
+	const svgTriangleTip = ({ r = 10, rd = 0.5, width, color, opacity }) =>
 		L.reread(
 			({
 				a: { x: x1, y: y1, z: z1, s: s1 },
-				b: { x: x2, y: y2, z: z2, s: s2, s2: s },
+				b: { x: x2, y: y2, z: z2, s: s2, ndc_z: dnc_z2 },
 				c: { x: x3, y: y3, z: z3, s: s3 },
 			}) => {
 				if (s1 < 0 || s2 < 0 || s3 < 0 || z2 < -1 || z2 > 1) {
@@ -403,7 +320,7 @@
 				return {
 					cx: x2,
 					cy: y2,
-					r: r + rd * Math.exp(-z2),
+					r: r + (10000 * rd * r) / Math.pow(s2, 2),
 					fill: color ?? "black",
 					"fill-opacity": opacity ?? "1",
 					clockwise: clockwise(x1, y1, x2, y2, x3, y3),
@@ -521,7 +438,7 @@
 						camera.aspect * Math.tan(camera.fov / 2),
 						Math.tan(camera.fov / 2),
 					),
-					project(camera.orthogonality, camera.cp),
+					project(camera.orthogonality, camera.cp || 1),
 					(p) => ({
 						...p,
 						x: p.x * camera.scale,
@@ -714,7 +631,7 @@
 				dominant-baseline="central"
 				>{numf.format(ptrX.value)},{numf.format(
 					ptrY.value,
-				)},{numf.format(ptrZ.value)}</text
+				)},{numf.format(ptrZ.value)},{numf.format(ptr.value)}</text
 			>
 		{/if}
 	{/each}

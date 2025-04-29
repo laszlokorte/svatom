@@ -14,6 +14,7 @@
 		activeTouchMove,
 	} from "./svatom.svelte.js";
 	import ThreeDeeModel from "./ThreeDeeModel.svelte";
+	import { cube } from "./example_mesh.js";
 
 	const numf = new Intl.NumberFormat("en-US", {
 		maximumFractionDigits: 2,
@@ -224,46 +225,7 @@
 		sz: 0.4,
 	});
 
-	const geo2 = atom({
-		vertices: [
-			{ x: 10, y: 10, z: 10 },
-			{ x: 10, y: -10, z: 10 },
-			{ x: -10, y: -10, z: 10 },
-			{ x: -10, y: 10, z: 10 },
-			{ x: 10, y: 10, z: -10 },
-			{ x: 10, y: -10, z: -10 },
-			{ x: -10, y: -10, z: -10 },
-			{ x: -10, y: 10, z: -10 },
-		],
-		edges: [
-			{ from: 0, to: 1, faces: [0, 3] },
-			{ from: 1, to: 2, faces: [0, 8] },
-			{ from: 2, to: 3, faces: [1, 7] },
-			{ from: 3, to: 0, faces: [1, 11] },
-			{ from: 4, to: 5, faces: [2, 5] },
-			{ from: 5, to: 6, faces: [4, 9] },
-			{ from: 6, to: 7, faces: [6, 4] },
-			{ from: 7, to: 4, faces: [5, 10] },
-			{ from: 0, to: 4, faces: [3, 11] },
-			{ from: 1, to: 5, faces: [2, 9] },
-			{ from: 2, to: 6, faces: [7, 8] },
-			{ from: 3, to: 7, faces: [6, 10] },
-		],
-		faces: [
-			{ a: 0, b: 1, c: 2, attrs: { color: "red", flip: true } },
-			{ a: 2, b: 3, c: 0, attrs: { color: "red", flip: true } },
-			{ a: 4, b: 5, c: 1, attrs: { color: "blue", flip: true } },
-			{ a: 1, b: 0, c: 4, attrs: { color: "blue", flip: true } },
-			{ a: 7, b: 6, c: 5, attrs: { color: "green", flip: true } },
-			{ a: 5, b: 4, c: 7, attrs: { color: "green", flip: true } },
-			{ a: 6, b: 7, c: 3, attrs: { color: "magenta", flip: true } },
-			{ a: 3, b: 2, c: 6, attrs: { color: "magenta", flip: true } },
-			{ a: 1, b: 6, c: 2, attrs: { color: "cyan", flip: true } },
-			{ a: 1, b: 5, c: 6, attrs: { color: "cyan", flip: true } },
-			{ a: 4, b: 3, c: 7, attrs: { color: "yellow", flip: true } },
-			{ a: 3, b: 4, c: 0, attrs: { color: "yellow", flip: true } },
-		],
-	});
+	const geo2 = atom(cube);
 
 	const camera = atom({
 		w: 50,
@@ -420,25 +382,50 @@
 		}
 	}}
 	onpointermove={(evt) => {
-		if (evt.currentTarget.hasPointerCapture(evt.pointerId)) {
+		if (
+			evt.isPrimary &&
+			evt.currentTarget.hasPointerCapture(evt.pointerId)
+		) {
 			pointerPos.value = evt;
-			ry.value =
-				((((ry.value + 720) % 720) + pointerDelta.value.dx / 2 + 360) %
-					720) -
-				360;
-			rx.value =
-				((((rx.value + 720) % 720) - pointerDelta.value.dy / 2 + 360) %
-					720) -
-				360;
+			if (evt.shiftKey) {
+				if (evt.ctrlKey) {
+					crx.value -= pointerDelta.value.dy / 10;
+					cry.value += pointerDelta.value.dx / 10;
+				} else {
+					ctx.value -= pointerDelta.value.dx / 10;
+					cty.value += pointerDelta.value.dy / 10;
+				}
+			} else {
+				if (evt.ctrlKey) {
+					ctz.value -= pointerDelta.value.dy / 10;
+				} else {
+					ry.value =
+						((((ry.value + 720) % 720) +
+							pointerDelta.value.dx / 2 +
+							360) %
+							720) -
+						360;
+					rx.value =
+						((((rx.value + 720) % 720) -
+							pointerDelta.value.dy / 2 +
+							360) %
+							720) -
+						360;
 
-			ry2.value =
-				((((ry2.value + 720) % 720) - pointerDelta.value.dx / 4 + 360) %
-					720) -
-				360;
-			rx2.value =
-				((((rx2.value + 720) % 720) + pointerDelta.value.dy / 4 + 360) %
-					720) -
-				360;
+					ry2.value =
+						((((ry2.value + 720) % 720) -
+							pointerDelta.value.dx / 4 +
+							360) %
+							720) -
+						360;
+					rx2.value =
+						((((rx2.value + 720) % 720) +
+							pointerDelta.value.dy / 4 +
+							360) %
+							720) -
+						360;
+				}
+			}
 			evt.preventDefault();
 		}
 	}}
@@ -642,7 +629,7 @@
 						<input
 							type="range"
 							bind:value={fp.value}
-							min="0"
+							min="0.2"
 							max="200"
 						/></label
 					>

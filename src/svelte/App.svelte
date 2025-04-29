@@ -21,6 +21,7 @@
 	import Canvas from "./Canvas/Root.svelte";
 	import Split from "./SplitView/Split.svelte";
 	import ThreeDee from "./ThreeDee.svelte";
+	import ThreeDeeFresh from "./ThreeDeeFresh.svelte";
 	import RenewImport from "./Renew/Import.svelte";
 	import asciiLogo from "./asciiLogo.txt?raw";
 	import { clamp, lerp } from "./utils.js";
@@ -889,6 +890,10 @@
 	<h2>Three Dimensional</h2>
 
 	<ThreeDee />
+
+	<h2>Clipping</h2>
+
+	<ThreeDeeFresh />
 </section>
 
 <style>
