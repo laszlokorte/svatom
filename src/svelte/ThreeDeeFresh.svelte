@@ -112,25 +112,29 @@
 			];
 		};
 
-	const lens3dProjectBuilder = (ax1, ax2, ax3, ax4) => [
-		L.applyAt(
-			L.pick({ ax1, ax2, ax3, ax4 }),
-			L.iso(
-				expect(R.is(Object), ({ ax1, ax2, ax3, ax4 }) => ({
-					ax1: ax1 / ax4,
-					ax2: ax2 / ax4,
-					ax3: ax3 / ax4,
-					ax4: ax4,
-				})),
-				expect(R.is(Object), ({ ax1, ax2, ax3, ax4 }) => ({
-					ax1: ax1 * ax4,
-					ax2: ax2 * ax4,
-					ax3: ax3 * ax4,
-					ax4: ax4,
-				})),
+	const lerp = (a, b, t) => b * t + (1 - t) * a;
+
+	const lens3dProjectBuilder =
+		(ax1, ax2, ax3, ax4) =>
+		(ortho = 0) => [
+			L.applyAt(
+				L.pick({ ax1, ax2, ax3, ax4 }),
+				L.iso(
+					expect(R.is(Object), ({ ax1, ax2, ax3, ax4 }) => ({
+						ax1: ax1 / lerp(ax4, 1.5, ortho),
+						ax2: ax2 / lerp(ax4, 1.5, ortho),
+						ax3: ax3 / lerp(ax4, 1.5, ortho),
+						ax4: ax4,
+					})),
+					expect(R.is(Object), ({ ax1, ax2, ax3, ax4 }) => ({
+						ax1: ax1 * lerp(ax4, 1.5, ortho),
+						ax2: ax2 * lerp(ax4, 1.5, ortho),
+						ax3: ax3 * lerp(ax4, 1.5, ortho),
+						ax4: ax4,
+					})),
+				),
 			),
-		),
-	];
+		];
 
 	const lens3dTranslate = lensTranslateBuilder("x", "y", "z");
 	const lens2dTranslate = lensTranslateBuilder("x", "y", "z");
@@ -140,8 +144,8 @@
 	const lens3dRotateY = lensRotateBuilder("x", "z");
 	const lens3dRotateZ = lensRotateBuilder("x", "y");
 	const lens2dRotate = lensRotateBuilder("x", "y");
-	const lens3dProject = lens3dProjectBuilder("x", "y", "z", "w");
 	const lens3dPerspective = lens3dPerspectiveBuilder("x", "y", "z", "w");
+	const lens3dProject = lens3dProjectBuilder("x", "y", "z", "w");
 
 	const coordPair = L.iso(
 		expect(R.is(Object), ({ x, y }) => `${x},${y}`),
@@ -516,23 +520,36 @@
 		);
 
 	const ndcCubeVertexPath = view(
-		L.choose(({ screen: { size }, cube: { vertices } }) => {
-			return [
-				"cube",
-				"vertices",
-				mapIso([lens3dProject, lens2dScale(size.x / 2, size.y / 2)]),
-				coordPathString(3),
-			];
-		}),
-		combine({ screen, cube: ndcCube }),
+		L.choose(
+			({
+				screen: { size },
+				cube: { vertices },
+				camera: { orthogonality },
+			}) => {
+				return [
+					"cube",
+					"vertices",
+					mapIso([
+						lens3dProject(orthogonality),
+						lens2dScale(size.x / 2, size.y / 2),
+					]),
+					coordPathString(3),
+				];
+			},
+		),
+		combine({ screen, cube: ndcCube, camera }),
 	);
 
 	const ndcCubeEdgePath = view(
-		({ screen: { size }, geo: { vertices, edges } }) => {
+		({
+			screen: { size },
+			geo: { vertices, edges },
+			camera: { orthogonality },
+		}) => {
 			const projectedVertices = L.get(
 				[
 					mapIso([
-						lens3dProject,
+						lens3dProject(orthogonality),
 						lens2dScale(size.x / 2, size.y / 2),
 						coordPair,
 					]),
@@ -549,7 +566,7 @@
 				),
 			);
 		},
-		combine({ screen, geo: ndcCube }),
+		combine({ screen, geo: ndcCube, camera }),
 	);
 
 	const ndcPlanes = [
@@ -630,10 +647,14 @@
 	}
 
 	const ndcTriangleEdgePath = view(
-		({ screen: { size }, geo: { vertices, edges } }) => {
+		({
+			screen: { size },
+			geo: { vertices, edges },
+			camera: { orthogonality },
+		}) => {
 			const project = [
 				L.defaults({ x: 0, y: 0, z: 0, w: 1 }),
-				lens3dProject,
+				lens3dProject(orthogonality),
 				lens2dScale(size.x / 2, size.y / 2),
 				coordPair,
 			];
@@ -657,13 +678,17 @@
 
 			return projectedVertices;
 		},
-		combine({ screen, geo: ndcTriangle }),
+		combine({ screen, geo: ndcTriangle, camera }),
 	);
 
 	const ndcTriangleFacePath = view(
-		({ screen: { size }, geo: { vertices, faces } }) => {
+		({
+			screen: { size },
+			geo: { vertices, faces },
+			camera: { orthogonality },
+		}) => {
 			const project = mapIso([
-				lens3dProject,
+				lens3dProject(orthogonality),
 				lens2dScale(size.x / 2, size.y / 2),
 				coordPair,
 			]);
@@ -682,7 +707,7 @@
 
 			return projectedVertices;
 		},
-		combine({ screen, geo: ndcTriangle }),
+		combine({ screen, geo: ndcTriangle, camera }),
 	);
 
 	const cameraFoV = view(["fov", lensRadToDegree], camera);
