@@ -27,7 +27,7 @@
 		camera = atom({
 			clip: {
 				near: 2,
-				far: 1000,
+				far: 400,
 			},
 			aspectRatio: 1,
 			fov: Math.PI / 2 / 3,
@@ -801,8 +801,14 @@
 	const cameraEyeRotX = view(["rx", lensRadToDegree], cameraEye);
 	const cameraEyeRotY = view(["ry", lensRadToDegree], cameraEye);
 	const cameraEyeRotZ = view(["rz", lensRadToDegree], cameraEye);
-	const cameraClipNear = view([["clip", "near"]], camera);
-	const cameraClipFar = view([["clip", "far"]], camera);
+	const cameraClipNear = view(
+		[["clip", L.choose(({ far }) => ["near", L.normalize(R.min(far))])]],
+		camera,
+	);
+	const cameraClipFar = view(
+		[["clip", L.choose(({ near }) => ["far", L.normalize(R.max(near))])]],
+		camera,
+	);
 
 	const worldTransformRotX = view(["rx", lensRadToDegree], worldTransform);
 	const worldTransformRotY = view(["ry", lensRadToDegree], worldTransform);
@@ -1342,7 +1348,7 @@
 						type="range"
 						class="number-picker-slider"
 						min="1"
-						max="200"
+						max="400"
 						step="1"
 						bind:value={cameraClipNear.value}
 					/><output class="number-picker-value ro"
@@ -1354,8 +1360,8 @@
 					<input
 						type="range"
 						class="number-picker-slider"
-						min="10"
-						max="1000"
+						min="1"
+						max="400"
 						step="1"
 						bind:value={cameraClipFar.value}
 					/><output class="number-picker-value ro"
