@@ -14,7 +14,7 @@
 		bindValue,
 		autofocusIf,
 	} from "./svatom.svelte.js";
-	import exampleMesh, { cube } from "./example_mesh";
+	import exampleMesh, { cube2 } from "./example_mesh";
 
 	const numf = new Intl.NumberFormat("en-US", {
 		maximumFractionDigits: 2,
@@ -444,9 +444,7 @@
 		],
 	});
 
-	const worldGeo = atom(
-		L.set(["vertices", L.elems, "w", L.define(1)], 1, cube),
-	);
+	const worldGeo = atom(cube2);
 
 	const worldTransform = atom({
 		tx: 0,
@@ -589,48 +587,22 @@
 	);
 
 	const ndcPlanes = [
-		{ axis: "x", sign: +1, offset: 0.02 }, // x ≤ w
-		{ axis: "x", sign: -1, offset: 0.02 }, // -x ≤ w
-		{ axis: "y", sign: +1, offset: 0.02 }, // y ≤ w
-		{ axis: "y", sign: -1, offset: 0.02 }, // -y ≤ w
-		{ axis: "z", sign: +1, offset: 0.02 }, // z ≤ w
-		{ axis: "z", sign: -1, offset: 0.02 }, // -z ≤ w
+		{ axis: "x", sign: +1, offset: 0.2 }, // x ≤ w
+		{ axis: "x", sign: -1, offset: 0.2 }, // -x ≤ w
+		{ axis: "y", sign: +1, offset: 0.2 }, // y ≤ w
+		{ axis: "y", sign: -1, offset: 0.2 }, // -y ≤ w
+		{ axis: "z", sign: +1, offset: 0.2 }, // z ≤ w
+		{ axis: "z", sign: -1, offset: 0.2 }, // -z ≤ w
 	];
 
-	function clipEdge4D(edge) {
-		let p0 = edge.from;
-		let p1 = edge.to;
-
-		for (const { axis, sign, offset } of ndcPlanes) {
-			const a0 = sign * p0[axis] - p0.w + offset;
-			const a1 = sign * p1[axis] - p1.w + offset;
-
-			// Both points outside → fully clipped
-			if (a0 > 0 && a1 > 0) return null;
-
-			// One point outside → clip
-			if (a0 > 0 || a1 > 0) {
-				const t = a0 / (a0 - a1);
-				const interpolate = (k) => p0[k] + (p1[k] - p0[k]) * t;
-				const pi = {
-					x: interpolate("x"),
-					y: interpolate("y"),
-					z: interpolate("z"),
-					w: interpolate("w"),
-				};
-				if (a0 > 0) p0 = pi;
-				else p1 = pi;
-			}
-		}
-
-		return { from: p0, to: p1 };
-	}
 	const interpolate = (p0, p1, t, k) => p0[k] + (p1[k] - p0[k]) * t;
 
-	function clipPoly4D(poly, { axis, sign, offset }) {
+	const polygonClipper = (poly, { axis, sign, offset }) => {
 		const result = [];
 
-		for (let i = 0; i < poly.length; i++) {
+		const length = poly.length;
+
+		for (let i = 0; i < length; i++) {
 			const j = (i + 1) % poly.length;
 
 			const a = poly[i];
@@ -647,56 +619,94 @@
 				w: interpolate(a, b, t, "w"),
 			};
 
-			if (bSign < 0) {
-				if (aSign > 0) {
+			if (bSign <= 0) {
+				if (aSign >= 0) {
 					result.push(c);
 				}
 
 				result.push(b);
-			} else if (aSign < 0) {
+			} else if (aSign <= 0) {
 				result.push(c);
 			}
 		}
 
 		return result;
-	}
+	};
 
-	function clipFace4D(polygon) {
-		return ndcPlanes.reduce(clipPoly4D, polygon);
-	}
+	const edgeClipper = (poly, { axis, sign, offset }) => {
+		const result = [];
 
-	const ndcGeoEdgePath = view(
-		({
-			screen: { size },
-			geo: { vertices, edges },
-			camera: { orthogonality },
-		}) => {
-			const project = [
-				L.defaults({ x: 0, y: 0, z: 0, w: 1 }),
-				lens3dProject(orthogonality),
-				lens2dScale(size.x / 2, size.y / 2),
-				coordPair,
-			];
+		const length = poly.length;
 
-			const edgesWithCoords = R.map(({ from, to }) => {
-				return { from: vertices[from], to: vertices[to] };
-			}, edges);
+		for (let i = 0; i < length; i++) {
+			const j = (i + 1) % poly.length;
 
-			const projectedVertices = L.get(
-				[
+			const a = poly[i];
+			const b = poly[j];
+
+			const aSign = sign * a[axis] - a.w + offset;
+			const bSign = sign * b[axis] - b.w + offset;
+
+			const t = aSign / (aSign - bSign);
+			const c = {
+				x: interpolate(a, b, t, "x"),
+				y: interpolate(a, b, t, "y"),
+				z: interpolate(a, b, t, "z"),
+				w: interpolate(a, b, t, "w"),
+			};
+
+			if (aSign <= 0) {
+				result.push(a);
+			} else {
+				result.push(c);
+			}
+		}
+
+		return result;
+	};
+
+	const clipFace4D = (clipper) => (polygon) => {
+		return ndcPlanes.reduce(clipper, polygon);
+	};
+
+	const clipVertex4D = (point) => {
+		return R.all(({ axis, sign, offset }) => {
+			return sign * point[axis] - point.w + offset < 0;
+		}, ndcPlanes);
+	};
+
+	const ndcGeoEdgePaths = view(
+		L.choose(
+			({
+				screen: { size },
+				geo: { vertices, edges },
+				camera: { orthogonality },
+			}) => {
+				const project = [
+					L.defaults({ x: 0, y: 0, z: 0, w: 1 }),
+					lens3dProject(orthogonality),
+					lens2dScale(size.x / 2, size.y / 2),
+					coordPair,
+				];
+
+				return [
+					"geo",
+					"edges",
+					L.applyAt(
+						[L.elems, "vertices", L.elems],
+						(i) => vertices[i],
+					),
 					mapIso([
-						clipEdge4D,
-						L.applyAt("from", project),
-						L.applyAt("to", project),
-						({ from, to }) => `M${from} L${to}`,
+						L.applyAt("vertices", [
+							clipFace4D(edgeClipper),
+							L.applyAt(L.elems, project),
+							L.inverse(L.split(" L ")),
+							L.inverse(L.dropPrefix(" M ")),
+						]),
 					]),
-					L.inverse(L.split(" ")),
-				],
-				edgesWithCoords,
-			);
-
-			return projectedVertices;
-		},
+				];
+			},
+		),
 		combine({ screen, geo: ndcGeo, camera }),
 	);
 
@@ -738,16 +748,12 @@
 					"geo",
 					"faces",
 					L.applyAt(
-						L.elems,
-						putProp("polygon", (obj) => [
-							vertices[obj.a],
-							vertices[obj.b],
-							vertices[obj.c],
-						]),
+						[L.elems, "vertices", L.elems],
+						(i) => vertices[i],
 					),
 					mapIso(
-						L.applyAt("polygon", [
-							clipFace4D,
+						L.applyAt("vertices", [
+							clipFace4D(polygonClipper),
 							project,
 							L.pick({
 								clockwise: isClockwise,
@@ -761,6 +767,23 @@
 				];
 			},
 		),
+		combine({ screen, geo: ndcGeo, camera }),
+	);
+
+	const ndcGeoVertices = view(
+		L.choose(({ screen: { size }, camera: { orthogonality } }) => {
+			const project = [
+				lens3dProject(orthogonality),
+				lens2dScale(size.x / 2, size.y / 2),
+			];
+
+			return [
+				"geo",
+				"vertices",
+				R.map((o) => ({ ...o, clipped: !clipVertex4D(o) })),
+				mapIso(project),
+			];
+		}),
 		combine({ screen, geo: ndcGeo, camera }),
 	);
 
@@ -795,7 +818,13 @@
 
 	const objectPointerRotate = view(
 		L.pick({
-			dx: ["ry", lensRadToDegree, L.setter((a, b) => b - a / 1.5)],
+			dx: L.cond(
+				[
+					R.pipe(R.prop("rx"), Math.abs, R.lt(Math.PI / 2)),
+					["ry", lensRadToDegree, L.setter((a, b) => b + a / 1.5)],
+				],
+				[["ry", lensRadToDegree, L.setter((a, b) => b - a / 1.5)]],
+			),
 			dy: ["rx", lensRadToDegree, L.setter((a, b) => b - a / 1.5)],
 		}),
 		worldTransform,
@@ -804,7 +833,7 @@
 	const cameraFoVWheel = view(
 		[
 			L.normalize(R.clamp(0.001, 180)),
-			L.setter((a, b) => b * Math.exp(-a / 1000)),
+			L.setter((a, b) => b * Math.exp(a / 1000)),
 		],
 		cameraFoV,
 	);
@@ -925,8 +954,23 @@
 			cancelAnimationFrame(raf);
 		};
 	});
+
+	const allProps = (val) =>
+		L.lens(R.pipe(R.values, R.all(R.equals(val))), (v, o) =>
+			v ? R.map(R.always(val), o) : R.map(R.always(!val), o),
+		);
+
+	const backfaceCull = atom({
+		cw: false,
+		ccw: true,
+	});
+	const hideCW = view("cw", backfaceCull);
+	const hideCCW = view("ccw", backfaceCull);
+	const hideNone = view(allProps(false), backfaceCull);
+	const hideAll = view(allProps(true), backfaceCull);
 </script>
 
+{JSON.stringify(backfaceCull.value)}
 <div
 	style="display: grid; grid-template-columns: repeat(auto-fit, minmax(20em, 1fr)); gap: 1em; padding: 1em 0"
 >
@@ -1319,11 +1363,40 @@
 					>
 				</label>
 			</fieldset>
+
+			<fieldset>
+				<legend>Backface</legend>
+
+				<label
+					><input type="checkbox" bind:checked={hideCW.value} /> Hide Clockwise
+					Faces</label
+				>
+				<label
+					><input type="checkbox" bind:checked={hideCCW.value} /> Hide
+					Counter-Clockwise Faces</label
+				>
+				<label
+					><input
+						type="radio"
+						value={true}
+						bind:group={hideNone.value}
+					/> Hide None</label
+				>
+				<label
+					><input
+						type="radio"
+						value={true}
+						bind:group={hideAll.value}
+					/> Hide All</label
+				>
+			</fieldset>
 		</fieldset>
 	</div>
 </div>
 <div class="resize">
 	<svg
+		data-hide-cw={hideCW.value}
+		data-hide-ccw={hideCCW.value}
 		bind:clientWidth={clientWidth.value}
 		bind:clientHeight={clientHeight.value}
 		tabindex="-1"
@@ -1383,24 +1456,44 @@
 
 		{#each ndcGeoFacePaths.value as p}
 			<polygon
-				fill="lightblue"
+				fill={p.attrs.color ?? "#ccc"}
 				fill-opacity="0.5"
 				stroke-width="1.2"
 				vector-effect="non-scaling-stroke"
 				stroke="none"
+				class={p.attrs.class}
 				stroke-opacity="0.1"
-				data-clockwise={p.polygon.clockwise}
-				points={p.polygon.points}
+				data-clockwise={p.vertices.clockwise}
+				points={p.vertices.points}
 			/>
 		{/each}
-		<path
-			stroke-width="2"
-			stroke-opacity="1"
-			vector-effect="non-scaling-stroke"
-			stroke="black"
-			stroke-dasharray="5 5"
-			d={ndcGeoEdgePath.value}
-		/>
+		{#each ndcGeoEdgePaths.value as p}
+			{@const allFaces = ndcGeoFacePaths.value}
+			{@const frontFacing = R.any(
+				(i) => allFaces[i].vertices.clockwise,
+				p.faces,
+			)}
+			<path
+				stroke-width="2"
+				stroke-opacity="1"
+				vector-effect="non-scaling-stroke"
+				stroke={p.attrs.color ?? "black"}
+				class={p.attrs.class}
+				data-any-clockwise={frontFacing !== (p.attrs.flip ?? false)}
+				d={p.vertices}
+			/>
+		{/each}
+		{#each ndcGeoVertices.value as v, i (i)}
+			{#if !v.clipped}
+				<circle cx={v.x} cy={v.y} r="5" fill="black" />
+				<text
+					x={v.x}
+					y={v.y}
+					text-anchor="middle"
+					transform="translate(0, -10)">{i}</text
+				>
+			{/if}
+		{/each}
 		<path fill="red" d={ndcCubeVertexPath.value} />
 	</svg>
 </div>
@@ -1429,9 +1522,17 @@
 		stroke-linejoin: round;
 	}
 
-	[data-clockwise="false"] {
-	}
-	[data-clockwise="true"] {
+	[data-hide-ccw="true"] [data-clockwise="false"] {
 		display: none;
+	}
+
+	[data-hide-cw="true"] [data-clockwise="true"] {
+		display: none;
+	}
+
+	.cube-edge[data-any-clockwise="false"] {
+		stroke-dasharray: 10 10;
+		stroke-width: 1;
+		stroke-opacity: 0.7;
 	}
 </style>

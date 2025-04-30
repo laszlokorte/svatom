@@ -289,7 +289,7 @@ button:not(:disabled):focus-visible, .button:not(:disabled):focus-visible {
 
 .number-picker {
 	display: grid;
-	grid-template-columns: 10fr 1fr 1fr;
+	grid-template-columns: 1fr auto auto;
 	grid-auto-columns: auto;
 	gap: 0.2ex 1em;
 	align-items: baseline;

@@ -350,6 +350,7 @@
 			<input
 				class="simple-form-field-input"
 				type="text"
+				placeholder=" "
 				bind:value={yourName.value}
 			/></label
 		>
@@ -367,6 +368,7 @@
 			<input
 				class="simple-form-field-input"
 				type="text"
+				placeholder=" "
 				bind:value={currentGreeting.value}
 			/></label
 		>

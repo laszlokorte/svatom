@@ -21,7 +21,7 @@ export default {
 		{
 			from: 1,
 			to: 2,
-			faces: [0, 9],
+			faces: [0, 8],
 			/*attrs: { color: "green" }*/
 		},
 		{
@@ -45,7 +45,7 @@ export default {
 		{
 			from: 5,
 			to: 6,
-			faces: [4, 8],
+			faces: [4, 9],
 			/*attrs: { color: "blue" }*/
 		},
 		{
@@ -155,11 +155,11 @@ export const cube = {
 	],
 	edges: [
 		{ from: 0, to: 1, faces: [0, 3] },
-		{ from: 1, to: 2, faces: [0, 8] },
+		{ from: 1, to: 2, faces: [0, 9] },
 		{ from: 2, to: 3, faces: [1, 7] },
-		{ from: 3, to: 0, faces: [1, 11] },
+		{ from: 3, to: 0, faces: [1, 10] },
 		{ from: 4, to: 5, faces: [2, 5] },
-		{ from: 5, to: 6, faces: [4, 9] },
+		{ from: 5, to: 6, faces: [4, 8] },
 		{ from: 6, to: 7, faces: [6, 4] },
 		{ from: 7, to: 4, faces: [5, 10] },
 		{ from: 0, to: 4, faces: [2, 11] },
@@ -180,5 +180,46 @@ export const cube = {
 		{ a: 2, b: 1, c: 5, attrs: { color: "cyan", flip: true } },
 		{ a: 0, b: 3, c: 7, attrs: { color: "yellow", flip: true } },
 		{ a: 7, b: 4, c: 0, attrs: { color: "yellow", flip: true } },
+	],
+}
+
+export const cube2 = {
+	vertices: [
+		{ x: 10, y: 10, z: 10, w:1 },
+		{ x: 10, y: -10, z: 10, w:1 },
+		{ x: -10, y: -10, z: 10, w:1 },
+		{ x: -10, y: 10, z: 10, w:1 },
+		{ x: 10, y: 10, z: -10, w:1 },
+		{ x: 10, y: -10, z: -10, w:1 },
+		{ x: -10, y: -10, z: -10, w:1 },
+		{ x: -10, y: 10, z: -10, w:1 },
+	],
+	edges: [
+		{ vertices: [0,1], faces: [0, 3],  attrs: { class: "cube-edge", color: "#333", flip: false } },
+		{ vertices: [1,2], faces: [0, 9],  attrs: { class: "cube-edge", color: "#333", flip: false } },
+		{ vertices: [2,3], faces: [1, 7],  attrs: { class: "cube-edge", color: "#333", flip: false } },
+		{ vertices: [3,0], faces: [1, 10],  attrs: { class: "cube-edge", color: "#333", flip: false } },
+		{ vertices: [4,5], faces: [2, 5],  attrs: { class: "cube-edge", color: "#333", flip: false } },
+		{ vertices: [5,6], faces: [4, 8],  attrs: { class: "cube-edge", color: "#333", flip: false } },
+		{ vertices: [6,7], faces: [6, 4],  attrs: { class: "cube-edge", color: "#333", flip: false } },
+		{ vertices: [7,4], faces: [5, 10],  attrs: { class: "cube-edge", color: "#333", flip: false } },
+		{ vertices: [0,4], faces: [2, 11],  attrs: { class: "cube-edge", color: "#333", flip: false } },
+		{ vertices: [1,5], faces: [3, 9],  attrs: { class: "cube-edge", color: "#333", flip: false } },
+		{ vertices: [2,6], faces: [6, 8],  attrs: { class: "cube-edge", color: "#333", flip: false } },
+		{ vertices: [3,7], faces: [7, 10],  attrs: { class: "cube-edge", color: "#333", flip: false } },
+	],
+	faces: [
+		{ vertices: [0, 1, 2], attrs: { class: "cube-face", color: "red", flip: true } },
+		{ vertices: [2, 3, 0], attrs: { class: "cube-face", color: "red", flip: true } },
+		{ vertices: [5, 0, 4], attrs: { class: "cube-face", color: "blue", flip: true } },
+		{ vertices: [5, 1, 0], attrs: { class: "cube-face", color: "blue", flip: true } },
+		{ vertices: [7, 6, 5], attrs: { class: "cube-face", color: "green", flip: true } },
+		{ vertices: [5, 4, 7], attrs: { class: "cube-face", color: "green", flip: true } },
+		{ vertices: [2, 6, 7], attrs: { class: "cube-face", color: "magenta", flip: true } },
+		{ vertices: [7, 3, 2], attrs: { class: "cube-face", color: "magenta", flip: true } },
+		{ vertices: [5, 6, 2], attrs: { class: "cube-face", color: "cyan", flip: true } },
+		{ vertices: [2, 1, 5], attrs: { class: "cube-face", color: "cyan", flip: true } },
+		{ vertices: [0, 3, 7], attrs: { class: "cube-face", color: "yellow", flip: true } },
+		{ vertices: [7, 4, 0], attrs: { class: "cube-face", color: "yellow", flip: true } },
 	],
 }
