@@ -699,29 +699,67 @@
 		combine({ screen, geo: ndcGeo, camera }),
 	);
 
+	const isClockwise = (points) => {
+		return R.pipe(
+			R.aperture(3),
+			R.map(
+				([a, b, c]) =>
+					(b.y - a.y) * (c.x - b.x) - (c.y - b.y) * (b.x - a.x) >= 0,
+			),
+			R.all(R.identity),
+		)(points);
+	};
+
+	const putProp = (prop, fn) =>
+		L.lens(
+			(obj) => ({
+				...obj,
+				[prop]: fn(obj),
+			}),
+			({ [prop]: _, ...rest }) => ({
+				...rest,
+			}),
+		);
+
 	const ndcGeoFacePaths = view(
-		({
-			screen: { size },
-			geo: { vertices, faces },
-			camera: { orthogonality },
-		}) => {
-			const project = mapIso([
-				lens3dProject(orthogonality),
-				lens2dScale(size.x / 2, size.y / 2),
-				coordPair,
-			]);
+		L.choose(
+			({
+				screen: { size },
+				geo: { vertices, faces },
+				camera: { orthogonality },
+			}) => {
+				const project = mapIso([
+					lens3dProject(orthogonality),
+					lens2dScale(size.x / 2, size.y / 2),
+				]);
 
-			const facesWithCoords = R.map(({ a, b, c }) => {
-				return [vertices[a], vertices[b], vertices[c]];
-			}, faces);
-
-			const projectedVertices = L.get(
-				[mapIso([clipFace4D, project, L.inverse(L.split(" "))])],
-				facesWithCoords,
-			);
-
-			return projectedVertices;
-		},
+				return [
+					"geo",
+					"faces",
+					L.applyAt(
+						L.elems,
+						putProp("polygon", (obj) => [
+							vertices[obj.a],
+							vertices[obj.b],
+							vertices[obj.c],
+						]),
+					),
+					mapIso(
+						L.applyAt("polygon", [
+							clipFace4D,
+							project,
+							L.pick({
+								clockwise: isClockwise,
+								points: [
+									mapIso(coordPair),
+									L.inverse(L.split(" ")),
+								],
+							}),
+						]),
+					),
+				];
+			},
+		),
 		combine({ screen, geo: ndcGeo, camera }),
 	);
 
@@ -1181,9 +1219,10 @@
 				fill-opacity="0.5"
 				stroke-width="1.2"
 				vector-effect="non-scaling-stroke"
-				stroke="darkred"
+				stroke="none"
 				stroke-opacity="0.1"
-				points={p}
+				data-clockwise={p.polygon.clockwise}
+				points={p.polygon.points}
 			/>
 		{/each}
 		<path
@@ -1216,5 +1255,11 @@
 	path,
 	polygon {
 		stroke-linejoin: round;
+	}
+
+	[data-clockwise="false"] {
+	}
+	[data-clockwise="true"] {
+		display: none;
 	}
 </style>
