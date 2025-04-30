@@ -1,4 +1,5 @@
 <script>
+	import { tick } from "svelte";
 	import * as L from "partial.lenses";
 	import * as G from "./generators";
 	import * as R from "ramda";
@@ -29,7 +30,7 @@
 				far: 1000,
 			},
 			aspectRatio: 1,
-			fov: Math.PI / 2,
+			fov: Math.PI / 2 / 3,
 			orthogonality: 0,
 			eye: {
 				tx: 0,
@@ -250,7 +251,7 @@
 		[
 			L.pick({
 				fill: R.always("black"),
-				r: R.always(10),
+				r: R.always(3),
 				cx: ["x"],
 				cy: ["y"],
 			}),
@@ -450,10 +451,10 @@
 	const worldTransform = atom({
 		tx: 0,
 		ty: 0,
-		tz: 0,
-		rx: 0.5,
-		ry: 0.8,
-		rz: -0.3,
+		tz: -100,
+		rx: -0.5,
+		ry: -0.8,
+		rz: 0,
 		sx: 1.1,
 		sy: 1.2,
 		sz: 1,
@@ -791,6 +792,139 @@
 	const worldTransformScaleX = view(["sx"], worldTransform);
 	const worldTransformScaleY = view(["sy"], worldTransform);
 	const worldTransformScaleZ = view(["sz"], worldTransform);
+
+	const objectPointerRotate = view(
+		L.pick({
+			dx: ["ry", lensRadToDegree, L.setter((a, b) => b - a / 1.5)],
+			dy: ["rx", lensRadToDegree, L.setter((a, b) => b - a / 1.5)],
+		}),
+		worldTransform,
+	);
+
+	const cameraFoVWheel = view(
+		[
+			L.normalize(R.clamp(0.001, 180)),
+			L.setter((a, b) => b * Math.exp(-a / 1000)),
+		],
+		cameraFoV,
+	);
+
+	const eyePointerRotate = view(
+		L.pick({
+			dx: ["ry", lensRadToDegree, L.setter((a, b) => b - a / 10)],
+			dy: ["rx", lensRadToDegree, L.setter((a, b) => b - a / 10)],
+		}),
+		cameraEye,
+	);
+
+	const eyePointerPan = view(
+		L.pick({
+			dx: ["tx", lensRadToDegree, L.setter((a, b) => b - a * 2)],
+			dy: ["ty", lensRadToDegree, L.setter((a, b) => b - a * 2)],
+		}),
+		cameraEye,
+	);
+
+	const eyePointerWalk = view(
+		L.pick({
+			dx: ["tx", lensRadToDegree, L.setter((a, b) => b)],
+			dy: ["tz", lensRadToDegree, L.setter((a, b) => b - a * 2)],
+		}),
+		cameraEye,
+	);
+	const eyeArrowWalk = view(
+		L.pick({
+			dx: ["tx", lensRadToDegree, L.setter((a, b) => b + a * 20)],
+			dy: ["tz", lensRadToDegree, L.setter((a, b) => b - a * 20)],
+		}),
+		cameraEye,
+	);
+
+	const pointer = atom({ x: 0, y: 0, dx: 0, dy: 0 });
+	const pointerPos = view(
+		L.lens(
+			({ x, y }) => ({ clientX: x, clientY: y }),
+			({ clientX: x, clientY: y }, o) => ({
+				x,
+				y,
+				dx: x - o.x,
+				dy: y - o.y,
+			}),
+		),
+		pointer,
+	);
+	const pointerDelta = view(L.props("dx", "dy"), pointer);
+
+	const arrowKeys = atom({
+		Shift: false,
+		ArrowLeft: false,
+		ArrowRight: false,
+		ArrowDown: false,
+		ArrowUp: false,
+	});
+
+	const arrowDirection = view((map) => {
+		const dx = (map.ArrowLeft ? -1 : 0) + (map.ArrowRight ? 1 : 0);
+		const dy = (map.ArrowDown ? -1 : 0) + (map.ArrowUp ? 1 : 0);
+		const len = Math.hypot(dy, dx);
+
+		return {
+			dx: (len ? dx / len : 0) * (map.Shift ? 3 : 1),
+			dy: (len ? dy / len : 0) * (map.Shift ? 3 : 1),
+		};
+	}, arrowKeys);
+
+	const keyDown = view(
+		L.lens(
+			(map) => {
+				return Object.entries(map)
+					.filter(([k, v]) => v)
+					.map(([k, v]) => k);
+			},
+			(key, map) => {
+				return Object.prototype.hasOwnProperty.call(map, key)
+					? { ...map, [key]: true }
+					: map;
+			},
+		),
+		arrowKeys,
+	);
+	const keyUp = view(
+		L.lens(
+			(map) => {
+				return Object.entries(map)
+					.filter(([k, v]) => !v)
+					.map(([k, v]) => k);
+			},
+			(key, map) => {
+				return Object.prototype.hasOwnProperty.call(map, key)
+					? { ...map, [key]: false }
+					: map;
+			},
+		),
+		arrowKeys,
+	);
+
+	let raf = null;
+	function frame(dx, dy, time) {
+		if (raf) {
+			raf = requestAnimationFrame(frame.bind(null, dx, dy));
+
+			eyeArrowWalk.value = { dx, dy };
+		}
+	}
+
+	$effect(() => {
+		const { dx, dy } = arrowDirection.value;
+
+		if (dx || dy) {
+			raf = requestAnimationFrame(frame.bind(null, dx, dy));
+		}
+
+		return () => {
+			cancelAnimationFrame(raf);
+		};
+	});
 </script>
 
 <div
@@ -875,8 +1009,8 @@
 						<input
 							type="range"
 							class="number-picker-slider"
-							min="-30"
-							max="30"
+							min="-150"
+							max="150"
 							step="0.001"
 							bind:value={worldTransformPosX.value}
 						/><output class="number-picker-value ro"
@@ -888,8 +1022,8 @@
 						<input
 							type="range"
 							class="number-picker-slider"
-							min="-30"
-							max="30"
+							min="-150"
+							max="150"
 							step="0.001"
 							bind:value={worldTransformPosY.value}
 						/><output class="number-picker-value ro"
@@ -901,8 +1035,8 @@
 						<input
 							type="range"
 							class="number-picker-slider"
-							min="-30"
-							max="30"
+							min="-150"
+							max="150"
 							step="0.001"
 							bind:value={worldTransformPosZ.value}
 						/><output class="number-picker-value ro"
@@ -1072,8 +1206,8 @@
 							<input
 								type="range"
 								class="number-picker-slider"
-								min="-30"
-								max="30"
+								min="-100"
+								max="100"
 								step="0.001"
 								bind:value={cameraEyePosX.value}
 							/><output class="number-picker-value ro"
@@ -1086,8 +1220,8 @@
 							<input
 								type="range"
 								class="number-picker-slider"
-								min="-30"
-								max="30"
+								min="-100"
+								max="100"
 								step="0.001"
 								bind:value={cameraEyePosY.value}
 							/><output class="number-picker-value ro"
@@ -1100,8 +1234,8 @@
 							<input
 								type="range"
 								class="number-picker-slider"
-								min="-30"
-								max="30"
+								min="-100"
+								max="100"
 								step="0.001"
 								bind:value={cameraEyePosZ.value}
 							/><output class="number-picker-value ro"
@@ -1192,9 +1326,43 @@
 	<svg
 		bind:clientWidth={clientWidth.value}
 		bind:clientHeight={clientHeight.value}
+		tabindex="-1"
 		class="viewport"
 		viewBox={viewBox.value}
 		preserveAspectRatio={aspectRatio.value}
+		onpointerdown={(evt) => {
+			evt.preventDefault();
+			evt.currentTarget.focus();
+			evt.currentTarget.setPointerCapture(evt.pointerId);
+			pointerPos.value = evt;
+		}}
+		onpointermove={(evt) => {
+			if (
+				evt.isPrimary &&
+				evt.currentTarget.hasPointerCapture(evt.pointerId)
+			) {
+				pointerPos.value = evt;
+				if (evt.shiftKey) {
+					eyePointerRotate.value = pointerDelta.value;
+				} else if (evt.ctrlKey) {
+					eyePointerPan.value = pointerDelta.value;
+				} else {
+					objectPointerRotate.value = pointerDelta.value;
+				}
+			}
+		}}
+		onkeydown={(evt) => {
+			evt.preventDefault();
+			keyDown.value = evt.key;
+		}}
+		onkeyup={(evt) => {
+			evt.preventDefault();
+			keyUp.value = evt.key;
+		}}
+		onwheel={(evt) => {
+			evt.preventDefault();
+			cameraFoVWheel.value = evt.deltaY;
+		}}
 	>
 		<rect {...debugRect.value}>
 			<title>Debug Rect</title>
@@ -1242,6 +1410,10 @@
 		width: 100%;
 		height: 100%;
 		display: block;
+	}
+
+	.viewport:focus {
+		touch-action: none;
 	}
 
 	.resize {
