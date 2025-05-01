@@ -17,16 +17,38 @@ export const parse = (str) => {
 		)(str)
 }
 
-export const toGeo = (obj) => {
-	return {
-		vertices: R.pipe(R.filter(R.propEq('vertex', 'type')), R.map(R.pipe(R.prop('pos'), R.assoc('w', 1))))(obj),
-		edges: [
-		],
+const cyclicAperture = R.curry((n, xs) => {
+  const len = xs.length;
+  if (n > len) return [];
+  return R.times(i =>
+    R.times(j => xs[(i + j) % len], n),
+    len
+  );
+});
+
+export const toGeo = (obj, scale = 1, reverse = false) => {
+
+	const clockwise = reverse ? R.reverse : R.identity
+
+	const center = R.pipe(R.filter(R.propEq('vertex', 'type')), R.map(R.pipe(R.prop('pos'))), R.addIndex(R.reduce)(
+		({x:ax,y:ay,z:az} , {x,y,z}, i) => ({
+			x:(ax*i+x)/(i+1),
+			y:(ay*i+y)/(i+1),
+			z:(az*i+z)/(i+1)
+		}), {x:0,y:0,z:0}))(obj)
+
+
+	const geo =  {
+		vertices: 
+		R.pipe(R.filter(R.propEq('vertex', 'type')), R.map(R.pipe(R.prop('pos'), R.modify('x', R.subtract(center.x)), R.modify('y', R.subtract(center.y)), R.modify('z', R.subtract(center.z)), R.map(R.multiply(scale)), R.assoc('w', 1))))(obj),
+		edges: R.pipe(R.filter(R.propEq('face', 'type')), R.addIndex(R.map)((f,fi) => R.pipe(R.prop('vertices'), clockwise, cyclicAperture(2), R.filter(([{v:v1},{v:v2}]) => v1>v2), R.map(R.pipe(R.map(R.pipe(R.prop('v'), R.add(-1))), R.objOf('vertices'), R.assoc('attrs', {class: "obj-edge"}), R.assoc('faces', [fi]))))(f)), R.flatten())(obj),
 		faces: 
-		R.pipe(R.filter(R.propEq('face', 'type')), R.map(R.pipe(R.prop('vertices'), R.map(R.pipe(R.prop('v'), R.add(-1))), R.objOf('vertices'), R.assoc('attrs', {oapcity:1, "fill-opacity": 1, color: "red"}))))(obj),
+		R.pipe(R.filter(R.propEq('face', 'type')), R.map(R.pipe(R.prop('vertices'), clockwise, R.map(R.pipe(R.prop('v'), R.add(-1))), R.objOf('vertices'), R.assoc('attrs', {class: "obj-face"}))))(obj),
 		masks: [
 		],
 		labels: [
 		],
 	}
+
+	return geo
 }

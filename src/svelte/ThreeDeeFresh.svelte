@@ -18,10 +18,12 @@
 	import exampleMesh, { cube2 } from "./example_mesh";
 	import objCube from "./cube.obj?raw";
 	import objTorus from "./torus.obj?raw";
+	import objTeapot from "./teapot.obj?raw";
+	import objMonkey from "./susan.obj?raw";
 	import { parse as parseObj, toGeo } from "./obj.js";
 
 	const objCubeParsed = parseObj(objCube);
-	const objTorusParsed = toGeo(parseObj(objTorus));
+	const objTorusParsed = toGeo(parseObj(objMonkey), 20, true);
 
 	const numf = new Intl.NumberFormat("en-US", {
 		maximumFractionDigits: 2,
@@ -1642,7 +1644,7 @@
 				fill-opacity="0.5"
 				vector-effect="non-scaling-stroke"
 				stroke="none"
-				class={p.attrs.class}
+				{...p.attrs}
 				stroke-opacity="0.1"
 				data-clockwise={p.vertices.clockwise !==
 					(p.attrs.flip ?? false)}
@@ -1834,8 +1836,8 @@
 			{/each}
 		</defs>
 
-		<circle cx="0" cy="0" r="60" clip-path="url(#mask-0)" fill="blue"
-		></circle>
+		<!-- <circle cx="0" cy="0" r="60" clip-path="url(#mask-0)" fill="blue"
+		></circle> -->
 	</svg>
 </div>
 
@@ -1957,5 +1959,29 @@
 		font-size: var(--font-size, 1em) !important;
 		stroke-linejoin: round;
 		stroke-linecap: round;
+	}
+
+	.obj-face {
+		opacity: 1;
+		fill-opacity: 1;
+		fill: darkred;
+	}
+
+	.obj-edge[data-any-clockwise="true"] {
+		stroke-dasharray: calc(var(--stroke-width-bg, 4) * 2)
+			calc(var(--stroke-width-bg, 4) * 2);
+		stroke-width: var(--stroke-width-bg, 2);
+		stroke-opacity: 0.3;
+	}
+	.obj-edge[data-any-clockwise="false"] {
+		stroke-width: var(--stroke-width-fg, 8);
+	}
+
+	[data-hide-ccw="true"] .obj-face[data-clockwise="false"] {
+		display: none;
+	}
+
+	[data-hide-cw="true"] .obj-face[data-clockwise="true"] {
+		display: none;
 	}
 </style>
