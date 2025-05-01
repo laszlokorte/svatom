@@ -16,6 +16,12 @@
 		setValue,
 	} from "./svatom.svelte.js";
 	import exampleMesh, { cube2 } from "./example_mesh";
+	import objCube from "./cube.obj?raw";
+	import objTorus from "./torus.obj?raw";
+	import { parse as parseObj, toGeo } from "./obj.js";
+
+	const objCubeParsed = parseObj(objCube);
+	const objTorusParsed = toGeo(parseObj(objTorus));
 
 	const numf = new Intl.NumberFormat("en-US", {
 		maximumFractionDigits: 2,
@@ -445,7 +451,7 @@
 		],
 	});
 
-	const worldGeo = atom(cube2);
+	const worldGeo = atom(objTorusParsed);
 
 	const worldTransform = atom({
 		tx: 0,
@@ -1641,7 +1647,6 @@
 				data-clockwise={p.vertices.clockwise !==
 					(p.attrs.flip ?? false)}
 				points={path.value}
-				tabindex="-1"
 			/>
 			{#if labelFace.value}
 				{@const center = view(
