@@ -23,7 +23,8 @@
 	import { parse as parseObj, toGeo } from "./obj.js";
 
 	const objCubeParsed = parseObj(objCube);
-	const objTorusParsed = toGeo(parseObj(objMonkey), 20, true);
+	const objMonkeyParsed = toGeo(parseObj(objMonkey), 20, true);
+	const objTorusParsed = toGeo(parseObj(objTorus), 5, true);
 
 	const numf = new Intl.NumberFormat("en-US", {
 		maximumFractionDigits: 2,
@@ -1964,7 +1965,11 @@
 	.obj-face {
 		opacity: 1;
 		fill-opacity: 1;
-		fill: darkred;
+		fill: aquamarine;
+	}
+
+	.obj-edge {
+		stroke: mediumaquamarine;
 	}
 
 	.obj-edge[data-any-clockwise="true"] {
