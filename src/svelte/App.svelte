@@ -896,6 +896,7 @@
 	<h2>Clipping</h2>
 
 	<ThreeDeeFresh />
+	<div style:height="60vh"></div>
 </section>
 
 <style>

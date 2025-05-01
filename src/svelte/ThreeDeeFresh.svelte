@@ -13,6 +13,7 @@
 		failableView,
 		bindValue,
 		autofocusIf,
+		setValue,
 	} from "./svatom.svelte.js";
 	import exampleMesh, { cube2 } from "./example_mesh";
 
@@ -657,7 +658,7 @@
 
 			if (aSign <= 0) {
 				result.push(a);
-			} else {
+			} else if (aSign > 0 !== bSign > 0) {
 				result.push(c);
 			}
 		}
@@ -686,7 +687,6 @@
 					L.defaults({ x: 0, y: 0, z: 0, w: 1 }),
 					lens3dProject(orthogonality),
 					lens2dScale(size.x / 2, size.y / 2),
-					coordPair,
 				];
 
 				return [
@@ -700,8 +700,6 @@
 						L.applyAt("vertices", [
 							clipFace4D(edgeClipper),
 							L.applyAt(L.elems, project),
-							L.inverse(L.split(" L ")),
-							L.inverse(L.dropPrefix(" M ")),
 						]),
 					]),
 				];
@@ -757,10 +755,42 @@
 							project,
 							L.pick({
 								clockwise: isClockwise,
-								points: [
-									mapIso(coordPair),
-									L.inverse(L.split(" ")),
-								],
+								points: [],
+							}),
+						]),
+					),
+				];
+			},
+		),
+		combine({ screen, geo: ndcGeo, camera }),
+	);
+
+	const ndcGeoMaskPaths = view(
+		L.choose(
+			({
+				screen: { size },
+				geo: { vertices },
+				camera: { orthogonality },
+			}) => {
+				const project = mapIso([
+					lens3dProject(orthogonality),
+					lens2dScale(size.x / 2, size.y / 2),
+				]);
+
+				return [
+					"geo",
+					"masks",
+					L.applyAt(
+						[L.elems, "vertices", L.elems],
+						(i) => vertices[i],
+					),
+					mapIso(
+						L.applyAt("vertices", [
+							clipFace4D(polygonClipper),
+							project,
+							L.pick({
+								clockwise: isClockwise,
+								points: [],
 							}),
 						]),
 					),
@@ -784,6 +814,34 @@
 				mapIso(project),
 			];
 		}),
+		combine({ screen, geo: ndcGeo, camera }),
+	);
+
+	const ndcGeoLabels = view(
+		L.choose(
+			({
+				screen: { size },
+				geo: { vertices },
+				camera: { orthogonality },
+			}) => {
+				const project = [
+					lens3dProject(orthogonality),
+					lens2dScale(size.x / 2, size.y / 2),
+				];
+
+				return [
+					"geo",
+					"labels",
+					mapIso([
+						L.applyAt("vertex", [
+							(i) => vertices[i],
+							project,
+							L.props("x", "y"),
+						]),
+					]),
+				];
+			},
+		),
 		combine({ screen, geo: ndcGeo, camera }),
 	);
 
@@ -974,9 +1032,32 @@
 	const hideCCW = view("ccw", backfaceCull);
 	const hideNone = view(allProps(false), backfaceCull);
 	const hideAll = view(allProps(true), backfaceCull);
+
+	const debugLabels = atom({
+		edge: false,
+		face: false,
+		vertex: false,
+		ndcCube: false,
+		screenTriangle: false,
+	});
+	const labelFace = view("face", debugLabels);
+	const labelVertex = view("vertex", debugLabels);
+	const labelEdge = view("edge", debugLabels);
+	const showNDCCube = view("ndcCube", debugLabels);
+	const screenTriangle = view("screenTriangle", debugLabels);
+	const penSize = atom({
+		fg: 4,
+		bg: 2,
+		circleRad: 0,
+		fontSize: 0,
+	});
+
+	const strokeWidthBg = view("bg", penSize);
+	const strokeWidthFg = view("fg", penSize);
+	const circleRad = view("circleRad", penSize);
+	const fontSize = view("fontSize", penSize);
 </script>
 
-{JSON.stringify(backfaceCull.value)}
 <div
 	style="display: grid; grid-template-columns: repeat(auto-fit, minmax(20em, 1fr)); gap: 1em; padding: 1em 0"
 >
@@ -1178,6 +1259,82 @@
 				</div>
 			</div>
 		</fieldset>
+		<fieldset>
+			<legend>Debug Labels</legend>
+
+			<label
+				><input type="checkbox" bind:checked={labelFace.value} /> Face</label
+			>
+			<label
+				><input type="checkbox" bind:checked={labelVertex.value} /> Vertex</label
+			>
+			<label
+				><input type="checkbox" bind:checked={labelEdge.value} /> Edge</label
+			>
+			<label
+				><input type="checkbox" bind:checked={showNDCCube.value} /> NDC Cube</label
+			>
+			<label
+				><input type="checkbox" bind:checked={screenTriangle.value} /> Clipped
+				Triangle</label
+			>
+		</fieldset>
+		<fieldset>
+			<legend>Drawing Style</legend>
+			<label class="number-picker"
+				><span class="number-picker-label">Stroke Fg:</span>
+				<input
+					type="range"
+					class="number-picker-slider"
+					min="0"
+					max="10"
+					step="0.1"
+					bind:value={strokeWidthFg.value}
+				/><output class="number-picker-value ro"
+					>({numf.format(strokeWidthFg.value)})</output
+				>
+			</label>
+
+			<label class="number-picker"
+				><span class="number-picker-label">Stroke Bg:</span>
+				<input
+					type="range"
+					class="number-picker-slider"
+					min="0"
+					max="10"
+					step="0.1"
+					bind:value={strokeWidthBg.value}
+				/><output class="number-picker-value ro"
+					>({numf.format(strokeWidthBg.value)})</output
+				>
+			</label>
+			<label class="number-picker"
+				><span class="number-picker-label">Vertex Size:</span>
+				<input
+					type="range"
+					class="number-picker-slider"
+					min="0"
+					max="20"
+					step="0.1"
+					bind:value={circleRad.value}
+				/><output class="number-picker-value ro"
+					>({numf.format(circleRad.value)})</output
+				>
+			</label>
+			<label class="number-picker"
+				><span class="number-picker-label">Font Size:</span>
+				<input
+					type="range"
+					class="number-picker-slider"
+					min="0"
+					max="20"
+					step="0.1"
+					bind:value={fontSize.value}
+				/><output class="number-picker-value ro"
+					>({numf.format(fontSize.value)})</output
+				>
+			</label>
+		</fieldset>
 	</div>
 
 	<div>
@@ -1369,7 +1526,6 @@
 					>
 				</label>
 			</fieldset>
-
 			<fieldset>
 				<legend>Backface</legend>
 
@@ -1381,19 +1537,11 @@
 					><input type="checkbox" bind:checked={hideCCW.value} /> Hide
 					Counter-Clockwise Faces</label
 				>
-				<label
-					><input
-						type="radio"
-						value={true}
-						bind:group={hideNone.value}
-					/> Hide None</label
+				<button onclick={setValue(hideNone)} value="true">
+					Show All</button
 				>
-				<label
-					><input
-						type="radio"
-						value={true}
-						bind:group={hideAll.value}
-					/> Hide All</label
+				<button onclick={setValue(hideAll)} value="true">
+					Hide All</button
 				>
 			</fieldset>
 		</fieldset>
@@ -1410,10 +1558,12 @@
 		viewBox={viewBox.value}
 		preserveAspectRatio={aspectRatio.value}
 		onpointerdown={(evt) => {
-			evt.preventDefault();
-			evt.currentTarget.focus();
-			evt.currentTarget.setPointerCapture(evt.pointerId);
-			pointerPos.value = evt;
+			if (evt.isPrimary) {
+				evt.preventDefault();
+				evt.currentTarget.focus();
+				evt.currentTarget.setPointerCapture(evt.pointerId);
+				pointerPos.value = evt;
+			}
 		}}
 		onpointermove={(evt) => {
 			if (
@@ -1443,64 +1593,244 @@
 			cameraFoVWheel.value = evt.deltaY;
 		}}
 	>
-		<rect {...debugRect.value}>
+		<rect {...debugRect.value} class:hidden={!showNDCCube.value}>
 			<title>Debug Rect</title>
 		</rect>
-		<polygon {...debugPolygon.value} />
-		<polygon {...debugBoundsSvg.value} />
-		<polygon {...debugPolygonClipped.value} />
-		<circle {...debugCircle.value}>
+		<polygon {...debugPolygon.value} class:hidden={!screenTriangle.value} />
+		<polygon {...debugBoundsSvg.value} class:hidden={!showNDCCube.value} />
+		<polygon
+			{...debugPolygonClipped.value}
+			class:hidden={!screenTriangle.value}
+		/>
+		<circle {...debugCircle.value} class:hidden={!showNDCCube.value}>
 			<title>Debug Center</title>
 		</circle>
+		<path
+			fill="red"
+			d={ndcCubeVertexPath.value}
+			class:hidden={!showNDCCube.value}
+		/>
 		<path
 			stroke-width="1"
 			vector-effect="non-scaling-stroke"
 			stroke="gray"
 			stroke-dasharray="5 5"
 			d={ndcCubeEdgePath.value}
+			class:hidden={!showNDCCube.value}
 		/>
 
-		{#each ndcGeoFacePaths.value as p}
+		{#each ndcGeoFacePaths.value as p, i (i)}
+			{@const path = view(
+				[
+					i,
+					"vertices",
+					"points",
+					mapIso(coordPair),
+					L.inverse(L.split(" ")),
+				],
+				ndcGeoFacePaths,
+			)}
+
 			<polygon
 				fill={p.attrs.color ?? "#ccc"}
 				fill-opacity="0.5"
-				stroke-width="1.2"
 				vector-effect="non-scaling-stroke"
 				stroke="none"
 				class={p.attrs.class}
 				stroke-opacity="0.1"
-				data-clockwise={p.vertices.clockwise}
-				points={p.vertices.points}
+				data-clockwise={p.vertices.clockwise !==
+					(p.attrs.flip ?? false)}
+				points={path.value}
+				tabindex="-1"
 			/>
-		{/each}
-		{#each ndcGeoEdgePaths.value as p}
-			{@const allFaces = ndcGeoFacePaths.value}
-			{@const frontFacing = R.any(
-				(i) => allFaces[i].vertices.clockwise,
-				p.faces,
-			)}
-			<path
-				stroke-width="2"
-				stroke-opacity="1"
-				vector-effect="non-scaling-stroke"
-				stroke={p.attrs.color ?? "black"}
-				class={p.attrs.class}
-				data-any-clockwise={frontFacing !== (p.attrs.flip ?? false)}
-				d={p.vertices}
-			/>
-		{/each}
-		{#each ndcGeoVertices.value as v, i (i)}
-			{#if !v.clipped}
-				<circle cx={v.x} cy={v.y} r="5" fill="black" />
+			{#if labelFace.value}
+				{@const center = view(
+					[
+						i,
+						"vertices",
+						"points",
+						L.foldTraversalLens(
+							L.foldl(
+								({ x: ax, y: ay }, { x, y }, i) => ({
+									x: (ax * i + x) / (i + 1),
+									y: (ay * i + y) / (i + 1),
+									"data-count": i + 1,
+								}),
+								{
+									x: 0,
+									y: 0,
+									"data-count": 0,
+								},
+							),
+							L.elems,
+						),
+					],
+					ndcGeoFacePaths,
+				)}
 				<text
-					x={v.x}
-					y={v.y}
+					class={p.attrs.class}
+					{...center.value}
+					data-clockwise={p.vertices.clockwise !==
+						(p.attrs.flip ?? false)}
 					text-anchor="middle"
-					transform="translate(0, -10)">{i}</text
+					transform="translate(0, -10)">f{i}</text
 				>
 			{/if}
 		{/each}
-		<path fill="red" d={ndcCubeVertexPath.value} />
+		<g
+			style:--stroke-width-fg={strokeWidthFg.value + "px"}
+			style:--stroke-width-bg={strokeWidthBg.value + "px"}
+			style:--stroke-width-bg2={strokeWidthBg.value * 2 + "px"}
+		>
+			{#each ndcGeoEdgePaths.value as p, i (i)}
+				{@const allFaces = ndcGeoFacePaths.value}
+				{@const frontFacing = R.any(
+					(i) => allFaces[i].vertices.clockwise,
+					p.faces,
+				)}
+				{@const path = view(
+					[
+						i,
+						"vertices",
+						L.applyAt(L.elems, coordPair),
+						L.inverse(L.split(" L ")),
+						L.inverse(L.dropPrefix(" M ")),
+					],
+					ndcGeoEdgePaths,
+				)}
+
+				<path
+					stroke-opacity="1"
+					vector-effect="non-scaling-stroke"
+					stroke={p.attrs.color ?? "black"}
+					class={p.attrs.class}
+					data-any-clockwise={frontFacing !== (p.attrs.flip ?? false)}
+					d={path.value}
+				/>
+				{#if labelEdge.value}
+					{@const center = view(
+						[
+							i,
+							"vertices",
+							L.foldTraversalLens(
+								L.foldl(
+									({ x: ax, y: ay }, { x, y }, i) => ({
+										x: (ax * i + x) / (i + 1),
+										y: (ay * i + y) / (i + 1),
+										"data-count": i + 1,
+									}),
+									{
+										x: 0,
+										y: 0,
+										"data-count": 0,
+									},
+								),
+								L.elems,
+							),
+						],
+						ndcGeoEdgePaths,
+					)}
+					<text
+						class={p.attrs.class}
+						{...center.value}
+						data-any-clockwise={frontFacing !==
+							(p.attrs.flip ?? false)}
+						text-anchor="middle"
+						transform="translate(0, -10)">e{i}</text
+					>
+				{/if}
+			{/each}
+		</g>
+		<g style:--circle-rad={circleRad.value + "px"}>
+			{#each ndcGeoVertices.value as v, i (i)}
+				{#if !v.clipped}
+					<circle
+						class="vertex"
+						cx={v.x}
+						cy={v.y}
+						r="5"
+						fill="black"
+					/>
+					{#if labelVertex.value}
+						<text
+							x={v.x}
+							y={v.y}
+							text-anchor="middle"
+							transform="translate(0, -10)">v{i}</text
+						>
+					{/if}
+				{/if}
+			{/each}
+		</g>
+
+		<g style:--font-size={fontSize.value + "px"}>
+			{#each ndcGeoLabels.value as v, i (i)}
+				{#if !v.clipped}
+					{@const lines = L.get(
+						[
+							"text",
+							L.choose(
+								R.ifElse(
+									R.is(Array),
+									R.always(L.identity),
+									R.always(L.getter(R.of(Array))),
+								),
+							),
+						],
+						v,
+					)}
+					<text
+						{...v.vertex}
+						text-anchor="middle"
+						transform="translate(0, -10)"
+						{...v.attrs}
+						>{#each lines as line, l (l)}
+							<tspan x={v.vertex.x} dy="1em">{line}</tspan>
+						{/each}</text
+					>
+					{#if v.attrs.stroke}
+						<text
+							{...v.vertex}
+							text-anchor="middle"
+							transform="translate(0, -10)"
+							{...v.attrs}
+							stroke="none"
+							stroke-width="0"
+							>{#each lines as line, l (l)}
+								<tspan x={v.vertex.x} dy="1em">{line}</tspan>
+							{/each}</text
+						>
+					{/if}
+				{/if}
+			{/each}
+		</g>
+
+		<defs>
+			{#each ndcGeoMaskPaths.value as p, i (i)}
+				{@const path = view(
+					[
+						i,
+						"vertices",
+						"points",
+						mapIso(coordPair),
+						L.inverse(L.split(" ")),
+					],
+					ndcGeoMaskPaths,
+				)}
+
+				<clipPath id="mask-{i}">
+					<polygon
+						class={p.attrs.class}
+						data-clockwise={p.vertices.clockwise !==
+							(p.attrs.flip ?? false)}
+						points={path.value}
+					/>
+				</clipPath>
+			{/each}
+		</defs>
+
+		<circle cx="0" cy="0" r="60" clip-path="url(#mask-0)" fill="blue"
+		></circle>
 	</svg>
 </div>
 
@@ -1511,7 +1841,9 @@
 		display: block;
 	}
 
-	.viewport:focus {
+	.viewport:focus,
+	.viewport:has-focus,
+	.viewport:focus-inside {
 		touch-action: none;
 	}
 
@@ -1523,22 +1855,102 @@
 		overflow: hidden;
 	}
 
-	path,
 	polygon {
 		stroke-linejoin: round;
+		stroke-width: 5px;
 	}
 
-	[data-hide-ccw="true"] [data-clockwise="false"] {
+	[data-hide-ccw="true"] .cube-face[data-clockwise="false"] {
 		display: none;
 	}
 
-	[data-hide-cw="true"] [data-clockwise="true"] {
+	[data-hide-cw="true"] .cube-face[data-clockwise="true"] {
+		display: none;
+	}
+
+	[data-hide-ccw="true"] text[data-clockwise="false"] {
+		display: none;
+	}
+
+	[data-hide-cw="true"] text[data-clockwise="true"] {
 		display: none;
 	}
 
 	.cube-edge[data-any-clockwise="false"] {
-		stroke-dasharray: 10 10;
-		stroke-width: 1;
+		stroke-dasharray: calc(var(--stroke-width-bg, 4) * 2)
+			calc(var(--stroke-width-bg, 4) * 2);
+		stroke-width: var(--stroke-width-bg, 2);
 		stroke-opacity: 0.7;
+	}
+
+	.vertex {
+		r: var(--circle-rad, 10px);
+	}
+
+	.cube-edge[data-any-clockwise="true"] {
+		stroke-width: var(--stroke-width-fg, 8);
+	}
+
+	.cube-edge {
+		stroke-linecap: round;
+	}
+
+	text.cube-edge[data-any-clockwise="false"] {
+		opacity: 0.6;
+	}
+
+	text.cube-face[data-clockwise="false"] {
+		opacity: 0.3;
+	}
+
+	text.cube-face[data-count="0"] {
+		display: none;
+	}
+
+	text.cube-edge[data-count="0"] {
+		display: none;
+	}
+
+	.hidden {
+		display: none;
+	}
+
+	polygon.ground {
+		fill-opacity: 0.2;
+		stroke: mediumaquamarine;
+		stroke-opacity: 0.5;
+		stroke-width: 1px;
+		opacity: 1;
+		pointer-events: none;
+	}
+
+	text.ground {
+		display: none;
+	}
+
+	polygon.cube-face:hover {
+		fill-opacity: 0.7;
+	}
+
+	polygon.cube-face {
+		pointer-events: fill;
+	}
+
+	.cube-edge {
+		pointer-events: none;
+	}
+
+	.cube-mask[data-clockwise="false"] {
+		display: none;
+	}
+
+	polygon.ground[data-clockwise="false"] {
+		display: none;
+	}
+
+	text.cube-label {
+		font-size: var(--font-size, 1em) !important;
+		stroke-linejoin: round;
+		stroke-linecap: round;
 	}
 </style>

@@ -872,3 +872,10 @@ export function isFullscreen() {
 		}
 	}
 }
+
+export function setValue(atom) {
+	return (evt) => {
+		evt.preventDefault()
+		atom.value = evt.currentTarget.value
+	}
+}
