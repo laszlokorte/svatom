@@ -22,9 +22,9 @@
 	import objMonkey from "./susan.obj?raw";
 	import { parse as parseObj, toGeo } from "./obj.js";
 
-	const objCubeParsed = parseObj(objCube);
-	const objMonkeyParsed = toGeo(parseObj(objMonkey), 20, true);
-	const objTorusParsed = toGeo(parseObj(objTorus), 5, true);
+	const objCubeParsed = toGeo(parseObj(objCube), 20);
+	const objMonkeyParsed = toGeo(parseObj(objMonkey), 20);
+	const objTorusParsed = toGeo(parseObj(objTorus), 5);
 
 	const numf = new Intl.NumberFormat("en-US", {
 		maximumFractionDigits: 2,
@@ -454,7 +454,7 @@
 		],
 	});
 
-	const worldGeo = atom(objTorusParsed);
+	const worldGeo = atom(objMonkeyParsed);
 
 	const worldTransform = atom({
 		tx: 0,
@@ -1681,6 +1681,7 @@
 					data-clockwise={p.vertices.clockwise !==
 						(p.attrs.flip ?? false)}
 					text-anchor="middle"
+					fill="black"
 					transform="translate(0, -10)">f{i}</text
 				>
 			{/if}
@@ -1847,6 +1848,8 @@
 		width: 100%;
 		height: 100%;
 		display: block;
+		touch-action: none;
+		overscroll-behavior: contain;
 	}
 
 	.viewport:focus,
@@ -1962,24 +1965,29 @@
 		stroke-linecap: round;
 	}
 
-	.obj-face {
-		opacity: 1;
+	polygon.obj-face {
+		opacity: 0.4;
 		fill-opacity: 1;
 		fill: aquamarine;
 	}
 
-	.obj-edge {
+	path.obj-edge {
 		stroke: mediumaquamarine;
 	}
 
 	.obj-edge[data-any-clockwise="true"] {
+		stroke-width: var(--stroke-width-fg, 8);
+	}
+
+	.obj-edge {
+		stroke-linecap: round;
+	}
+
+	.obj-edge[data-any-clockwise="false"] {
 		stroke-dasharray: calc(var(--stroke-width-bg, 4) * 2)
 			calc(var(--stroke-width-bg, 4) * 2);
 		stroke-width: var(--stroke-width-bg, 2);
-		stroke-opacity: 0.3;
-	}
-	.obj-edge[data-any-clockwise="false"] {
-		stroke-width: var(--stroke-width-fg, 8);
+		stroke-opacity: 0.7;
 	}
 
 	[data-hide-ccw="true"] .obj-face[data-clockwise="false"] {
