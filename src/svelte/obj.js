@@ -26,25 +26,31 @@ const cyclicAperture = R.curry((n, xs) => {
   );
 });
 
-export const toGeo = (obj, scale = 1, reverse = true) => {
+export const toGeo = (obj, scale = 1, reverse = true, scaleX= 1, scaleY= 1, scaleZ= 1) => {
 
 	const clockwise = reverse ? R.reverse : R.identity
+	const vert = R.filter(R.propEq('vertex', 'type'))
+	const facs = R.filter(R.propEq('face', 'type'))
 
-	const center = R.pipe(R.filter(R.propEq('vertex', 'type')), R.map(R.pipe(R.prop('pos'))), R.addIndex(R.reduce)(
+	const center = R.pipe(vert, R.map(R.pipe(R.prop('pos'))), R.addIndex(R.reduce)(
 		({x:ax,y:ay,z:az} , {x,y,z}, i) => ({
 			x:(ax*i+x)/(i+1),
 			y:(ay*i+y)/(i+1),
 			z:(az*i+z)/(i+1)
 		}), {x:0,y:0,z:0}))(obj)
 
+		const toTriangle = (vs) => {
+			return R.pipe(R.slice(1,Infinity), R.aperture(2), R.map(R.prepend(R.nth(0, vs))))(vs)
+		}
 
+	const vertices = R.pipe(vert, R.map(R.pipe(R.prop('pos'), R.modify('x', R.pipe(R.subtract(R.__, center.x), R.multiply(scaleX))), R.modify('y', R.pipe(R.subtract(R.__, center.y), R.multiply(scaleY))), R.modify('z', R.pipe(R.subtract(R.__, center.z), R.multiply(scaleZ))), R.map(R.multiply(scale)), R.assoc('w', 1))))(obj)
+	const faces = R.pipe(facs, R.map(R.pipe(R.prop('vertices'), clockwise, toTriangle, R.map(R.pipe(R.map(R.pipe(R.prop('v'), R.add(-1))), R.objOf('vertices'), R.assoc('attrs', {class: "obj-face"}))))), R.flatten())(obj)
+	const edges = R.pipe(facs, R.map(R.pipe(R.prop('vertices'), clockwise, cyclicAperture(2), R.map(R.pipe(R.map(R.pipe(R.prop('v'), R.add(-1))), R.objOf('vertices'), R.assoc('attrs', {class: "obj-edge"}), (e) => R.assoc('faces', R.pipe(R.addIndex(R.map)((f,i) => ({i,f})), R.filter(({f}) => (R.intersection(e.vertices, f.vertices)).length >= 2), R.map(R.prop("i")))(faces), e))))), R.flatten(), R.filter(R.pipe(R.prop("faces"), R.complement(R.isEmpty))), R.uniqBy(R.pipe(R.prop("vertices"), R.sortBy(R.identity))))(obj)
 
 	const geo =  {
-		vertices: 
-		R.pipe(R.filter(R.propEq('vertex', 'type')), R.map(R.pipe(R.prop('pos'), R.modify('x', R.subtract(R.__, center.x)), R.modify('y', R.subtract(R.__, center.y)), R.modify('z', R.subtract(R.__, center.z)), R.map(R.multiply(scale)), R.assoc('w', 1))))(obj),
-		edges: R.pipe(R.filter(R.propEq('face', 'type')), R.addIndex(R.map)(R.pipe(R.prop('vertices'), clockwise, cyclicAperture(2), R.filter(([{v:v1},{v:v2}]) => v2>v1), R.map(R.pipe(R.map(R.pipe(R.prop('v'), R.add(-1))), R.objOf('vertices'), R.assoc('attrs', {class: "obj-edge"}), (e) => R.assoc('faces', R.pipe(R.filter(R.propEq('face', 'type')), R.addIndex(R.map)((f,i) => ({i,f})), R.filter(({f}) => (R.intersection(e.vertices, R.map(R.pipe(R.prop("v"), R.add(-1)), f.vertices))).length == 2), R.map(R.prop("i")))(obj), e))))), R.flatten())(obj),
-		faces: 
-		R.pipe(R.filter(R.propEq('face', 'type')), R.map(R.pipe(R.prop('vertices'), clockwise, R.map(R.pipe(R.prop('v'), R.add(-1))), R.objOf('vertices'), R.assoc('attrs', {class: "obj-face"}))))(obj),
+		vertices,
+		edges,
+		faces, 
 		masks: [
 		],
 		labels: [

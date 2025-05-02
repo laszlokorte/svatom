@@ -19,12 +19,21 @@
 	import objCube from "./cube.obj?raw";
 	import objTorus from "./torus.obj?raw";
 	import objTeapot from "./teapot.obj?raw";
-	import objMonkey from "./susan.obj?raw";
+	import objMonkey from "./suzanne.obj?raw";
 	import { parse as parseObj, toGeo } from "./obj.js";
 
-	const objCubeParsed = toGeo(parseObj(objCube), 20);
-	const objMonkeyParsed = toGeo(parseObj(objMonkey), 20);
-	const objTorusParsed = toGeo(parseObj(objTorus), 5);
+	const objs = {
+		initial: { label: "Initial", geo: cube2 },
+		cube: { label: "Cube", data: objCube, scale: 20 },
+		monkey: {
+			label: "Suzanne",
+			data: objMonkey,
+			scale: 20,
+			scaleX: -1,
+			scaleY: -1,
+		},
+		torus: { label: "Torus", data: objTorus, scale: 5 },
+	};
 
 	const numf = new Intl.NumberFormat("en-US", {
 		maximumFractionDigits: 2,
@@ -454,7 +463,7 @@
 		],
 	});
 
-	const worldGeo = atom(objMonkeyParsed);
+	const worldGeo = atom(cube2);
 
 	const worldTransform = atom({
 		tx: 0,
@@ -1055,16 +1064,18 @@
 	const showNDCCube = view("ndcCube", debugLabels);
 	const screenTriangle = view("screenTriangle", debugLabels);
 	const penSize = atom({
-		fg: 4,
-		bg: 2,
+		fg: 2,
+		bg: 1,
 		circleRad: 0,
-		fontSize: 0,
+		fontSize: 12,
 	});
 
 	const strokeWidthBg = view("bg", penSize);
 	const strokeWidthFg = view("fg", penSize);
 	const circleRad = view("circleRad", penSize);
 	const fontSize = view("fontSize", penSize);
+
+	const geoJson = view(L.inverse(L.json({ space: "  " })), worldGeo);
 </script>
 
 <div
@@ -1554,6 +1565,35 @@
 				>
 			</fieldset>
 		</fieldset>
+
+		<fieldset>
+			<legend>Load Example model</legend>
+
+			<div>
+				<select
+					size="10"
+					onchange={(evt) => {
+						const obj = objs[evt.currentTarget.value];
+						if (obj.geo) {
+							worldGeo.value = obj.geo;
+						} else if (obj.data) {
+							worldGeo.value = obj.geo = toGeo(
+								parseObj(obj.data),
+								obj.scale ?? 1,
+								obj.reverse ?? true,
+								obj.scaleX ?? 1,
+								obj.scaleY ?? 1,
+								obj.scaleZ ?? 1,
+							);
+						}
+					}}
+				>
+					{#each Object.entries(objs) as [k, v] (k)}
+						<option value={k}>{v.label}</option>
+					{/each}
+				</select>
+			</div>
+		</fieldset>
 	</div>
 </div>
 <div class="resize">
@@ -1838,10 +1878,13 @@
 			{/each}
 		</defs>
 
-		<!-- <circle cx="0" cy="0" r="60" clip-path="url(#mask-0)" fill="blue"
-		></circle> -->
+		{#if worldGeo.value.masks.length}
+			<circle cx="0" cy="0" r="60" clip-path="url(#mask-0)" fill="blue"
+			></circle>
+		{/if}
 	</svg>
 </div>
+<textarea bind:value={geoJson.value}></textarea>
 
 <style>
 	.viewport {
