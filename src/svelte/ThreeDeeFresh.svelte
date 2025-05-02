@@ -2040,4 +2040,12 @@
 	[data-hide-cw="true"] .obj-face[data-clockwise="true"] {
 		display: none;
 	}
+
+	text.obj-face[data-count="0"] {
+		display: none;
+	}
+
+	text.obj-edge[data-count="0"] {
+		display: none;
+	}
 </style>
