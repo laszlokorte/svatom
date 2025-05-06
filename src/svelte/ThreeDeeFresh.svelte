@@ -39,7 +39,8 @@
 		maximumFractionDigits: 2,
 		minimumFractionDigits: 2,
 	});
-	const expect = (p, f) => (x) => (p(x) ? f(x) : undefined);
+	//const expect = (p, f) => (x) => (p(x) ? f(x) : undefined);
+	const expect = (p, f) => (x) => (x === undefined ? x : f(x));
 
 	const {
 		geo = atom(exampleMesh),
@@ -513,13 +514,12 @@
 		L.choose(({ camera, transform, screenAspect, geo }) => {
 			return [
 				"geo",
-				L.applyAt(
-					"vertices",
+				L.applyAt("vertices", [
 					mapIso([
 						lensMatrixTransform(transform),
 						cameraTransform(camera, screenAspect),
 					]),
-				),
+				]),
 			];
 		}),
 		combine({
@@ -555,7 +555,7 @@
 			),
 		);
 
-	const ndcCubeVertexPath = view(
+	const ndcCubeVertices = view(
 		L.choose(
 			({
 				screen: { size },
@@ -569,40 +569,26 @@
 						lens3dProject(orthogonality),
 						lens2dScale(size.x / 2, size.y / 2),
 					]),
-					coordPathString(3),
 				];
 			},
 		),
 		combine({ screen, cube: ndcCube, camera }),
 	);
 
-	const ndcCubeEdgePath = view(
-		({
-			screen: { size },
-			geo: { vertices, edges },
-			camera: { orthogonality },
-		}) => {
-			const projectedVertices = L.get(
-				[
-					mapIso([
-						lens3dProject(orthogonality),
-						lens2dScale(size.x / 2, size.y / 2),
-						coordPair,
-					]),
-				],
-				vertices,
-			);
+	const ndcCubeVertexPath = view(coordPathString(3), ndcCubeVertices);
 
+	const ndcCubeEdgePath = view(
+		({ geo: { edges }, projectedVertices }) => {
 			return R.join(
 				" ",
 				R.map(
 					({ from, to }) =>
-						`M${projectedVertices[from]} L ${projectedVertices[to]}`,
+						`M${L.get(coordPair, projectedVertices[from])} L ${L.get(coordPair, projectedVertices[to])}`,
 					edges,
 				),
 			);
 		},
-		combine({ screen, geo: ndcCube, camera }),
+		combine({ projectedVertices: ndcCubeVertices, geo: ndcCube }),
 	);
 
 	const ndcPlanes = [
@@ -701,25 +687,27 @@
 				geo: { vertices, edges },
 				camera: { orthogonality },
 			}) => {
-				const project = [
-					L.defaults({ x: 0, y: 0, z: 0, w: 1 }),
+				const project = L.compose(
 					lens3dProject(orthogonality),
 					lens2dScale(size.x / 2, size.y / 2),
-				];
+				);
 
 				return [
 					"geo",
 					"edges",
 					L.applyAt(
-						[L.elems, "vertices", L.elems],
+						L.compose(L.elems, "vertices", L.elems),
 						(i) => vertices[i],
 					),
-					mapIso([
-						L.applyAt("vertices", [
-							clipFace4D(edgeClipper),
-							L.applyAt(L.elems, project),
-						]),
-					]),
+					mapIso(
+						L.applyAt(
+							"vertices",
+							L.compose(
+								clipFace4D(edgeClipper),
+								L.applyAt(L.elems, project),
+							),
+						),
+					),
 				];
 			},
 		),
@@ -755,27 +743,32 @@
 				geo: { vertices, faces },
 				camera: { orthogonality },
 			}) => {
-				const project = mapIso([
-					lens3dProject(orthogonality),
-					lens2dScale(size.x / 2, size.y / 2),
-				]);
+				const project = mapIso(
+					L.compose(
+						lens3dProject(orthogonality),
+						lens2dScale(size.x / 2, size.y / 2),
+					),
+				);
 
 				return [
 					"geo",
 					"faces",
 					L.applyAt(
-						[L.elems, "vertices", L.elems],
+						L.compose(L.elems, "vertices", L.elems),
 						(i) => vertices[i],
 					),
 					mapIso(
-						L.applyAt("vertices", [
-							clipFace4D(polygonClipper),
-							project,
-							L.pick({
-								clockwise: isClockwise,
-								points: [],
-							}),
-						]),
+						L.applyAt(
+							"vertices",
+							L.compose(
+								clipFace4D(polygonClipper),
+								project,
+								L.pick({
+									clockwise: isClockwise,
+									points: [],
+								}),
+							),
+						),
 					),
 				];
 			},
@@ -790,27 +783,32 @@
 				geo: { vertices },
 				camera: { orthogonality },
 			}) => {
-				const project = mapIso([
-					lens3dProject(orthogonality),
-					lens2dScale(size.x / 2, size.y / 2),
-				]);
+				const project = mapIso(
+					L.compose(
+						lens3dProject(orthogonality),
+						lens2dScale(size.x / 2, size.y / 2),
+					),
+				);
 
 				return [
 					"geo",
 					"masks",
 					L.applyAt(
-						[L.elems, "vertices", L.elems],
+						L.compose(L.elems, "vertices", L.elems),
 						(i) => vertices[i],
 					),
 					mapIso(
-						L.applyAt("vertices", [
-							clipFace4D(polygonClipper),
-							project,
-							L.pick({
-								clockwise: isClockwise,
-								points: [],
-							}),
-						]),
+						L.applyAt(
+							"vertices",
+							L.compose(
+								clipFace4D(polygonClipper),
+								project,
+								L.pick({
+									clockwise: isClockwise,
+									points: [],
+								}),
+							),
+						),
 					),
 				];
 			},
@@ -820,10 +818,10 @@
 
 	const ndcGeoVertices = view(
 		L.choose(({ screen: { size }, camera: { orthogonality } }) => {
-			const project = [
+			const project = L.compose(
 				lens3dProject(orthogonality),
 				lens2dScale(size.x / 2, size.y / 2),
-			];
+			);
 
 			return [
 				"geo",
@@ -842,20 +840,23 @@
 				geo: { vertices },
 				camera: { orthogonality },
 			}) => {
-				const project = [
+				const project = L.compose(
 					lens3dProject(orthogonality),
 					lens2dScale(size.x / 2, size.y / 2),
-				];
+				);
 
 				return [
 					"geo",
 					"labels",
 					mapIso([
-						L.applyAt("vertex", [
-							(i) => vertices[i],
-							project,
-							L.props("x", "y"),
-						]),
+						L.applyAt(
+							"vertex",
+							L.compose(
+								(i) => vertices[i],
+								project,
+								L.props("x", "y"),
+							),
+						),
 					]),
 				];
 			},
@@ -898,16 +899,40 @@
 	const worldTransformScaleY = view(["sy"], worldTransform);
 	const worldTransformScaleZ = view(["sz"], worldTransform);
 
+	const wrapRange = (a, b) => {
+		const range_width = b - a;
+		return L.normalize(
+			(x) => ((((x - a) % range_width) + range_width) % range_width) + a,
+		);
+	};
+
 	const objectPointerRotate = view(
 		L.pick({
 			dx: L.cond(
 				[
 					R.pipe(R.prop("rx"), Math.abs, R.lt(Math.PI / 2)),
-					["ry", lensRadToDegree, L.setter((a, b) => b + a / 1.5)],
+					[
+						"ry",
+						wrapRange(-Math.PI, Math.PI),
+						lensRadToDegree,
+						L.setter((a, b) => b + a / 1.5),
+					],
 				],
-				[["ry", lensRadToDegree, L.setter((a, b) => b - a / 1.5)]],
+				[
+					[
+						"ry",
+						wrapRange(-Math.PI, Math.PI),
+						lensRadToDegree,
+						L.setter((a, b) => b - a / 1.5),
+					],
+				],
 			),
-			dy: ["rx", lensRadToDegree, L.setter((a, b) => b - a / 1.5)],
+			dy: [
+				"rx",
+				wrapRange(-Math.PI, Math.PI),
+				lensRadToDegree,
+				L.setter((a, b) => b - a / 1.5),
+			],
 		}),
 		worldTransform,
 	);
@@ -922,31 +947,51 @@
 
 	const eyePointerRotate = view(
 		L.pick({
-			dx: ["ry", lensRadToDegree, L.setter((a, b) => b - a / 10)],
-			dy: ["rx", lensRadToDegree, L.setter((a, b) => b - a / 10)],
+			dx: [
+				"ry",
+				wrapRange(-Math.PI, Math.PI),
+				lensRadToDegree,
+				L.setter((a, b) => b - a / 10),
+			],
+			dy: [
+				"rx",
+				wrapRange(-Math.PI, Math.PI),
+				lensRadToDegree,
+				L.setter((a, b) => b - a / 10),
+			],
 		}),
 		cameraEye,
 	);
 
 	const eyePointerPan = view(
 		L.pick({
-			dx: ["tx", lensRadToDegree, L.setter((a, b) => b - a * 2)],
-			dy: ["ty", lensRadToDegree, L.setter((a, b) => b - a * 2)],
+			dx: ["tx", L.setter((a, b) => b - a / 10)],
+			dy: ["ty", L.setter((a, b) => b - a / 10)],
 		}),
 		cameraEye,
 	);
 
 	const eyePointerWalk = view(
 		L.pick({
-			dx: ["tx", lensRadToDegree, L.setter((a, b) => b)],
-			dy: ["tz", lensRadToDegree, L.setter((a, b) => b - a * 2)],
+			dx: [
+				"tx",
+				wrapRange(-Math.PI, Math.PI),
+				lensRadToDegree,
+				L.setter((a, b) => b),
+			],
+			dy: [
+				"tz",
+				wrapRange(-Math.PI, Math.PI),
+				lensRadToDegree,
+				L.setter((a, b) => b - a * 2),
+			],
 		}),
 		cameraEye,
 	);
 	const eyeArrowWalk = view(
 		L.pick({
-			dx: ["tx", lensRadToDegree, L.setter((a, b) => b + a * 20)],
-			dy: ["tz", lensRadToDegree, L.setter((a, b) => b - a * 20)],
+			dx: ["tx", L.setter((a, b) => b + a * 2)],
+			dy: ["tz", L.setter((a, b) => b - a * 2)],
 		}),
 		cameraEye,
 	);
@@ -1620,9 +1665,9 @@
 				evt.currentTarget.hasPointerCapture(evt.pointerId)
 			) {
 				pointerPos.value = evt;
-				if (evt.shiftKey) {
+				if (evt.ctrlKey) {
 					eyePointerRotate.value = pointerDelta.value;
-				} else if (evt.ctrlKey) {
+				} else if (evt.shiftKey) {
 					eyePointerPan.value = pointerDelta.value;
 				} else {
 					objectPointerRotate.value = pointerDelta.value;
