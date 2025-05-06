@@ -1690,6 +1690,8 @@
 						} else if (obj.renew) {
 							worldGeo.value = obj.geo = renewToGeo(
 								parserAutoDetect(obj.renew, false),
+								50,
+								8,
 							);
 						}
 					}}

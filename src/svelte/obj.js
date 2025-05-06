@@ -70,7 +70,7 @@ export const toGeo = (obj, scale = 1, reverse = true, scaleX= 1, scaleY= 1, scal
 }
 
 
-export const renewToGeo = (renewDocument, scale=50) =>  {
+export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 
 	const rectTypes = hierarchyV11.descendantsOf(
 		"CH.ifa.draw.figures.RectangleFigure",
@@ -223,7 +223,6 @@ export const renewToGeo = (renewDocument, scale=50) =>  {
 
 		const v0 = v.length
 		const f0 = f.length
-		const sides = 24
 
 		f.push({ vertices: front, attrs: { class: "petri-face", color: "green", flip: false } },)
 		f.push({ vertices: back, attrs: { class: "petri-face", color: "green", flip: false } },)
