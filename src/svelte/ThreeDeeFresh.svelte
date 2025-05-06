@@ -464,7 +464,22 @@
 		],
 	});
 
+	const lensAddProp = (k, v) => L.iso(R.assoc(k, v), R.dissoc(k));
+	const normLength = L.normalize((o) => {
+		return L.modify(L.values, R.divide(R.__, L.sum(L.values, o) || 1), o);
+	});
 	const worldGeo = atom(cube2);
+	const sunLightDir = atom({
+		pos: { x: 0, y: 0, z: -100 },
+		dir: { x: -1, y: 0.8, z: 0.5 },
+	});
+	const sunLight = view(
+		L.pickIn({
+			pos: lensAddProp("w", 1),
+			dir: [normLength, lensAddProp("w", 0)],
+		}),
+		sunLightDir,
+	);
 
 	const worldTransform = atom({
 		tx: 0,
@@ -486,22 +501,31 @@
 		lens3dTranslate(transform.tx, transform.ty, transform.tz),
 	];
 
-	const cameraTransform = (camera, screenAspect) => [
-		L.inverse([
-			lens3dScale(camera.eye.sx, camera.eye.sy, camera.eye.sz),
-			lens3dRotateY(camera.eye.ry),
-			lens3dRotateX(camera.eye.rx),
-			lens3dRotateZ(camera.eye.rz),
-			lens3dTranslate(camera.eye.tx, camera.eye.ty, camera.eye.tz),
-		]),
+	const cameraTransform = (camera, screenAspect, translation = true) =>
+		L.compose(
+			L.inverse(
+				L.compose(
+					lens3dScale(camera.eye.sx, camera.eye.sy, camera.eye.sz),
+					lens3dRotateY(camera.eye.ry),
+					lens3dRotateX(camera.eye.rx),
+					lens3dRotateZ(camera.eye.rz),
+					translation
+						? lens3dTranslate(
+								camera.eye.tx,
+								camera.eye.ty,
+								camera.eye.tz,
+							)
+						: L.identity,
+				),
+			),
 
-		lens3dPerspective(
-			camera.fov,
-			camera.aspectRatio * screenAspect,
-			camera.clip.near,
-			camera.clip.far,
-		),
-	];
+			lens3dPerspective(
+				camera.fov,
+				camera.aspectRatio * screenAspect,
+				camera.clip.near,
+				camera.clip.far,
+			),
+		);
 
 	const ratio = (a, b) => [
 		L.pick({ a, b }),
@@ -511,7 +535,7 @@
 	const screenAspect = view(["size", ratio("x", "y")], screen);
 
 	const ndcGeo = view(
-		L.choose(({ camera, transform, screenAspect, geo }) => {
+		L.choose(({ camera, transform, screenAspect }) => {
 			return [
 				"geo",
 				L.applyAt("vertices", [
@@ -525,6 +549,23 @@
 		combine({
 			geo: worldGeo,
 			transform: worldTransform,
+			camera,
+			screenAspect,
+		}),
+	);
+
+	const ndcLight = view(
+		L.choose(({ camera, transform, screenAspect }) => {
+			return [
+				"light",
+				L.applyAt(
+					L.values,
+					cameraTransform(camera, screenAspect, false),
+				),
+			];
+		}),
+		combine({
+			light: sunLight,
 			camera,
 			screenAspect,
 		}),
@@ -714,6 +755,18 @@
 		combine({ screen, geo: ndcGeo, camera }),
 	);
 
+	const lightRay = view(
+		L.choose(({ screen: { size }, camera: { orthogonality } }) => {
+			const project = L.compose(
+				lens3dProject(orthogonality),
+				lens2dScale(size.x / 2, size.y / 2),
+			);
+
+			return ["light", L.applyAt(L.values, project)];
+		}),
+		combine({ screen, light: ndcLight, camera }),
+	);
+
 	const isClockwise = (points) => {
 		return R.pipe(
 			R.aperture(3),
@@ -853,8 +906,9 @@
 							"vertex",
 							L.compose(
 								(i) => vertices[i],
+								(o) => ({ ...o, clipped: !clipVertex4D(o) }),
 								project,
-								L.props("x", "y"),
+								L.props("x", "y", "clipped"),
 							),
 						),
 					]),
@@ -1859,7 +1913,7 @@
 
 		<g style:--font-size={fontSize.value + "px"}>
 			{#each ndcGeoLabels.value as v, i (i)}
-				{#if !v.clipped}
+				{#if !v.vertex.clipped}
 					{@const lines = L.get(
 						[
 							"text",
@@ -1927,6 +1981,16 @@
 			<circle cx="0" cy="0" r="60" clip-path="url(#mask-0)" fill="blue"
 			></circle>
 		{/if}
+		<line
+			stroke-width="4"
+			x1={0}
+			y1={0}
+			x2={(lightRay.value.dir.x * 40) /
+				Math.hypot(lightRay.value.dir.y, lightRay.value.dir.x)}
+			y2={(lightRay.value.dir.y * 40) /
+				Math.hypot(lightRay.value.dir.y, lightRay.value.dir.x)}
+			stroke="orange"
+		/>
 	</svg>
 </div>
 <textarea bind:value={geoJson.value}></textarea>
