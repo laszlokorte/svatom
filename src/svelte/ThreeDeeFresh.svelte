@@ -1858,7 +1858,7 @@
 					stroke-opacity="1"
 					vector-effect="non-scaling-stroke"
 					stroke={p.attrs.color ?? "black"}
-					class={p.attrs.class}
+					{...p.attrs}
 					data-any-clockwise={frontFacing !== (p.attrs.flip ?? false)}
 					d={path.value}
 				/>
@@ -1961,6 +1961,18 @@
 		</g>
 
 		<defs>
+			<marker
+				id="simple-arrow"
+				viewBox="0 0 10 10"
+				refX="9"
+				refY="5"
+				markerWidth="6"
+				markerHeight="6"
+				orient="auto-start-reverse"
+			>
+				<path d="M 0 0 L 10 5 L 0 10 z" />
+			</marker>
+
 			{#each ndcGeoMaskPaths.value as p, i (i)}
 				{@const path = view(
 					[
@@ -2194,7 +2206,6 @@
 	path.petri-edge {
 		stroke: #222;
 	}
-
 	.petri-edge[data-any-clockwise="true"] {
 		stroke-width: var(--stroke-width-fg, 8);
 	}
@@ -2212,5 +2223,10 @@
 			calc(var(--stroke-width-bg, 4) * 2);
 		stroke-width: var(--stroke-width-bg, 2);
 		stroke-opacity: 0.7;
+	}
+
+	path.petri-edge.edge-3d {
+		stroke-opacity: 0.5;
+		stroke-width: var(--stroke-width-bg, 8);
 	}
 </style>

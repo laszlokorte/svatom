@@ -197,14 +197,14 @@ export const renewToGeo = (renewDocument, scale=50) =>  {
 		e.push({ vertices: [v1+6,v1+7], faces: [f1+1,f1+3],  attrs: { class: "petri-edge", color: "#333", flip: false } },)
 		
 		e.push({ vertices: [v1+0,v1+3], faces: [f1+5,f1+0],  attrs: { class: "petri-edge", color: "#333", flip: false } },)
-		e.push({ vertices: [v1+3,v1+7], faces: [f1+5,f1+3],  attrs: { class: "petri-edge", color: "#333", flip: false } },)
+		e.push({ vertices: [v1+3,v1+7], faces: [f1+5,f1+3],  attrs: { class: "petri-edge edge-3d", color: "#333", flip: false } },)
 		e.push({ vertices: [v1+7,v1+4], faces: [f1+1,f1+5],  attrs: { class: "petri-edge", color: "#333", flip: false } },)
-		e.push({ vertices: [v1+4,v1+0], faces: [f1+5,f1+2],  attrs: { class: "petri-edge", color: "#333", flip: false } },)
+		e.push({ vertices: [v1+4,v1+0], faces: [f1+5,f1+2],  attrs: { class: "petri-edge edge-3d", color: "#333", flip: false } },)
 		
 		e.push({ vertices: [v1+1,v1+2], faces: [f1+4,f1+0],  attrs: { class: "petri-edge", color: "#333", flip: false } },)
-		e.push({ vertices: [v1+2,v1+6], faces: [f1+3,f1+4],  attrs: { class: "petri-edge", color: "#333", flip: false } },)
+		e.push({ vertices: [v1+2,v1+6], faces: [f1+3,f1+4],  attrs: { class: "petri-edge edge-3d", color: "#333", flip: false } },)
 		e.push({ vertices: [v1+6,v1+5], faces: [f1+4,f1+1],  attrs: { class: "petri-edge", color: "#333", flip: false } },)
-		e.push({ vertices: [v1+5,v1+1], faces: [f1+4,f1+2],  attrs: { class: "petri-edge", color: "#333", flip: false } },)
+		e.push({ vertices: [v1+5,v1+1], faces: [f1+4,f1+2],  attrs: { class: "petri-edge edge-3d", color: "#333", flip: false } },)
 	
 	}
 
@@ -223,14 +223,18 @@ export const renewToGeo = (renewDocument, scale=50) =>  {
 
 		const v0 = v.length
 		const f0 = f.length
-		const sides = 12
+		const sides = 24
 
 		f.push({ vertices: front, attrs: { class: "petri-face", color: "green", flip: false } },)
 		f.push({ vertices: back, attrs: { class: "petri-face", color: "green", flip: false } },)
 
 
 
-		for (let i = 0; i < sides; i++) {
+		v.push({ x: (((cx+rx)-bounds.minX)/width-0.5)*scale, y: ((cy-bounds.minY)/height-0.5)*scale*aspect, z: 0, w:1 },)
+		v.push({ x: (((cx+rx)-bounds.minX)/width-0.5)*scale, y: ((cy-bounds.minY)/height-0.5)*scale*aspect, z: 1, w:1 },)
+			
+		const f2 = f.length
+		for (let i = 1; i <= sides; i++) {
 			const v1 = v.length
 		  const angle = (i / sides) * 2 * Math.PI;
 		  const x = cx + rx * Math.cos(angle);
@@ -238,12 +242,10 @@ export const renewToGeo = (renewDocument, scale=50) =>  {
 			v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: 0, w:1 },)
 			v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: 1, w:1 },)
 			
-			if(front.length) {
-				f.push({ vertices: [v1+1,v1,v1-2,v1-1], attrs: { class: "petri-face", color: "green", flip: false } },)
-				//e.push({ vertices: [v1-2, v1-1], faces: [(i>1 ? (f.length-2) : f0+sides), f.length-1],  attrs: { class: "petri-edge", color: "red", flip: false } },)
-				e.push({ vertices: [v1, v1-2], faces: [f0,f.length-1],  attrs: { class: "petri-edge", color: "#333", flip: false } },)
-				e.push({ vertices: [v1+1, v1-1], faces: [f0+1,f.length-1],  attrs: { class: "petri-edge", color: "#333", flip: false } },)
-			}
+			f.push({ vertices: [v1+1,v1,v1-2,v1-1], attrs: { class: "petri-face", color: "green", flip: false } },)
+			e.push({ vertices: [v1-2, v1-1], faces: [f2+(i+sides-2)%sides, f2+(i+sides-1)%sides],  attrs: { class: "petri-edge edge-3d", color: "red", flip: false } },)
+			e.push({ vertices: [v1, v1-2], faces: [f0,f.length-1],  attrs: { class: "petri-edge", color: "#333", flip: false } },)
+			e.push({ vertices: [v1+1, v1-1], faces: [f0+1,f.length-1],  attrs: { class: "petri-edge", color: "#333", flip: false } },)
 
 		  front.push(v1)
 		  back.unshift(v1+1)
@@ -252,13 +254,6 @@ export const renewToGeo = (renewDocument, scale=50) =>  {
 
 	
 	
-		{
-			const v1 = v.length
-			f.push({ vertices: [v0+1,v0,v1-2,v1-1,], attrs: { class: "petri-face", color: "green", flip: false } },)
-			//e.push({ vertices: [v1-2, v1-1], faces: [f.length-1,f0+2],  attrs: { class: "petri-edge", color: "#333", flip: false } },)
-			e.push({ vertices: [v0, v1-2], faces: [f0,f.length-1],  attrs: { class: "petri-edge", color: "#333", flip: false } },)
-			e.push({ vertices: [v0+1, v1-1], faces: [f0+1,f.length-1],  attrs: { class: "petri-edge", color: "#333", flip: false } },)
-		}
 	}
 
 	const labels  = []
@@ -266,7 +261,7 @@ export const renewToGeo = (renewDocument, scale=50) =>  {
 	for(const t of textes) {
 		const v1 = v.length
 
-		v.push({ x: ((t.fOriginX-bounds.minX)/width-0.5)*scale, y: ((t.fOriginY-bounds.minY)/height-0.5)*scale*aspect, z: 1, w:1 },)
+		v.push({ x: ((t.fOriginX-bounds.minX)/width-0.5)*scale, y: ((t.fOriginY-bounds.minY)/height-0.5)*scale*aspect, z: 1.6, w:1 },)
 		labels.push({ vertex: v1, text: t.lines, attrs: { class:"petri-label", "font-family": "sans-serif", "pointer-events":"none", "text-anchor": "start","font-size": "1em", fill: "black", transform: "translate(0, 100%)"} },)
 	}
 
@@ -276,7 +271,7 @@ export const renewToGeo = (renewDocument, scale=50) =>  {
 			v.push({ x: ((from.x-bounds.minX)/width-0.5)*scale, y: ((from.y-bounds.minY)/height-0.5)*scale*aspect, z: 0.5, w:1 },)
 			v.push({ x: ((to.x-bounds.minX)/width-0.5)*scale, y: ((to.y-bounds.minY)/height-0.5)*scale*aspect, z: 0.5, w:1 },)
 
-			e.push({ vertices: [v1,v1+1], faces: [],  attrs: { "stroke-width": 4, class: "petri-line", color: "#333", flip: true } },)
+			e.push({ vertices: [v1,v1+1], faces: [],  attrs: { "stroke-width": 4, "marker-end": "url(#simple-arrow)" , "class": "petri-line", color: "#333", flip: true } },)
 
 		}
 		//v.push({ x: ((t.fOriginX-bounds.minX)/width-0.5)*scale, y: ((t.fOriginY-bounds.minY)/height-0.5)*scale*aspect, z: 0, w:1 },)
