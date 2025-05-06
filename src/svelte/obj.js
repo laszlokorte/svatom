@@ -170,7 +170,8 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 
 	f.push({ vertices: [0,1,2,3], attrs: { class: "background", color: "#eee", flip: false } },)
 
-	for(const {x,y,w,h} of rectangles) {
+	for(const r of rectangles) {
+		const {x,y,w,h} = r
 		const f1 = f.length
 		const v1 = v.length
 		const v2 = v.length + 4
@@ -184,31 +185,32 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 		v.push({ x: ((x+w-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: 1, w:1 },)
 		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: 1, w:1 },)
 
-		f.push({ vertices: [v1,v1+1,v1+2,v1+3], attrs: { class: "petri-face", color: "green", flip: false } },)
-		f.push({ vertices: [v2+1,v2,v2+3,v2+2,], attrs: { class: "petri-face", color: "green", flip: false } },)
-		f.push({ vertices: [v1+1,v1,v2,v2+1], attrs: { class: "petri-face", color: "green", flip: false } },)
-		f.push({ vertices: [v1+3,v1+2,v2+2,v2+3,], attrs: { class: "petri-face", color: "green", flip: false } },)
-		f.push({ vertices: [v1+2,v1+1,v2+1,v2+2], attrs: { class: "petri-face", color: "green", flip: false } },)
-		f.push({ vertices: [v1+0,v1+3,v2+3,v2+0], attrs: { class: "petri-face", color: "green", flip: false } },)
+		f.push({ vertices: [v1,v1+1,v1+2,v1+3], attrs: { class: "petri-face", color: renewToRgba(r?.attributes?.attrs?.FillColor??{ r: 112, g: 219, b: 147 }), flip: false } },)
+		f.push({ vertices: [v2+1,v2,v2+3,v2+2,], attrs: { class: "petri-face", color: renewToRgba(r?.attributes?.attrs?.FillColor??{ r: 112, g: 219, b: 147 }), flip: false } },)
+		f.push({ vertices: [v1+1,v1,v2,v2+1], attrs: { class: "petri-face", color: renewToRgba(r?.attributes?.attrs?.FillColor??{ r: 112, g: 219, b: 147 }), flip: false } },)
+		f.push({ vertices: [v1+3,v1+2,v2+2,v2+3,], attrs: { class: "petri-face", color: renewToRgba(r?.attributes?.attrs?.FillColor??{ r: 112, g: 219, b: 147 }), flip: false } },)
+		f.push({ vertices: [v1+2,v1+1,v2+1,v2+2], attrs: { class: "petri-face", color: renewToRgba(r?.attributes?.attrs?.FillColor??{ r: 112, g: 219, b: 147 }), flip: false } },)
+		f.push({ vertices: [v1+0,v1+3,v2+3,v2+0], attrs: { class: "petri-face", color: renewToRgba(r?.attributes?.attrs?.FillColor??{ r: 112, g: 219, b: 147 }), flip: false } },)
 
-		e.push({ vertices: [v1+0,v1+1], faces: [f1+0,f1+2],  attrs: { class: "petri-edge", color: "#333", flip: false } },)
-		e.push({ vertices: [v1+2,v1+3], faces: [f1+0,f1+3],  attrs: { class: "petri-edge", color: "#333", flip: false } },)
-		e.push({ vertices: [v1+4,v1+5], faces: [f1+1,f1+2],  attrs: { class: "petri-edge", color: "#333", flip: false } },)
-		e.push({ vertices: [v1+6,v1+7], faces: [f1+1,f1+3],  attrs: { class: "petri-edge", color: "#333", flip: false } },)
+		e.push({ vertices: [v1+0,v1+1], faces: [f1+0,f1+2],  attrs: { class: "petri-edge", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
+		e.push({ vertices: [v1+2,v1+3], faces: [f1+0,f1+3],  attrs: { class: "petri-edge", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
+		e.push({ vertices: [v1+4,v1+5], faces: [f1+1,f1+2],  attrs: { class: "petri-edge", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
+		e.push({ vertices: [v1+6,v1+7], faces: [f1+1,f1+3],  attrs: { class: "petri-edge", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
 		
-		e.push({ vertices: [v1+0,v1+3], faces: [f1+5,f1+0],  attrs: { class: "petri-edge", color: "#333", flip: false } },)
-		e.push({ vertices: [v1+3,v1+7], faces: [f1+5,f1+3],  attrs: { class: "petri-edge edge-3d", color: "#333", flip: false } },)
-		e.push({ vertices: [v1+7,v1+4], faces: [f1+1,f1+5],  attrs: { class: "petri-edge", color: "#333", flip: false } },)
-		e.push({ vertices: [v1+4,v1+0], faces: [f1+5,f1+2],  attrs: { class: "petri-edge edge-3d", color: "#333", flip: false } },)
+		e.push({ vertices: [v1+0,v1+3], faces: [f1+5,f1+0],  attrs: { class: "petri-edge", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
+		e.push({ vertices: [v1+3,v1+7], faces: [f1+5,f1+3],  attrs: { class: "petri-edge edge-3d", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
+		e.push({ vertices: [v1+7,v1+4], faces: [f1+1,f1+5],  attrs: { class: "petri-edge", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
+		e.push({ vertices: [v1+4,v1+0], faces: [f1+5,f1+2],  attrs: { class: "petri-edge edge-3d", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
 		
-		e.push({ vertices: [v1+1,v1+2], faces: [f1+4,f1+0],  attrs: { class: "petri-edge", color: "#333", flip: false } },)
-		e.push({ vertices: [v1+2,v1+6], faces: [f1+3,f1+4],  attrs: { class: "petri-edge edge-3d", color: "#333", flip: false } },)
-		e.push({ vertices: [v1+6,v1+5], faces: [f1+4,f1+1],  attrs: { class: "petri-edge", color: "#333", flip: false } },)
-		e.push({ vertices: [v1+5,v1+1], faces: [f1+4,f1+2],  attrs: { class: "petri-edge edge-3d", color: "#333", flip: false } },)
+		e.push({ vertices: [v1+1,v1+2], faces: [f1+4,f1+0],  attrs: { class: "petri-edge", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
+		e.push({ vertices: [v1+2,v1+6], faces: [f1+3,f1+4],  attrs: { class: "petri-edge edge-3d", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
+		e.push({ vertices: [v1+6,v1+5], faces: [f1+4,f1+1],  attrs: { class: "petri-edge", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
+		e.push({ vertices: [v1+5,v1+1], faces: [f1+4,f1+2],  attrs: { class: "petri-edge edge-3d", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
 	
 	}
 
-	for(const {x,y,w,h} of ellipsis) {
+	for(const r of ellipsis) {
+		const {x,y,w,h} = r
 		const f1 = f.length
 		const v1 = v.length
 		const v2 = v.length + 4
@@ -224,8 +226,8 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 		const v0 = v.length
 		const f0 = f.length
 
-		f.push({ vertices: front, attrs: { class: "petri-face", color: "green", flip: false } },)
-		f.push({ vertices: back, attrs: { class: "petri-face", color: "green", flip: false } },)
+		f.push({ vertices: front, attrs: { class: "petri-face", color: renewToRgba(r?.attributes?.attrs?.FillColor??{ r: 112, g: 219, b: 147 }), flip: false } },)
+		f.push({ vertices: back, attrs: { class: "petri-face", color: renewToRgba(r?.attributes?.attrs?.FillColor??{ r: 112, g: 219, b: 147 }), flip: false } },)
 
 
 
@@ -241,10 +243,10 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 			v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: 0, w:1 },)
 			v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: 1, w:1 },)
 			
-			f.push({ vertices: [v1+1,v1,v1-2,v1-1], attrs: { class: "petri-face", color: "green", flip: false } },)
-			e.push({ vertices: [v1-2, v1-1], faces: [f2+(i+sides-2)%sides, f2+(i+sides-1)%sides],  attrs: { class: "petri-edge edge-3d", color: "red", flip: false } },)
-			e.push({ vertices: [v1, v1-2], faces: [f0,f.length-1],  attrs: { class: "petri-edge", color: "#333", flip: false } },)
-			e.push({ vertices: [v1+1, v1-1], faces: [f0+1,f.length-1],  attrs: { class: "petri-edge", color: "#333", flip: false } },)
+			f.push({ vertices: [v1+1,v1,v1-2,v1-1], attrs: { class: "petri-face", color: renewToRgba(r?.attributes?.attrs?.FillColor??{ r: 112, g: 219, b: 147 }), flip: false } },)
+			e.push({ vertices: [v1-2, v1-1], faces: [f2+(i+sides-2)%sides, f2+(i+sides-1)%sides],  attrs: { class: "petri-edge edge-3d", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
+			e.push({ vertices: [v1, v1-2], faces: [f0,f.length-1],  attrs: { class: "petri-edge", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
+			e.push({ vertices: [v1+1, v1-1], faces: [f0+1,f.length-1],  attrs: { class: "petri-edge", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
 
 		  front.push(v1)
 		  back.unshift(v1+1)
@@ -270,7 +272,7 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 			v.push({ x: ((from.x-bounds.minX)/width-0.5)*scale, y: ((from.y-bounds.minY)/height-0.5)*scale*aspect, z: 0.5, w:1 },)
 			v.push({ x: ((to.x-bounds.minX)/width-0.5)*scale, y: ((to.y-bounds.minY)/height-0.5)*scale*aspect, z: 0.5, w:1 },)
 
-			e.push({ vertices: [v1,v1+1], faces: [],  attrs: { "stroke-width": 4, "marker-end": "url(#simple-arrow)" , "class": "petri-line", color: "#333", flip: true } },)
+			e.push({ vertices: [v1,v1+1], faces: [],  attrs: { "stroke-width": 4, "marker-end": "url(#simple-arrow)" , "class": "petri-line", color: renewToRgba(l?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: true } },)
 
 		}
 		//v.push({ x: ((t.fOriginX-bounds.minX)/width-0.5)*scale, y: ((t.fOriginY-bounds.minY)/height-0.5)*scale*aspect, z: 0, w:1 },)
@@ -288,3 +290,35 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 
 	return geo
 }
+
+function renewToRgba(color) {
+		const NONE = { r: 255, g: 199, b: 158, a: 255 }; //WTF?
+		if(typeof color === 'string' ) {
+			return color
+		}
+		if (!color) {
+			return "rgba(0,0,0,0)";
+		}
+		if (Object.prototype.hasOwnProperty.call(color, "a")) {
+			if (
+				NONE.r == color.r &&
+				NONE.g == color.g &&
+				NONE.b == color.b &&
+				NONE.a == color.a
+			) {
+				return "rgba(0,0,0,0)";
+			}
+			return `rgba(${color.r},${color.g},${color.b},${color.a / 255})`;
+		} else if (
+			Object.prototype.hasOwnProperty.call(color, "r") &&
+			Object.prototype.hasOwnProperty.call(color, "g") &&
+			Object.prototype.hasOwnProperty.call(color, "b")
+		) {
+			if (NONE.r == color.r && NONE.g == color.g && NONE.b == color.b) {
+				return "rgba(0,0,0,0)";
+			}
+			return `rgb(${color.r},${color.g},${color.b})`;
+		} else {
+			return "rgb(0,0,0)";
+		}
+	}

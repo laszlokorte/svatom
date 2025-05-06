@@ -21,6 +21,7 @@
 	import objTeapot from "./teapot.obj?raw";
 	import objMonkey from "./suzanne.obj?raw";
 	import exampleRenew from "./Renew/example.rnw?raw";
+	import exampleDoubleArrow from "./Renew/doublearrow.rnw?raw";
 	import { parserAutoDetect } from "../renew/index.js";
 	import { parse as parseObj, toGeo, renewToGeo } from "./obj.js";
 
@@ -35,7 +36,8 @@
 			scaleY: -1,
 		},
 		torus: { label: "Torus", data: objTorus, scale: 5 },
-		renew: { label: "Renew", renew: exampleRenew, scale: 5 },
+		renew1: { label: "Renew #1", renew: exampleRenew, scale: 5 },
+		renew2: { label: "Renew #2", renew: exampleDoubleArrow, scale: 5 },
 	};
 
 	const numf = new Intl.NumberFormat("en-US", {
@@ -2182,7 +2184,7 @@
 	polygon.petri-face {
 		opacity: 0.4;
 		fill-opacity: 1;
-		fill: #39f76d;
+		fill: currentColor;
 	}
 
 	[data-hide-ccw="true"] .petri-face[data-clockwise="false"] {
@@ -2206,7 +2208,7 @@
 	}
 
 	path.petri-edge {
-		stroke: #222;
+		stroke: currentColor;
 	}
 	.petri-edge[data-any-clockwise="true"] {
 		stroke-width: var(--stroke-width-fg, 8);
