@@ -20,7 +20,9 @@
 	import objTorus from "./torus.obj?raw";
 	import objTeapot from "./teapot.obj?raw";
 	import objMonkey from "./suzanne.obj?raw";
-	import { parse as parseObj, toGeo } from "./obj.js";
+	import exampleRenew from "./Renew/example.rnw?raw";
+	import { parserAutoDetect } from "../renew/index.js";
+	import { parse as parseObj, toGeo, renewToGeo } from "./obj.js";
 
 	const objs = {
 		initial: { label: "Initial", geo: cube2 },
@@ -33,6 +35,7 @@
 			scaleY: -1,
 		},
 		torus: { label: "Torus", data: objTorus, scale: 5 },
+		renew: { label: "Renew", renew: exampleRenew, scale: 5 },
 	};
 
 	const numf = new Intl.NumberFormat("en-US", {
@@ -1684,6 +1687,10 @@
 								obj.scaleY ?? 1,
 								obj.scaleZ ?? 1,
 							);
+						} else if (obj.renew) {
+							worldGeo.value = obj.geo = renewToGeo(
+								parserAutoDetect(obj.renew, false),
+							);
 						}
 					}}
 				>
@@ -1981,16 +1988,6 @@
 			<circle cx="0" cy="0" r="60" clip-path="url(#mask-0)" fill="blue"
 			></circle>
 		{/if}
-		<line
-			stroke-width="4"
-			x1={0}
-			y1={0}
-			x2={(lightRay.value.dir.x * 40) /
-				Math.hypot(lightRay.value.dir.y, lightRay.value.dir.x)}
-			y2={(lightRay.value.dir.y * 40) /
-				Math.hypot(lightRay.value.dir.y, lightRay.value.dir.x)}
-			stroke="orange"
-		/>
 	</svg>
 </div>
 <textarea bind:value={geoJson.value}></textarea>
@@ -2156,5 +2153,64 @@
 
 	text.obj-edge[data-count="0"] {
 		display: none;
+	}
+
+	.petri-edge {
+		stroke-width: 2;
+		stroke-linejoin: round;
+		stroke-linecap: round;
+	}
+
+	.petri-label {
+		font-family: monospace;
+	}
+
+	polygon.petri-face {
+		opacity: 0.4;
+		fill-opacity: 1;
+		fill: #39f76d;
+	}
+
+	[data-hide-ccw="true"] .petri-face[data-clockwise="false"] {
+		display: none;
+	}
+
+	[data-hide-cw="true"] .petri-face[data-clockwise="true"] {
+		display: none;
+	}
+
+	text.petri-face[data-count="0"] {
+		display: none;
+	}
+
+	text.petri-edge[data-count="0"] {
+		display: none;
+	}
+
+	text.petri-label {
+		font-size: var(--font-size, 1em) !important;
+	}
+
+	path.petri-edge {
+		stroke: #222;
+	}
+
+	.petri-edge[data-any-clockwise="true"] {
+		stroke-width: var(--stroke-width-fg, 8);
+	}
+
+	.petri-line {
+		stroke-width: var(--stroke-width-fg, 8);
+	}
+
+	.petri-edge {
+		stroke-linecap: round;
+	}
+
+	.petri-edge[data-any-clockwise="false"] {
+		stroke-dasharray: calc(var(--stroke-width-bg, 4) * 2)
+			calc(var(--stroke-width-bg, 4) * 2);
+		stroke-width: var(--stroke-width-bg, 2);
+		stroke-opacity: 0.7;
 	}
 </style>
