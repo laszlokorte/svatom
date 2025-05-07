@@ -10,10 +10,14 @@
 		disableEventIf,
 	} from "../../svatom.svelte.js";
 
-	const { frameBoxPath, clientToCanvas, panMovement } = $props();
+	const {
+		frameBoxPath,
+		clientToCanvas,
+		panMovement,
+		state = atom({}),
+	} = $props();
 
-	const grab = atom({ active: false });
-	const grabPosition = view([L.removable("position"), "position"], grab);
+	const grabPosition = view([L.removable("position"), "position"], state);
 	const isActive = view(
 		L.lens(R.compose(R.not, R.isNil), (b, o) => (b ? o : undefined)),
 		grabPosition,

@@ -1642,15 +1642,21 @@
 	const rotateMovement = view(rotateMovementLens, camera);
 	const zoomMovement = view(zoomMovementLens, camera);
 	const rotationState = atom({});
+	const panState = atom({});
 	const zoomState = atom({});
 	const lockScroll = view(
 		[
-			L.choices(["rot", "pivot"], ["zoom", "pivotWorld"]),
+			L.choices(
+				["rot", "pivot"],
+				["zoom", "pivotWorld"],
+				["pan", "position"],
+			),
 			R.compose(R.not, R.isNil),
 		],
 		combine({
 			rot: rotationState,
 			zoom: zoomState,
+			pan: panState,
 		}),
 	);
 
@@ -1851,6 +1857,7 @@
 				frameBoxPath,
 				clientToCanvas,
 				panMovement,
+				state: panState,
 			},
 		},
 		rotate: {

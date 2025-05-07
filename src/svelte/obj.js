@@ -52,7 +52,7 @@ export const toGeo = (obj, scale = 1, reverse = true, scaleX= 1, scaleY= 1, scal
 			return R.pipe(R.slice(1,Infinity), R.aperture(2), R.map(R.prepend(R.nth(0, vs))))(vs)
 		}
 
-	const vertices = R.pipe(vert, R.map(R.pipe(R.prop('pos'), R.modify('x', R.pipe(R.subtract(R.__, center.x), R.multiply(scaleX))), R.modify('y', R.pipe(R.subtract(R.__, center.y), R.multiply(scaleY))), R.modify('z', R.pipe(R.subtract(R.__, center.z), R.multiply(scaleZ))), R.map(R.multiply(scale)), R.assoc('w', 1))))(obj)
+	const vertices = R.pipe(vert, R.map(R.pipe(R.prop('pos'), R.modify('x', R.pipe(R.subtract(R.__, center.x), R.multiply(scaleX))), R.modify('y', R.pipe(R.subtract(R.__, center.y), R.multiply(scaleY))), R.modify('z', R.pipe(R.subtract(R.__, center.z), R.multiply(scaleZ))), R.map(R.multiply(scale)))))(obj)
 	const faces = R.pipe(facs, R.map(R.pipe(R.prop('vertices'), clockwise, toTriangle, R.map(R.pipe(R.map(R.pipe(R.prop('v'), R.add(-1))), R.objOf('vertices'), R.assoc('attrs', {class: "obj-face"}))))), R.flatten())(obj)
 	const edges = R.pipe(facs, R.map(R.pipe(R.prop('vertices'), clockwise, cyclicAperture(2), R.map(R.pipe(R.map(R.pipe(R.prop('v'), R.add(-1))), R.objOf('vertices'), R.assoc('attrs', {class: "obj-edge"}), (e) => R.assoc('faces', R.pipe(R.addIndex(R.map)((f,i) => ({i,f})), R.filter(({f}) => (R.intersection(e.vertices, f.vertices)).length >= 2), R.map(R.prop("i")))(faces), e))))), R.flatten(), R.filter(R.pipe(R.prop("faces"), R.complement(R.isEmpty))), R.uniqBy(R.pipe(R.prop("vertices"), R.sortBy(R.identity))))(obj)
 
@@ -162,10 +162,10 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 	const f = []
 	const e = []
 
-	v.push({ x: -0.55*scale, y: -0.55*scale*aspect, z: -0.1, w:1 },)
-	v.push({ x: 0.55*scale, y: -0.55*scale*aspect, z: -0.1, w:1 },)
-	v.push({ x: 0.55*scale, y: 0.55*scale*aspect, z: -0.1, w:1 },)
-	v.push({ x: -0.55*scale, y: 0.55*scale*aspect, z: -0.1, w:1 },)
+	v.push({ x: -0.55*scale, y: -0.55*scale*aspect, z: -0.1 },)
+	v.push({ x: 0.55*scale, y: -0.55*scale*aspect, z: -0.1 },)
+	v.push({ x: 0.55*scale, y: 0.55*scale*aspect, z: -0.1 },)
+	v.push({ x: -0.55*scale, y: 0.55*scale*aspect, z: -0.1 },)
 
 
 	f.push({ vertices: [0,1,2,3], attrs: { class: "background", color: "#eee", flip: false } },)
@@ -175,15 +175,15 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 		const f1 = f.length
 		const v1 = v.length
 		const v2 = v.length + 4
-		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: 0, w:1 },)
-		v.push({ x: ((x+w-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: 0, w:1 },)
-		v.push({ x: ((x+w-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: 0, w:1 },)
-		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: 0, w:1 },)
+		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: 0 },)
+		v.push({ x: ((x+w-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: 0 },)
+		v.push({ x: ((x+w-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: 0 },)
+		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: 0 },)
 
-		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: 1, w:1 },)
-		v.push({ x: ((x+w-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: 1, w:1 },)
-		v.push({ x: ((x+w-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: 1, w:1 },)
-		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: 1, w:1 },)
+		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: 1 },)
+		v.push({ x: ((x+w-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: 1 },)
+		v.push({ x: ((x+w-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: 1 },)
+		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: 1 },)
 
 		f.push({ vertices: [v1,v1+1,v1+2,v1+3], attrs: { class: "petri-face", color: renewToRgba(r?.attributes?.attrs?.FillColor??{ r: 112, g: 219, b: 147 }), flip: false } },)
 		f.push({ vertices: [v2+1,v2,v2+3,v2+2,], attrs: { class: "petri-face", color: renewToRgba(r?.attributes?.attrs?.FillColor??{ r: 112, g: 219, b: 147 }), flip: false } },)
@@ -231,8 +231,8 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 
 
 
-		v.push({ x: (((cx+rx)-bounds.minX)/width-0.5)*scale, y: ((cy-bounds.minY)/height-0.5)*scale*aspect, z: 0, w:1 },)
-		v.push({ x: (((cx+rx)-bounds.minX)/width-0.5)*scale, y: ((cy-bounds.minY)/height-0.5)*scale*aspect, z: 1, w:1 },)
+		v.push({ x: (((cx+rx)-bounds.minX)/width-0.5)*scale, y: ((cy-bounds.minY)/height-0.5)*scale*aspect, z: 0 },)
+		v.push({ x: (((cx+rx)-bounds.minX)/width-0.5)*scale, y: ((cy-bounds.minY)/height-0.5)*scale*aspect, z: 1 },)
 			
 		const f2 = f.length
 		for (let i = 1; i <= sides; i++) {
@@ -240,8 +240,8 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 		  const angle = (i / sides) * 2 * Math.PI;
 		  const x = cx + rx * Math.cos(angle);
 		  const y = cy + ry * Math.sin(angle);
-			v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: 0, w:1 },)
-			v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: 1, w:1 },)
+			v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: 0 },)
+			v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: 1 },)
 			
 			f.push({ vertices: [v1+1,v1,v1-2,v1-1], attrs: { class: "petri-face", color: renewToRgba(r?.attributes?.attrs?.FillColor??{ r: 112, g: 219, b: 147 }), flip: false } },)
 			e.push({ vertices: [v1-2, v1-1], faces: [f2+(i+sides-2)%sides, f2+(i+sides-1)%sides],  attrs: { class: "petri-edge edge-3d", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
@@ -262,20 +262,20 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 	for(const t of textes) {
 		const v1 = v.length
 
-		v.push({ x: ((t.fOriginX-bounds.minX)/width-0.5)*scale, y: ((t.fOriginY-bounds.minY)/height-0.5)*scale*aspect, z: 1.6, w:1 },)
-		labels.push({ vertex: v1, text: t.lines, attrs: { class:"petri-label", "font-family": "sans-serif", "pointer-events":"none", "text-anchor": "start","font-size": "1em", fill: "black", transform: "translate(0, 100%)"} },)
+		v.push({ x: ((t.fOriginX-bounds.minX)/width-0.5)*scale, y: ((t.fOriginY-bounds.minY)/height-0.5)*scale*aspect, z: 1.6 },)
+		labels.push({ vertex: v1, text: t.lines, attrs: { class:"petri-label", "font-family": "sans-serif", "pointer-events":"none", "text-anchor": "start","font-size": "1em", fill: "black", transform: "translate(0, 12)"} },)
 	}
 
 	for(const l of lines) {
 		for(const [from, to] of R.aperture(2, l.points)) {
 			const v1 = v.length
-			v.push({ x: ((from.x-bounds.minX)/width-0.5)*scale, y: ((from.y-bounds.minY)/height-0.5)*scale*aspect, z: 0.5, w:1 },)
-			v.push({ x: ((to.x-bounds.minX)/width-0.5)*scale, y: ((to.y-bounds.minY)/height-0.5)*scale*aspect, z: 0.5, w:1 },)
+			v.push({ x: ((from.x-bounds.minX)/width-0.5)*scale, y: ((from.y-bounds.minY)/height-0.5)*scale*aspect, z: 0.5 },)
+			v.push({ x: ((to.x-bounds.minX)/width-0.5)*scale, y: ((to.y-bounds.minY)/height-0.5)*scale*aspect, z: 0.5 },)
 
 			e.push({ vertices: [v1,v1+1], faces: [],  attrs: { "stroke-width": 4, "marker-end": "url(#simple-arrow)" , "class": "petri-line", color: renewToRgba(l?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: true } },)
 
 		}
-		//v.push({ x: ((t.fOriginX-bounds.minX)/width-0.5)*scale, y: ((t.fOriginY-bounds.minY)/height-0.5)*scale*aspect, z: 0, w:1 },)
+		//v.push({ x: ((t.fOriginX-bounds.minX)/width-0.5)*scale, y: ((t.fOriginY-bounds.minY)/height-0.5)*scale*aspect, z: 0 },)
 		//labels.push({ vertex: v1, text: t.lines, attrs: { class:"petri-label", "font-family": "sans-serif", "pointer-events":"none", "text-anchor": "start","font-size": "1.1em", fill: "black", transform: "translate(0, -10)"} },)
 	}
 

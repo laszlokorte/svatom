@@ -61,12 +61,17 @@
 				tx: 0,
 				ty: 0,
 				tz: 30,
-				rx: 0,
-				ry: 0,
+				rx: (33 / 180) * Math.PI,
+				ry: (-33 / 180) * Math.PI,
 				rz: 0,
 				sx: 1,
 				sy: 1,
 				sz: 1,
+			},
+			offset: {
+				x: 0,
+				y: -10,
+				z: 130,
 			},
 		}),
 		screen = atom({
@@ -480,8 +485,8 @@
 	});
 	const sunLight = view(
 		L.pickIn({
-			pos: lensAddProp("w", 1),
-			dir: [normLength, lensAddProp("w", 0)],
+			pos: [],
+			dir: [normLength],
 		}),
 		sunLightDir,
 	);
@@ -490,8 +495,8 @@
 		tx: 0,
 		ty: 0,
 		tz: -100,
-		rx: -0.5,
-		ry: -0.8,
+		rx: 0,
+		ry: 0,
 		rz: 0,
 		sx: 1.1,
 		sy: 1.2,
@@ -511,9 +516,19 @@
 			L.inverse(
 				L.compose(
 					lens3dScale(camera.eye.sx, camera.eye.sy, camera.eye.sz),
-					lens3dRotateY(camera.eye.ry),
-					lens3dRotateX(camera.eye.rx),
+					lens3dTranslate(
+						camera.offset.x,
+						camera.offset.y,
+						camera.offset.z,
+					),
 					lens3dRotateZ(camera.eye.rz),
+					lens3dRotateX(camera.eye.rx),
+					lens3dRotateY(camera.eye.ry),
+					lens3dTranslate(
+						-camera.offset.x,
+						-camera.offset.y,
+						-camera.offset.z,
+					),
 					translation
 						? lens3dTranslate(
 								camera.eye.tx,
@@ -523,7 +538,7 @@
 						: L.identity,
 				),
 			),
-
+			lensAddProp("w", 1),
 			lens3dPerspective(
 				camera.fov,
 				camera.aspectRatio * screenAspect,
@@ -931,9 +946,13 @@
 	);
 
 	const cameraEye = view(["eye"], camera);
+	const cameraOffset = view(["offset"], camera);
 	const cameraEyePosX = view(["tx"], cameraEye);
 	const cameraEyePosY = view(["ty"], cameraEye);
 	const cameraEyePosZ = view(["tz"], cameraEye);
+	const cameraOffsetX = view(["x"], cameraOffset);
+	const cameraOffsetY = view(["y"], cameraOffset);
+	const cameraOffsetZ = view(["z"], cameraOffset);
 	const cameraEyeRotX = view(["rx", lensRadToDegree], cameraEye);
 	const cameraEyeRotY = view(["ry", lensRadToDegree], cameraEye);
 	const cameraEyeRotZ = view(["rz", lensRadToDegree], cameraEye);
@@ -1010,13 +1029,13 @@
 				"ry",
 				wrapRange(-Math.PI, Math.PI),
 				lensRadToDegree,
-				L.setter((a, b) => b - a / 10),
+				L.setter((a, b) => b + a / 3),
 			],
 			dy: [
 				"rx",
 				wrapRange(-Math.PI, Math.PI),
 				lensRadToDegree,
-				L.setter((a, b) => b - a / 10),
+				L.setter((a, b) => b + a / 3),
 			],
 		}),
 		cameraEye,
@@ -1618,6 +1637,47 @@
 							>
 						</label>
 					</div>
+					<div>
+						<label class="number-picker"
+							><span class="number-picker-label">Offset X:</span>
+							<input
+								type="range"
+								class="number-picker-slider"
+								min="-100"
+								max="100"
+								step="0.001"
+								bind:value={cameraOffsetX.value}
+							/><output class="number-picker-value ro"
+								>({numf.format(cameraOffsetX.value)})</output
+							>
+						</label>
+						<label class="number-picker"
+							><span class="number-picker-label">Offset Y:</span>
+							<input
+								type="range"
+								class="number-picker-slider"
+								min="-100"
+								max="100"
+								step="0.001"
+								bind:value={cameraOffsetY.value}
+							/><output class="number-picker-value ro"
+								>({numf.format(cameraOffsetY.value)})</output
+							>
+						</label>
+						<label class="number-picker"
+							><span class="number-picker-label">Offset Z:</span>
+							<input
+								type="range"
+								class="number-picker-slider"
+								min="-100"
+								max="100"
+								step="0.001"
+								bind:value={cameraOffsetZ.value}
+							/><output class="number-picker-value ro"
+								>({numf.format(cameraOffsetZ.value)})</output
+							>
+						</label>
+					</div>
 				</div>
 			</fieldset>
 
@@ -1731,11 +1791,11 @@
 			) {
 				pointerPos.value = evt;
 				if (evt.ctrlKey) {
-					eyePointerRotate.value = pointerDelta.value;
+					objectPointerRotate.value = pointerDelta.value;
 				} else if (evt.shiftKey) {
 					eyePointerPan.value = pointerDelta.value;
 				} else {
-					objectPointerRotate.value = pointerDelta.value;
+					eyePointerRotate.value = pointerDelta.value;
 				}
 			}
 		}}
