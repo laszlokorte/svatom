@@ -511,6 +511,38 @@
 		lens3dTranslate(transform.tx, transform.ty, transform.tz),
 	];
 
+	const fastMatrixTransform = (v, transform) => {
+		const v0 = {
+			x: v.x * transform.sx,
+			y: v.y * transform.sy,
+			z: v.z * transform.sz,
+		};
+
+		const v1 = {
+			x: v0.x * Math.cos(transform.ry) - v0.z * Math.sin(transform.ry),
+			y: v0.y,
+			z: v0.x * Math.sin(transform.ry) + v0.z * Math.cos(transform.ry),
+		};
+
+		const v2 = {
+			x: v1.x,
+			y: v1.y * Math.cos(transform.rx) - v1.z * Math.sin(transform.rx),
+			z: v1.y * Math.sin(transform.rx) + v1.z * Math.cos(transform.rx),
+		};
+
+		const v3 = {
+			x: v2.x * Math.cos(transform.rz) - v2.y * Math.sin(transform.rz),
+			y: v2.x * Math.sin(transform.rz) + v2.y * Math.cos(transform.rz),
+			z: v2.z,
+		};
+
+		return {
+			x: v3.x + transform.tx,
+			y: v3.y + transform.ty,
+			z: v3.z + transform.tz,
+		};
+	};
+
 	const cameraTransform = (camera, screenAspect, translation = true) =>
 		L.compose(
 			L.inverse(
@@ -547,6 +579,72 @@
 			),
 		);
 
+	const fastCameraTransform = (v, camera, screenAspect) => {
+		const v5 = {
+			x: v.x + camera.offset.x - camera.eye.tx,
+			y: v.y + camera.offset.y - camera.eye.ty,
+			z: v.z + camera.offset.z - camera.eye.tz,
+		};
+		const v4 = {
+			x:
+				v5.x * Math.cos(-camera.eye.ry) -
+				v5.z * Math.sin(-camera.eye.ry),
+			y: v5.y,
+			z:
+				v5.x * Math.sin(-camera.eye.ry) +
+				v5.z * Math.cos(-camera.eye.ry),
+		};
+
+		const v3 = {
+			x: v4.x,
+			y:
+				v4.y * Math.cos(-camera.eye.rx) -
+				v4.z * Math.sin(-camera.eye.rx),
+			z:
+				v4.y * Math.sin(-camera.eye.rx) +
+				v4.z * Math.cos(-camera.eye.rx),
+		};
+
+		const v2 = {
+			x:
+				v3.x * Math.cos(-camera.eye.rz) -
+				v3.y * Math.sin(-camera.eye.rz),
+			y:
+				v3.x * Math.sin(-camera.eye.rz) +
+				v3.y * Math.cos(-camera.eye.rz),
+			z: v3.z,
+		};
+
+		const v1 = {
+			x: v2.x - camera.offset.x,
+			y: v2.y - camera.offset.y,
+			z: v2.z - camera.offset.z,
+		};
+
+		const v0 = {
+			x: v1.x / camera.eye.sx,
+			y: v1.y / camera.eye.sy,
+			z: v1.z / camera.eye.sz,
+		};
+
+		const tanfov = 1 / Math.tan(camera.fov / 2);
+		const fpn =
+			-(camera.clip.far + camera.clip.near) /
+			(camera.clip.far - camera.clip.near);
+		const ftn =
+			-(2 * camera.clip.far * camera.clip.near) /
+			(camera.clip.far - camera.clip.near);
+		const aspect = camera.aspectRatio * screenAspect;
+
+		const r = {
+			x: v0.x * tanfov * aspect,
+			y: v0.y * tanfov,
+			z: v0.z * fpn + ftn,
+			w: -v0.z,
+		};
+		return r;
+	};
+
 	const ratio = (a, b) => [
 		L.pick({ a, b }),
 		L.choose(({ a }) => ["b", L.divide(a)]),
@@ -566,6 +664,31 @@
 				]),
 			];
 		}),
+		combine({
+			geo: worldGeo,
+			transform: worldTransform,
+			camera,
+			screenAspect,
+		}),
+	);
+
+	const ndcGeoFast = view(
+		({ geo, camera, transform, screenAspect }) => {
+			const t = L.compose(cameraTransform(camera, screenAspect));
+
+			return {
+				...geo,
+				vertices: geo.vertices.map((v) => {
+					const r = fastCameraTransform(
+						fastMatrixTransform(v, transform),
+						camera,
+						screenAspect,
+					);
+
+					return r;
+				}),
+			};
+		},
 		combine({
 			geo: worldGeo,
 			transform: worldTransform,
@@ -1199,6 +1322,140 @@
 	const fontSize = view("fontSize", penSize);
 
 	const geoJson = view(L.inverse(L.json({ space: "  " })), worldGeo);
+
+	const clipEdge = clipFace4D(edgeClipper);
+	const clipFace = clipFace4D(polygonClipper);
+	const fastProject = (v, camera, screen) => {
+		return {
+			x:
+				((v.x / lerp(v.w, 1.5, camera.orthogonality)) * screen.size.x) /
+				2,
+			y:
+				((v.y / lerp(v.w, 1.5, camera.orthogonality)) * screen.size.y) /
+				2,
+			z: v.z / lerp(v.w, 1.5, camera.orthogonality),
+			w: 1,
+		};
+	};
+	const ndcGeoEdgePathsFast = view(
+		({ ndcGeo, camera, screen, screenAspect }) => {
+			const vertices = ndcGeo.vertices;
+			return ndcGeo.edges.map((edge) => {
+				const vs = clipEdge(
+					edge.vertices.map((vi) => vertices[vi]),
+				).map((v) => fastProject(v, camera, screen));
+				return {
+					attrs: edge.attrs,
+					frontFacing: edge.faces.some((fi) => {
+						const face = ndcGeo.faces[fi];
+						return isClockwise(
+							clipFace(
+								face.vertices.map((vi) => vertices[vi]),
+							).map((v) => fastProject(v, camera, screen)),
+						);
+					}),
+					path: "M" + vs.map((c) => c.x + "," + c.y).join(" L"),
+					center: vs.length
+						? vs.reduce(
+								({ x: ax, y: ay }, { x, y }) => ({
+									x: ax + x / vs.length,
+									y: ay + y / vs.length,
+								}),
+								{ x: 0, y: 0 },
+							)
+						: { "data-count": 0 },
+				};
+			});
+		},
+		combine({
+			ndcGeo: ndcGeoFast,
+			camera,
+			screen,
+			screenAspect,
+		}),
+	);
+	const ndcGeoFacePathsFast = view(
+		({ ndcGeo, camera, screen, screenAspect }) => {
+			const vertices = ndcGeo.vertices;
+			return ndcGeo.faces.map((face) => {
+				const vs = clipFace(
+					face.vertices.map((vi) => vertices[vi]),
+				).map((v) => fastProject(v, camera, screen));
+				return {
+					attrs: face.attrs,
+					clockwise: isClockwise(vs),
+					path: vs.map((c) => c.x + "," + c.y).join(","),
+					center: vs.length
+						? vs.reduce(
+								({ x: ax, y: ay }, { x, y }) => ({
+									x: ax + x / vs.length,
+									y: ay + y / vs.length,
+								}),
+								{ x: 0, y: 0 },
+							)
+						: { "data-count": 0 },
+				};
+			});
+		},
+		combine({
+			ndcGeo: ndcGeoFast,
+			camera,
+			screen,
+			screenAspect,
+		}),
+	);
+	const ndcGeoMaskPathsFast = view(
+		({ ndcGeo, camera, screen, screenAspect }) => {
+			const vertices = ndcGeo.vertices;
+			return (ndcGeo.masks ?? []).map((face) => {
+				const vs = clipFace(
+					face.vertices.map((vi) => vertices[vi]),
+				).map((v) => fastProject(v, camera, screen));
+				return {
+					attrs: face.attrs,
+					clockwise: isClockwise(vs),
+					path: vs.map((c) => c.x + "," + c.y).join(","),
+				};
+			});
+		},
+		combine({
+			ndcGeo: ndcGeoFast,
+			camera,
+			screen,
+			screenAspect,
+		}),
+	);
+	const ndcGeoVerticesFast = view(
+		({ ndcGeo, camera, screen, screenAspect }) => {
+			return ndcGeo.vertices.map((v) => ({
+				...fastProject(v, camera, screen),
+				clipped: !clipVertex4D(v),
+			}));
+		},
+		combine({
+			ndcGeo: ndcGeoFast,
+			worldTransform,
+			camera,
+			screen,
+			screenAspect,
+		}),
+	);
+	const ndcGeoLabelsFast = view(
+		({ ndcGeo, camera, screen, screenAspect }) => {
+			return ndcGeo.labels.map((v) => ({
+				...v,
+				vertex: fastProject(ndcGeo.vertices[v.vertex], camera, screen),
+				clipped: !clipVertex4D(ndcGeo.vertices[v.vertex]),
+				lines: Array.isArray(v.text) ? v.text : v.text.split("\n"),
+			}));
+		},
+		combine({
+			ndcGeo: ndcGeoFast,
+			camera,
+			screen,
+			screenAspect,
+		}),
+	);
 </script>
 
 <div
@@ -1838,18 +2095,7 @@
 			class:hidden={!showNDCCube.value}
 		/>
 
-		{#each ndcGeoFacePaths.value as p, i (i)}
-			{@const path = view(
-				[
-					i,
-					"vertices",
-					"points",
-					mapIso(coordPair),
-					L.inverse(L.split(" ")),
-				],
-				ndcGeoFacePaths,
-			)}
-
+		{#each ndcGeoFacePathsFast.value as p, i (i)}
 			<polygon
 				fill={p.attrs.color ?? "#ccc"}
 				fill-opacity="0.5"
@@ -1857,39 +2103,14 @@
 				stroke="none"
 				{...p.attrs}
 				stroke-opacity="0.1"
-				data-clockwise={p.vertices.clockwise !==
-					(p.attrs.flip ?? false)}
-				points={path.value}
+				data-clockwise={p.clockwise !== (p.attrs.flip ?? false)}
+				points={p.path}
 			/>
 			{#if labelFace.value}
-				{@const center = view(
-					[
-						i,
-						"vertices",
-						"points",
-						L.foldTraversalLens(
-							L.foldl(
-								({ x: ax, y: ay }, { x, y }, i) => ({
-									x: (ax * i + x) / (i + 1),
-									y: (ay * i + y) / (i + 1),
-									"data-count": i + 1,
-								}),
-								{
-									x: 0,
-									y: 0,
-									"data-count": 0,
-								},
-							),
-							L.elems,
-						),
-					],
-					ndcGeoFacePaths,
-				)}
 				<text
 					class={p.attrs.class}
-					{...center.value}
-					data-clockwise={p.vertices.clockwise !==
-						(p.attrs.flip ?? false)}
+					{...p.center}
+					data-clockwise={p.clockwise !== (p.attrs.flip ?? false)}
 					text-anchor="middle"
 					fill="black"
 					transform="translate(0, -10)">f{i}</text
@@ -1901,58 +2122,21 @@
 			style:--stroke-width-bg={strokeWidthBg.value + "px"}
 			style:--stroke-width-bg2={strokeWidthBg.value * 2 + "px"}
 		>
-			{#each ndcGeoEdgePaths.value as p, i (i)}
-				{@const allFaces = ndcGeoFacePaths.value}
-				{@const frontFacing = R.any(
-					(i) => allFaces[i].vertices.clockwise,
-					p.faces,
-				)}
-				{@const path = view(
-					[
-						i,
-						"vertices",
-						L.applyAt(L.elems, coordPair),
-						L.inverse(L.split(" L ")),
-						L.inverse(L.dropPrefix(" M ")),
-					],
-					ndcGeoEdgePaths,
-				)}
-
+			{#each ndcGeoEdgePathsFast.value as p, i (i)}
 				<path
 					stroke-opacity="1"
 					vector-effect="non-scaling-stroke"
 					stroke={p.attrs.color ?? "black"}
 					{...p.attrs}
-					data-any-clockwise={frontFacing !== (p.attrs.flip ?? false)}
-					d={path.value}
+					data-any-clockwise={p.frontFacing !==
+						(p.attrs.flip ?? false)}
+					d={p.path}
 				/>
 				{#if labelEdge.value}
-					{@const center = view(
-						[
-							i,
-							"vertices",
-							L.foldTraversalLens(
-								L.foldl(
-									({ x: ax, y: ay }, { x, y }, i) => ({
-										x: (ax * i + x) / (i + 1),
-										y: (ay * i + y) / (i + 1),
-										"data-count": i + 1,
-									}),
-									{
-										x: 0,
-										y: 0,
-										"data-count": 0,
-									},
-								),
-								L.elems,
-							),
-						],
-						ndcGeoEdgePaths,
-					)}
 					<text
 						class={p.attrs.class}
-						{...center.value}
-						data-any-clockwise={frontFacing !==
+						{...p.center}
+						data-any-clockwise={p.frontFacing !==
 							(p.attrs.flip ?? false)}
 						text-anchor="middle"
 						transform="translate(0, -10)">e{i}</text
@@ -1961,7 +2145,7 @@
 			{/each}
 		</g>
 		<g style:--circle-rad={circleRad.value + "px"}>
-			{#each ndcGeoVertices.value as v, i (i)}
+			{#each ndcGeoVerticesFast.value as v, i (i)}
 				{#if !v.clipped}
 					<circle
 						class="vertex"
@@ -1983,27 +2167,14 @@
 		</g>
 
 		<g style:--font-size={fontSize.value + "px"}>
-			{#each ndcGeoLabels.value as v, i (i)}
-				{#if !v.vertex.clipped}
-					{@const lines = L.get(
-						[
-							"text",
-							L.choose(
-								R.ifElse(
-									R.is(Array),
-									R.always(L.identity),
-									R.always(L.getter(R.of(Array))),
-								),
-							),
-						],
-						v,
-					)}
+			{#each ndcGeoLabelsFast.value as v, i (i)}
+				{#if !v.clipped}
 					<text
 						{...v.vertex}
 						text-anchor="middle"
 						transform="translate(0, -10)"
 						{...v.attrs}
-						>{#each lines as line, l (l)}
+						>{#each v.lines as line, l (l)}
 							<tspan x={v.vertex.x} dy="1em">{line}</tspan>
 						{/each}</text
 					>
@@ -2015,7 +2186,7 @@
 							{...v.attrs}
 							stroke="none"
 							stroke-width="0"
-							>{#each lines as line, l (l)}
+							>{#each v.lines as line, l (l)}
 								<tspan x={v.vertex.x} dy="1em">{line}</tspan>
 							{/each}</text
 						>
@@ -2037,24 +2208,12 @@
 				<path d="M 0 0 L 10 5 L 0 10 z" />
 			</marker>
 
-			{#each ndcGeoMaskPaths.value as p, i (i)}
-				{@const path = view(
-					[
-						i,
-						"vertices",
-						"points",
-						mapIso(coordPair),
-						L.inverse(L.split(" ")),
-					],
-					ndcGeoMaskPaths,
-				)}
-
+			{#each ndcGeoMaskPathsFast.value as p, i (i)}
 				<clipPath id="mask-{i}">
 					<polygon
 						class={p.attrs.class}
-						data-clockwise={p.vertices.clockwise !==
-							(p.attrs.flip ?? false)}
-						points={path.value}
+						data-clockwise={p.clockwise !== (p.attrs.flip ?? false)}
+						points={p.path}
 					/>
 				</clipPath>
 			{/each}

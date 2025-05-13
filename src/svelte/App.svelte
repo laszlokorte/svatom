@@ -75,14 +75,6 @@
 		(x) => x,
 		(v, old) => (isNaN(parseInt(v, 10)) ? old : parseInt(v, 10)),
 	);
-	const lindex = (xtra) =>
-		L.lens(
-			(a) =>
-				Array(a + xtra)
-					.fill(0)
-					.map((_, i) => i),
-			(c, a) => c.length - xtra,
-		);
 
 	const summingLens = (i, forceSum = null) =>
 		L.lens(
@@ -113,7 +105,6 @@
 	const clampedSize = view(L.normalize(R.clamp(10, 30)), size);
 	const fontSize = string`font-size: ${clampedSize}px`;
 	const count = view("length", allNames);
-	const indices = view(lindex(1), count);
 	const newName = view(
 		[L.appendTo, L.removable("name"), "name", L.defaults("")],
 		allNames,
@@ -130,7 +121,8 @@
 	);
 	const theNumberDoubled = view(doubleNumber, theNumberClamped);
 
-	const allLangs = read([L.keys, L.defaults([])], translation);
+	const allLangs = read(L.foldTraversalLens(L.collect, L.keys), translation);
+	const allLangsCount = read("length", allLangs);
 	const lang = view("local", settings);
 	const langAndTranslation = combineWithRest({
 		lang: view("local", settings),
@@ -357,8 +349,10 @@
 		<label class="simple-form-field"
 			><span class="simple-form-field-label">Your language:</span>
 			<select class="simple-form-field-input" bind:value={lang.value}>
-				{#each allLangs.all as l}
-					<option value={l}>{l}</option>
+				{#each { length: allLangsCount.value }, l}
+					{@const lang = view(l, allLangs)}
+					<option value={lang.value}>{lang.value}</option>
+					}
 				{/each}
 			</select></label
 		>
@@ -421,20 +415,17 @@
 	<ul
 		style="display: grid; grid-template-columns: auto repeat(2, auto 1fr); align-items: baseline;"
 	>
-		{#each indices.value as i (i)}
+		{#each { length: count.value + 1 }, i (i)}
 			{@const thisEntry = view(i, allNames)}
 			{@const thisInputName = view([i, "name"], inputFields)}
 			{@const prevInputName = view(
-				[(i - 1 + indices.value.length) % indices.value.length, "name"],
+				[(i - 1 + count.value) % count.value, "name"],
 				inputFields,
 			)}
 			{@const nextInputName = view([i + 1, "name"], inputFields)}
 			{@const thisInputGreet = view([i, "greet"], inputFields)}
 			{@const prevInputGreet = view(
-				[
-					(i - 1 + indices.value.length) % indices.value.length,
-					"greet",
-				],
+				[(i - 1 + count.value) % count.value, "greet"],
 				inputFields,
 			)}
 			{@const nextInputGreet = view([i + 1, "greet"], inputFields)}
