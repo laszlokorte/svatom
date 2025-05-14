@@ -5,7 +5,17 @@
 	import * as R from "ramda";
 	import * as U from "./utils";
 
-	import { Renderer, Camera, Transform, Box, Program, Mesh } from "ogl";
+	import {
+		Renderer,
+		Camera,
+		Transform,
+		Box,
+		Program,
+		Mesh,
+		Geometry,
+		Vec3,
+		Mat4,
+	} from "ogl";
 
 	import {
 		atom,
@@ -525,6 +535,19 @@
 		sy: 1.2,
 		sz: 1,
 	});
+	const meshColor = atom("#5fdfb4");
+	const meshColorGL = view(
+		L.reread((hex) => {
+			const digits = hex.slice(1);
+			const int = parseInt(digits, 16);
+			return [
+				(int >> 16) & 0xff,
+				(int >> 8) & 0xff,
+				(int << 0) & 0xff,
+			].map((x) => x / 255);
+		}),
+		meshColor,
+	);
 
 	const lensMatrixTransform = (transform) => [
 		lens3dScale(transform.sx, transform.sy, transform.sz),
@@ -1330,12 +1353,16 @@
 	const hideAll = view(allProps(true), backfaceCull);
 
 	const debugLabels = atom({
+		svg: true,
+		canvas: true,
 		edge: false,
 		face: false,
 		vertex: false,
 		ndcCube: false,
 		screenTriangle: false,
 	});
+	const showSvg = view("svg", debugLabels);
+	const showCanvas = view("canvas", debugLabels);
 	const labelFace = view("face", debugLabels);
 	const labelVertex = view("vertex", debugLabels);
 	const labelEdge = view("edge", debugLabels);
@@ -1489,10 +1516,38 @@
 		}),
 	);
 
-	const canvas = atom(undefined);
+	const canvasRoot = atom(undefined);
+
+	class CustomGeo extends Geometry {
+		constructor(gl, geo) {
+			// 1. Extract and flatten vertices
+			const positions = new Float32Array(
+				geo.vertices.flatMap((v) => [v.x, -v.y, v.z]),
+			);
+
+			// 2. Convert faces to triangles (handle quads)
+			const indices = [];
+
+			for (const face of geo.faces) {
+				const v = face.vertices;
+				for (let i = 2; i < v.length; i++) {
+					indices.push(v[0], v[i - 1], v[i]);
+				}
+			}
+
+			const indexArray = new Uint16Array(indices);
+
+			super(gl, {
+				position: { size: 3, data: positions },
+				index: { data: indexArray },
+			});
+		}
+	}
 
 	onMount(() => {
-		const renderer = new Renderer({ canvas: canvas.value });
+		const renderer = new Renderer({
+			alpha: true,
+		});
 		const gl = renderer.gl;
 
 		gl.clearColor(1, 1, 1, 1);
@@ -1507,12 +1562,21 @@
 			camera.perspective({ aspect: 1 / screenAspect.value });
 		});
 
+		$effect(() => {
+			if (canvasRoot.value) {
+				gl.canvas.classList.add("viewport");
+				canvasRoot.value.appendChild(gl.canvas);
+			}
+		});
+
 		const scene = new Transform();
 
-		const geometry = new Box(gl);
+		const geometry = new CustomGeo(gl, worldGeo.value);
 
 		const program = new Program(gl, {
 			vertex: /* glsl */ `
+			precision mediump float;
+
             attribute vec3 position;
 
             uniform mat4 modelViewMatrix;
@@ -1523,10 +1587,16 @@
             }
         `,
 			fragment: /* glsl */ `
+			precision mediump float;
+            uniform vec3 uMeshColor;
+
             void main() {
-                gl_FragColor = vec4(0.9,0.2,0.0,1.0);
+                gl_FragColor = vec4(uMeshColor,0.2);
             }
         `,
+			uniforms: {
+				uMeshColor: { value: new Vec3(0, 0, 0) },
+			},
 		});
 
 		const mesh = new Mesh(gl, { geometry, program });
@@ -1548,9 +1618,13 @@
 			mesh.position.x = worldTransformPosX.value;
 			mesh.position.y = worldTransformPosY.value;
 			mesh.position.z = worldTransformPosZ.value;
-			mesh.scale.x = 20 * worldTransformScaleX.value;
-			mesh.scale.y = 20 * worldTransformScaleY.value;
-			mesh.scale.z = 20 * worldTransformScaleZ.value;
+			mesh.scale.x = worldTransformScaleX.value;
+			mesh.scale.y = worldTransformScaleY.value;
+			mesh.scale.z = worldTransformScaleZ.value;
+		});
+
+		$effect(() => {
+			mesh.geometry = new CustomGeo(gl, worldGeo.value);
 		});
 
 		$effect(() => {
@@ -1587,11 +1661,15 @@
 			cameraOffsetTransform.updateMatrixWorld();
 		});
 
+		$effect(() => {
+			program.uniforms.uMeshColor.value.set(...meshColorGL.value);
+		});
+
 		let raf = requestAnimationFrame(update);
 		function update(t) {
-			raf = requestAnimationFrame(update);
-
 			renderer.render({ scene, camera });
+
+			raf = requestAnimationFrame(update);
 		}
 
 		return () => {
@@ -1801,11 +1879,23 @@
 						>
 					</label>
 				</div>
+				<div>
+					<label>
+						Color:
+						<input type="color" bind:value={meshColor.value} />
+					</label>
+				</div>
 			</div>
 		</fieldset>
 		<fieldset>
 			<legend>Debug Labels</legend>
 
+			<label
+				><input type="checkbox" bind:checked={showSvg.value} /> SVG</label
+			>
+			<label
+				><input type="checkbox" bind:checked={showCanvas.value} /> Canvas</label
+			>
 			<label
 				><input type="checkbox" bind:checked={labelFace.value} /> Face</label
 			>
@@ -2168,7 +2258,9 @@
 	</div>
 </div>
 <div class="resize">
-	<canvas class="viewport raster" bind:this={canvas.value}></canvas>
+	{#if showCanvas.value}
+		<div class="viewportContainer" bind:this={canvasRoot.value}></div>
+	{/if}
 	<svg
 		data-hide-cw={hideCW.value}
 		data-hide-ccw={hideCCW.value}
@@ -2214,132 +2306,148 @@
 			cameraFoVWheel.value = evt.deltaY;
 		}}
 	>
-		<rect {...debugRect.value} class:hidden={!showNDCCube.value}>
-			<title>Debug Rect</title>
-		</rect>
-		<polygon {...debugPolygon.value} class:hidden={!screenTriangle.value} />
-		<polygon {...debugBoundsSvg.value} class:hidden={!showNDCCube.value} />
-		<polygon
-			{...debugPolygonClipped.value}
-			class:hidden={!screenTriangle.value}
-		/>
-		<circle {...debugCircle.value} class:hidden={!showNDCCube.value}>
-			<title>Debug Center</title>
-		</circle>
-		<path
-			fill="red"
-			d={ndcCubeVertexPath.value}
-			class:hidden={!showNDCCube.value}
-		/>
-		<path
-			stroke-width="1"
-			vector-effect="non-scaling-stroke"
-			stroke="gray"
-			stroke-dasharray="5 5"
-			d={ndcCubeEdgePath.value}
-			class:hidden={!showNDCCube.value}
-		/>
-
-		{#each ndcGeoFacePathsFast.value as p, i (i)}
-			<polygon
-				fill={p.attrs.color ?? "#ccc"}
-				fill-opacity="0.5"
-				vector-effect="non-scaling-stroke"
-				stroke="none"
-				{...p.attrs}
-				stroke-opacity="0.1"
-				data-clockwise={p.clockwise !== (p.attrs.flip ?? false)}
-				points={p.path}
-			/>
-			{#if labelFace.value}
-				<text
-					class={p.attrs.class}
-					{...p.center}
-					data-clockwise={p.clockwise !== (p.attrs.flip ?? false)}
-					text-anchor="middle"
-					fill="black"
-					transform="translate(0, -10)">f{i}</text
-				>
-			{/if}
-		{/each}
-		<g
-			style:--stroke-width-fg={strokeWidthFg.value + "px"}
-			style:--stroke-width-bg={strokeWidthBg.value + "px"}
-			style:--stroke-width-bg2={strokeWidthBg.value * 2 + "px"}
-		>
-			{#each ndcGeoEdgePathsFast.value as p, i (i)}
-				<path
-					stroke-opacity="1"
-					vector-effect="non-scaling-stroke"
-					stroke={p.attrs.color ?? "black"}
-					{...p.attrs}
-					data-any-clockwise={p.frontFacing !==
-						(p.attrs.flip ?? false)}
-					d={p.path}
+		{#if showSvg.value}
+			<g style:--mesh-color={meshColor.value}>
+				<rect {...debugRect.value} class:hidden={!showNDCCube.value}>
+					<title>Debug Rect</title>
+				</rect>
+				<polygon
+					{...debugPolygon.value}
+					class:hidden={!screenTriangle.value}
 				/>
-				{#if labelEdge.value}
-					<text
-						class={p.attrs.class}
-						{...p.center}
-						data-any-clockwise={p.frontFacing !==
-							(p.attrs.flip ?? false)}
-						text-anchor="middle"
-						transform="translate(0, -10)">e{i}</text
-					>
-				{/if}
-			{/each}
-		</g>
-		<g style:--circle-rad={circleRad.value + "px"}>
-			{#each ndcGeoVerticesFast.value as v, i (i)}
-				{#if !v.clipped}
-					<circle
-						class="vertex"
-						cx={v.x}
-						cy={v.y}
-						r="5"
-						fill="black"
+				<polygon
+					{...debugBoundsSvg.value}
+					class:hidden={!showNDCCube.value}
+				/>
+				<polygon
+					{...debugPolygonClipped.value}
+					class:hidden={!screenTriangle.value}
+				/>
+				<circle
+					{...debugCircle.value}
+					class:hidden={!showNDCCube.value}
+				>
+					<title>Debug Center</title>
+				</circle>
+				<path
+					fill="red"
+					d={ndcCubeVertexPath.value}
+					class:hidden={!showNDCCube.value}
+				/>
+				<path
+					stroke-width="1"
+					vector-effect="non-scaling-stroke"
+					stroke="gray"
+					stroke-dasharray="5 5"
+					d={ndcCubeEdgePath.value}
+					class:hidden={!showNDCCube.value}
+				/>
+
+				{#each ndcGeoFacePathsFast.value as p, i (i)}
+					<polygon
+						fill={p.attrs.color ?? "#ccc"}
+						fill-opacity="0.5"
+						vector-effect="non-scaling-stroke"
+						stroke="none"
+						{...p.attrs}
+						stroke-opacity="0.1"
+						data-clockwise={p.clockwise !== (p.attrs.flip ?? false)}
+						points={p.path}
 					/>
-					{#if labelVertex.value}
+					{#if labelFace.value}
 						<text
-							x={v.x}
-							y={v.y}
+							class={p.attrs.class}
+							{...p.center}
+							data-clockwise={p.clockwise !==
+								(p.attrs.flip ?? false)}
 							text-anchor="middle"
-							transform="translate(0, -10)">v{i}</text
+							fill="black"
+							transform="translate(0, -10)">f{i}</text
 						>
 					{/if}
-				{/if}
-			{/each}
-		</g>
+				{/each}
+				<g
+					style:--stroke-width-fg={strokeWidthFg.value + "px"}
+					style:--stroke-width-bg={strokeWidthBg.value + "px"}
+					style:--stroke-width-bg2={strokeWidthBg.value * 2 + "px"}
+				>
+					{#each ndcGeoEdgePathsFast.value as p, i (i)}
+						<path
+							stroke-opacity="1"
+							vector-effect="non-scaling-stroke"
+							stroke={p.attrs.color ?? "black"}
+							{...p.attrs}
+							data-any-clockwise={p.frontFacing !==
+								(p.attrs.flip ?? false)}
+							d={p.path}
+						/>
+						{#if labelEdge.value}
+							<text
+								class={p.attrs.class}
+								{...p.center}
+								data-any-clockwise={p.frontFacing !==
+									(p.attrs.flip ?? false)}
+								text-anchor="middle"
+								transform="translate(0, -10)">e{i}</text
+							>
+						{/if}
+					{/each}
+				</g>
+				<g style:--circle-rad={circleRad.value + "px"}>
+					{#each ndcGeoVerticesFast.value as v, i (i)}
+						{#if !v.clipped}
+							<circle
+								class="vertex"
+								cx={v.x}
+								cy={v.y}
+								r="5"
+								fill="black"
+							/>
+							{#if labelVertex.value}
+								<text
+									x={v.x}
+									y={v.y}
+									text-anchor="middle"
+									transform="translate(0, -10)">v{i}</text
+								>
+							{/if}
+						{/if}
+					{/each}
+				</g>
 
-		<g style:--font-size={fontSize.value + "px"}>
-			{#each ndcGeoLabelsFast.value as v, i (i)}
-				{#if !v.clipped}
-					<text
-						{...v.vertex}
-						text-anchor="middle"
-						transform="translate(0, -10)"
-						{...v.attrs}
-						>{#each v.lines as line, l (l)}
-							<tspan x={v.vertex.x} dy="1em">{line}</tspan>
-						{/each}</text
-					>
-					{#if v.attrs.stroke}
-						<text
-							{...v.vertex}
-							text-anchor="middle"
-							transform="translate(0, -10)"
-							{...v.attrs}
-							stroke="none"
-							stroke-width="0"
-							>{#each v.lines as line, l (l)}
-								<tspan x={v.vertex.x} dy="1em">{line}</tspan>
-							{/each}</text
-						>
-					{/if}
-				{/if}
-			{/each}
-		</g>
-
+				<g style:--font-size={fontSize.value + "px"}>
+					{#each ndcGeoLabelsFast.value as v, i (i)}
+						{#if !v.clipped}
+							<text
+								{...v.vertex}
+								text-anchor="middle"
+								transform="translate(0, -10)"
+								{...v.attrs}
+								>{#each v.lines as line, l (l)}
+									<tspan x={v.vertex.x} dy="1em">{line}</tspan
+									>
+								{/each}</text
+							>
+							{#if v.attrs.stroke}
+								<text
+									{...v.vertex}
+									text-anchor="middle"
+									transform="translate(0, -10)"
+									{...v.attrs}
+									stroke="none"
+									stroke-width="0"
+									>{#each v.lines as line, l (l)}
+										<tspan x={v.vertex.x} dy="1em"
+											>{line}</tspan
+										>
+									{/each}</text
+								>
+							{/if}
+						{/if}
+					{/each}
+				</g>
+			</g>
+		{/if}
 		<defs>
 			<marker
 				id="simple-arrow"
@@ -2373,6 +2481,7 @@
 <textarea bind:value={geoJson.value}></textarea>
 
 <style>
+	.viewportContainer :global(.viewport),
 	.viewport {
 		width: 100%;
 		height: 100%;
@@ -2388,8 +2497,13 @@
 		touch-action: none;
 	}
 
-	.viewport.raster {
+	.viewportContainer {
 		background: #fff;
+		display: contents;
+	}
+
+	.viewport.vector {
+		z-index: 10;
 	}
 
 	.resize {
@@ -2464,7 +2578,7 @@
 
 	polygon.ground {
 		fill-opacity: 0.2;
-		stroke: mediumaquamarine;
+		stroke: var(--mesh-color, mediumaquamarine);
 		stroke-opacity: 0.5;
 		stroke-width: 1px;
 		opacity: 1;
@@ -2504,11 +2618,11 @@
 	polygon.obj-face {
 		opacity: 0.4;
 		fill-opacity: 1;
-		fill: aquamarine;
+		fill: var(--mesh-color, mediumaquamarine);
 	}
 
 	path.obj-edge {
-		stroke: mediumaquamarine;
+		stroke: var(--mesh-color, mediumaquamarine);
 	}
 
 	.obj-edge[data-any-clockwise="true"] {
