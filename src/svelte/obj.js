@@ -69,6 +69,59 @@ export const toGeo = (obj, scale = 1, reverse = true, scaleX= 1, scaleY= 1, scal
 	return geo
 }
 
+const lerp = (a,b,t) => (1-t)*a + t*b
+
+export const marchingCubesToGeo = (fn, minX, minY, minZ, maxX, maxY, maxZ, res = 4) => {
+
+	const vertices = [minX,maxX].flatMap(x => [minY,maxY].flatMap(y => [minZ,maxZ].flatMap(z => [({x,y,z})])))
+	const faces = [{vertices: [1,0,2,3], attrs: {flip: false, class:"obj-face", opacity: 0.2}},
+		{vertices: [4,5,7,6], attrs: {flip: false, class:"obj-face", opacity: 0.2}},
+		{vertices: [0,1,5,4], attrs: {flip: false, class:"obj-face", opacity: 0.2}},
+		{vertices: [3,2,6,7], attrs: {flip: false, class:"obj-face", opacity: 0.2}},
+		{vertices: [1,3,7,5], attrs: {flip: false, class:"obj-face", opacity: 0.2}},
+		{vertices: [2,0,4,6], attrs: {flip: false, class:"obj-face", opacity: 0.2}}]
+	const edges = [{vertices: [0,1], attrs:{}, faces: []},
+		{vertices: [1,3], attrs:{}, faces: []},
+		{vertices: [2,3], attrs:{}, faces: []},
+		{vertices: [2,0], attrs:{}, faces: []},
+		{vertices: [4,5], attrs:{}, faces: []},
+		{vertices: [5,7], attrs:{}, faces: []},
+		{vertices: [6,7], attrs:{}, faces: []},
+		{vertices: [6,4], attrs:{}, faces: []},
+		{vertices: [0,4], attrs:{}, faces: []},
+		{vertices: [1,5], attrs:{}, faces: []},
+		{vertices: [3,7], attrs:{}, faces: []},
+		{vertices: [2,6], attrs:{}, faces: []},
+	]
+
+	for(let x=0;x<=res;x++) {
+		for(let y=0;y<=res;y++) {
+			for(let z=0;z<=res;z++) {
+				const mask = [0,1].flatMap(xx => [0,1].flatMap(yy => [0,1].flatMap(zz => 
+					[fn(lerp(minX,maxX,(x+xx)/res), lerp(minY,maxY,(y+yy)/res), lerp(minZ,maxZ,(z+zz)/res))]
+				))).reduce((a,b,i) => a | (b?1<<i:0), 0)
+				const d = fn(lerp(minX,maxX,x/res), lerp(minY,maxY,y/res), lerp(minZ,maxZ,z/res))
+				if(d <= 0) {
+					vertices.push({x: lerp(minX,maxX,x/res),y: lerp(minY,maxY,y/res),z: lerp(minZ,maxZ,z/res)})
+				}
+			}
+		}
+	}
+	
+
+	const geo =  {
+		vertices,
+		edges,
+		faces, 
+		masks: [
+		],
+		labels: [
+		],
+	}
+
+	return geo
+}
+
 
 export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 

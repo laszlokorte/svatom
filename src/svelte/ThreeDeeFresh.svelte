@@ -1,9 +1,12 @@
 <script>
-	import { tick } from "svelte";
+	import { onMount, tick } from "svelte";
 	import * as L from "partial.lenses";
 	import * as G from "./generators";
 	import * as R from "ramda";
 	import * as U from "./utils";
+
+	import { Renderer, Camera, Transform, Box, Program, Mesh } from "ogl";
+
 	import {
 		atom,
 		view,
@@ -23,10 +26,19 @@
 	import exampleRenew from "./Renew/example.rnw?raw";
 	import exampleDoubleArrow from "./Renew/doublearrow.rnw?raw";
 	import { parserAutoDetect } from "../renew/index.js";
-	import { parse as parseObj, toGeo, renewToGeo } from "./obj.js";
+	import {
+		parse as parseObj,
+		toGeo,
+		renewToGeo,
+		marchingCubesToGeo,
+	} from "./obj.js";
+	import { render } from "svelte/server";
 
 	const objs = {
-		initial: { label: "Initial", geo: cube2 },
+		initial: {
+			label: "Initial",
+			geo: cube2,
+		},
 		cube: { label: "Cube", data: objCube, scale: 20 },
 		monkey: {
 			label: "Suzanne",
@@ -62,7 +74,7 @@
 				ty: 0,
 				tz: 30,
 				rx: (33 / 180) * Math.PI,
-				ry: (-33 / 180) * Math.PI,
+				ry: -(33 / 180) * Math.PI,
 				rz: 0,
 				sx: 1,
 				sy: 1,
@@ -478,7 +490,18 @@
 	const normLength = L.normalize((o) => {
 		return L.modify(L.values, R.divide(R.__, L.sum(L.values, o) || 1), o);
 	});
-	const worldGeo = atom(cube2);
+	const worldGeo = atom(
+		marchingCubesToGeo(
+			(x, y, z) => Math.sqrt(x * x + y * y + z * z) - 8,
+			-10,
+			-10,
+			-10,
+			10,
+			10,
+			10,
+			10,
+		),
+	);
 	const sunLightDir = atom({
 		pos: { x: 0, y: 0, z: -100 },
 		dir: { x: -1, y: 0.8, z: 0.5 },
@@ -505,8 +528,8 @@
 
 	const lensMatrixTransform = (transform) => [
 		lens3dScale(transform.sx, transform.sy, transform.sz),
-		lens3dRotateY(transform.ry),
 		lens3dRotateX(transform.rx),
+		lens3dRotateY(transform.ry),
 		lens3dRotateZ(transform.rz),
 		lens3dTranslate(transform.tx, transform.ty, transform.tz),
 	];
@@ -519,15 +542,15 @@
 		};
 
 		const v1 = {
-			x: v0.x * Math.cos(transform.ry) - v0.z * Math.sin(transform.ry),
-			y: v0.y,
-			z: v0.x * Math.sin(transform.ry) + v0.z * Math.cos(transform.ry),
+			x: v0.x,
+			y: v0.y * Math.cos(transform.rx) - v0.z * Math.sin(transform.rx),
+			z: v0.y * Math.sin(transform.rx) + v0.z * Math.cos(transform.rx),
 		};
 
 		const v2 = {
-			x: v1.x,
-			y: v1.y * Math.cos(transform.rx) - v1.z * Math.sin(transform.rx),
-			z: v1.y * Math.sin(transform.rx) + v1.z * Math.cos(transform.rx),
+			x: v1.x * Math.cos(transform.ry) - v1.z * Math.sin(transform.ry),
+			y: v1.y,
+			z: v1.x * Math.sin(transform.ry) + v1.z * Math.cos(transform.ry),
 		};
 
 		const v3 = {
@@ -553,9 +576,9 @@
 						camera.offset.y,
 						camera.offset.z,
 					),
-					lens3dRotateZ(camera.eye.rz),
 					lens3dRotateX(camera.eye.rx),
 					lens3dRotateY(camera.eye.ry),
+					lens3dRotateZ(camera.eye.rz),
 					lens3dTranslate(
 						-camera.offset.x,
 						-camera.offset.y,
@@ -585,34 +608,35 @@
 			y: v.y + camera.offset.y - camera.eye.ty,
 			z: v.z + camera.offset.z - camera.eye.tz,
 		};
+
 		const v4 = {
 			x:
-				v5.x * Math.cos(-camera.eye.ry) -
-				v5.z * Math.sin(-camera.eye.ry),
-			y: v5.y,
-			z:
-				v5.x * Math.sin(-camera.eye.ry) +
-				v5.z * Math.cos(-camera.eye.ry),
+				v5.x * Math.cos(-camera.eye.rz) -
+				v5.y * Math.sin(-camera.eye.rz),
+			y:
+				v5.x * Math.sin(-camera.eye.rz) +
+				v5.y * Math.cos(-camera.eye.rz),
+			z: v5.z,
 		};
 
 		const v3 = {
-			x: v4.x,
-			y:
-				v4.y * Math.cos(-camera.eye.rx) -
-				v4.z * Math.sin(-camera.eye.rx),
+			x:
+				v4.x * Math.cos(-camera.eye.ry) -
+				v4.z * Math.sin(-camera.eye.ry),
+			y: v4.y,
 			z:
-				v4.y * Math.sin(-camera.eye.rx) +
-				v4.z * Math.cos(-camera.eye.rx),
+				v4.x * Math.sin(-camera.eye.ry) +
+				v4.z * Math.cos(-camera.eye.ry),
 		};
 
 		const v2 = {
-			x:
-				v3.x * Math.cos(-camera.eye.rz) -
-				v3.y * Math.sin(-camera.eye.rz),
+			x: v3.x,
 			y:
-				v3.x * Math.sin(-camera.eye.rz) +
-				v3.y * Math.cos(-camera.eye.rz),
-			z: v3.z,
+				v3.y * Math.cos(-camera.eye.rx) -
+				v3.z * Math.sin(-camera.eye.rx),
+			z:
+				v3.y * Math.sin(-camera.eye.rx) +
+				v3.z * Math.cos(-camera.eye.rx),
 		};
 
 		const v1 = {
@@ -651,6 +675,7 @@
 	];
 
 	const screenAspect = view(["size", ratio("x", "y")], screen);
+	const screenSize = view(["size", L.props("x", "y")], screen);
 
 	const ndcGeo = view(
 		L.choose(({ camera, transform, screenAspect }) => {
@@ -1100,6 +1125,13 @@
 	const worldTransformScaleY = view(["sy"], worldTransform);
 	const worldTransformScaleZ = view(["sz"], worldTransform);
 
+	const worldTransformMatrix = view(
+		L.reread(({ rx, ry, rz, tx, ty, tz, sx, sy, sz }) => [
+			[sx, 0, 0, tx, 0, sy, 0, ty, 0, 0, sz, tz, 0, 0, 0, 1],
+		]),
+		worldTransform,
+	);
+
 	const wrapRange = (a, b) => {
 		const range_width = b - a;
 		return L.normalize(
@@ -1456,6 +1488,118 @@
 			screenAspect,
 		}),
 	);
+
+	const canvas = atom(undefined);
+
+	onMount(() => {
+		const renderer = new Renderer({ canvas: canvas.value });
+		const gl = renderer.gl;
+
+		gl.clearColor(1, 1, 1, 1);
+
+		const cameraOffsetTransform = new Transform();
+		const camera = new Camera(gl);
+
+		camera.setParent(cameraOffsetTransform);
+
+		$effect(() => {
+			renderer.setSize(screenSize.value.x, screenSize.value.y);
+			camera.perspective({ aspect: 1 / screenAspect.value });
+		});
+
+		const scene = new Transform();
+
+		const geometry = new Box(gl);
+
+		const program = new Program(gl, {
+			vertex: /* glsl */ `
+            attribute vec3 position;
+
+            uniform mat4 modelViewMatrix;
+            uniform mat4 projectionMatrix;
+
+            void main() {
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `,
+			fragment: /* glsl */ `
+            void main() {
+                gl_FragColor = vec4(0.9,0.2,0.0,1.0);
+            }
+        `,
+		});
+
+		const mesh = new Mesh(gl, { geometry, program });
+		mesh.setParent(scene);
+
+		$effect(() => {
+			mesh.rotation.x = -L.getInverse(
+				lensRadToDegree,
+				worldTransformRotX.value,
+			);
+			mesh.rotation.y = -L.getInverse(
+				lensRadToDegree,
+				worldTransformRotY.value,
+			);
+			mesh.rotation.z = -L.getInverse(
+				lensRadToDegree,
+				worldTransformRotZ.value,
+			);
+			mesh.position.x = worldTransformPosX.value;
+			mesh.position.y = worldTransformPosY.value;
+			mesh.position.z = worldTransformPosZ.value;
+			mesh.scale.x = 20 * worldTransformScaleX.value;
+			mesh.scale.y = 20 * worldTransformScaleY.value;
+			mesh.scale.z = 20 * worldTransformScaleZ.value;
+		});
+
+		$effect(() => {
+			cameraOffsetTransform.position.x =
+				cameraEyePosX.value - cameraOffsetX.value;
+			cameraOffsetTransform.position.y =
+				-cameraEyePosY.value + cameraOffsetY.value;
+			cameraOffsetTransform.position.z =
+				cameraEyePosZ.value - cameraOffsetZ.value;
+
+			camera.position.x = +cameraOffsetX.value;
+			camera.position.y = -cameraOffsetY.value;
+			camera.position.z = +cameraOffsetZ.value;
+
+			cameraOffsetTransform.rotation.x = -L.getInverse(
+				lensRadToDegree,
+				cameraEyeRotX.value,
+			);
+			cameraOffsetTransform.rotation.y = -L.getInverse(
+				lensRadToDegree,
+				cameraEyeRotY.value,
+			);
+			cameraOffsetTransform.rotation.z = -L.getInverse(
+				lensRadToDegree,
+				cameraEyeRotZ.value,
+			);
+
+			camera.perspective({
+				near: cameraClipNear.value,
+				far: cameraClipFar.value,
+				fov: cameraFoV.value,
+			});
+
+			cameraOffsetTransform.updateMatrixWorld();
+		});
+
+		let raf = requestAnimationFrame(update);
+		function update(t) {
+			raf = requestAnimationFrame(update);
+
+			renderer.render({ scene, camera });
+		}
+
+		return () => {
+			if (raf) {
+				cancelAnimationFrame(raf);
+			}
+		};
+	});
 </script>
 
 <div
@@ -2024,13 +2168,14 @@
 	</div>
 </div>
 <div class="resize">
+	<canvas class="viewport raster" bind:this={canvas.value}></canvas>
 	<svg
 		data-hide-cw={hideCW.value}
 		data-hide-ccw={hideCCW.value}
 		bind:clientWidth={clientWidth.value}
 		bind:clientHeight={clientHeight.value}
 		tabindex="-1"
-		class="viewport"
+		class="viewport vector"
 		viewBox={viewBox.value}
 		preserveAspectRatio={aspectRatio.value}
 		onpointerdown={(evt) => {
@@ -2234,6 +2379,7 @@
 		display: block;
 		touch-action: none;
 		overscroll-behavior: contain;
+		grid-area: 1/1/-1/-1;
 	}
 
 	.viewport:focus,
@@ -2242,12 +2388,18 @@
 		touch-action: none;
 	}
 
+	.viewport.raster {
+		background: #fff;
+	}
+
 	.resize {
 		resize: both;
 		width: 100%;
 		height: 30em;
 		border: 1px solid gray;
 		overflow: hidden;
+		display: grid;
+		grid-template: 1fr;
 	}
 
 	polygon {
