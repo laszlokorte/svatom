@@ -1,7 +1,6 @@
 <script>
-	import { onMount, tick } from "svelte";
 	import * as L from "partial.lenses";
-	import * as G from "./generators";
+	import * as G from "@svatom/basic/generators";
 	import * as R from "ramda";
 	import * as U from "./utils";
 
@@ -38,7 +37,8 @@
 	import objMonkey from "./suzanne.obj?raw";
 	import exampleRenew from "./Renew/example.rnw?raw";
 	import exampleDoubleArrow from "./Renew/doublearrow.rnw?raw";
-	import { parserAutoDetect } from "../renew/index.js";
+	import { parserAutoDetect } from "@petristation/renewjs";
+	import { SegmentPolyline } from "./SegmentPolyline.js";
 	import {
 		parse as parseObj,
 		toGeo,
@@ -1519,7 +1519,6 @@
 		}),
 	);
 
-	const canvasRoot = atom(undefined);
 
 	class CustomFaceGeo extends Geometry {
 		constructor(gl, geo) {
@@ -1551,218 +1550,9 @@
 		}
 	}
 
-	const defaultVertex = /* glsl */ `
-    precision highp float;
-
-    attribute vec3 position;
-    attribute vec3 next;
-    attribute vec3 prev;
-    attribute vec2 uv;
-    attribute float side;
-
-    uniform mat4 modelViewMatrix;
-    uniform mat4 projectionMatrix;
-    uniform vec2 uResolution;
-    uniform float uDPR;
-    uniform float uThickness;
-    uniform float uMiter;
-    uniform float uZOffset;
-
-    varying vec2 vUv;
-
-    vec4 getPosition() {
-        mat4 mvp = projectionMatrix * modelViewMatrix;
-        vec4 current = mvp * vec4(position, 1);
-        vec4 nextPos = mvp * vec4(next, 1);
-        vec4 prevPos = mvp * vec4(prev, 1);
-
-        vec2 aspect = vec2(uResolution.x / uResolution.y, 1);    
-        vec2 currentScreen = current.xy / current.w * aspect;
-        vec2 nextScreen = nextPos.xy / nextPos.w * aspect;
-        vec2 prevScreen = prevPos.xy / prevPos.w * aspect;
-    
-        vec2 dir1 = normalize(currentScreen - prevScreen);
-        vec2 dir2 = normalize(nextScreen - currentScreen);
-        vec2 dir = normalize(dir1 + dir2);
-    
-        vec2 normal = vec2(-dir.y, dir.x);
-        normal /= mix(1.0, max(0.3, dot(normal, vec2(-dir1.y, dir1.x))), uMiter);
-        normal /= aspect;
-
-        float pixelWidthRatio = 1.0 / (uResolution.y / uDPR);
-        float pixelWidth = current.w * pixelWidthRatio;
-        normal *= pixelWidth * uThickness;
-        current.xy -= normal * side;
-    
-        return current;
-    }
-
-    void main() {
-        vUv = uv;
-        gl_Position = getPosition();
-        gl_Position.z -= uZOffset;
-    }
-`;
-
-	const defaultFragment = /* glsl */ `
-    precision highp float;
-
-    uniform vec3 uColor;
-    
-    varying vec2 vUv;
-
-    void main() {
-        gl_FragColor.rgb = uColor;
-        gl_FragColor.a = 1.0;
-    }
-`;
-
-	class SegmentPolyline {
-		constructor(
-			gl,
-			{
-				points, // Array of Vec3s
-				vertex = defaultVertex,
-				fragment = defaultFragment,
-				uniforms = {},
-				attributes = {}, // For passing in custom attribs
-			},
-		) {
-			this.gl = gl;
-			this.points = points;
-			this.count = points.length;
-
-			const segmentCount = Math.floor(this.count / 2);
-			const vertCount = segmentCount * 4; // 4 vertices per segment
-
-			// Create buffers
-			this.position = new Float32Array(vertCount * 3);
-			this.prev = new Float32Array(vertCount * 3);
-			this.next = new Float32Array(vertCount * 3);
-			const side = new Float32Array(vertCount);
-			const uv = new Float32Array(vertCount * 2);
-			const index = new Uint16Array(segmentCount * 6); // 2 triangles per segment
-
-			// Set static buffers
-			for (let i = 0; i < segmentCount; i++) {
-				const base = i * 4;
-
-				// Side: alternate left/right
-				side.set([-1, 1, -1, 1], base);
-
-				// UVs (optional layout)
-				uv.set([0, 0, 1, 0, 0, 1, 1, 1], base * 2); // 4 verts * 2 floats each
-
-				// Indices for 2 triangles
-				index.set(
-					[
-						base + 0,
-						base + 2,
-						base + 1,
-						base + 2,
-						base + 3,
-						base + 1,
-					],
-					i * 6,
-				);
-			}
-
-			const geometry = (this.geometry = new Geometry(
-				gl,
-				Object.assign(attributes, {
-					position: { size: 3, data: this.position },
-					prev: { size: 3, data: this.prev },
-					next: { size: 3, data: this.next },
-					side: { size: 1, data: side },
-					uv: { size: 2, data: uv },
-					index: { size: 1, data: index },
-				}),
-			));
-
-			// Populate dynamic buffers with segment data
-			this.updateGeometry();
-
-			// Default uniforms
-			if (!uniforms.uResolution)
-				this.resolution = uniforms.uResolution = { value: new Vec2() };
-			if (!uniforms.uDPR) this.dpr = uniforms.uDPR = { value: 1 };
-			if (!uniforms.uThickness)
-				this.thickness = uniforms.uThickness = { value: 1 };
-			if (!uniforms.uColor)
-				this.color = uniforms.uColor = { value: new Color("#000") };
-			if (!uniforms.uMiter) this.miter = uniforms.uMiter = { value: 1 };
-			if (!uniforms.uZOffset)
-				this.miter = uniforms.uZOffset = { value: 0 };
-
-			// Set resolution-based uniforms
-			this.resize();
-
-			const program = (this.program = new Program(gl, {
-				vertex,
-				fragment,
-				uniforms,
-			}));
-
-			this.mesh = new Mesh(gl, { geometry, program });
-		}
-
-		updateGeometry() {
-			const pointCount = Math.floor(this.points.length / 2); // One segment per 2 points
-			for (let i = 0; i < pointCount; i++) {
-				const a = this.points[i * 2];
-				const b = this.points[i * 2 + 1];
-				const next = new Vec3(
-					b[0] + 2 * (a[0] - b[0]),
-					b[1] + 2 * (a[1] - b[1]),
-					b[2] + 2 * (a[2] - b[2]),
-				);
-
-				const prev = new Vec3(
-					a[0] + 2 * (b[0] - a[0]),
-					a[1] + 2 * (b[1] - a[1]),
-					a[2] + 2 * (b[2] - a[2]),
-				);
-
-				// Each segment creates 4 vertices (quad)
-				// a-side+1, a-side-1, b-side+1, b-side-1
-
-				const i4 = i * 4;
-
-				// Positions
-				a.toArray(this.position, (i4 + 0) * 3);
-				a.toArray(this.position, (i4 + 1) * 3);
-				b.toArray(this.position, (i4 + 2) * 3);
-				b.toArray(this.position, (i4 + 3) * 3);
-
-				// Prev & Next for direction vectors
-				prev.toArray(this.prev, (i4 + 0) * 3);
-				prev.toArray(this.prev, (i4 + 1) * 3);
-				prev.toArray(this.prev, (i4 + 2) * 3);
-				prev.toArray(this.prev, (i4 + 3) * 3);
-
-				next.toArray(this.next, (i4 + 0) * 3);
-				next.toArray(this.next, (i4 + 1) * 3);
-				next.toArray(this.next, (i4 + 2) * 3);
-				next.toArray(this.next, (i4 + 3) * 3);
-			}
-
-			this.geometry.attributes.position.needsUpdate = true;
-			this.geometry.attributes.prev.needsUpdate = true;
-			this.geometry.attributes.next.needsUpdate = true;
-		} // Only need to call if not handling resolution uniforms manually
-		resize() {
-			// Update automatic uniforms if not overridden
-			if (this.resolution)
-				this.resolution.value.set(
-					this.gl.canvas.width,
-					this.gl.canvas.height,
-				);
-			if (this.dpr) this.dpr.value = this.gl.renderer.dpr;
-		}
-	}
-
-	onMount(() => {
+	const renderGL = (canvasRoot) => {
 		const renderer = new Renderer({
+			dpr: window.devicePixelRatio,
 			alpha: true,
 			antialias: true,
 		});
@@ -1782,12 +1572,9 @@
 			camera.perspective({ aspect: 1 / screenAspect.value });
 		});
 
-		$effect(() => {
-			if (canvasRoot.value) {
-				gl.canvas.classList.add("viewport");
-				canvasRoot.value.appendChild(gl.canvas);
-			}
-		});
+		
+		gl.canvas.classList.add("viewport");
+		canvasRoot.appendChild(gl.canvas);
 
 		const scene = new Transform();
 		const object = new Transform();
@@ -1869,6 +1656,10 @@
 		});
 
 		$effect(() => {
+
+			disposeGeo(gl, faceMesh.geometry)
+			disposeGeo(gl, edgeMesh.geometry)
+
 			faceMesh.geometry = new CustomFaceGeo(gl, worldGeo.value);
 			const vs = worldGeo.value.vertices;
 			const polyline = new SegmentPolyline(gl, {
@@ -1929,12 +1720,29 @@
 			raf = requestAnimationFrame(update);
 		}
 
+		function disposeGeo(gl, geometry) {
+			for (let key in geometry.buffers) {
+			  const buffer = geometry.buffers[key];
+			  if (buffer.buffer) gl.deleteBuffer(buffer.buffer);
+			}
+			if (geometry.index && geometry.index.buffer) {
+  gl.deleteBuffer(geometry.index.buffer);
+}
+		}
+
 		return () => {
+			canvasRoot.removeChild(gl.canvas);
+			disposeGeo(gl, edgeMesh.geometry)
+			disposeGeo(gl, edgeMesh.geometry)
+			gl.getExtension('WEBGL_lose_context')?.loseContext()
+			gl.deleteProgram(faceMesh.program.program)
+			gl.deleteProgram(edgeMesh.program.program)
+
 			if (raf) {
 				cancelAnimationFrame(raf);
 			}
 		};
-	});
+	};
 </script>
 
 <div
@@ -2147,28 +1955,30 @@
 		<fieldset>
 			<legend>Debug Labels</legend>
 
-			<label
-				><input type="checkbox" bind:checked={showSvg.value} /> SVG</label
+			<div class="checkbox-list">
+				
+			<label class="checkbox-list-item"
+				><input type="checkbox" bind:checked={showSvg.value} /> <span class="checkbox-list-item-label">SVG</span></label
 			>
-			<label
-				><input type="checkbox" bind:checked={showCanvas.value} /> Canvas</label
+			<label class="checkbox-list-item"
+				><input type="checkbox" bind:checked={showCanvas.value} /> <span class="checkbox-list-item-label">Canvas</span></label
 			>
-			<label
-				><input type="checkbox" bind:checked={labelFace.value} /> Face</label
+			<label class="checkbox-list-item"
+				><input type="checkbox" bind:checked={labelFace.value} /> <span class="checkbox-list-item-label">Face</span></label
 			>
-			<label
-				><input type="checkbox" bind:checked={labelVertex.value} /> Vertex</label
+			<label class="checkbox-list-item"
+				><input type="checkbox" bind:checked={labelVertex.value} /> <span class="checkbox-list-item-label">Vertex</span></label
 			>
-			<label
-				><input type="checkbox" bind:checked={labelEdge.value} /> Edge</label
+			<label class="checkbox-list-item"
+				><input type="checkbox" bind:checked={labelEdge.value} /> <span class="checkbox-list-item-label">Edge</span></label
 			>
-			<label
-				><input type="checkbox" bind:checked={showNDCCube.value} /> NDC Cube</label
+			<label class="checkbox-list-item"
+				><input type="checkbox" bind:checked={showNDCCube.value} /> <span class="checkbox-list-item-label">NDC Cube</span></label
 			>
-			<label
-				><input type="checkbox" bind:checked={screenTriangle.value} /> Clipped
-				Triangle</label
+			<label class="checkbox-list-item"
+				><input type="checkbox" bind:checked={screenTriangle.value} /> <span class="checkbox-list-item-label">Clipped Triangle</span></label
 			>
+			</div>
 		</fieldset>
 		<fieldset>
 			<legend>Drawing Style</legend>
@@ -2461,13 +2271,14 @@
 			<fieldset>
 				<legend>Backface</legend>
 
-				<label
-					><input type="checkbox" bind:checked={hideCW.value} /> Hide Clockwise
-					Faces</label
+				<div class="checkbox-list">
+					<label class="checkbox-list-item"
+					><input type="checkbox" bind:checked={hideCW.value} /> <span class="checkbox-list-item-label ">Hide Clockwise
+										Faces</span></label
 				>
-				<label
-					><input type="checkbox" bind:checked={hideCCW.value} /> Hide
-					Counter-Clockwise Faces</label
+				<label class="checkbox-list-item"
+					><input type="checkbox" bind:checked={hideCCW.value} /> <span class="checkbox-list-item-label ">Hide
+										Counter-Clockwise Faces</span></label
 				>
 				<button onclick={setValue(hideNone)} value="true">
 					Show All</button
@@ -2475,6 +2286,7 @@
 				<button onclick={setValue(hideAll)} value="true">
 					Hide All</button
 				>
+				</div>
 			</fieldset>
 		</fieldset>
 
@@ -2484,6 +2296,7 @@
 			<div>
 				<select
 					size="10"
+					style="width: 100%;"
 					onchange={(evt) => {
 						const obj = objs[evt.currentTarget.value];
 						if (obj.geo) {
@@ -2517,7 +2330,7 @@
 
 <div class="resize">
 	{#if showCanvas.value}
-		<div class="viewportContainer" bind:this={canvasRoot.value}></div>
+		<div class="viewportContainer" {@attach renderGL}></div>
 	{/if}
 	<svg
 		data-hide-cw={hideCW.value}

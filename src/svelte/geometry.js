@@ -1,6 +1,6 @@
 import * as L from "partial.lenses";
 import * as R from "ramda";
-import * as G from "./generators";
+import * as G from "@svatom/basic/generators";
 
 export function translateXY(dx, dy, vec) {
 	return {

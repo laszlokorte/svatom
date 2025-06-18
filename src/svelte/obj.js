@@ -6,7 +6,7 @@ import {
 		kindKey,
 		selfKey,
 		refKey,
-	} from "../renew/index.js";
+	} from "@petristation/renewjs";
 
 
 export const parse = (str) => {

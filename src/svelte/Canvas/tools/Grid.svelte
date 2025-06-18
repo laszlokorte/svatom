@@ -2,7 +2,7 @@
 	import * as L from "partial.lenses";
 	import * as R from "ramda";
 	import * as U from "../../utils";
-	import * as G from "../../generators";
+	import * as G from "@svatom/basic/generators";
 	import * as Geo from "../../geometry";
 	import { view, read, combine, atom } from "../../svatom.svelte.js";
 

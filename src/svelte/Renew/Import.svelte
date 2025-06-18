@@ -33,7 +33,7 @@
 		kindKey as kindKeySymbol,
 		selfKey as selfKeySymbol,
 		refKey as refKeySymbol,
-	} from "../../renew/index.js";
+	} from "@petristation/renewjs";
 	import Scroller from "../Scroller.svelte";
 
 	import exampleActor from "./actors.rnw?raw";
