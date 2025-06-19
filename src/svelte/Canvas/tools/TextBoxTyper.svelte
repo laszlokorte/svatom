@@ -125,9 +125,13 @@
 		d={frameBoxPath.value}
 		pointer-events="all"
 		fill="none"
-		class="text-box-surface"
-		class:dim={isActive.value && !isDragging.value}
-		class:dim-empty={textEmpty.value}
+		class={[
+			"text-box-surface",
+			{
+				dim: isActive.value && !isDragging.value,
+				"dim-empty": textEmpty.value,
+			},
+		]}
 		role="button"
 		tabindex="-1"
 		onkeydown={(evt) => {
@@ -302,10 +306,14 @@
 			d={textBoxPath.value}
 			transform={textBoxTransform.value}
 			fill="none"
-			class={"text-box"}
+			class={[
+				"text-box",
+				{
+					ready: !isDragging.value,
+					valid: textBoxValid.value,
+				},
+			]}
 			pointer-events="none"
-			class:ready={!isDragging.value}
-			class:valid={textBoxValid.value}
 		/>
 	</g>
 </g>

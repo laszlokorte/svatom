@@ -109,8 +109,7 @@
 </script>
 
 <g
-	class={"edge-container"}
-	class:active={isActive.value}
+	class={["edge-container", { active: isActive.value }]}
 	role="button"
 	tabindex="-1"
 	onclick={(evt) => {
@@ -221,28 +220,30 @@
 		d={frameBoxPath.value}
 		pointer-events="all"
 		fill="none"
-		class="edge-surface"
-		class:active={isActive.value}
+		class={["edge-surface", { active: isActive.value }]}
 	/>
 
 	<g transform={rotationTransform.value} pointer-events="none">
 		{#each nodes.value as v, i (i)}
 			<circle
 				data-idx={i}
-				class={"socket"}
+				class={[
+					"socket",
+					{
+						"active-source": draftSourceId.value === i,
+						"active-target": draftTargetId.value === i,
+					},
+				]}
 				cx={v.x}
 				cy={v.y}
 				pointer-events="all"
 				r={snapRadiusScaled.value}
-				class:active-source={draftSourceId.value === i}
-				class:active-target={draftTargetId.value === i}
 			></circle>
 		{/each}
 
 		{#if draftSourcePosition.value && draftTargetSnappedPosition.value}
 			<path
-				class:valid={validConnection.value}
-				class={"edge"}
+				class={["edge", { valid: validConnection.value }]}
 				stroke="black"
 				pointer-events="none"
 				d="M{draftSourcePosition.value.x} {draftSourcePosition.value

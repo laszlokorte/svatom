@@ -156,9 +156,11 @@
 </script>
 
 <div
-	class={"scroller"}
-	class:overscroll-enabled={allowOverscroll}
-	class:overscroll-disabled={!allowOverscroll}
+	class={[
+		"scroller",
+		{ "overscroll-enabled": allowOverscroll },
+		{ "overscroll-disabled": !allowOverscroll },
+	]}
 	use:bindScroll={adjustedScrollPosition}
 	style:--scroll-total-x={paddedContentSizeValue.x}
 	style:--scroll-total-y={paddedContentSizeValue.y}

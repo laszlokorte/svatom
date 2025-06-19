@@ -79,36 +79,37 @@
 				allTabs,
 			)}
 			<span
-				class={"doc-tab-group"}
-				class:active={d === currentTabId.value}
+				class={["doc-tab-group", { active: d === currentTabId.value }]}
 			>
 				{#if d === currentTabId.value}
 					<input
 						placeholder={fallbackName.value}
-						class={"doc-tab-titel"}
-						class:untitled={!docName.value}
+						class={[
+							"doc-tab-titel",
+							"active",
+							{ untitled: !docName.value },
+						]}
 						value={docName.value}
 						onchange={(evt) => {
 							docName.value = evt.currentTarget.value;
 						}}
-						class:active={true}
 					/>
 				{:else}
 					<button
-						class={"doc-tab-titel"}
-						class:active={false}
-						class:untitled={!docName.value}
+						class={["doc-tab-titel", { untitled: !docName.value }]}
 						onclick={() => (currentTabId.value = d)}
 						>{docName.value || fallbackName.value}</button
 					>
 				{/if}
 				<button
 					type="button"
-					class={"doc-tab-del"}
+					class={[
+						"doc-tab-del",
+						{ active: d === currentTabId.value },
+					]}
 					onclick={() => {
 						closeTab.value = d;
 					}}
-					class:active={d === currentTabId.value}
 					title="Close"
 				>
 					<svg width="10" height="10" viewBox="-16 -16 32 32">

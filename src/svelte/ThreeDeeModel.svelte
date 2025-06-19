@@ -556,8 +556,10 @@
 	)}
 	<polygon
 		stroke="none"
-		class:clickable={selected}
-		class:selected={selected && selected.value === i}
+		class={{
+			clickable: selected,
+			selected: selected && selected.value === i,
+		}}
 		onclick={(evt) => {
 			if ((evt.ctrlKey || evt.altKey) && selected) {
 				evt.stopPropagation();

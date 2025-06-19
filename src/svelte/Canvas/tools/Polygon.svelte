@@ -151,7 +151,7 @@
 </script>
 
 <path
-	class={"polygon-surface"}
+	class={["polygon-surface", { dragging: dragging.value }]}
 	d={frameBoxPath.value}
 	pointer-events="all"
 	stroke="none"
@@ -161,7 +161,6 @@
 	onclick={(evt) => {
 		evt.stopPropagation();
 	}}
-	class:dragging={dragging.value}
 	onkeydown={(evt) => {
 		if (evt.key === "Escape" || evt.key === "Esc") {
 			if (dragging.value) {
@@ -372,8 +371,11 @@
 			cx={pathRoot.value.x}
 			cy={pathRoot.value.y}
 			r={snapRadiusVisual * cameraScale.value}
-			class={["capture-spot", "close"]}
-			class:snapped={draftSnappedClose.value}
+			class={[
+				"capture-spot",
+				"close",
+				{ snapped: draftSnappedClose.value },
+			]}
 		></circle>
 	{/if}
 	{#if pathLength.value > 0}
@@ -381,8 +383,11 @@
 			cx={pathHead.value.x}
 			cy={pathHead.value.y}
 			r={snapRadiusVisual * cameraScale.value}
-			class={["capture-spot", "finish"]}
-			class:snapped={draftSnappedFinish.value}
+			class={[
+				"capture-spot",
+				"finish",
+				{ snapped: draftSnappedFinish.value },
+			]}
 		></circle>
 
 		<circle
@@ -397,8 +402,7 @@
 			cx={pathNeck.value.x}
 			cy={pathNeck.value.y}
 			r={snapRadiusVisual * cameraScale.value}
-			class={"cancel-spot"}
-			class:snapped={draftSnappedPop.value}
+			class={["cancel-spot", { snapped: draftSnappedPop.value }]}
 		></circle>
 	{/if}
 </g>

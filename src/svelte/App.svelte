@@ -381,7 +381,7 @@
 
 	<div class="beside">
 		<textarea
-			class:has-error={langAndTransJson.hasError}
+			class={[{ "has-error": langAndTransJson.hasError }]}
 			bind:value={langAndTransJson.value}
 		></textarea>
 		<pre>{langAndTransJson.stableValue}</pre>
@@ -436,8 +436,10 @@
 			)}
 			<li style="display: contents;">
 				<button
-					class:phantom={!thisEntry.value}
-					class={["simple-form-button"]}
+					class={[
+						"simple-form-button",
+						{ phantom: !thisEntry.value },
+					]}
 					type="button"
 					onclick={() => (thisName.value = "")}
 					aria-label="Delete"
@@ -525,7 +527,7 @@
 
 	<div class="beside">
 		<textarea
-			class:has-error={peopleJson.hasError}
+			class={{ "has-error": peopleJson.hasError }}
 			bind:value={peopleJson.value}
 		></textarea>
 		<pre style={fontSize.value}>{peopleJson.stableValue}</pre>
@@ -734,8 +736,10 @@
 		{extraScrollPadding}
 	>
 		<div
-			class={["stack"]}
-			class:dropshadow={browserChromeOverscrollSum.value > 0}
+			class={[
+				"stack",
+				{ dropshadow: browserChromeOverscrollSum.value > 0 },
+			]}
 			style:--shadow-x="{Math.round(browserChromeOverscroll.value.x) /
 				3}px"
 			style:--shadow-y="{Math.round(browserChromeOverscroll.value.y) /

@@ -54,11 +54,15 @@
 >
 	<path
 		d={frameBoxPath.value}
-		class:dim={isEditing.value}
-		class:dim-empty={textEmpty.value}
 		pointer-events="all"
 		fill="none"
-		class={"typer-surface"}
+		class={[
+			"typer-surface",
+			{
+				dim: isEditing.value,
+				"dim-empty": textEmpty.value,
+			},
+		]}
 		role="button"
 		tabindex="-1"
 		onkeydown={(evt) => {

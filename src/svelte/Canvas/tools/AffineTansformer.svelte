@@ -488,25 +488,28 @@
 					)}
 					{#if R.all((t) => selectionExtensionValue.allowedTransform[t], handle.transforms)}
 						<g
-							class:active={activeHandle.value &&
-								activeHandle
-									.value
-									.wx ===
-									handle.wx *
-										Math.sign(
-											scaleAccum
-												.value
-												.x,
-										) &&
-								activeHandle
-									.value
-									.wy ==
-									handle.wy *
-										Math.sign(
-											scaleAccum
-												.value
-												.y,
-										)}
+							class={{
+								active:
+									activeHandle.value &&
+									activeHandle
+										.value
+										.wx ===
+										handle.wx *
+											Math.sign(
+												scaleAccum
+													.value
+													.x,
+											) &&
+									activeHandle
+										.value
+										.wy ==
+										handle.wy *
+											Math.sign(
+												scaleAccum
+													.value
+													.y,
+											),
+							}}
 						>
 							<circle
 								data-handle={i}
@@ -559,8 +562,12 @@
 					)}
 					<g
 						style:--cursor-url="url({rotationCursor})"
-						class={"rotator-handle"}
-						class:active={activeRotationPivot.value}
+						class={[
+							"rotator-handle",
+							{
+								active: activeRotationPivot.value,
+							},
+						]}
 					>
 						<circle
 							data-rotate="true"

@@ -2379,31 +2379,31 @@
 	>
 		{#if showSvg.value}
 			<g style:--mesh-color={meshColor.value}>
-				<rect {...debugRect.value} class:hidden={!showNDCCube.value}>
+				<rect {...debugRect.value} class={{hidden: !showNDCCube.value}}>
 					<title>Debug Rect</title>
 				</rect>
 				<polygon
 					{...debugPolygon.value}
-					class:hidden={!screenTriangle.value}
+					class={{hidden: !screenTriangle.value}}
 				/>
 				<polygon
 					{...debugBoundsSvg.value}
-					class:hidden={!showNDCCube.value}
+					class={{hidden: !showNDCCube.value}}
 				/>
 				<polygon
 					{...debugPolygonClipped.value}
-					class:hidden={!screenTriangle.value}
+					class={{hidden: !screenTriangle.value}}
 				/>
 				<circle
 					{...debugCircle.value}
-					class:hidden={!showNDCCube.value}
+					class={{hidden: !showNDCCube.value}}
 				>
 					<title>Debug Center</title>
 				</circle>
 				<path
 					fill="red"
 					d={ndcCubeVertexPath.value}
-					class:hidden={!showNDCCube.value}
+					class={{hidden: !showNDCCube.value}}
 				/>
 				<path
 					stroke-width="1"
@@ -2411,7 +2411,7 @@
 					stroke="gray"
 					stroke-dasharray="5 5"
 					d={ndcCubeEdgePath.value}
-					class:hidden={!showNDCCube.value}
+					class={{hidden: !showNDCCube.value}}
 				/>
 
 				{#each ndcGeoFacePathsFast.value as p, i (i)}

@@ -110,30 +110,36 @@
 				<circle
 					fill="none"
 					stroke="none"
-					class={"hit-area"}
+					class={[
+						"hit-area",
+						{ active: selectionValue.indexOf(ha.id) > -1 },
+					]}
 					cx={ha.cx}
 					cy={ha.cy}
 					r={ha.r}
 					data-area-id={ha.id}
-					class:active={selectionValue.indexOf(ha.id) > -1}
 				/>
 			{:else if ha.type === "polygon"}
 				<polygon
 					fill="none"
 					stroke="none"
-					class={"hit-area"}
+					class={[
+						"hit-area",
+						{ active: selectionValue.indexOf(ha.id) > -1 },
+					]}
 					points={ha.points.map(({ x, y }) => `${x} ${y}`).join(" ")}
 					data-area-id={ha.id}
-					class:active={selectionValue.indexOf(ha.id) > -1}
 				/>
 			{:else if ha.type === "polyline"}
 				<polyline
 					fill="none"
 					stroke="none"
-					class={"hit-path"}
+					class={[
+						"hit-path",
+						{ active: selectionValue.indexOf(ha.id) > -1 },
+					]}
 					points={ha.points.map(({ x, y }) => `${x} ${y}`).join(" ")}
 					data-area-id={ha.id}
-					class:active={selectionValue.indexOf(ha.id) > -1}
 				/>
 			{/if}
 		{/each}

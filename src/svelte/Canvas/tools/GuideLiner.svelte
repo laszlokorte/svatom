@@ -233,8 +233,7 @@
 	<path
 		d={guidePath.value}
 		fill="none"
-		class={"guide-handle"}
-		class:valid={newGuideValid.value}
+		class={["guide-handle", { valid: newGuideValid.value }]}
 		pointer-events="none"
 	/>
 </g>

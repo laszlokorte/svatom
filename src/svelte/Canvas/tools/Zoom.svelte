@@ -150,8 +150,7 @@
 
 <path
 	d={frameBoxPath.value}
-	class={"rotate-surface"}
-	class:zooming={isActive.value}
+	class={["rotate-surface", { zooming: isActive.value }]}
 	pointer-events="all"
 	fill="none"
 	role="button"

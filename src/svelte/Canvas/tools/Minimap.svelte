@@ -36,7 +36,7 @@
 {#if visible.value}
 	<svg
 		tabindex="-1"
-		class:active={isActive.value}
+		class={{ active: isActive.value }}
 		viewBox={viewBox.value}
 		role="presentation"
 		preserveAspectRatio="xMidYMid meet"

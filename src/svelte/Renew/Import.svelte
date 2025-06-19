@@ -1136,11 +1136,15 @@
 >
 	<div class="beside" style="height: 15em">
 		<textarea
-			class={"drop-target"}
+			class={[
+				"drop-target",
+				{
+					"has-error": renewSerialized.hasError,
+					dragging: dragging.value > 0,
+				},
+			]}
 			placeholder="// Drop a renew file here"
-			class:has-error={renewSerialized.hasError}
 			bind:value={renewSerialized.value}
-			class:dragging={dragging.value > 0}
 		></textarea>
 		<textarea bind:value={renewJson.value}></textarea>
 
@@ -1179,7 +1183,7 @@
 
 	<label><input type="checkbox" bind:checked={debug.value} /> Debug</label>
 	<div
-		class:hidden={selection.value.length == 0}
+		class={{ hidden: selection.value.length == 0 }}
 		style=" position: fixed; top: 1em; left: 1em;z-index: 10000; overflow: auto; color: #fff; "
 	>
 		<div
@@ -1419,9 +1423,12 @@
 									? "polygon"
 									: "polyline"}
 							<g
-								class:selected={currentSelection.indexOf(
-									line[selfKey],
-								) > -1}
+								class={{
+									selected:
+										currentSelection.indexOf(
+											line[selfKey],
+										) > -1,
+								}}
 								id={/*line.attributes?.attrs.FigureWithID ??*/
 								"ref-" + line[selfKey]}
 							>
@@ -1481,9 +1488,12 @@
 										line.points,
 									)}
 									<g
-										class:selected={currentSelection.indexOf(
-											endDecoration[selfKey],
-										) > -1}
+										class={{
+											selected:
+												currentSelection.indexOf(
+													endDecoration[selfKey],
+												) > -1,
+										}}
 									>
 										{#if lineDecorations[decorationType]}
 											<path
@@ -1517,9 +1527,12 @@
 
 									<g
 										pointer-events="all"
-										class:selected={currentSelection.indexOf(
-											startDecoration[selfKey],
-										) > -1}
+										class={{
+											selected:
+												currentSelection.indexOf(
+													startDecoration[selfKey],
+												) > -1,
+										}}
 									>
 										{#if lineDecorations[decorationType]}
 											<path
@@ -1553,9 +1566,12 @@
 					<g name="rects">
 						{#each rectangles.value as rect, i (rect[selfKey])}
 							<g
-								class:selected={currentSelection.indexOf(
-									rect[selfKey],
-								) > -1}
+								class={{
+									selected:
+										currentSelection.indexOf(
+											rect[selfKey],
+										) > -1,
+								}}
 								id={/*rect.attributes?.attrs.FigureWithID ??*/
 								"ref-" + rect[selfKey]}
 							>
@@ -1687,9 +1703,12 @@
 					<g name="ellipses">
 						{#each ellipses.value as ellipse, i (ellipse[selfKey])}
 							<g
-								class:selected={currentSelection.indexOf(
-									ellipse[selfKey],
-								) > -1}
+								class={{
+									selected:
+										currentSelection.indexOf(
+											ellipse[selfKey],
+										) > -1,
+								}}
 								id={/*ellipse.attributes?.attrs.FigureWithID ??*/
 								"ref-" + ellipse[selfKey]}
 							>
@@ -1749,9 +1768,12 @@
 									"de.renew.diagram.HSplitFigure",
 							)}
 							<g
-								class:selected={currentSelection.indexOf(
-									diag[selfKey],
-								) > -1}
+								class={{
+									selected:
+										currentSelection.indexOf(
+											diag[selfKey],
+										) > -1,
+								}}
 								id={/*diag.attributes?.attrs.FigureWithID ??*/
 								"ref-" + diag[selfKey]}
 							>
@@ -1796,9 +1818,12 @@
 										decoration[kindKey]}
 									<g
 										pointer-events="all"
-										class:selected={currentSelection.indexOf(
-											decoration[selfKey],
-										) > -1}
+										class={{
+											selected:
+												currentSelection.indexOf(
+													decoration[selfKey],
+												) > -1,
+										}}
 									>
 										{#if boxDecorations[decorationKind]}
 											{@const x =
@@ -1833,7 +1858,7 @@
 								{/if}
 
 								<text
-									class:hidden={!debug.value}
+									class={{ hidden: !debug.value }}
 									pointer-events="none"
 									text-rendering="geometricPrecision"
 									x={diag.displayBox.x +
@@ -1857,9 +1882,12 @@
 								"ref-" + group[selfKey]}
 							<g
 								{id}
-								class:selected={currentSelection.indexOf(
-									group[selfKey],
-								) > -1}
+								class={{
+									selected:
+										currentSelection.indexOf(
+											group[selfKey],
+										) > -1,
+								}}
 							>
 								{#each group.figures as f}
 									<use
@@ -1914,9 +1942,12 @@
 								textLineStyles[text[kindKey]]}
 							<g
 								{id}
-								class:selected={currentSelection.indexOf(
-									text[selfKey],
-								) > -1}
+								class={{
+									selected:
+										currentSelection.indexOf(
+											text[selfKey],
+										) > -1,
+								}}
 							>
 								{#if measureValue}
 									<g

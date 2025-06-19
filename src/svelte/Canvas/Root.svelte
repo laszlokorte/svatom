@@ -2251,7 +2251,7 @@
 				>
 				<br />
 
-				<div class:fullPageCorner={fullPageCanvas.value}>
+				<div class={{ fullPageCorner: fullPageCanvas.value }}>
 					<label
 						><input
 							type="checkbox"
@@ -2578,9 +2578,11 @@
 	<Properties properties={defaultProperties} />
 
 	<div
-		class={"prevent-selection"}
+		class={[
+			"prevent-selection",
+			{ fullPageFill: fullPageCanvas.value || isFullScreen.value },
+		]}
 		bind:this={fullScreenContainer.value}
-		class:fullPageFill={fullPageCanvas.value || isFullScreen.value}
 	>
 		<Dropper
 			{clientToCanvas}
@@ -2626,7 +2628,7 @@
 							{frameBoxPath}
 						>
 							<g
-								class:hidden={!debugFrames.value}
+								class={{ hidden: !debugFrames.value }}
 								pointer-events="none"
 							>
 								<path
