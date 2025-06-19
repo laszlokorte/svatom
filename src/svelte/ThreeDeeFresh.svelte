@@ -30,14 +30,11 @@
 		autofocusIf,
 		setValue,
 	} from "./svatom.svelte.js";
-	import exampleMesh, { cube2 } from "./example_mesh";
-	import objCube from "./cube.obj?raw";
-	import objTorus from "./torus.obj?raw";
-	import objTeapot from "./teapot.obj?raw";
-	import objMonkey from "./suzanne.obj?raw";
-	import exampleRenew from "./Renew/example.rnw?raw";
-	import exampleDoubleArrow from "./Renew/doublearrow.rnw?raw";
 	import { parserAutoDetect } from "@petristation/renewjs";
+	import exampleMesh, { cube2 } from "./example_mesh";
+	import * as objData from "../data/obj";
+	import exampleRenew from "../data/renew/example.rnw?raw";
+	import exampleDoubleArrow from "../data/renew/doublearrow.rnw?raw";
 	import { SegmentPolyline } from "./SegmentPolyline.js";
 	import {
 		parse as parseObj,
@@ -52,15 +49,15 @@
 			label: "Initial",
 			geo: cube2,
 		},
-		cube: { label: "Cube", data: objCube, scale: 20 },
+		cube: { label: "Cube", data: objData.cube, scale: 20 },
 		monkey: {
 			label: "Suzanne",
-			data: objMonkey,
+			data: objData.monkey,
 			scale: 20,
 			scaleX: -1,
 			scaleY: -1,
 		},
-		torus: { label: "Torus", data: objTorus, scale: 5 },
+		torus: { label: "Torus", data: objData.torus, scale: 5 },
 		renew1: { label: "Renew #1", renew: exampleRenew, scale: 5 },
 		renew2: { label: "Renew #2", renew: exampleDoubleArrow, scale: 5 },
 	};
@@ -1731,16 +1728,15 @@
 		}
 
 		return () => {
-			canvasRoot.removeChild(gl.canvas);
-			disposeGeo(gl, edgeMesh.geometry)
-			disposeGeo(gl, edgeMesh.geometry)
-			gl.getExtension('WEBGL_lose_context')?.loseContext()
-			gl.deleteProgram(faceMesh.program.program)
-			gl.deleteProgram(edgeMesh.program.program)
-
 			if (raf) {
 				cancelAnimationFrame(raf);
 			}
+
+			canvasRoot.removeChild(gl.canvas);
+			disposeGeo(gl, edgeMesh.geometry)
+			disposeGeo(gl, edgeMesh.geometry)
+			gl.deleteProgram(faceMesh.program.program)
+			gl.deleteProgram(edgeMesh.program.program)
 		};
 	};
 </script>
@@ -2333,6 +2329,8 @@
 		<div class="viewportContainer" {@attach renderGL}></div>
 	{/if}
 	<svg
+
+		role="button"
 		data-hide-cw={hideCW.value}
 		data-hide-ccw={hideCCW.value}
 		bind:clientWidth={clientWidth.value}
@@ -2580,7 +2578,7 @@
 		border: 1px solid gray;
 		overflow: hidden;
 		display: grid;
-		grid-template: 1fr;
+		grid-template: 1fr / 1fr;
 	}
 
 	polygon {

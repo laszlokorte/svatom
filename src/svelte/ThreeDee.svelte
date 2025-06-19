@@ -364,12 +364,19 @@
 </p>
 
 <svg
+	tabindex="-1"
 	preserveAspectRatio="xMidYMid meet"
 	viewBox="-500 -500 1000 1000"
 	class="viewport"
 	stroke="red"
+	role="button"
 	onclick={(evt) => {
 		selected.value = undefined;
+	}}
+	onkeypress={(evt) => {
+		if (evt.key == "Escape") {
+			selected.value = undefined;
+		}
 	}}
 	use:activeTouchMove={(evt) => {
 		evt.preventDefault();
@@ -986,13 +993,5 @@
 		height: 50vh;
 		cursor: move;
 		touch-action: none;
-	}
-
-	polygon[clockwise="true"] {
-		fill: blue;
-	}
-
-	circle[clockwise="false"] {
-		display: none;
 	}
 </style>

@@ -23,7 +23,7 @@
 	import ThreeDee from "./ThreeDee.svelte";
 	import ThreeDeeFresh from "./ThreeDeeFresh.svelte";
 	import RenewImport from "./Renew/Import.svelte";
-	import asciiLogo from "./asciiLogo.txt?raw";
+	import asciiLogo from "../data/asciiLogo.txt?raw";
 	import { clamp, lerp } from "./utils.js";
 	import favicon from "/favicon.svg";
 

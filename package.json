@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@petristation/renewjs": "^1.0.0",
-    "@svatom/basic": "^1.0.3",
+    "@svatom/basic": "^1.0.6",
     "ogl": "^1.0.11",
     "partial.lenses": "^14.17.0",
     "partial.lenses.history": "git+https://github.com/laszlokorte/partial.lenses.history#initialdate",

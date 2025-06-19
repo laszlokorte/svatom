@@ -4,7 +4,6 @@
 	import { untrack, tick } from "svelte";
 	import * as Geo from "../geometry";
 	import Navigator from "../Canvas/camera/Navigator.svelte";
-	import Static from "./Static.svelte";
 
 	import { frameBoxLens } from "../Canvas/camera/lenses";
 
@@ -35,26 +34,9 @@
 		refKey as refKeySymbol,
 	} from "@petristation/renewjs";
 	import Scroller from "../Scroller.svelte";
+	import * as renewFiles from "../../data/renew";
 
-	import exampleActor from "./actors.rnw?raw";
-	import exampleCloseDoor from "./closedoor.rnw?raw";
-	import exampleRenew from "./example.rnw?raw";
-	import exampleAip from "./example.aip?raw";
-	import exampleAip2 from "./example2.aip?raw";
-	import exampleTextLines from "./textLineStyles.rnw?raw";
-	import exampleDoubleArrow from "./doublearrow.rnw?raw";
-	import exampleColors from "./colors.rnw?raw";
-
-	const examples = [
-		exampleActor,
-		exampleCloseDoor,
-		exampleRenew,
-		exampleAip,
-		exampleAip2,
-		exampleTextLines,
-		exampleDoubleArrow,
-		exampleColors,
-	];
+	const examples = Object.values(renewFiles);
 	const moreExamples = fetch("https://renew.laszlokorte.de/")
 		.then((x) => x.json())
 		.catch((e) => {});

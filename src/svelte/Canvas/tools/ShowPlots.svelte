@@ -253,23 +253,6 @@
 </g>
 
 <style>
-	.plot-axis {
-		fill: none;
-		stroke-width: 1px;
-		stroke: currentColor;
-		shape-rendering: crispEdges;
-		vector-effect: non-scaling-stroke;
-	}
-
-	.plot-axis-handle {
-		fill: none;
-		stroke-width: 4px;
-		stroke: currentColor;
-		vector-effect: non-scaling-stroke;
-		stroke-linecap: round;
-		stroke-linejoin: round;
-	}
-
 	.plot-line {
 		fill: none;
 		stroke-width: 1.5px;

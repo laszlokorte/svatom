@@ -1119,10 +1119,10 @@
     magic-string "^0.25.0"
     string.prototype.matchall "^4.0.6"
 
-"@svatom/basic@^1.0.3":
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/@svatom/basic/-/basic-1.0.3.tgz#9bfe3de6bf57c74ab898e24ccb1c10546f7762fd"
-  integrity sha512-To/xxdW99oDmvFTn0P6qFJ6a7OcsJUKvsZi57CL0qlwe0VELnzvq5YYD0CfmM8HTY567FOqCS58O7uZXbwcI4g==
+"@svatom/basic@^1.0.6":
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/@svatom/basic/-/basic-1.0.6.tgz#bd81d7c477c697c0422b70ddbd0731853e07c3cb"
+  integrity sha512-pf00Gcc0GfZSvtAkBXnLrRo8YkTToDpaZEky2/5QsA/e0IrdeA7tnf69MZ8byOALRu6iXhz8u2dhIUKUpEiHsg==
 
 "@sveltejs/acorn-typescript@^1.0.5":
   version "1.0.5"
