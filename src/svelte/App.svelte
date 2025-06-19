@@ -437,7 +437,7 @@
 			<li style="display: contents;">
 				<button
 					class:phantom={!thisEntry.value}
-					class="simple-form-button"
+					class={["simple-form-button"]}
 					type="button"
 					onclick={() => (thisName.value = "")}
 					aria-label="Delete"
@@ -734,7 +734,7 @@
 		{extraScrollPadding}
 	>
 		<div
-			class="stack"
+			class={["stack"]}
 			class:dropshadow={browserChromeOverscrollSum.value > 0}
 			style:--shadow-x="{Math.round(browserChromeOverscroll.value.x) /
 				3}px"

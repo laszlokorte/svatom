@@ -113,7 +113,7 @@
 	d={frameBoxPath.value}
 	pointer-events="all"
 	fill="none"
-	class="magnifier-surface"
+	class={"magnifier-surface"}
 	class:magnifier-surface-active={magnifierFrameStretched.value}
 	role="button"
 	tabindex="-1"

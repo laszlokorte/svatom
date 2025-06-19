@@ -50,9 +50,11 @@
 </script>
 
 <div
-	class="split"
-	class:dir-column={direction === "column"}
-	class:dir-row={direction === "row"}
+	class={[
+		"split",
+		direction === "column" && "dir-column",
+		direction === "row" && "dir-row",
+	]}
 >
 	{#each content.value as c, i (i)}
 		{@const size = view(
@@ -75,9 +77,11 @@
 		)}
 		{#if i > 0}
 			<div
-				class="split-divider"
-				class:dir-column={direction === "column"}
-				class:dir-row={direction === "row"}
+				class={[
+					"split-divider",
+					direction === "column" && "dir-column",
+					direction === "row" && "dir-row",
+				]}
 				onpointerdown={(e) => {
 					e.preventDefault();
 					e.currentTarget.setPointerCapture(e.pointerId);
@@ -117,7 +121,7 @@
 			></div>
 		{/if}
 
-		<div class="split-content" style:--split-size={size.value}>
+		<div class={["split-content"]} style:--split-size={size.value}>
 			{@render children?.(i, content.content)}
 		</div>
 	{/each}
@@ -127,6 +131,7 @@
 	.split {
 		display: flex;
 		justify-items: stretch;
+		justify-content: stretch;
 		width: 100%;
 		height: 100%;
 		max-width: 100%;
@@ -193,5 +198,6 @@
 		justify-content: stretch;
 		align-items: stretch;
 		justify-items: stretch;
+		justify-content: stretch;
 	}
 </style>

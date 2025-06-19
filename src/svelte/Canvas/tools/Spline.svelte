@@ -779,7 +779,7 @@
 						cx={currentDraftValue.draftBackHandle.x}
 						cy={currentDraftValue.draftBackHandle.y}
 						r={10 * cameraScaleValue}
-						class="detach"
+						class={"detach"}
 						pointer-events="all"
 						class:active={currentDraftValue.isDetached}
 					/>

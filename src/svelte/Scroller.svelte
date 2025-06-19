@@ -156,7 +156,7 @@
 </script>
 
 <div
-	class="scroller"
+	class={"scroller"}
 	class:overscroll-enabled={allowOverscroll}
 	class:overscroll-disabled={!allowOverscroll}
 	use:bindScroll={adjustedScrollPosition}

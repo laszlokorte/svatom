@@ -149,7 +149,7 @@
 </script>
 
 <div
-	class="drop-zone"
+	class={"drop-zone"}
 	role="application"
 	pointer-events="all"
 	ondragover={onDragOver}
@@ -160,7 +160,7 @@
 >
 	{@render children()}
 	<div
-		class="blocker"
+		class={"blocker"}
 		class:active={dragging.value > 0}
 		ondragenter={onDragEnter}
 		ondragleave={onDragLeave}

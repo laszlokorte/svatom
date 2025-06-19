@@ -302,7 +302,7 @@
 			d={textBoxPath.value}
 			transform={textBoxTransform.value}
 			fill="none"
-			class="text-box"
+			class={"text-box"}
 			pointer-events="none"
 			class:ready={!isDragging.value}
 			class:valid={textBoxValid.value}

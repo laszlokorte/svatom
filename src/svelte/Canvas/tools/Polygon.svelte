@@ -151,7 +151,7 @@
 </script>
 
 <path
-	class="polygon-surface"
+	class={"polygon-surface"}
 	d={frameBoxPath.value}
 	pointer-events="all"
 	stroke="none"
@@ -372,7 +372,7 @@
 			cx={pathRoot.value.x}
 			cy={pathRoot.value.y}
 			r={snapRadiusVisual * cameraScale.value}
-			class="capture-spot close"
+			class={["capture-spot", "close"]}
 			class:snapped={draftSnappedClose.value}
 		></circle>
 	{/if}
@@ -381,7 +381,7 @@
 			cx={pathHead.value.x}
 			cy={pathHead.value.y}
 			r={snapRadiusVisual * cameraScale.value}
-			class="capture-spot finish"
+			class={["capture-spot", "finish"]}
 			class:snapped={draftSnappedFinish.value}
 		></circle>
 
@@ -397,7 +397,7 @@
 			cx={pathNeck.value.x}
 			cy={pathNeck.value.y}
 			r={snapRadiusVisual * cameraScale.value}
-			class="cancel-spot"
+			class={"cancel-spot"}
 			class:snapped={draftSnappedPop.value}
 		></circle>
 	{/if}

@@ -2578,7 +2578,7 @@
 	<Properties properties={defaultProperties} />
 
 	<div
-		class="prevent-selection"
+		class={"prevent-selection"}
 		bind:this={fullScreenContainer.value}
 		class:fullPageFill={fullPageCanvas.value || isFullScreen.value}
 	>

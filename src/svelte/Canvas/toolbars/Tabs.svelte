@@ -78,11 +78,14 @@
 				],
 				allTabs,
 			)}
-			<span class="doc-tab-group" class:active={d === currentTabId.value}>
+			<span
+				class={"doc-tab-group"}
+				class:active={d === currentTabId.value}
+			>
 				{#if d === currentTabId.value}
 					<input
 						placeholder={fallbackName.value}
-						class="doc-tab-titel"
+						class={"doc-tab-titel"}
 						class:untitled={!docName.value}
 						value={docName.value}
 						onchange={(evt) => {
@@ -92,7 +95,7 @@
 					/>
 				{:else}
 					<button
-						class="doc-tab-titel"
+						class={"doc-tab-titel"}
 						class:active={false}
 						class:untitled={!docName.value}
 						onclick={() => (currentTabId.value = d)}
@@ -101,7 +104,7 @@
 				{/if}
 				<button
 					type="button"
-					class="doc-tab-del"
+					class={"doc-tab-del"}
 					onclick={() => {
 						closeTab.value = d;
 					}}

@@ -95,7 +95,7 @@
 
 <path
 	d={frameBoxPath.value}
-	class="rotate-surface"
+	class={"rotate-surface"}
 	class:rotating={isActive.value}
 	pointer-events="all"
 	fill="none"
@@ -180,7 +180,7 @@
 			cy={rotPivot.y}
 			r={minRadius.value}
 			stroke="#444"
-			class="ring"
+			class={"ring"}
 			class:active
 			fill-opacity="0.1"
 			stroke-width="{4 * cameraScale.value}px"
@@ -191,7 +191,7 @@
 			r={minRadius.value * 0.92}
 			stroke-dasharray="{7 * cameraScale.value} {4 * cameraScale.value}"
 			fill="#aa8888"
-			class="ring"
+			class={"ring"}
 			class:active
 			fill-opacity="0.3"
 			stroke="#444"

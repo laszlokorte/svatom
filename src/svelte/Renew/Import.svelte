@@ -1136,7 +1136,7 @@
 >
 	<div class="beside" style="height: 15em">
 		<textarea
-			class="drop-target"
+			class={"drop-target"}
 			placeholder="// Drop a renew file here"
 			class:has-error={renewSerialized.hasError}
 			bind:value={renewSerialized.value}

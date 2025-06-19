@@ -58,7 +58,7 @@
 		class:dim-empty={textEmpty.value}
 		pointer-events="all"
 		fill="none"
-		class="typer-surface"
+		class={"typer-surface"}
 		role="button"
 		tabindex="-1"
 		onkeydown={(evt) => {

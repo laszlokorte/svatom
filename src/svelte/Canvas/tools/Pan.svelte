@@ -26,7 +26,7 @@
 
 <path
 	d={frameBoxPath.value}
-	class="pan-surface"
+	class={"pan-surface"}
 	class:grabbing={isActive.value}
 	pointer-events="all"
 	fill="none"

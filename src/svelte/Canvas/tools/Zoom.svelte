@@ -150,7 +150,7 @@
 
 <path
 	d={frameBoxPath.value}
-	class="rotate-surface"
+	class={"rotate-surface"}
 	class:zooming={isActive.value}
 	pointer-events="all"
 	fill="none"

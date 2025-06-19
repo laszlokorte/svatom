@@ -109,7 +109,7 @@
 </script>
 
 <g
-	class="edge-container"
+	class={"edge-container"}
 	class:active={isActive.value}
 	role="button"
 	tabindex="-1"
@@ -229,7 +229,7 @@
 		{#each nodes.value as v, i (i)}
 			<circle
 				data-idx={i}
-				class="socket"
+				class={"socket"}
 				cx={v.x}
 				cy={v.y}
 				pointer-events="all"
@@ -242,7 +242,7 @@
 		{#if draftSourcePosition.value && draftTargetSnappedPosition.value}
 			<path
 				class:valid={validConnection.value}
-				class="edge"
+				class={"edge"}
 				stroke="black"
 				pointer-events="none"
 				d="M{draftSourcePosition.value.x} {draftSourcePosition.value
