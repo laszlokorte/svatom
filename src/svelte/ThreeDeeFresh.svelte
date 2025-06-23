@@ -40,8 +40,11 @@
 		parse as parseObj,
 		toGeo,
 		renewToGeo,
-		marchingCubesToGeo,
 	} from "./obj.js";
+
+	import {
+		marchingCubesToGeo,
+	} from "./marchingCubes.js";
 	import { render } from "svelte/server";
 
 	const objs = {
@@ -60,6 +63,16 @@
 		torus: { label: "Torus", data: objData.torus, scale: 5 },
 		renew1: { label: "Renew #1", renew: exampleRenew, scale: 5 },
 		renew2: { label: "Renew #2", renew: exampleDoubleArrow, scale: 5 },
+		marching: { label: "Marching Cubes", geo: marchingCubesToGeo(
+			(x, y, z) => Math.sqrt(2*x * x + 3*y * y + 4*z * z) - 17,
+			-24,
+			-24,
+			-24,
+			24,
+			24,
+			24,
+			12,
+		), scale: 10 },
 	};
 
 	const numf = new Intl.NumberFormat("en-US", {
@@ -501,16 +514,7 @@
 		return L.modify(L.values, R.divide(R.__, L.sum(L.values, o) || 1), o);
 	});
 	const worldGeo = atom(
-		marchingCubesToGeo(
-			(x, y, z) => Math.sqrt(x * x + y * y + z * z) - 8,
-			-10,
-			-10,
-			-10,
-			10,
-			10,
-			10,
-			10,
-		),
+		objs.marching.geo,
 	);
 	const sunLightDir = atom({
 		pos: { x: 0, y: 0, z: -100 },
