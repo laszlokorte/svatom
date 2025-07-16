@@ -1,4 +1,5 @@
 node_modules
 publish.sh
+publish.ps1
 dist
 .DS_Store

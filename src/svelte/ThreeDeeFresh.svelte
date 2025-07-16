@@ -1614,7 +1614,7 @@
 			],
 			uniforms: {
 				uColor: { value: new Color("#000") },
-				uZOffset: { value: 0.005 },
+				uZOffset: { value: 0.007 },
 			},
 		});
 
@@ -1633,6 +1633,7 @@
 		$effect(() => {
 			renderer.setSize(screenSize.value.x, screenSize.value.y);
 			polyline.resolution.value = (new Vec2(screenSize.value.x, screenSize.value.y))
+			polyline.dpr.value = window.devicePixelRatio
 			camera.perspective({ aspect: 1 / screenAspect.value });
 		});
 

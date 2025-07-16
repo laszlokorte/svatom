@@ -156,8 +156,6 @@ export class SegmentPolyline {
 		if (!uniforms.uZOffset)
 			this.miter = uniforms.uZOffset = { value: 0 };
 
-		// Set resolution-based uniforms
-		this.resize();
 
 		const program = (this.program = new Program(gl, {
 			vertex,
@@ -211,14 +209,5 @@ export class SegmentPolyline {
 		this.geometry.attributes.position.needsUpdate = true;
 		this.geometry.attributes.prev.needsUpdate = true;
 		this.geometry.attributes.next.needsUpdate = true;
-	} // Only need to call if not handling resolution uniforms manually
-	resize() {
-		// Update automatic uniforms if not overridden
-		if (this.resolution)
-			this.resolution.value.set(
-				this.gl.canvas.width,
-				this.gl.canvas.height,
-			);
-		if (this.dpr) this.dpr.value = this.gl.renderer.dpr;
 	}
 }
