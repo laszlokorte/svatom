@@ -90,7 +90,7 @@
 				far: 400,
 			},
 			aspectRatio: 1,
-			fov: Math.PI / 2 / 3,
+			fov: Math.PI / 2 / 6,
 			orthogonality: 0,
 			eye: {
 				tx: 0,
@@ -1553,7 +1553,7 @@
 
 	const renderGL = (canvasRoot) => {
 		const renderer = new Renderer({
-			dpr: window.devicePixelRatio,
+			dpr: window.devicePixelRatio * 2,
 			alpha: true,
 			antialias: true,
 		});
@@ -1568,11 +1568,6 @@
 
 		camera.setParent(cameraOffsetTransform);
 
-		$effect(() => {
-			renderer.setSize(screenSize.value.x, screenSize.value.y);
-			camera.perspective({ aspect: 1 / screenAspect.value });
-		});
-
 		
 		gl.canvas.classList.add("viewport");
 		canvasRoot.appendChild(gl.canvas);
@@ -1584,6 +1579,7 @@
 		const faceGeometry = new CustomFaceGeo(gl, worldGeo.value);
 
 		const faceProgram = new Program(gl, {
+		  transparent: true,
 			vertex: /* glsl */ `
 			precision mediump float;
 
@@ -1618,7 +1614,6 @@
 			],
 			uniforms: {
 				uColor: { value: new Color("#000") },
-				uThickness: { value: 1 },
 				uZOffset: { value: 0.005 },
 			},
 		});
@@ -1634,6 +1629,16 @@
 			program: polyline.program,
 		});
 		edgeMesh.setParent(object);
+
+		$effect(() => {
+			renderer.setSize(screenSize.value.x, screenSize.value.y);
+			polyline.resolution.value = (new Vec2(screenSize.value.x, screenSize.value.y))
+			camera.perspective({ aspect: 1 / screenAspect.value });
+		});
+
+		$effect(() => {
+			polyline.thickness.value = strokeWidthFg.value
+		})
 
 		$effect(() => {
 			object.rotation.x = -L.getInverse(
@@ -2554,6 +2559,8 @@
 	.viewport {
 		width: 100%;
 		height: 100%;
+		max-width: 100%;
+		max-height: 100%;
 		display: block;
 		touch-action: none;
 		overscroll-behavior: contain;
@@ -2582,7 +2589,7 @@
 		border: 1px solid gray;
 		overflow: hidden;
 		display: grid;
-		grid-template: 1fr / 1fr;
+		grid-template: 100% / 100%;
 	}
 
 	polygon {
