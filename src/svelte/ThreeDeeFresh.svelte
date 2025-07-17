@@ -13,11 +13,16 @@
 		Mesh,
 		Geometry,
 		Vec3,
+		Vec4,
 		Vec2,
 		Mat4,
 		Polyline,
 		Color,
 	} from "ogl";
+
+	import createREGL from 'regl'
+
+
 
 	import {
 		atom,
@@ -548,6 +553,21 @@
 				(int >> 16) & 0xff,
 				(int >> 8) & 0xff,
 				(int << 0) & 0xff,
+				255,
+			].map((x) => x / 255);
+		}),
+		meshColor,
+	);
+
+	const meshColorGLDark = view(
+		L.reread((hex) => {
+			const digits = hex.slice(1);
+			const int = parseInt(digits, 16);
+			return [
+				((int >> 16) & 0xff) * 0.6,
+				((int >> 8) & 0xff) * 0.6,
+				((int << 0) & 0xff) * 0.6,
+				255,
 			].map((x) => x / 255);
 		}),
 		meshColor,
@@ -1357,7 +1377,7 @@
 	const hideAll = view(allProps(true), backfaceCull);
 
 	const debugLabels = atom({
-		svg: true,
+		svg: false,
 		canvas: true,
 		edge: false,
 		face: false,
@@ -1551,7 +1571,497 @@
 		}
 	}
 
+	function roundCapJoinGeometry(regl, resolution) {
+        const instanceRoundRound = [
+          [0, -0.5, 0],
+          [0, -0.5, 1],
+          [0, 0.5, 1],
+          [0, -0.5, 0],
+          [0, 0.5, 1],
+          [0, 0.5, 0]
+        ];
+        // Add the left cap.
+        for (let step = 0; step < resolution; step++) {
+          const theta0 = Math.PI / 2 + ((step + 0) * Math.PI) / resolution;
+          const theta1 = Math.PI / 2 + ((step + 1) * Math.PI) / resolution;
+          instanceRoundRound.push([0, 0, 0]);
+          instanceRoundRound.push([
+            0.5 * Math.cos(theta0),
+            0.5 * Math.sin(theta0),
+            0
+          ]);
+          instanceRoundRound.push([
+            0.5 * Math.cos(theta1),
+            0.5 * Math.sin(theta1),
+            0
+          ]);
+        }
+        // Add the right cap.
+        for (let step = 0; step < resolution; step++) {
+          const theta0 = (3 * Math.PI) / 2 + ((step + 0) * Math.PI) / resolution;
+          const theta1 = (3 * Math.PI) / 2 + ((step + 1) * Math.PI) / resolution;
+          instanceRoundRound.push([0, 0, 1]);
+          instanceRoundRound.push([
+            0.5 * Math.cos(theta0),
+            0.5 * Math.sin(theta0),
+            1
+          ]);
+          instanceRoundRound.push([
+            0.5 * Math.cos(theta1),
+            0.5 * Math.sin(theta1),
+            1
+          ]);
+        }
+        return {
+          buffer: regl.buffer(instanceRoundRound),
+          count: instanceRoundRound.length
+        };
+      }
+
+	function interleavedStripRoundCapJoin3D(regl, resolution) {
+        const roundCapJoin = roundCapJoinGeometry(regl, resolution);
+        return regl({
+          vert: `
+            precision highp float;
+            attribute vec3 position;
+            attribute vec3 pointA, pointB;
+            uniform float width;
+            uniform vec2 resolution;
+            uniform vec3 axisFilter;
+            uniform vec3 axisShift;
+            uniform mat4 model, view, projection;
+
+            void main() {
+              vec4 clip0 = projection * view * model * vec4(axisFilter*pointA + axisShift, 1.0);
+              vec4 clip1 = projection * view * model * vec4(axisFilter*pointB + axisShift, 1.0);
+              vec2 screen0 = resolution * (0.5 * clip0.xy/clip0.w + 0.5);
+              vec2 screen1 = resolution * (0.5 * clip1.xy/clip1.w + 0.5);
+              vec2 xBasis = normalize(screen1 - screen0);
+              if(pointA==pointB) {
+              	xBasis = vec2(1.0,0.0);
+              }
+              vec2 yBasis = vec2(-xBasis.y, xBasis.x);
+              vec2 pt0 = screen0 + width * (position.x * xBasis + position.y * yBasis);
+              vec2 pt1 = screen1 + width * (position.x * xBasis + position.y * yBasis);
+              vec2 pt = mix(pt0, pt1, position.z);
+              vec4 clip = mix(clip0, clip1, position.z);
+              gl_Position = vec4(clip.w * (2.0 * pt/resolution - 1.0), clip.z, clip.w);
+            }`,
+
+          frag: `
+            precision highp float;
+            uniform vec4 color;
+            void main() {
+              gl_FragColor = color;
+            }`,
+
+          attributes: {
+            position: {
+              buffer: roundCapJoin.buffer,
+              divisor: 0
+            },
+            pointA: {
+              buffer: regl.prop("points"),
+              divisor: 1,
+              offset: (_, props) => ((props.segmentOffset??0) * 6 * Float32Array.BYTES_PER_ELEMENT) + Float32Array.BYTES_PER_ELEMENT * 0,
+              stride: Float32Array.BYTES_PER_ELEMENT * 6
+            },
+            pointB: {
+              buffer: regl.prop("points"),
+              divisor: 1,
+              offset: (_, props) => ((props.segmentOffset??0) * 6 * Float32Array.BYTES_PER_ELEMENT) + Float32Array.BYTES_PER_ELEMENT * 3 * (props.segmentLength??1),
+              stride: Float32Array.BYTES_PER_ELEMENT * 6
+            }
+          },
+
+          uniforms: {
+            width: regl.prop("width"),
+            axisFilter: regl.prop("axisFilter"),
+            axisShift: regl.prop("axisShift"),
+            color: regl.prop("color"),
+            model: regl.prop("model"),
+            resolution: regl.prop("resolution")
+          },
+
+          depth: {
+            enable: regl.prop("depth")
+          },
+
+          cull: {
+            enable: true,
+            face: "back"
+          },
+
+          blend: {
+            enable: true,
+            func: {
+              srcRGB: 'src alpha',
+              srcAlpha: 1,
+              dstRGB: 'one minus src alpha',
+              dstAlpha: 1
+            },
+            equation: {
+              rgb: 'add',
+              alpha: 'add'
+            },
+            color: [0, 0, 0, 0]
+          },
+
+          stencil: {
+            enable: (_, props) => props.stencilId >= 0,
+            func: {
+              cmp: 'equal',
+              ref: 0xff,
+              mask: (_, props) => 1 << props.stencilId,
+            },
+            op: {
+              fail: 'keep',
+              zfail: 'keep',
+              zpass: 'keep'
+            },
+          },
+
+          count: roundCapJoin.count,
+          instances: regl.prop("segments")
+        });
+      }
+
+      function makeMatrixPerspective(fovDeg, aspect, near, far) {
+        const f = 1.0 / Math.tan(deg2rad(fovDeg) / 2)
+        const nf = 1 / (near - far)
+
+        return [
+          f / aspect, 0.0, 0.0, 0.0,
+          0.0, f, 0.0, 0.0,
+          0.0, 0.0, (far + near) * nf, -1.0,
+          0.0, 0.0, (2 * far * near) * nf, 0.0
+        ]
+      }
+
+      function makeMatrixIdentity() {
+        return [
+          1, 0, 0, 0,
+          0, 1, 0, 0,
+          0, 0, 1, 0,
+          0, 0, 0, 1,
+        ]
+      }
+
+      function makeMatrixScale(x,y,z) {
+        return [
+          x, 0, 0, 0,
+          0, y, 0, 0,
+          0, 0, z, 0,
+          0, 0, 0, 1,
+        ]
+      }
+
+      function makeMatrixTranslate(x,y,z) {
+        return [
+          1, 0, 0, 0,
+          0, 1, 0, 0,
+          0, 0, 1, 0,
+          x, y, z, 1,
+        ]
+      }
+
+      function makeMatrixRotateZ(angle) {
+        const c = Math.cos(angle)
+        const s = Math.sin(angle)
+        return [
+          c, -s, 0, 0,
+          s,  c, 0, 0,
+          0,  0, 1, 0,
+          0,  0, 0, 1,
+        ]
+      }
+
+      function makeMatrixRotateX(angle) {
+        const c = Math.cos(angle)
+        const s = Math.sin(angle)
+        return [
+          1, 0,  0, 0,
+          0, c, -s, 0,
+          0, s,  c, 0,
+          0, 0,  0, 1,
+        ]
+      }
+
+      function makeMatrixRotateY(angle) {
+        const c = Math.cos(angle)
+        const s = Math.sin(angle)
+        return [
+           c, 0, s,  0,
+           0, 1, 0,  0,
+          -s, 0, c,  0,
+           0, 0, 0,  1,
+        ]
+      }
+
+
+      function matrixMultiplyMatrix([
+        _x1,  _x2,  _x3,  _x4,
+        _y1,  _y2,  _y3,  _y4,
+        _z1,  _z2,  _z3,  _z4,
+        _w1,  _w2,  _w3,  _w4,
+      ], [
+        x1,  x2,  x3,  x4,
+        y1,  y2,  y3,  y4,
+        z1,  z2,  z3,  z4,
+        w1,  w2,  w3,  w4,
+      ]) {
+        return [
+          x1 * _x1 + x2 * _y1 + x3 * _z1 + x4 * _w1,
+          x1 * _x2 + x2 * _y2 + x3 * _z2 + x4 * _w2,
+          x1 * _x3 + x2 * _y3 + x3 * _z3 + x4 * _w3,
+          x1 * _x4 + x2 * _y4 + x3 * _z4 + x4 * _w4,
+
+          y1 * _x1 + y2 * _y1 + y3 * _z1 + y4 * _w1,
+          y1 * _x2 + y2 * _y2 + y3 * _z2 + y4 * _w2,
+          y1 * _x3 + y2 * _y3 + y3 * _z3 + y4 * _w3,
+          y1 * _x4 + y2 * _y4 + y3 * _z4 + y4 * _w4,
+
+          z1 * _x1 + z2 * _y1 + z3 * _z1 + z4 * _w1,
+          z1 * _x2 + z2 * _y2 + z3 * _z2 + z4 * _w2,
+          z1 * _x3 + z2 * _y3 + z3 * _z3 + z4 * _w3,
+          z1 * _x4 + z2 * _y4 + z3 * _z4 + z4 * _w4,
+
+          w1 * _x1 + w2 * _y1 + w3 * _z1 + w4 * _w1,
+          w1 * _x2 + w2 * _y2 + w3 * _z2 + w4 * _w2,
+          w1 * _x3 + w2 * _y3 + w3 * _z3 + w4 * _w3,
+          w1 * _x4 + w2 * _y4 + w3 * _z4 + w4 * _w4,
+        ]
+      }
+
+      function deg2rad(deg) {
+        return deg/180 * Math.PI
+      }
+
+      function makeCubeBuffers(regl, w2, h2, d2) {
+        return {
+          vertices: regl.buffer([
+            [-w2, +h2, +d2],
+            [+w2, +h2, +d2],
+            [+w2, -h2, +d2],
+            [-w2, -h2, +d2], // positive z face.
+            [+w2, +h2, +d2],
+            [+w2, +h2, -d2],
+            [+w2, -h2, -d2],
+            [+w2, -h2, +d2], // positive x face
+            [+w2, +h2, -d2],
+            [-w2, +h2, -d2],
+            [-w2, -h2, -d2],
+            [+w2, -h2, -d2], // negative z face
+            [-w2, +h2, -d2],
+            [-w2, +h2, +d2],
+            [-w2, -h2, +d2],
+            [-w2, -h2, -d2], // negative x face.
+            [-w2, +h2, -d2],
+            [+w2, +h2, -d2],
+            [+w2, +h2, +d2],
+            [-w2, +h2, +d2], // top face
+            [-w2, -h2, -d2],
+            [+w2, -h2, -d2],
+            [+w2, -h2, +d2],
+            [-w2, -h2, +d2]  // bottom face
+          ]),
+          faceColors: regl.buffer([
+            [1,0,0],
+            [1,0,0],
+            [1,0,0],
+            [1,0,0], // positive z face.
+            [0,1,0],
+            [0,1,0],
+            [0,1,0],
+            [0,1,0], // positive x face
+            [0,1,1],
+            [0,1,1],
+            [0,1,1],
+            [0,1,1], // negative z face
+            [1,0,1],
+            [1,0,1],
+            [1,0,1],
+            [1,0,1], // negative x face.
+            [1,1,0],
+            [1,1,0],
+            [1,1,0],
+            [1,1,0], // top face
+            [0,0,1],
+            [0,0,1],
+            [0,0,1],
+            [0,0,1]
+          ]),
+          faceNormals: regl.buffer([
+            [0,0,1],
+            [0,0,1],
+            [0,0,1],
+            [0,0,1], // positive z face.
+            [1,0,0],
+            [1,0,0],
+            [1,0,0],
+            [1,0,0], // positive x face
+            [0,0,-1],
+            [0,0,-1],
+            [0,0,-1],
+            [0,0,-1], // negative z face
+            [-1,0,0],
+            [-1,0,0],
+            [-1,0,0],
+            [-1,0,0], // negative x face.
+            [0,1,0],
+            [0,1,0],
+            [0,1,0],
+            [0,1,0], // top face
+            [0,-1,0],
+            [0,-1,0],
+            [0,-1,0],
+            [0,-1,0]  // bottom face
+          ]),
+          uvCoords: regl.buffer([
+            [0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], // positive z face.
+            [0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], // positive x face.
+            [0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], // negative z face.
+            [0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], // negative x face.
+            [0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], // top face
+            [0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]  // bottom face
+          ]),
+          elements: regl.elements([
+            [2, 1, 0], [2, 0, 3],       // positive z face.
+            [6, 5, 4], [6, 4, 7],       // positive x face.
+            [10, 9, 8], [10, 8, 11],    // negative z face.
+            [14, 13, 12], [14, 12, 15], // negative x face.
+            [18, 17, 16], [18, 16, 19], // top face.
+            [20, 21, 22], [23, 20, 22]  // bottom face
+          ]),
+          outline: regl.buffer([
+            w2,h2,d2,
+            -w2,h2,d2,
+            -w2,h2,d2,
+            -w2,-h2,d2,
+            -w2,-h2,d2,
+            w2,-h2,d2,
+            w2,-h2,d2,
+            w2,h2,d2,
+
+            w2,h2,-d2,
+            -w2,h2,-d2,
+            -w2,h2,-d2,
+            -w2,-h2,-d2,
+            -w2,-h2,-d2,
+            w2,-h2,-d2,
+            w2,-h2,-d2,
+            w2,h2,-d2,
+
+
+            w2,h2,d2,
+            w2,h2,-d2,
+            -w2,h2,d2,
+            -w2,h2,-d2,
+            -w2,-h2,d2,
+            -w2,-h2,-d2,
+            w2,-h2,d2,
+            w2,-h2,-d2
+          ])
+        }
+      }
+
+
 	const renderGL = (canvasRoot) => {
+		const reglCanvas = document.createElement('canvas')
+		reglCanvas.classList.add("viewport");
+
+
+		const reglGL = reglCanvas.getContext('webgl', {
+			antialias: true,
+			stencil: false,
+			premultipliedAlpha: false 
+		})
+		const regl = createREGL({
+			canvas: reglCanvas,
+			extensions: ["ANGLE_instanced_arrays"],
+		})
+
+        const drawLine3D = interleavedStripRoundCapJoin3D(regl, 4)
+        var reglCamera = regl({
+            context: {
+              view: ({tick}) => {
+                const w = reglCanvas.width/2
+                const t = 0.01 * tick
+                return [
+                   makeMatrixTranslate(-cameraOffsetX.value,cameraOffsetY.value,-cameraOffsetZ.value),
+
+                  makeMatrixRotateX(-L.getInverse(
+						lensRadToDegree,
+						cameraEyeRotX.value,
+					)),
+                  makeMatrixRotateY(-L.getInverse(
+						lensRadToDegree,
+						cameraEyeRotY.value,
+					)),
+                  makeMatrixRotateX(-L.getInverse(
+						lensRadToDegree,
+						cameraEyeRotZ.value,
+					)),
+                 makeMatrixTranslate(cameraOffsetX.value,-cameraOffsetY.value,cameraOffsetZ.value),
+
+                   makeMatrixTranslate(-cameraEyePosX.value,cameraEyePosY.value,-cameraEyePosZ.value),
+                ].reduce(matrixMultiplyMatrix)
+              },
+              projection: ({viewportWidth, viewportHeight}) =>
+                makeMatrixPerspective(cameraFoV.value, viewportWidth/viewportHeight, cameraClipNear.value, cameraClipFar.value),
+
+              viewport: () => ({ x: 0, y: 0, width: reglCanvas.width, height: reglCanvas.height }),
+            },
+
+            uniforms: {
+              view: regl.context('view'),
+              projection: regl.context('projection'),
+              viewport: regl.context('viewport'),
+            }
+          })
+
+       const cubeMesh = makeCubeBuffers(regl, 0.5, 0.25, 0.5)
+		regl.frame(() => {
+			reglCanvas.width = reglCanvas.clientWidth * window.devicePixelRatio * 2
+	        reglCanvas.height = reglCanvas.clientHeight * window.devicePixelRatio * 2
+
+	        regl.clear({
+	          color: [1, 0, 1, 0],
+	          stencil: 1
+	        })
+
+	         reglCamera(() => {
+	            drawLine3D({
+	              points: cubeMesh.outline,
+	              model: [
+	                  makeMatrixRotateX(-L.getInverse(
+							lensRadToDegree,
+							worldTransformRotX.value,
+						)),
+	                  makeMatrixRotateY(-L.getInverse(
+							lensRadToDegree,
+							worldTransformRotY.value,
+						)),
+	                  makeMatrixRotateX(-L.getInverse(
+							lensRadToDegree,
+							worldTransformRotZ.value,
+						)),
+	                   makeMatrixTranslate(worldTransformPosX.value,worldTransformPosY.value,worldTransformPosZ.value),
+	                   makeMatrixScale(worldTransformScaleX.value,worldTransformScaleY.value,worldTransformScaleZ.value),
+	                	
+                   makeMatrixScale(30,30,30)
+	                ].reduce(matrixMultiplyMatrix),
+	              axisFilter: [1,1,1],
+	              axisShift: [0,0,0],
+	              color: meshColorGLDark.value,
+	              width: strokeWidthFg.value * window.devicePixelRatio * 2,
+	              segments: 12,
+	              resolution: [reglCanvas.width,reglCanvas.height],
+	              depth: true,
+	            })
+	        })
+		})
+
 		const renderer = new Renderer({
 			dpr: window.devicePixelRatio * 2,
 			alpha: true,
@@ -1571,6 +2081,7 @@
 		
 		gl.canvas.classList.add("viewport");
 		canvasRoot.appendChild(gl.canvas);
+		canvasRoot.appendChild(reglCanvas);
 
 		const scene = new Transform();
 		const object = new Transform();
@@ -1594,14 +2105,14 @@
         `,
 			fragment: /* glsl */ `
 			precision mediump float;
-            uniform vec3 uMeshColor;
+            uniform vec4 uMeshColor;
 
             void main() {
-                gl_FragColor = vec4(uMeshColor,0.6);
+                gl_FragColor = vec4(uMeshColor.rgb,0.8);
             }
         `,
 			uniforms: {
-				uMeshColor: { value: new Vec3().fromArray(meshColorGL.value) },
+				uMeshColor: { value: new Vec4().fromArray(meshColorGL.value) },
 			},
 		});
 
@@ -1716,7 +2227,7 @@
 		$effect(() => {
 			faceMesh.program.uniforms.uMeshColor.value.set(meshColorGL.value);
 			edgeMesh.program.uniforms.uColor.value.set(
-				meshColorGL.value.map(R.multiply(0.6)),
+				meshColorGLDark.value,
 			);
 		});
 
@@ -1741,6 +2252,10 @@
 			if (raf) {
 				cancelAnimationFrame(raf);
 			}
+
+			regl.destroy()
+
+			canvasRoot.removeChild(reglCanvas)
 
 			canvasRoot.removeChild(gl.canvas);
 			disposeGeo(gl, edgeMesh.geometry)
