@@ -3,23 +3,6 @@
 	import * as G from "@svatom/basic/generators";
 	import * as R from "ramda";
 	import * as U from "./utils";
-
-	import {
-		Renderer,
-		Camera,
-		Transform,
-		Box,
-		Program,
-		Mesh,
-		Geometry,
-		Vec3,
-		Vec4,
-		Vec2,
-		Mat4,
-		Polyline,
-		Color,
-	} from "ogl";
-
 	import createREGL from 'regl'
 
 
@@ -40,7 +23,6 @@
 	import * as objData from "../data/obj";
 	import exampleRenew from "../data/renew/example.rnw?raw";
 	import exampleDoubleArrow from "../data/renew/doublearrow.rnw?raw";
-	import { SegmentPolyline } from "./SegmentPolyline.js";
 	import {
 		parse as parseObj,
 		toGeo,
@@ -568,6 +550,19 @@
 				((int >> 8) & 0xff) * 0.6,
 				((int << 0) & 0xff) * 0.6,
 				255,
+			].map((x) => x / 255);
+		}),
+		meshColor,
+	);
+	const meshColorGLTranslucent = view(
+		L.reread((hex) => {
+			const digits = hex.slice(1);
+			const int = parseInt(digits, 16);
+			return [
+				((int >> 16) & 0xff) * 0.6,
+				((int >> 8) & 0xff) * 0.6,
+				((int << 0) & 0xff) * 0.6,
+				100,
 			].map((x) => x / 255);
 		}),
 		meshColor,
@@ -1541,35 +1536,6 @@
 	);
 
 
-	class CustomFaceGeo extends Geometry {
-		constructor(gl, geo) {
-			// 1. Extract and flatten vertices
-			const positions = new Float32Array(
-				geo.vertices.flatMap((v) => [v.x, -v.y, v.z]),
-			);
-
-			// 2. Convert faces to triangles (handle quads)
-			const indices = [];
-
-			for (const face of geo.faces) {
-				const v = face.vertices;
-				for (let i = 2; i < v.length; i++) {
-					if (face.attrs.flip) {
-						indices.push(v[i], v[i - 1], v[0]);
-					} else {
-						indices.push(v[0], v[i - 1], v[i]);
-					}
-				}
-			}
-
-			const indexArray = new Uint16Array(indices);
-
-			super(gl, {
-				position: { size: 3, data: positions },
-				index: { data: indexArray },
-			});
-		}
-	}
 
 	function roundCapJoinGeometry(regl, resolution) {
         const instanceRoundRound = [
@@ -1687,6 +1653,14 @@
             enable: regl.prop("depth")
           },
 
+          polygonOffset: {
+		    enable: true,
+		    offset: {
+		      factor: 1,
+		      units: 0
+		    }
+		  },
+
           cull: {
             enable: true,
             face: "back"
@@ -1724,6 +1698,41 @@
           count: roundCapJoin.count,
           instances: regl.prop("segments")
         });
+      }
+
+      function makeColorShader(regl) {
+        return regl({
+          frag: `
+          precision mediump float;
+          uniform vec4 color;
+          void main () {
+            gl_FragColor = color;
+          }`,
+          vert: `
+          precision mediump float;
+          attribute vec3 position;
+          uniform vec4 color;
+          uniform mat4 model, projection, view;
+          void main() {
+            gl_Position = projection * view * model * vec4(position, 1);
+          }`,
+          attributes: {
+            position: regl.prop('positions'),
+          },
+          cull: {
+            enable: false,
+            face: 'back'
+          },
+
+          uniforms: {
+            color: regl.prop("color"),
+            model: regl.prop("model"),
+          },
+          depth: {
+            enable: regl.prop("depth"),
+          },
+          elements: regl.prop("elements"),
+        })
       }
 
       function makeMatrixPerspective(fovDeg, aspect, near, far) {
@@ -1968,6 +1977,7 @@
 
 	const renderGL = (canvasRoot) => {
 		const reglCanvas = document.createElement('canvas')
+		canvasRoot.appendChild(reglCanvas)
 		reglCanvas.classList.add("viewport");
 
 
@@ -1981,7 +1991,8 @@
 			extensions: ["ANGLE_instanced_arrays"],
 		})
 
-        const drawLine3D = interleavedStripRoundCapJoin3D(regl, 4)
+        const drawLine3D = interleavedStripRoundCapJoin3D(regl, 10)
+        const drawFace3D = makeColorShader(regl)
         var reglCamera = regl({
             context: {
               view: ({tick}) => {
@@ -2020,20 +2031,54 @@
             }
           })
 
-       const cubeMesh = makeCubeBuffers(regl, 0.5, 0.25, 0.5)
-		regl.frame(() => {
-			reglCanvas.width = reglCanvas.clientWidth * window.devicePixelRatio * 2
-	        reglCanvas.height = reglCanvas.clientHeight * window.devicePixelRatio * 2
+        let reglLineMesh = {
+        	buffer: regl.buffer([]),
+        	count: 0
+        }
 
-	        regl.clear({
-	          color: [1, 0, 1, 0],
-	          stencil: 1
-	        })
+        let reglVertexMesh = {
+        	buffer: regl.buffer([]),
+        	count: 0
+        }
 
-	         reglCamera(() => {
-	            drawLine3D({
-	              points: cubeMesh.outline,
-	              model: [
+        let reglFaceMesh = {
+        	positions: regl.buffer([0,0,1,1,0,0,0,1,0]),
+        	elements: regl.elements([0,1,2,3,4,5,6,7,8]),
+        }
+
+        $effect(() => {
+        	const vs = worldGeo.value.vertices
+        	const edges = worldGeo.value.edges.flatMap((e) =>
+				e.vertices.flatMap(vi => [vs[vi].x, -vs[vi].y, vs[vi].z]),
+			)
+
+			const faces = worldGeo.value.faces.flatMap((f) => f.vertices.length == 3 ? [f.vertices] : [[f.vertices[0], f.vertices[1], f.vertices[2]], [f.vertices[2], f.vertices[3], f.vertices[0]]])
+			const vertices = vs.map(({x,y,z}) => [x,-y,z])
+
+
+			reglFaceMesh = {
+	        	positions: regl.buffer({
+	        		type: "float",
+	        		data: vertices,
+	        	}),
+	        	elements: regl.elements(faces),
+	        }
+
+			reglLineMesh = {
+	        	buffer: regl.buffer(edges),
+	        	count: edges.length / 6
+	        }
+
+			reglVertexMesh = {
+	        	buffer: regl.buffer(vs.flatMap(v => [v.x,-v.y,v.z,v.x,-v.y,v.z])),
+	        	count: vs.length
+	        }
+        })
+
+        let modelMatrix = makeMatrixIdentity()
+
+        $effect(() => {
+        	modelMatrix= [
 	                  makeMatrixRotateX(-L.getInverse(
 							lensRadToDegree,
 							worldTransformRotX.value,
@@ -2049,219 +2094,60 @@
 	                   makeMatrixTranslate(worldTransformPosX.value,worldTransformPosY.value,worldTransformPosZ.value),
 	                   makeMatrixScale(worldTransformScaleX.value,worldTransformScaleY.value,worldTransformScaleZ.value),
 	                	
-                   makeMatrixScale(30,30,30)
-	                ].reduce(matrixMultiplyMatrix),
+	                ].reduce(matrixMultiplyMatrix)
+        })
+		regl.frame(() => {
+			reglCanvas.width = reglCanvas.clientWidth * window.devicePixelRatio * 2
+	        reglCanvas.height = reglCanvas.clientHeight * window.devicePixelRatio * 2
+
+	        regl.clear({
+	          color: [0.99,0.99,0.99, 1],
+	          stencil: 1,
+	          depth: 1,
+	        })
+
+
+
+	         reglCamera(() => {
+
+	            drawFace3D({
+	              model: modelMatrix,
+	              color: meshColorGLTranslucent.value,
+	              positions: reglFaceMesh.positions,
+	              elements: reglFaceMesh.elements,
+	              depth: true,
+	            })
+	            drawLine3D({
+	              points: reglLineMesh.buffer,
+	              model: modelMatrix,
 	              axisFilter: [1,1,1],
 	              axisShift: [0,0,0],
 	              color: meshColorGLDark.value,
 	              width: strokeWidthFg.value * window.devicePixelRatio * 2,
-	              segments: 12,
+	              segments: reglLineMesh.count,
 	              resolution: [reglCanvas.width,reglCanvas.height],
-	              depth: true,
+	              depth: false,
+	            })
+
+
+	            drawLine3D({
+	              points: reglVertexMesh.buffer,
+	              model: modelMatrix,
+	              axisFilter: [1,1,1],
+	              axisShift: [0,0,0],
+	              color: [0,0,0,1],
+	              width: circleRad.value * window.devicePixelRatio * 4,
+	              segments: reglVertexMesh.count,
+	              resolution: [reglCanvas.width,reglCanvas.height],
+	              depth: false,
 	            })
 	        })
 		})
 
-		const renderer = new Renderer({
-			dpr: window.devicePixelRatio * 2,
-			alpha: true,
-			antialias: true,
-		});
-		const gl = renderer.gl;
-
-		gl.clearColor(1, 1, 1, 1);
-		//gl.enable(gl.POLYGON_OFFSET_FILL);
-		//gl.polygonOffset(2.0, 1.0);
-
-		const cameraOffsetTransform = new Transform();
-		const camera = new Camera(gl);
-
-		camera.setParent(cameraOffsetTransform);
-
-		
-		gl.canvas.classList.add("viewport");
-		canvasRoot.appendChild(gl.canvas);
-		canvasRoot.appendChild(reglCanvas);
-
-		const scene = new Transform();
-		const object = new Transform();
-		object.setParent(scene);
-
-		const faceGeometry = new CustomFaceGeo(gl, worldGeo.value);
-
-		const faceProgram = new Program(gl, {
-		  transparent: true,
-			vertex: /* glsl */ `
-			precision mediump float;
-
-            attribute vec3 position;
-
-            uniform mat4 modelViewMatrix;
-            uniform mat4 projectionMatrix;
-
-            void main() {
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-            }
-        `,
-			fragment: /* glsl */ `
-			precision mediump float;
-            uniform vec4 uMeshColor;
-
-            void main() {
-                gl_FragColor = vec4(uMeshColor.rgb,0.8);
-            }
-        `,
-			uniforms: {
-				uMeshColor: { value: new Vec4().fromArray(meshColorGL.value) },
-			},
-		});
-
-		const polyline = new SegmentPolyline(gl, {
-			points: [
-				new Vec3(-10, 0, 0),
-				new Vec3(10, 0, 0),
-				new Vec3(0, 0, 10),
-				new Vec3(0, 0, -10),
-			],
-			uniforms: {
-				uColor: { value: new Color("#000") },
-				uZOffset: { value: 0.007 },
-			},
-		});
-
-		const faceMesh = new Mesh(gl, {
-			geometry: faceGeometry,
-			program: faceProgram,
-		});
-		faceMesh.setParent(object);
-
-		const edgeMesh = new Mesh(gl, {
-			geometry: polyline.geometry,
-			program: polyline.program,
-		});
-		edgeMesh.setParent(object);
-
-		$effect(() => {
-			renderer.setSize(screenSize.value.x, screenSize.value.y);
-			polyline.resolution.value = (new Vec2(screenSize.value.x, screenSize.value.y))
-			polyline.dpr.value = window.devicePixelRatio
-			camera.perspective({ aspect: 1 / screenAspect.value });
-		});
-
-		$effect(() => {
-			polyline.thickness.value = strokeWidthFg.value
-		})
-
-		$effect(() => {
-			object.rotation.x = -L.getInverse(
-				lensRadToDegree,
-				worldTransformRotX.value,
-			);
-			object.rotation.y = -L.getInverse(
-				lensRadToDegree,
-				worldTransformRotY.value,
-			);
-			object.rotation.z = -L.getInverse(
-				lensRadToDegree,
-				worldTransformRotZ.value,
-			);
-			object.position.x = worldTransformPosX.value;
-			object.position.y = worldTransformPosY.value;
-			object.position.z = worldTransformPosZ.value;
-			object.scale.x = worldTransformScaleX.value;
-			object.scale.y = worldTransformScaleY.value;
-			object.scale.z = worldTransformScaleZ.value;
-		});
-
-		$effect(() => {
-
-			disposeGeo(gl, faceMesh.geometry)
-			disposeGeo(gl, edgeMesh.geometry)
-
-			faceMesh.geometry = new CustomFaceGeo(gl, worldGeo.value);
-			const vs = worldGeo.value.vertices;
-			const polyline = new SegmentPolyline(gl, {
-				points: worldGeo.value.edges.flatMap((e) =>
-					e.vertices.map(
-						(vi) => new Vec3(vs[vi].x, -vs[vi].y, vs[vi].z),
-					),
-				),
-			});
-			edgeMesh.geometry = polyline.geometry;
-		});
-
-		$effect(() => {
-			cameraOffsetTransform.position.x =
-				cameraEyePosX.value - cameraOffsetX.value;
-			cameraOffsetTransform.position.y =
-				-cameraEyePosY.value + cameraOffsetY.value;
-			cameraOffsetTransform.position.z =
-				cameraEyePosZ.value - cameraOffsetZ.value;
-
-			camera.position.x = +cameraOffsetX.value;
-			camera.position.y = -cameraOffsetY.value;
-			camera.position.z = +cameraOffsetZ.value;
-
-			cameraOffsetTransform.rotation.x = -L.getInverse(
-				lensRadToDegree,
-				cameraEyeRotX.value,
-			);
-			cameraOffsetTransform.rotation.y = -L.getInverse(
-				lensRadToDegree,
-				cameraEyeRotY.value,
-			);
-			cameraOffsetTransform.rotation.z = -L.getInverse(
-				lensRadToDegree,
-				cameraEyeRotZ.value,
-			);
-
-			camera.perspective({
-				near: cameraClipNear.value,
-				far: cameraClipFar.value,
-				fov: cameraFoV.value,
-			});
-
-			cameraOffsetTransform.updateMatrixWorld();
-		});
-
-		$effect(() => {
-			faceMesh.program.uniforms.uMeshColor.value.set(meshColorGL.value);
-			edgeMesh.program.uniforms.uColor.value.set(
-				meshColorGLDark.value,
-			);
-		});
-
-		let raf = requestAnimationFrame(update);
-		function update(t) {
-			renderer.render({ scene, camera });
-
-			raf = requestAnimationFrame(update);
-		}
-
-		function disposeGeo(gl, geometry) {
-			for (let key in geometry.buffers) {
-			  const buffer = geometry.buffers[key];
-			  if (buffer.buffer) gl.deleteBuffer(buffer.buffer);
-			}
-			if (geometry.index && geometry.index.buffer) {
-  gl.deleteBuffer(geometry.index.buffer);
-}
-		}
 
 		return () => {
-			if (raf) {
-				cancelAnimationFrame(raf);
-			}
-
 			regl.destroy()
-
 			canvasRoot.removeChild(reglCanvas)
-
-			canvasRoot.removeChild(gl.canvas);
-			disposeGeo(gl, edgeMesh.geometry)
-			disposeGeo(gl, edgeMesh.geometry)
-			gl.deleteProgram(faceMesh.program.program)
-			gl.deleteProgram(edgeMesh.program.program)
 		};
 	};
 </script>
