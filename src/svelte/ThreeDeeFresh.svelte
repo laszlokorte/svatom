@@ -51,15 +51,15 @@
 		renew1: { label: "Renew #1", renew: exampleRenew, scale: 5 },
 		renew2: { label: "Renew #2", renew: exampleDoubleArrow, scale: 5 },
 		marching: { label: "Marching Cubes", geo: marchingCubesToGeo(
-			(x, y, z) => Math.sqrt(2*x * x + 3*y * y + 4*z * z) - 17,
-			-24,
-			-24,
-			-24,
-			24,
-			24,
-			24,
-			12,
-		), scale: 10 },
+			(x, y, z) => (3*x * x/100 + 4*y * y/100 + 1.5*z * z/100) - Math.cos(z*Math.PI/10)*45 - Math.cos(x*Math.PI/12)*20 - Math.cos(y*Math.PI/14)*40,
+			-10,
+			-10,
+			-10,
+			10,
+			10,
+			10,
+			8,
+		), scale: 40 },
 	};
 
 	const numf = new Intl.NumberFormat("en-US", {
@@ -568,6 +568,19 @@
 		meshColor,
 	);
 
+	const meshColorGLDarker = view(
+		L.reread((hex) => {
+			const digits = hex.slice(1);
+			const int = parseInt(digits, 16);
+			return [
+				((int >> 16) & 0xff),
+				((int >> 8) & 0xff),
+				((int << 0) & 0xff),
+				255,
+			].map((x) => x / 255).map(x => x*0.5 + (1 - x*0.5) / 2);
+		}),
+		meshColor,
+	);
 	const lensMatrixTransform = (transform) => [
 		lens3dScale(transform.sx, transform.sy, transform.sz),
 		lens3dRotateX(transform.rx),
@@ -1591,22 +1604,29 @@
             precision highp float;
             attribute vec3 position;
             attribute vec3 pointA, pointB;
+            attribute vec3 normalFaceA, normalFaceB;
             uniform float width;
             uniform vec2 resolution;
             uniform vec3 axisFilter;
             uniform vec3 axisShift;
+            uniform mat3 viewNormal, modelMatrixNormal;
             uniform mat4 model, view, projection;
 
             void main() {
+              vec3 normalClip0 = normalize(viewNormal * modelMatrixNormal * normalFaceA);
+              vec3 normalClip1 = normalize(viewNormal * modelMatrixNormal * normalFaceB);
+              vec3 normalDir0 = normalize(-(view * model * vec4(axisFilter*pointA + axisShift, 1.0)).xyz);
+              vec3 normalDir1 = normalize(-(view * model * vec4(axisFilter*pointB + axisShift, 1.0)).xyz);
               vec4 clip0 = projection * view * model * vec4(axisFilter*pointA + axisShift, 1.0);
               vec4 clip1 = projection * view * model * vec4(axisFilter*pointB + axisShift, 1.0);
+          	  float normalDir = length(normalFaceA) == 0.0 || dot(normalClip0, normalDir0) > 0.0 || dot(normalClip1, normalDir1) > 0.0 ? 1.0 : -1.0;
               vec2 screen0 = resolution * (0.5 * clip0.xy/clip0.w + 0.5);
               vec2 screen1 = resolution * (0.5 * clip1.xy/clip1.w + 0.5);
               vec2 xBasis = normalize(screen1 - screen0);
               if(pointA==pointB) {
               	xBasis = vec2(1.0,0.0);
               }
-              vec2 yBasis = vec2(-xBasis.y, xBasis.x);
+              vec2 yBasis = vec2(-xBasis.y * normalDir, xBasis.x * normalDir);
               vec2 pt0 = screen0 + width * (position.x * xBasis + position.y * yBasis);
               vec2 pt1 = screen1 + width * (position.x * xBasis + position.y * yBasis);
               vec2 pt = mix(pt0, pt1, position.z);
@@ -1635,9 +1655,22 @@
             pointB: {
               buffer: regl.prop("points"),
               divisor: 1,
-              offset: (_, props) => ((props.segmentOffset??0) * 6 * Float32Array.BYTES_PER_ELEMENT) + Float32Array.BYTES_PER_ELEMENT * 3 * (props.segmentLength??1),
+              offset: (_, props) => ((props.segmentOffset??0) * 6 * Float32Array.BYTES_PER_ELEMENT) + Float32Array.BYTES_PER_ELEMENT * 3,
               stride: Float32Array.BYTES_PER_ELEMENT * 6
-            }
+            },
+
+            normalFaceA: {
+              buffer: regl.prop("normals"),
+              divisor: 1,
+              offset: (_, props) => ((props.segmentOffset??0) * 6 * Float32Array.BYTES_PER_ELEMENT) + Float32Array.BYTES_PER_ELEMENT * 0,
+              stride: Float32Array.BYTES_PER_ELEMENT * 6
+            },
+            normalFaceB: {
+              buffer: regl.prop("normals"),
+              divisor: 1,
+              offset: (_, props) => ((props.segmentOffset??0) * 6 * Float32Array.BYTES_PER_ELEMENT) + Float32Array.BYTES_PER_ELEMENT * 3,
+              stride: Float32Array.BYTES_PER_ELEMENT * 6
+            },
           },
 
           uniforms: {
@@ -1646,7 +1679,8 @@
             axisShift: regl.prop("axisShift"),
             color: regl.prop("color"),
             model: regl.prop("model"),
-            resolution: regl.prop("resolution")
+            resolution: regl.prop("resolution"),
+            modelMatrixNormal: regl.prop("modelMatrixNormal"),
           },
 
           depth: {
@@ -1656,14 +1690,14 @@
           polygonOffset: {
 		    enable: true,
 		    offset: {
-		      factor: 1,
+		      factor: 0,
 		      units: 0
 		    }
 		  },
 
           cull: {
             enable: true,
-            face: "back"
+            face: regl.prop("cullFace")
           },
 
           blend: {
@@ -1996,8 +2030,6 @@
         var reglCamera = regl({
             context: {
               view: ({tick}) => {
-                const w = reglCanvas.width/2
-                const t = 0.01 * tick
                 return [
                    makeMatrixTranslate(-cameraOffsetX.value,cameraOffsetY.value,-cameraOffsetZ.value),
 
@@ -2022,22 +2054,48 @@
                 makeMatrixPerspective(cameraFoV.value, viewportWidth/viewportHeight, cameraClipNear.value, cameraClipFar.value),
 
               viewport: () => ({ x: 0, y: 0, width: reglCanvas.width, height: reglCanvas.height }),
+
+              viewNormal: () => {
+                const m = [
+                  makeMatrixRotateX(-L.getInverse(
+						lensRadToDegree,
+						cameraEyeRotX.value,
+					)),
+                  makeMatrixRotateY(-L.getInverse(
+						lensRadToDegree,
+						cameraEyeRotY.value,
+					)),
+                  makeMatrixRotateX(-L.getInverse(
+						lensRadToDegree,
+						cameraEyeRotZ.value,
+					)),
+                ].reduce(matrixMultiplyMatrix)
+
+                return [
+                	m[0], m[1], m[2],
+                	m[4], m[5], m[6],
+                	m[8], m[9], m[10]
+                ]
+              },
             },
 
             uniforms: {
               view: regl.context('view'),
               projection: regl.context('projection'),
               viewport: regl.context('viewport'),
+              viewNormal: regl.context('viewNormal'),
             }
           })
 
         let reglLineMesh = {
-        	buffer: regl.buffer([]),
+        	points: regl.buffer([]),
+        	normals: regl.buffer([]),
         	count: 0
         }
 
         let reglVertexMesh = {
-        	buffer: regl.buffer([]),
+        	points: regl.buffer([]),
+        	normals: regl.buffer([]),
         	count: 0
         }
 
@@ -2052,6 +2110,36 @@
 				e.vertices.flatMap(vi => [vs[vi].x, -vs[vi].y, vs[vi].z]),
 			)
 
+			const edgeNormals = worldGeo.value.edges.flatMap((e) => {
+					const normals = e.faces.flatMap(fi => {
+						const faceVerts = worldGeo.value.faces[fi].vertices.map(vi => worldGeo.value.vertices[vi])
+						const v1 = faceVerts[0]
+						const v2 = faceVerts[1]
+						const v3 = faceVerts[2]
+
+						const d1x = v2.x - v1.x
+						const d1y = -(v2.y - v1.y)
+						const d1z = v2.z - v1.z
+
+						const d2x = v3.x - v1.x
+						const d2y = -(v3.y - v1.y)
+						const d2z = v3.z - v1.z
+
+						const normal = [
+							d1y*d2z - d1z*d2y,
+							d1z*d2x - d1x*d2z,
+							d1x*d2y - d1y*d2x,
+						]
+
+						const length = Math.sqrt(normal.map(x => x*x).reduce((a,b) => a+b))
+
+						return normal.map(x => x/length)
+					})
+					return [...normals,...normals, 0,0,0,0,0,0].slice(0, 6)
+				}
+			)
+
+
 			const faces = worldGeo.value.faces.flatMap((f) => f.vertices.length == 3 ? [f.vertices] : [[f.vertices[0], f.vertices[1], f.vertices[2]], [f.vertices[2], f.vertices[3], f.vertices[0]]])
 			const vertices = vs.map(({x,y,z}) => [x,-y,z])
 
@@ -2063,39 +2151,43 @@
 	        	}),
 	        	elements: regl.elements(faces),
 	        }
-
 			reglLineMesh = {
-	        	buffer: regl.buffer(edges),
+	        	points: regl.buffer(edges),
+	        	normals: regl.buffer(edgeNormals),
 	        	count: edges.length / 6
 	        }
 
 			reglVertexMesh = {
-	        	buffer: regl.buffer(vs.flatMap(v => [v.x,-v.y,v.z,v.x,-v.y,v.z])),
+	        	points: regl.buffer(vs.flatMap(v => [v.x,-v.y,v.z,v.x,-v.y,v.z])),
+	        	normals: regl.buffer(vs.flatMap(v => [0,0,0,0,0,0])),
 	        	count: vs.length
 	        }
         })
 
-        let modelMatrix = makeMatrixIdentity()
+        let modelMatrix = read((trans) => [
+			makeMatrixRotateX(-trans.rx),
+			makeMatrixRotateY(-trans.ry),
+			makeMatrixRotateX(-trans.rz),
+			makeMatrixTranslate(trans.tx,trans.ty,trans.tz),
+			makeMatrixScale(trans.sx,trans.sy,trans.sz),
+        ].reduce(matrixMultiplyMatrix), worldTransform)
 
-        $effect(() => {
-        	modelMatrix= [
-	                  makeMatrixRotateX(-L.getInverse(
-							lensRadToDegree,
-							worldTransformRotX.value,
-						)),
-	                  makeMatrixRotateY(-L.getInverse(
-							lensRadToDegree,
-							worldTransformRotY.value,
-						)),
-	                  makeMatrixRotateX(-L.getInverse(
-							lensRadToDegree,
-							worldTransformRotZ.value,
-						)),
-	                   makeMatrixTranslate(worldTransformPosX.value,worldTransformPosY.value,worldTransformPosZ.value),
-	                   makeMatrixScale(worldTransformScaleX.value,worldTransformScaleY.value,worldTransformScaleZ.value),
-	                	
-	                ].reduce(matrixMultiplyMatrix)
-        })
+        let modelMatrixNormal = read((trans) => {
+        	const m = [
+        			makeMatrixRotateX(-trans.rx),
+        			makeMatrixRotateY(-trans.ry),
+        			makeMatrixRotateX(-trans.rz),
+        			makeMatrixScale(1/trans.sx,1/trans.sy,1/trans.sz),
+                ].reduce(matrixMultiplyMatrix)
+
+                return [
+                	m[0], m[1], m[2],
+                	m[4], m[5], m[6],
+                	m[8], m[9], m[10]
+                ]
+            }, worldTransform)
+
+
 		regl.frame(() => {
 			reglCanvas.width = reglCanvas.clientWidth * window.devicePixelRatio * 2
 	        reglCanvas.height = reglCanvas.clientHeight * window.devicePixelRatio * 2
@@ -2111,15 +2203,35 @@
 	         reglCamera(() => {
 
 	            drawFace3D({
-	              model: modelMatrix,
+	              model: modelMatrix.value,
 	              color: meshColorGLTranslucent.value,
 	              positions: reglFaceMesh.positions,
 	              elements: reglFaceMesh.elements,
 	              depth: true,
 	            })
+
+
+
 	            drawLine3D({
-	              points: reglLineMesh.buffer,
-	              model: modelMatrix,
+	              points: reglLineMesh.points,
+	              normals: reglLineMesh.normals,
+	              model: modelMatrix.value,
+	              axisFilter: [1,1,1],
+	              axisShift: [0,0,0],
+	              color: meshColorGLDarker.value,
+	              width: strokeWidthBg.value * window.devicePixelRatio * 2,
+	              segments: reglLineMesh.count,
+	              resolution: [reglCanvas.width,reglCanvas.height],
+	              depth: false,
+	              cullFace: "front",
+	              modelMatrixNormal: modelMatrixNormal.value
+	            })
+
+
+	            drawLine3D({
+	              points: reglLineMesh.points,
+	              normals: reglLineMesh.normals,
+	              model: modelMatrix.value,
 	              axisFilter: [1,1,1],
 	              axisShift: [0,0,0],
 	              color: meshColorGLDark.value,
@@ -2127,12 +2239,15 @@
 	              segments: reglLineMesh.count,
 	              resolution: [reglCanvas.width,reglCanvas.height],
 	              depth: false,
+	              cullFace: "back",
+	              modelMatrixNormal: modelMatrixNormal.value
 	            })
 
 
 	            drawLine3D({
-	              points: reglVertexMesh.buffer,
-	              model: modelMatrix,
+	              points: reglVertexMesh.points,
+	              normals: reglVertexMesh.normals,
+	              model: modelMatrix.value,
 	              axisFilter: [1,1,1],
 	              axisShift: [0,0,0],
 	              color: [0,0,0,1],
@@ -2140,6 +2255,8 @@
 	              segments: reglVertexMesh.count,
 	              resolution: [reglCanvas.width,reglCanvas.height],
 	              depth: false,
+	              cullFace: "back",
+	              modelMatrixNormal: modelMatrixNormal.value
 	            })
 	        })
 		})
