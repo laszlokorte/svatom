@@ -1704,7 +1704,7 @@
 
           depth: {
             enable: regl.prop("depth"),
-            func: 'greater',
+            func: regl.prop("depthFunc"),
           },
 
           polygonOffset: {
@@ -1716,7 +1716,7 @@
 		  },
 
           cull: {
-            enable: true,
+            enable: regl.prop("cull"),
             face: regl.prop("cullFace")
           },
 
@@ -1774,7 +1774,7 @@
             position: regl.prop('positions'),
           },
           cull: {
-            enable: true,
+            enable: regl.prop("cull"),
             face: regl.prop("cullFace")
           },
 
@@ -1784,7 +1784,7 @@
           },
           depth: {
             enable: regl.prop("depth"),
-            func: 'greater',
+            func: regl.prop("depthFunc"),
           },
           polygonOffset: {
 		    enable: true,
@@ -2241,20 +2241,10 @@
 	              positions: reglFaceMesh.positions,
 	              elements: reglFaceMesh.elements,
 	              depth: true,
-	              cull: true,
+	              depthFunc: 'greater',
+	              cull: false,
 				  cullFace: "front",
 				  depthOffset: -4
-	            })
-
-	            drawFace3D({
-	              model: modelMatrix.value,
-	              color: meshColorGLTranslucent.value,
-	              positions: reglFaceMesh.positions,
-	              elements: reglFaceMesh.elements,
-	              depth: false,
-	              cull: true,
-				  cullFace: "back",
-				  depthOffset: 0
 	            })
 
 
@@ -2270,12 +2260,16 @@
 	              segments: reglLineMesh.count,
 	              resolution: [reglCanvas.width,reglCanvas.height],
 	              depth: false,
+	              depthFunc: 'less',
+	              cull: false,
 	              cullFace: "front",
 	              modelMatrixNormal: modelMatrixNormal.value,
 	              dashFrequency: 2.0,
 	              dashRatio: 0.4,
-	              depthOffset: 0
+	              depthOffset: strokeWidthBg.value
 	            })
+
+
 
 
 	            drawLine3D({
@@ -2289,11 +2283,13 @@
 	              segments: reglLineMesh.count,
 	              resolution: [reglCanvas.width,reglCanvas.height],
 	              depth: true,
+	              depthFunc: 'greater',
+	              cull: true,
 	              cullFace: "back",
 	              modelMatrixNormal: modelMatrixNormal.value,
 	              dashFrequency: 1.0,
 	              dashRatio: 1.0,
-	              depthOffset: 0
+	              depthOffset: strokeWidthFg.value 
 	            })
 
 
@@ -2308,6 +2304,8 @@
 	              segments: reglVertexMesh.count,
 	              resolution: [reglCanvas.width,reglCanvas.height],
 	              depth: true,
+	              depthFunc: 'greater',
+	              cull: true,
 	              cullFace: "back",
 	              modelMatrixNormal: modelMatrixNormal.value,
 	              dashFrequency: 1.0,
