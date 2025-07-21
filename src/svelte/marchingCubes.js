@@ -326,7 +326,7 @@ function vertexInterp(isolevel, p1, p2, valp1, valp2) {
   };
 }
 
-export const marchingCubesToGeo = (fn, minX, minY, minZ, maxX, maxY, maxZ, res = 4) => {
+export const marchingCubesToGeo = (fn, minX, minY, minZ, maxX, maxY, maxZ, res = 4, genEdges = true) => {
   const vertices = [];
   const faces = [];
   const vertexCache = new Map();
@@ -429,5 +429,5 @@ export const marchingCubesToGeo = (fn, minX, minY, minZ, maxX, maxY, maxZ, res =
 
 
 
-  return {vertices: vertices, faces, edges: edges.map(e => ({...e, faces: [...new Set(e.faces)]})), labels :[], masks: []};
+  return {vertices: vertices, faces, edges: !genEdges ? [] : edges.map(e => ({...e, faces: [...new Set(e.faces)]})), labels :[], masks: []};
 };

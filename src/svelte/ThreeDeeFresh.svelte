@@ -60,6 +60,16 @@
 			10,
 			8,
 		), scale: 40 },
+		gauss: { label: "Gauss", geo: marchingCubesToGeo(
+			(x, y, z) => -y*2 - (2 * Math.PI * Math.exp(-(x*x + z*z) / 8 / Math.PI)),
+			-12,
+			-12,
+			-12,
+			12,
+			12,
+			12,
+			24,
+		), scale: 40 },
 	};
 
 	const numf = new Intl.NumberFormat("en-US", {
@@ -577,7 +587,7 @@
 				((int >> 8) & 0xff),
 				((int << 0) & 0xff),
 				255,
-			].map((x) => x / 255).map(x => x*0.5 + (1 - x*0.5) / 2);
+			].map((x) => x / 255).map(x => x*0.4 + (1 - x*0.4) / 2);
 		}),
 		meshColor,
 	);
@@ -1612,6 +1622,8 @@
             uniform mat3 viewNormal, modelMatrixNormal;
             uniform mat4 model, view, projection;
 
+            varying float texCoord;
+
             void main() {
               vec3 normalClip0 = normalize(viewNormal * modelMatrixNormal * normalFaceA);
               vec3 normalClip1 = normalize(viewNormal * modelMatrixNormal * normalFaceB);
@@ -1631,14 +1643,19 @@
               vec2 pt1 = screen1 + width * (position.x * xBasis + position.y * yBasis);
               vec2 pt = mix(pt0, pt1, position.z);
               vec4 clip = mix(clip0, clip1, position.z);
+          	  texCoord = (0.5 - position.z) * length(screen1 - screen0) / log(length(resolution)) * 0.1;
               gl_Position = vec4(clip.w * (2.0 * pt/resolution - 1.0), clip.z, clip.w);
             }`,
 
           frag: `
             precision highp float;
             uniform vec4 color;
+            uniform float dashFrequency;
+            uniform float dashRatio;
+            varying float texCoord;
+            uniform float width;
             void main() {
-              gl_FragColor = color;
+              gl_FragColor = vec4(color.rgb, floor(dashRatio + fract(texCoord*dashFrequency)));
             }`,
 
           attributes: {
@@ -1681,17 +1698,20 @@
             model: regl.prop("model"),
             resolution: regl.prop("resolution"),
             modelMatrixNormal: regl.prop("modelMatrixNormal"),
+            dashFrequency: regl.prop("dashFrequency"),
+            dashRatio: regl.prop("dashRatio"),
           },
 
           depth: {
-            enable: regl.prop("depth")
+            enable: regl.prop("depth"),
+            func: 'greater',
           },
 
           polygonOffset: {
 		    enable: true,
 		    offset: {
-		      factor: 0,
-		      units: 0
+		      factor: regl.prop("depthOffset"),
+		      units: 10
 		    }
 		  },
 
@@ -1754,8 +1774,8 @@
             position: regl.prop('positions'),
           },
           cull: {
-            enable: false,
-            face: 'back'
+            enable: true,
+            face: regl.prop("cullFace")
           },
 
           uniforms: {
@@ -1764,20 +1784,28 @@
           },
           depth: {
             enable: regl.prop("depth"),
+            func: 'greater',
           },
+          polygonOffset: {
+		    enable: true,
+		    offset: {
+		      factor: regl.prop("depthOffset"),
+		      units: 1
+		    }
+		  },
           elements: regl.prop("elements"),
         })
       }
 
       function makeMatrixPerspective(fovDeg, aspect, near, far) {
         const f = 1.0 / Math.tan(deg2rad(fovDeg) / 2)
-        const nf = 1 / (near - far)
+        const nf = 1 / (far - near)
 
         return [
           f / aspect, 0.0, 0.0, 0.0,
           0.0, f, 0.0, 0.0,
-          0.0, 0.0, (far + near) * nf, -1.0,
-          0.0, 0.0, (2 * far * near) * nf, 0.0
+          0.0, 0.0, near * nf, -1.0,
+          0.0, 0.0, far * near * nf, 0.0
         ]
       }
 
@@ -2015,15 +2043,17 @@
 		reglCanvas.classList.add("viewport");
 
 
-		const reglGL = reglCanvas.getContext('webgl', {
-			antialias: true,
-			stencil: false,
-			premultipliedAlpha: false 
-		})
 		const regl = createREGL({
 			canvas: reglCanvas,
 			extensions: ["ANGLE_instanced_arrays"],
+			attributes: {
+			antialias: true,
+			stencil: false,
+			premultipliedAlpha: false 
+		}
 		})
+
+		regl._gl.depthRange(1.0, 0.0);
 
         const drawLine3D = interleavedStripRoundCapJoin3D(regl, 10)
         const drawFace3D = makeColorShader(regl)
@@ -2195,12 +2225,15 @@
 	        regl.clear({
 	          color: [0.99,0.99,0.99, 1],
 	          stencil: 1,
-	          depth: 1,
+	          depth: 0.0,
 	        })
 
 
 
 	         reglCamera(() => {
+
+
+	       
 
 	            drawFace3D({
 	              model: modelMatrix.value,
@@ -2208,6 +2241,20 @@
 	              positions: reglFaceMesh.positions,
 	              elements: reglFaceMesh.elements,
 	              depth: true,
+	              cull: true,
+				  cullFace: "front",
+				  depthOffset: -4
+	            })
+
+	            drawFace3D({
+	              model: modelMatrix.value,
+	              color: meshColorGLTranslucent.value,
+	              positions: reglFaceMesh.positions,
+	              elements: reglFaceMesh.elements,
+	              depth: false,
+	              cull: true,
+				  cullFace: "back",
+				  depthOffset: 0
 	            })
 
 
@@ -2224,7 +2271,10 @@
 	              resolution: [reglCanvas.width,reglCanvas.height],
 	              depth: false,
 	              cullFace: "front",
-	              modelMatrixNormal: modelMatrixNormal.value
+	              modelMatrixNormal: modelMatrixNormal.value,
+	              dashFrequency: 2.0,
+	              dashRatio: 0.4,
+	              depthOffset: 0
 	            })
 
 
@@ -2238,9 +2288,12 @@
 	              width: strokeWidthFg.value * window.devicePixelRatio * 2,
 	              segments: reglLineMesh.count,
 	              resolution: [reglCanvas.width,reglCanvas.height],
-	              depth: false,
+	              depth: true,
 	              cullFace: "back",
-	              modelMatrixNormal: modelMatrixNormal.value
+	              modelMatrixNormal: modelMatrixNormal.value,
+	              dashFrequency: 1.0,
+	              dashRatio: 1.0,
+	              depthOffset: 0
 	            })
 
 
@@ -2254,9 +2307,12 @@
 	              width: circleRad.value * window.devicePixelRatio * 4,
 	              segments: reglVertexMesh.count,
 	              resolution: [reglCanvas.width,reglCanvas.height],
-	              depth: false,
+	              depth: true,
 	              cullFace: "back",
-	              modelMatrixNormal: modelMatrixNormal.value
+	              modelMatrixNormal: modelMatrixNormal.value,
+	              dashFrequency: 1.0,
+	              dashRatio: 1.0,
+	              depthOffset: 0
 	            })
 	        })
 		})
