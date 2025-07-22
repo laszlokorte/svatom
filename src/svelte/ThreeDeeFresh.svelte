@@ -1759,19 +1759,24 @@
           frag: `
           precision mediump float;
           uniform vec4 color;
+          varying vec4 faceColor;
           void main () {
-            gl_FragColor = color;
+            gl_FragColor = vec4(faceColor.rgb * faceColor.w + color.rgb * (1.0-faceColor.w), color.w);
           }`,
           vert: `
           precision mediump float;
           attribute vec3 position;
+          attribute vec4 vertexColor;
+          varying vec4 faceColor;
           uniform vec4 color;
           uniform mat4 model, projection, view;
           void main() {
             gl_Position = projection * view * model * vec4(position, 1);
+            faceColor = vertexColor;
           }`,
           attributes: {
             position: regl.prop('positions'),
+            vertexColor: regl.prop('colors'),
           },
           cull: {
             enable: regl.prop("cull"),
@@ -2053,7 +2058,6 @@
 		}
 		})
 
-		regl._gl.depthRange(1.0, 0.0);
 
         const drawLine3D = interleavedStripRoundCapJoin3D(regl, 10)
         const drawFace3D = makeColorShader(regl)
@@ -2131,8 +2135,42 @@
 
         let reglFaceMesh = {
         	positions: regl.buffer([0,0,1,1,0,0,0,1,0]),
+        	colors: regl.buffer([0.2,0,0,1,0.2,0,0,1,0.2,0,0,1]),
         	elements: regl.elements([0,1,2,3,4,5,6,7,8]),
         }
+
+        function parseColor(color, fallback) {
+        	if(!color) {
+        		return fallback
+        	}
+		  color = color.trim();
+
+		  if (color.startsWith('#')) {
+		    let hex = color.slice(1);
+		    if (hex.length === 3) {
+		      hex = hex.split('').map(c => c + c).join('');
+		    }
+		    const num = parseInt(hex, 16);
+		    return [
+		      ((num >> 16) & 255) / 255,
+		      ((num >> 8) & 255) / 255,
+		      (num & 255) / 255,
+		      1
+		    ];
+		  }
+
+		  const rgbaMatch = color.match(/rgba?\s*\(([^)]+)\)/i);
+		  if (rgbaMatch) {
+		    const parts = rgbaMatch[1].split(',').map(s => s.trim());
+		    const r = parseInt(parts[0], 10) / 255;
+		    const g = parseInt(parts[1], 10) / 255;
+		    const b = parseInt(parts[2], 10) / 255;
+		    const a = parts[3] !== undefined ? parseFloat(parts[3]) : 1;
+		    return [r, g, b, a];
+		  }
+
+		  throw new Error("Unsupported color format: " + color);
+		}
 
         $effect(() => {
         	const vs = worldGeo.value.vertices
@@ -2169,8 +2207,11 @@
 				}
 			)
 
+			const toTriangle = (vs) => {
+				return R.pipe(R.slice(1,Infinity), R.aperture(2), R.map(R.prepend(R.nth(0, vs))))(vs)
+			}
 
-			const faces = worldGeo.value.faces.flatMap((f) => f.vertices.length == 3 ? [f.vertices] : [[f.vertices[0], f.vertices[1], f.vertices[2]], [f.vertices[2], f.vertices[3], f.vertices[0]]])
+			const faces = worldGeo.value.faces.flatMap((f) => toTriangle(f.vertices))
 			const vertices = vs.map(({x,y,z}) => [x,-y,z])
 
 
@@ -2178,6 +2219,12 @@
 	        	positions: regl.buffer({
 	        		type: "float",
 	        		data: vertices,
+	        	}),
+        		colors: regl.buffer({
+	        		type: "float",
+	        		data: vs.map(({x,y,z}, vi) => {
+	        			return parseColor(worldGeo.value.faces.find((f) => f.vertices.includes(vi))?.attrs?.color, [0.2,0,0,0.0])
+	        		}),
 	        	}),
 	        	elements: regl.elements(faces),
 	        }
@@ -2195,18 +2242,18 @@
         })
 
         let modelMatrix = read((trans) => [
-			makeMatrixRotateX(-trans.rx),
-			makeMatrixRotateY(-trans.ry),
-			makeMatrixRotateX(-trans.rz),
-			makeMatrixTranslate(trans.tx,trans.ty,trans.tz),
+			makeMatrixTranslate(trans.tx,-trans.ty,trans.tz),
+			makeMatrixRotateZ(trans.rz),
+			makeMatrixRotateY(trans.ry),
+			makeMatrixRotateX(trans.rx),
 			makeMatrixScale(trans.sx,trans.sy,trans.sz),
         ].reduce(matrixMultiplyMatrix), worldTransform)
 
         let modelMatrixNormal = read((trans) => {
         	const m = [
-        			makeMatrixRotateX(-trans.rx),
-        			makeMatrixRotateY(-trans.ry),
-        			makeMatrixRotateX(-trans.rz),
+        			makeMatrixRotateZ(trans.rz),
+					makeMatrixRotateY(trans.ry),
+					makeMatrixRotateX(trans.rx),
         			makeMatrixScale(1/trans.sx,1/trans.sy,1/trans.sz),
                 ].reduce(matrixMultiplyMatrix)
 
@@ -2239,6 +2286,7 @@
 	              model: modelMatrix.value,
 	              color: meshColorGLTranslucent.value,
 	              positions: reglFaceMesh.positions,
+	              colors: reglFaceMesh.colors,
 	              elements: reglFaceMesh.elements,
 	              depth: true,
 	              depthFunc: 'greater',
@@ -2892,7 +2940,7 @@
 							worldGeo.value = obj.geo = renewToGeo(
 								parserAutoDetect(obj.renew, false),
 								50,
-								8,
+								20,
 							);
 						}
 					}}
