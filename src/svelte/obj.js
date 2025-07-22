@@ -153,17 +153,18 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 
 	const bounds = L.get(
 		L.pick({
-			minX: L.foldTraversalLens( L.minimum, [L.elems, 'x']),
-			minY: L.foldTraversalLens( L.minimum, [L.elems, 'y']),
-			maxX: L.foldTraversalLens( L.maximum, [L.elems, L.props('x','w'), L.foldTraversalLens(L.sum, L.values)]),
-			maxY: L.foldTraversalLens( L.maximum, [L.elems, L.props('y','h'), L.foldTraversalLens(L.sum, L.values)]),
+			minX: [L.foldTraversalLens( L.minimum, [L.elems, 'x']), L.defaults(0)],
+			minY: [L.foldTraversalLens( L.minimum, [L.elems, 'y']), L.defaults(0)],
+			maxX: [L.foldTraversalLens( L.maximum, [L.elems, L.props('x','w'), L.foldTraversalLens(L.sum, L.values)]), L.defaults(0)],
+			maxY: [L.foldTraversalLens( L.maximum, [L.elems, L.props('y','h'), L.foldTraversalLens(L.sum, L.values)]), L.defaults(0)],
 		}),
 		figures,
 	);
 
-	const width = bounds.maxX - bounds.minX
-	const height = bounds.maxY - bounds.minY
+	const width = (bounds.maxX - bounds.minX)||1
+	const height = (bounds.maxY - bounds.minY)||1
 	const aspect = height/width
+
 
 	const v = []
 	const f = []
@@ -325,12 +326,15 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 	}
 
 	for(const l of lines) {
-		for(const [from, to] of R.aperture(2, l.points)) {
+		const segments = R.aperture(2, l.points)
+		let s = 0;
+		for(const [from, to] of segments) {
+			s++
 			const v1 = v.length
 			v.push({ x: ((from.x-bounds.minX)/width-0.5)*scale, y: ((from.y-bounds.minY)/height-0.5)*scale*aspect, z: 0.5 },)
 			v.push({ x: ((to.x-bounds.minX)/width-0.5)*scale, y: ((to.y-bounds.minY)/height-0.5)*scale*aspect, z: 0.5 },)
 
-			e.push({ vertices: [v1,v1+1], faces: [],  attrs: { "stroke-width": 4, "marker-end": "url(#simple-arrow)" , "class": "petri-line", color: renewToRgba(l?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: true } },)
+			e.push({ vertices: [v1,v1+1], faces: [],  attrs: { "stroke-width": 4, "marker-end": segments.length === s ? "url(#simple-arrow)" : null , "class": "petri-line", color: renewToRgba(l?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: true } },)
 
 		}
 		//v.push({ x: ((t.fOriginX-bounds.minX)/width-0.5)*scale, y: ((t.fOriginY-bounds.minY)/height-0.5)*scale*aspect, z: 0 },)

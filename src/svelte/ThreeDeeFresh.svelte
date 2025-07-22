@@ -21,8 +21,7 @@
 	import { parserAutoDetect } from "@petristation/renewjs";
 	import exampleMesh, { cube2 } from "./example_mesh";
 	import * as objData from "../data/obj";
-	import exampleRenew from "../data/renew/example.rnw?raw";
-	import exampleDoubleArrow from "../data/renew/doublearrow.rnw?raw";
+	import * as renew from "../data/renew";
 	import {
 		parse as parseObj,
 		toGeo,
@@ -48,8 +47,9 @@
 			scaleY: -1,
 		},
 		torus: { label: "Torus", data: objData.torus, scale: 5 },
-		renew1: { label: "Renew #1", renew: exampleRenew, scale: 5 },
-		renew2: { label: "Renew #2", renew: exampleDoubleArrow, scale: 5 },
+		renew1: { label: "Renew #1", renew: renew.exampleRenew, scale: 5 },
+		renew2: { label: "Renew #2", renew: renew.exampleDoubleArrow, scale: 5 },
+		renew3: { label: "Renew #3", renew: renew.exampleEightPhil, scale: 5 },
 		marching: { label: "Marching Cubes", geo: marchingCubesToGeo(
 			(x, y, z) => (3*x * x/100 + 4*y * y/100 + 1.5*z * z/100) - Math.cos(z*Math.PI/10)*45 - Math.cos(x*Math.PI/12)*20 - Math.cos(y*Math.PI/14)*40,
 			-10,
@@ -71,6 +71,12 @@
 			24,
 		), scale: 40 },
 	};
+
+	const renewExamples = fetch("https://renew.laszlokorte.de/")
+		.then((x) => x.json())
+		.catch((e) => {
+			files: []
+		});
 
 	const numf = new Intl.NumberFormat("en-US", {
 		maximumFractionDigits: 2,
@@ -1560,55 +1566,82 @@
 
 
 
-	function roundCapJoinGeometry(regl, resolution) {
-        const instanceRoundRound = [
-          [0, -0.5, 0],
-          [0, -0.5, 1],
-          [0, 0.5, 1],
-          [0, -0.5, 0],
-          [0, 0.5, 1],
-          [0, 0.5, 0]
-        ];
-        // Add the left cap.
-        for (let step = 0; step < resolution; step++) {
-          const theta0 = Math.PI / 2 + ((step + 0) * Math.PI) / resolution;
-          const theta1 = Math.PI / 2 + ((step + 1) * Math.PI) / resolution;
-          instanceRoundRound.push([0, 0, 0]);
-          instanceRoundRound.push([
-            0.5 * Math.cos(theta0),
-            0.5 * Math.sin(theta0),
-            0
-          ]);
-          instanceRoundRound.push([
-            0.5 * Math.cos(theta1),
-            0.5 * Math.sin(theta1),
-            0
-          ]);
-        }
-        // Add the right cap.
-        for (let step = 0; step < resolution; step++) {
-          const theta0 = (3 * Math.PI) / 2 + ((step + 0) * Math.PI) / resolution;
-          const theta1 = (3 * Math.PI) / 2 + ((step + 1) * Math.PI) / resolution;
-          instanceRoundRound.push([0, 0, 1]);
-          instanceRoundRound.push([
-            0.5 * Math.cos(theta0),
-            0.5 * Math.sin(theta0),
-            1
-          ]);
-          instanceRoundRound.push([
-            0.5 * Math.cos(theta1),
-            0.5 * Math.sin(theta1),
-            1
-          ]);
-        }
-        return {
-          buffer: regl.buffer(instanceRoundRound),
-          count: instanceRoundRound.length
-        };
+	function roundCapJoinGeometry(resolution) {
+		return (regl) => {
+			const instanceRoundRound = [
+	          [0, -0.5, 0],
+	          [0, -0.5, 1],
+	          [0, 0.5, 1],
+	          [0, -0.5, 0],
+	          [0, 0.5, 1],
+	          [0, 0.5, 0]
+	        ];
+	        // Add the left cap.
+	        for (let step = 0; step < resolution; step++) {
+	          const theta0 = Math.PI / 2 + ((step + 0) * Math.PI) / resolution;
+	          const theta1 = Math.PI / 2 + ((step + 1) * Math.PI) / resolution;
+	          instanceRoundRound.push([0, 0, 0]);
+	          instanceRoundRound.push([
+	            0.5 * Math.cos(theta0),
+	            0.5 * Math.sin(theta0),
+	            0
+	          ]);
+	          instanceRoundRound.push([
+	            0.5 * Math.cos(theta1),
+	            0.5 * Math.sin(theta1),
+	            0
+	          ]);
+	        }
+	        // Add the right cap.
+	        for (let step = 0; step < resolution; step++) {
+	          const theta0 = (3 * Math.PI) / 2 + ((step + 0) * Math.PI) / resolution;
+	          const theta1 = (3 * Math.PI) / 2 + ((step + 1) * Math.PI) / resolution;
+	          instanceRoundRound.push([0, 0, 1]);
+	          instanceRoundRound.push([
+	            0.5 * Math.cos(theta0),
+	            0.5 * Math.sin(theta0),
+	            1
+	          ]);
+	          instanceRoundRound.push([
+	            0.5 * Math.cos(theta1),
+	            0.5 * Math.sin(theta1),
+	            1
+	          ]);
+	        }
+	        return {
+	          buffer: regl.buffer(instanceRoundRound),
+	          count: instanceRoundRound.length
+	        };
+		}
+        
       }
 
-	function interleavedStripRoundCapJoin3D(regl, resolution) {
-        const roundCapJoin = roundCapJoinGeometry(regl, resolution);
+      function arrowGeometry(size) {
+      	return (regl) => {
+	      	return {
+	          buffer: regl.buffer([
+	            [0, -0.5, 0],
+	            [-size, -0.5, 1],
+	            [-size, 0.5, 1],
+	            [0, -0.5, 0],
+	            [-size, 0.5, 1],
+	            [0, 0.5, 0],
+
+	            [0,0,1],
+	            [-size*1.25,size*0.5,1],
+	            [-size,0,1],
+
+	            [0,0,1],
+	            [-size,0,1],
+	            [-size*1.25,-size*0.5,1],
+	          ]),
+	          count: 12
+	        }
+      	}
+      }
+
+	function interleavedStrip3D(regl, geometry) {
+        const geo = geometry(regl);
         return regl({
           vert: `
             precision highp float;
@@ -1643,7 +1676,8 @@
               vec2 pt1 = screen1 + width * (position.x * xBasis + position.y * yBasis);
               vec2 pt = mix(pt0, pt1, position.z);
               vec4 clip = mix(clip0, clip1, position.z);
-          	  texCoord = (0.5 - position.z) * length(screen1 - screen0) / log(length(resolution)) * 0.1;
+    	  	  texCoord = (0.5 - position.z) * length(screen1 - screen0) / log(length(resolution)) * 0.1;
+
               gl_Position = vec4(clip.w * (2.0 * pt/resolution - 1.0), clip.z, clip.w);
             }`,
 
@@ -1660,7 +1694,7 @@
 
           attributes: {
             position: {
-              buffer: roundCapJoin.buffer,
+              buffer: geo.buffer,
               divisor: 0
             },
             pointA: {
@@ -1749,7 +1783,7 @@
             },
           },
 
-          count: roundCapJoin.count,
+          count: geo.count,
           instances: regl.prop("segments")
         });
       }
@@ -2059,7 +2093,8 @@
 		})
 
 
-        const drawLine3D = interleavedStripRoundCapJoin3D(regl, 10)
+        const drawLine3D = interleavedStrip3D(regl, roundCapJoinGeometry(10))
+        const drawArrow3D = interleavedStrip3D(regl, arrowGeometry(4))
         const drawFace3D = makeColorShader(regl)
         var reglCamera = regl({
             context: {
@@ -2127,6 +2162,12 @@
         	count: 0
         }
 
+        let reglArrowMesh = {
+        	points: regl.buffer([]),
+        	normals: regl.buffer([]),
+        	count: 0
+        }
+
         let reglVertexMesh = {
         	points: regl.buffer([]),
         	normals: regl.buffer([]),
@@ -2174,11 +2215,11 @@
 
         $effect(() => {
         	const vs = worldGeo.value.vertices
-        	const edges = worldGeo.value.edges.flatMap((e) =>
+        	const edges = worldGeo.value.edges.filter(e => e.attrs["marker-end"] != "url(#simple-arrow)").flatMap((e) =>
 				e.vertices.flatMap(vi => [vs[vi].x, -vs[vi].y, vs[vi].z]),
 			)
 
-			const edgeNormals = worldGeo.value.edges.flatMap((e) => {
+			const edgeNormals = worldGeo.value.edges.filter(e => e.attrs["marker-end"] != "url(#simple-arrow)").flatMap((e) => {
 					const normals = e.faces.flatMap(fi => {
 						const faceVerts = worldGeo.value.faces[fi].vertices.map(vi => worldGeo.value.vertices[vi])
 						const v1 = faceVerts[0]
@@ -2232,6 +2273,45 @@
 	        	points: regl.buffer(edges),
 	        	normals: regl.buffer(edgeNormals),
 	        	count: edges.length / 6
+	        }
+
+	        const arrowEdges = worldGeo.value.edges.filter(e => e.attrs["marker-end"] === "url(#simple-arrow)").flatMap((e) =>
+				e.vertices.slice(-2).flatMap(vi => [vs[vi].x, -vs[vi].y, vs[vi].z]),
+			)
+
+			const arrowEdgeNormals = worldGeo.value.edges.filter(e => e.attrs["marker-end"] === "url(#simple-arrow)").flatMap((e) => {
+					const normals = e.faces.flatMap(fi => {
+						const faceVerts = worldGeo.value.faces[fi].vertices.map(vi => worldGeo.value.vertices[vi])
+						const v1 = faceVerts[0]
+						const v2 = faceVerts[1]
+						const v3 = faceVerts[2]
+
+						const d1x = v2.x - v1.x
+						const d1y = -(v2.y - v1.y)
+						const d1z = v2.z - v1.z
+
+						const d2x = v3.x - v1.x
+						const d2y = -(v3.y - v1.y)
+						const d2z = v3.z - v1.z
+
+						const normal = [
+							d1y*d2z - d1z*d2y,
+							d1z*d2x - d1x*d2z,
+							d1x*d2y - d1y*d2x,
+						]
+
+						const length = Math.sqrt(normal.map(x => x*x).reduce((a,b) => a+b))
+
+						return normal.map(x => x/length)
+					})
+					return [...normals,...normals, 0,0,0,0,0,0].slice(0, 6)
+				}
+			)
+
+			reglArrowMesh = {
+	        	points: regl.buffer(arrowEdges),
+	        	normals: regl.buffer(arrowEdgeNormals),
+	        	count: arrowEdges.length / 6
 	        }
 
 			reglVertexMesh = {
@@ -2318,6 +2398,26 @@
 	            })
 
 
+	            drawLine3D({
+	              points: reglArrowMesh.points,
+	              normals: reglArrowMesh.normals,
+	              model: modelMatrix.value,
+	              axisFilter: [1,1,1],
+	              axisShift: [0,0,0],
+	              color: meshColorGLDarker.value,
+	              width: strokeWidthBg.value * window.devicePixelRatio * 2,
+	              segments: reglArrowMesh.count,
+	              resolution: [reglCanvas.width,reglCanvas.height],
+	              depth: false,
+	              depthFunc: 'less',
+	              cull: false,
+	              cullFace: "front",
+	              modelMatrixNormal: modelMatrixNormal.value,
+	              dashFrequency: 2.0,
+	              dashRatio: 0.4,
+	              depthOffset: strokeWidthBg.value
+	            })
+
 
 
 	            drawLine3D({
@@ -2333,6 +2433,29 @@
 	              depth: true,
 	              depthFunc: 'greater',
 	              cull: true,
+	              cullFace: "back",
+	              modelMatrixNormal: modelMatrixNormal.value,
+	              dashFrequency: 1.0,
+	              dashRatio: 1.0,
+	              depthOffset: strokeWidthFg.value 
+	            })
+
+
+
+
+	            drawArrow3D({
+	              points: reglArrowMesh.points,
+	              normals: reglArrowMesh.normals,
+	              model: modelMatrix.value,
+	              axisFilter: [1,1,1],
+	              axisShift: [0,0,0],
+	              color: meshColorGLDark.value,
+	              width: strokeWidthFg.value * window.devicePixelRatio * 2,
+	              segments: reglArrowMesh.count,
+	              resolution: [reglCanvas.width,reglCanvas.height],
+	              depth: true,
+	              depthFunc: 'greater',
+	              cull: false,
 	              cullFace: "back",
 	              modelMatrixNormal: modelMatrixNormal.value,
 	              dashFrequency: 1.0,
@@ -2950,7 +3073,60 @@
 					{/each}
 				</select>
 			</div>
+
 		</fieldset>
+
+
+		<fieldset>
+			<legend>Load Renew Document</legend>
+
+			{#await renewExamples then { files }}
+					<label>
+						Select file:
+						<select
+						onchange={(e) => {
+							const fileName = e.currentTarget.selectedOptions[0].textContent
+							if (e.currentTarget.value) {
+								fetch(e.currentTarget.value)
+								.then((x) => x.json())
+								.then((x) => {
+									worldGeo.value = renewToGeo(
+										parserAutoDetect(x.content, false),
+										50,
+										20,
+									);
+								})
+								.catch((e) => {
+									worldGeo.value = {
+										vertices: [
+											{ x: 0, y: 0, z: 0 },
+										],
+										edges: [
+										],
+										faces: [
+										],
+										masks: [
+										],
+										labels: [
+											{ vertex: 0, text: ["Error parsing", fileName], attrs: { class:"cube-label", "pointer-events":"none",stroke:"white", "text-anchor": "middle", "stroke-width": "5px", "font-size": "3.4em", fill: "red", transform: ""} },
+										]
+									};
+								});
+							}
+						}}
+					>
+						<option value="">More examples</option>
+						{#each files as { name, href }}
+							<option value={href}>{name}</option>
+						{/each}
+					</select>
+					</label>
+				{:catch}
+					<em style="color: #aaa"
+						>Or Drop Renew Files from your own PC into the text field</em
+					>
+				{/await}
+</fieldset>
 	</div>
 </div>
 
