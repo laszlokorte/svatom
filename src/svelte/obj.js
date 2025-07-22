@@ -151,7 +151,7 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 		renewDocument,
 	);
 
-	const bounds = L.get(
+	const figureBounds = L.get(
 		L.pick({
 			minX: [L.foldTraversalLens( L.minimum, [L.elems, 'x']), L.defaults(0)],
 			minY: [L.foldTraversalLens( L.minimum, [L.elems, 'y']), L.defaults(0)],
@@ -160,6 +160,34 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 		}),
 		figures,
 	);
+
+	const linesBounds = L.get(
+		L.pick({
+			minX: [L.foldTraversalLens( L.minimum, [L.elems, 'points', L.elems, 'x']), L.defaults(0)],
+			minY: [L.foldTraversalLens( L.minimum, [L.elems, 'points', L.elems, 'y']), L.defaults(0)],
+			maxX: [L.foldTraversalLens( L.maximum, [L.elems, 'points', L.elems, 'x']), L.defaults(0)],
+			maxY: [L.foldTraversalLens( L.maximum, [L.elems, 'points', L.elems, 'y']), L.defaults(0)],
+		}),
+		lines,
+	);
+
+
+	const textBounds = L.get(
+		L.pick({
+			minX: [L.foldTraversalLens( L.minimum, [L.elems, 'fOriginX']), L.defaults(0)],
+			minY: [L.foldTraversalLens( L.minimum, [L.elems, 'fOriginY']), L.defaults(0)],
+			maxX: [L.foldTraversalLens( L.maximum, [L.elems, 'fOriginX']), L.defaults(0)],
+			maxY: [L.foldTraversalLens( L.maximum, [L.elems, 'fOriginY']), L.defaults(0)],
+		}),
+		textes,
+	);
+
+	const bounds = {
+		minX: Math.min(figureBounds.minX, linesBounds.minX, textBounds.minX),
+		minY: Math.min(figureBounds.minY, linesBounds.minY, textBounds.minY),
+		maxX: Math.max(figureBounds.maxX, linesBounds.maxX, textBounds.maxX),
+		maxY: Math.max(figureBounds.maxY, linesBounds.maxY, textBounds.maxY),
+	}
 
 	const width = (bounds.maxX - bounds.minX)||1
 	const height = (bounds.maxY - bounds.minY)||1
@@ -334,7 +362,7 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 			v.push({ x: ((from.x-bounds.minX)/width-0.5)*scale, y: ((from.y-bounds.minY)/height-0.5)*scale*aspect, z: 0.5 },)
 			v.push({ x: ((to.x-bounds.minX)/width-0.5)*scale, y: ((to.y-bounds.minY)/height-0.5)*scale*aspect, z: 0.5 },)
 
-			e.push({ vertices: [v1,v1+1], faces: [],  attrs: { "stroke-width": 4, "marker-end": segments.length === s ? "url(#simple-arrow)" : null , "class": "petri-line", color: renewToRgba(l?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: true } },)
+			e.push({ vertices: [v1,v1+1], faces: [],  attrs: { "stroke-width": 4, "marker-end": segments.length === s ? "url(#simple-arrow)" : null, "marker-start": 1 === s ? "url(#circle-arrow)" : null, "class": "petri-line", color: renewToRgba(l?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: true } },)
 
 		}
 		//v.push({ x: ((t.fOriginX-bounds.minX)/width-0.5)*scale, y: ((t.fOriginY-bounds.minY)/height-0.5)*scale*aspect, z: 0 },)

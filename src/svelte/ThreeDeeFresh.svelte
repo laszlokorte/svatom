@@ -1640,6 +1640,40 @@
       	}
       }
 
+      function circleCapGeometry(size, resolution) {
+		return (regl) => {
+			const instanceRoundRound = [
+				[0, -0.5, 0],
+		          [-size*0.5, -0.5, 1],
+		          [-size*0.5, 0.5, 1],
+		          [0, -0.5, 0],
+		          [-size*0.5, 0.5, 1],
+		          [0, 0.5, 0]
+	        ];
+	        // Add the right cap.
+	        for (let step = 0; step < resolution*2; step++) {
+	          const theta0 = (3 * Math.PI) / 2 + ((step + 0) * Math.PI) / resolution;
+	          const theta1 = (3 * Math.PI) / 2 + ((step + 1) * Math.PI) / resolution;
+	          instanceRoundRound.push([-size*0.5, 0, 1]);
+	          instanceRoundRound.push([
+	            -size*0.5+size*0.5 * Math.cos(theta0),
+	            size*0.5 * Math.sin(theta0),
+	            1
+	          ]);
+	          instanceRoundRound.push([
+	            -size*0.5+size*0.5 * Math.cos(theta1),
+	            size*0.5 * Math.sin(theta1),
+	            1
+	          ]);
+	        }
+	        return {
+	          buffer: regl.buffer(instanceRoundRound),
+	          count: instanceRoundRound.length
+	        };
+		}
+        
+      }
+
 	function interleavedStrip3D(regl, geometry) {
         const geo = geometry(regl);
         return regl({
@@ -2095,6 +2129,7 @@
 
         const drawLine3D = interleavedStrip3D(regl, roundCapJoinGeometry(10))
         const drawArrow3D = interleavedStrip3D(regl, arrowGeometry(4))
+        const drawCircle3D = interleavedStrip3D(regl, circleCapGeometry(5, 10))
         const drawFace3D = makeColorShader(regl)
         var reglCamera = regl({
             context: {
@@ -2168,6 +2203,12 @@
         	count: 0
         }
 
+        let reglCircleArrowMesh = {
+        	points: regl.buffer([]),
+        	normals: regl.buffer([]),
+        	count: 0
+        }
+
         let reglVertexMesh = {
         	points: regl.buffer([]),
         	normals: regl.buffer([]),
@@ -2213,13 +2254,15 @@
 		  throw new Error("Unsupported color format: " + color);
 		}
 
+		const hasMarker = (side, type) => e => !!e.attrs["marker-"+side] && (!type || "url(#"+type+")" === e.attrs["marker-"+side])
+
         $effect(() => {
         	const vs = worldGeo.value.vertices
-        	const edges = worldGeo.value.edges.filter(e => e.attrs["marker-end"] != "url(#simple-arrow)").flatMap((e) =>
+        	const edges = worldGeo.value.edges.filter(R.complement(R.anyPass([hasMarker("start"), hasMarker("end")]))).flatMap((e) =>
 				e.vertices.flatMap(vi => [vs[vi].x, -vs[vi].y, vs[vi].z]),
 			)
 
-			const edgeNormals = worldGeo.value.edges.filter(e => e.attrs["marker-end"] != "url(#simple-arrow)").flatMap((e) => {
+			const edgeNormals = worldGeo.value.edges.filter(R.complement(R.anyPass([hasMarker("start"), hasMarker("end")]))).flatMap((e) => {
 					const normals = e.faces.flatMap(fi => {
 						const faceVerts = worldGeo.value.faces[fi].vertices.map(vi => worldGeo.value.vertices[vi])
 						const v1 = faceVerts[0]
@@ -2275,11 +2318,44 @@
 	        	count: edges.length / 6
 	        }
 
-	        const arrowEdges = worldGeo.value.edges.filter(e => e.attrs["marker-end"] === "url(#simple-arrow)").flatMap((e) =>
+	        const arrowEdgesForward = worldGeo.value.edges.filter(hasMarker("end", "simple-arrow")).flatMap((e) =>
 				e.vertices.slice(-2).flatMap(vi => [vs[vi].x, -vs[vi].y, vs[vi].z]),
 			)
 
-			const arrowEdgeNormals = worldGeo.value.edges.filter(e => e.attrs["marker-end"] === "url(#simple-arrow)").flatMap((e) => {
+			const arrowEdgeNormalsForward = worldGeo.value.edges.filter(hasMarker("end", "simple-arrow")).flatMap((e) => {
+					const normals = e.faces.flatMap(fi => {
+						const faceVerts = worldGeo.value.faces[fi].vertices.map(vi => worldGeo.value.vertices[vi])
+						const v1 = faceVerts[0]
+						const v2 = faceVerts[1]
+						const v3 = faceVerts[2]
+
+						const d1x = v2.x - v1.x
+						const d1y = -(v2.y - v1.y)
+						const d1z = v2.z - v1.z
+
+						const d2x = v3.x - v1.x
+						const d2y = -(v3.y - v1.y)
+						const d2z = v3.z - v1.z
+
+						const normal = [
+							d1y*d2z - d1z*d2y,
+							d1z*d2x - d1x*d2z,
+							d1x*d2y - d1y*d2x,
+						]
+
+						const length = Math.sqrt(normal.map(x => x*x).reduce((a,b) => a+b))
+
+						return normal.map(x => x/length)
+					})
+					return [...normals,...normals, 0,0,0,0,0,0].slice(0, 6)
+				}
+			)
+
+	        const arrowEdgesBackward = worldGeo.value.edges.filter(hasMarker("start", "simple-arrow")).flatMap((e) =>
+				e.vertices.slice(0,2).reverse().flatMap(vi => [vs[vi].x, -vs[vi].y, vs[vi].z]),
+			)
+
+			const arrowEdgeNormalsBackward = worldGeo.value.edges.filter(hasMarker("start", "simple-arrow")).flatMap((e) => {
 					const normals = e.faces.flatMap(fi => {
 						const faceVerts = worldGeo.value.faces[fi].vertices.map(vi => worldGeo.value.vertices[vi])
 						const v1 = faceVerts[0]
@@ -2309,9 +2385,84 @@
 			)
 
 			reglArrowMesh = {
-	        	points: regl.buffer(arrowEdges),
-	        	normals: regl.buffer(arrowEdgeNormals),
-	        	count: arrowEdges.length / 6
+	        	points: regl.buffer([...arrowEdgesForward, ...arrowEdgesBackward]),
+	        	normals: regl.buffer([...arrowEdgeNormalsForward, ...arrowEdgeNormalsBackward]),
+	        	count: arrowEdgesForward.length / 6 + arrowEdgesBackward.length / 6
+	        }
+
+
+
+
+	        const arrowCircleEdgesForward = worldGeo.value.edges.filter(hasMarker("end", "circle-arrow")).flatMap((e) =>
+				e.vertices.slice(-2).flatMap(vi => [vs[vi].x, -vs[vi].y, vs[vi].z]),
+			)
+
+			const arrowCircleEdgeNormalsForward = worldGeo.value.edges.filter(hasMarker("end", "circle-arrow")).flatMap((e) => {
+					const normals = e.faces.flatMap(fi => {
+						const faceVerts = worldGeo.value.faces[fi].vertices.map(vi => worldGeo.value.vertices[vi])
+						const v1 = faceVerts[0]
+						const v2 = faceVerts[1]
+						const v3 = faceVerts[2]
+
+						const d1x = v2.x - v1.x
+						const d1y = -(v2.y - v1.y)
+						const d1z = v2.z - v1.z
+
+						const d2x = v3.x - v1.x
+						const d2y = -(v3.y - v1.y)
+						const d2z = v3.z - v1.z
+
+						const normal = [
+							d1y*d2z - d1z*d2y,
+							d1z*d2x - d1x*d2z,
+							d1x*d2y - d1y*d2x,
+						]
+
+						const length = Math.sqrt(normal.map(x => x*x).reduce((a,b) => a+b))
+
+						return normal.map(x => x/length)
+					})
+					return [...normals,...normals, 0,0,0,0,0,0].slice(0, 6)
+				}
+			)
+
+	        const arrowCircleEdgesBackward = worldGeo.value.edges.filter(hasMarker("start", "circle-arrow")).flatMap((e) =>
+				e.vertices.slice(0,2).reverse().flatMap(vi => [vs[vi].x, -vs[vi].y, vs[vi].z]),
+			)
+
+			const arrowCircleEdgeNormalsBackward = worldGeo.value.edges.filter(hasMarker("start", "circle-arrow")).flatMap((e) => {
+					const normals = e.faces.flatMap(fi => {
+						const faceVerts = worldGeo.value.faces[fi].vertices.map(vi => worldGeo.value.vertices[vi])
+						const v1 = faceVerts[0]
+						const v2 = faceVerts[1]
+						const v3 = faceVerts[2]
+
+						const d1x = v2.x - v1.x
+						const d1y = -(v2.y - v1.y)
+						const d1z = v2.z - v1.z
+
+						const d2x = v3.x - v1.x
+						const d2y = -(v3.y - v1.y)
+						const d2z = v3.z - v1.z
+
+						const normal = [
+							d1y*d2z - d1z*d2y,
+							d1z*d2x - d1x*d2z,
+							d1x*d2y - d1y*d2x,
+						]
+
+						const length = Math.sqrt(normal.map(x => x*x).reduce((a,b) => a+b))
+
+						return normal.map(x => x/length)
+					})
+					return [...normals,...normals, 0,0,0,0,0,0].slice(0, 6)
+				}
+			)
+
+			reglCircleArrowMesh = {
+	        	points: regl.buffer([...arrowCircleEdgesForward, ...arrowCircleEdgesBackward]),
+	        	normals: regl.buffer([...arrowCircleEdgeNormalsForward, ...arrowCircleEdgeNormalsBackward]),
+	        	count: arrowCircleEdgesForward.length / 6 + arrowCircleEdgesBackward.length / 6
 	        }
 
 			reglVertexMesh = {
@@ -2452,6 +2603,27 @@
 	              color: meshColorGLDark.value,
 	              width: strokeWidthFg.value * window.devicePixelRatio * 2,
 	              segments: reglArrowMesh.count,
+	              resolution: [reglCanvas.width,reglCanvas.height],
+	              depth: true,
+	              depthFunc: 'greater',
+	              cull: false,
+	              cullFace: "back",
+	              modelMatrixNormal: modelMatrixNormal.value,
+	              dashFrequency: 1.0,
+	              dashRatio: 1.0,
+	              depthOffset: strokeWidthFg.value 
+	            })
+
+
+	            drawCircle3D({
+	              points: reglCircleArrowMesh.points,
+	              normals: reglCircleArrowMesh.normals,
+	              model: modelMatrix.value,
+	              axisFilter: [1,1,1],
+	              axisShift: [0,0,0],
+	              color: meshColorGLDark.value,
+	              width: strokeWidthFg.value * window.devicePixelRatio * 2,
+	              segments: reglCircleArrowMesh.count,
 	              resolution: [reglCanvas.width,reglCanvas.height],
 	              depth: true,
 	              depthFunc: 'greater',
@@ -3330,6 +3502,19 @@
 				orient="auto-start-reverse"
 			>
 				<path d="M 0 0 L 10 5 L 0 10 z" />
+			</marker>
+
+
+			<marker
+				id="circle-arrow"
+				viewBox="0 0 10 10"
+				refX="9"
+				refY="5"
+				markerWidth="6"
+				markerHeight="6"
+				orient="auto-start-reverse"
+			>
+				<circle cx="5" cy="5" r=5 />
 			</marker>
 
 			{#each ndcGeoMaskPathsFast.value as p, i (i)}
