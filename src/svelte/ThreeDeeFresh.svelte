@@ -1253,7 +1253,7 @@
 	const eyePointerRotate = view(
 		L.pick({
 			dx: [
-				"ry",
+				L.choose(({rx}) => Math.cos(rx) > 0 ? "ry" : ["ry", L.negate]),
 				wrapRange(-Math.PI, Math.PI),
 				lensRadToDegree,
 				L.setter((a, b) => b + a / 3),
@@ -1268,10 +1268,43 @@
 		cameraEye,
 	);
 
+	const getCameraUpVector = (rx, ry, rz) => {
+	  const sinX = Math.sin(rx), cosX = Math.cos(rx);
+	  const sinY = Math.sin(ry), cosY = Math.cos(ry);
+	  const sinZ = Math.sin(rz), cosZ = Math.cos(rz);
+
+	  // Combine rotations: R = Ry * Rx * Rz
+	  // Then apply to (0, 1, 0)
+
+	  // Intermediate result: (0, 1, 0) rotated by Rz
+	  const x1 = -sinZ;
+	  const y1 = cosZ;
+	  const z1 = 0;
+
+	  // Then rotate by Rx
+	  const x2 = x1;
+	  const y2 = y1 * cosX - z1 * sinX;
+	  const z2 = y1 * sinX + z1 * cosX;
+
+	  // Then rotate by Ry
+	  return {
+	    x: x2 * cosY + z2 * sinY,
+	    y: y2,
+	    z: -x2 * sinY + z2 * cosY
+	  };
+	};
+
 	const eyePointerPan = view(
 		L.pick({
-			dx: ["tx", L.setter((a, b) => b - a / 10)],
-			dy: ["ty", L.setter((a, b) => b - a / 10)],
+			dx: [L.setter((dist, cam) => R.pipe(R.modify('tx', R.add(-Math.cos(cam.ry) * dist * 0.1)), R.modify('tz', R.add(-Math.sin(cam.ry) * dist * 0.1)))(cam))],
+			dy:  L.setter((dist, cam) => {
+			    const up = getCameraUpVector(cam.rx, cam.ry, cam.rz);
+			    return R.pipe(
+			      R.modify('tx', R.add(up.x * dist * 0.1)),
+			      R.modify('ty', R.add(-up.y * dist * 0.1)),
+			      R.modify('tz', R.add(-up.z * dist * 0.1))
+			    )(cam);
+			  }),
 		}),
 		cameraEye,
 	);
@@ -1295,8 +1328,8 @@
 	);
 	const eyeArrowWalk = view(
 		L.pick({
-			dx: ["tx", L.setter((a, b) => b + a * 2)],
-			dy: ["tz", L.setter((a, b) => b - a * 2)],
+			dx: [L.setter((dist, cam) => R.pipe(R.modify('tx', R.add(Math.cos(cam.ry) * dist * 2)), R.modify('tz', R.add(Math.sin(cam.ry) * dist * 2)))(cam))],
+			dy: [L.setter((dist, cam) =>  R.pipe(R.modify('tz', R.add(-Math.cos(cam.ry)*Math.cos(cam.rx)  * dist * 2)), R.modify('tx', R.add(Math.sin(cam.ry)*Math.cos(cam.rx) * dist * 2)), R.modify('ty', R.add(Math.sin(cam.rx) * dist * 2)))(cam))],
 		}),
 		cameraEye,
 	);
@@ -2521,9 +2554,9 @@
 	              colors: reglFaceMesh.colors,
 	              elements: reglFaceMesh.elements,
 	              depth: true,
-	              depthFunc: 'greater',
+	              depthFunc: 'gequal',
 	              cull: false,
-				  cullFace: "front",
+				  cullFace: "back",
 				  depthOffset: -4
 	            })
 
@@ -2541,7 +2574,7 @@
 	              segments: reglLineMesh.count,
 	              resolution: [reglCanvas.width,reglCanvas.height],
 	              depth: false,
-	              depthFunc: 'less',
+	              depthFunc: 'lequal',
 	              cull: false,
 	              cullFace: "front",
 	              modelMatrixNormal: modelMatrixNormal.value,
@@ -2564,7 +2597,7 @@
 	              segments: reglLineMesh.count,
 	              resolution: [reglCanvas.width,reglCanvas.height],
 	              depth: true,
-	              depthFunc: 'greater',
+	              depthFunc: 'gequal',
 	              cull: true,
 	              cullFace: "back",
 	              modelMatrixNormal: modelMatrixNormal.value,
@@ -2588,7 +2621,7 @@
 	              segments: reglArrowMesh.count,
 	              resolution: [reglCanvas.width,reglCanvas.height],
 	              depth: true,
-	              depthFunc: 'greater',
+	              depthFunc: 'gequal',
 	              cull: false,
 	              cullFace: "back",
 	              modelMatrixNormal: modelMatrixNormal.value,
@@ -2610,7 +2643,7 @@
 	              segments: reglCircleArrowMesh.count,
 	              resolution: [reglCanvas.width,reglCanvas.height],
 	              depth: true,
-	              depthFunc: 'greater',
+	              depthFunc: 'gequal',
 	              cull: false,
 	              cullFace: "back",
 	              modelMatrixNormal: modelMatrixNormal.value,
@@ -2632,7 +2665,7 @@
 	              segments: reglVertexMesh.count,
 	              resolution: [reglCanvas.width,reglCanvas.height],
 	              depth: false,
-	              depthFunc: 'greater',
+	              depthFunc: 'gequal',
 	              cull: true,
 	              cullFace: "back",
 	              modelMatrixNormal: modelMatrixNormal.value,

@@ -215,15 +215,15 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 		const f1 = f.length
 		const v1 = v.length
 		const v2 = v.length + 4
-		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: zAxis },)
-		v.push({ x: ((x+w-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: zAxis },)
-		v.push({ x: ((x+w-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: zAxis },)
-		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: zAxis },)
+		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: zAxis+layerCount*0.001 },)
+		v.push({ x: ((x+w-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: zAxis+layerCount*0.001 },)
+		v.push({ x: ((x+w-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: zAxis+layerCount*0.001 },)
+		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: zAxis+layerCount*0.001 },)
 
-		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: zAxis + thickness },)
-		v.push({ x: ((x+w-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: zAxis + thickness },)
-		v.push({ x: ((x+w-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: zAxis + thickness },)
-		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: zAxis + thickness },)
+		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: zAxis+layerCount*0.001 + thickness },)
+		v.push({ x: ((x+w-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: zAxis+layerCount*0.001 + thickness },)
+		v.push({ x: ((x+w-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: zAxis+layerCount*0.001 + thickness },)
+		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: zAxis+layerCount*0.001 + thickness },)
 
 		f.push({ vertices: [v1,v1+1,v1+2,v1+3], attrs: { class: "petri-face", color: renewToRgba(r?.attributes?.attrs?.FillColor??{ r: 112, g: 219, b: 147 }), flip: false } },)
 		f.push({ vertices: [v2+1,v2,v2+3,v2+2,], attrs: { class: "petri-face", color: renewToRgba(r?.attributes?.attrs?.FillColor??{ r: 112, g: 219, b: 147 }), flip: false } },)
@@ -267,13 +267,13 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 		const f1 = f.length
 		const v1 = v.length
 		const v2 = v.length + 3
-		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: zAxis },)
-		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: zAxis },)
-		v.push({ x: ((x+w-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: zAxis },)
+		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: zAxis +layerCount*0.001 },)
+		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: zAxis +layerCount*0.001 },)
+		v.push({ x: ((x+w-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: zAxis +layerCount*0.001 },)
 
-		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: zAxis + thickness },)
-		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: zAxis + thickness },)
-		v.push({ x: ((x+w-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: zAxis + thickness },)
+		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: zAxis +layerCount*0.001 + thickness },)
+		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: zAxis +layerCount*0.001 + thickness },)
+		v.push({ x: ((x+w-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: zAxis +layerCount*0.001 + thickness },)
 
 		f.push({ vertices: [v1,v1+1,v1+2].reverse(), attrs: { class: "petri-face", color: renewToRgba(r?.attributes?.attrs?.FillColor??{ r: 112, g: 219, b: 147 }), flip: false } },)
 		f.push({ vertices: [v2+1,v2,v2+2].reverse(), attrs: { class: "petri-face", color: renewToRgba(r?.attributes?.attrs?.FillColor??{ r: 112, g: 219, b: 147 }), flip: false } },)
@@ -297,6 +297,10 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 	}
 
 	for(const r of ellipsis) {
+		layerCount++;
+	  let zAxis = 0;
+	  let thickness = 1;
+
 		const {x,y,w,h} = r
 		const f1 = f.length
 		const v1 = v.length
@@ -318,8 +322,8 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 
 
 
-		v.push({ x: (((cx+rx)-bounds.minX)/width-0.5)*scale, y: ((cy-bounds.minY)/height-0.5)*scale*aspect, z: 0 },)
-		v.push({ x: (((cx+rx)-bounds.minX)/width-0.5)*scale, y: ((cy-bounds.minY)/height-0.5)*scale*aspect, z: 1 },)
+		v.push({ x: (((cx+rx)-bounds.minX)/width-0.5)*scale, y: ((cy-bounds.minY)/height-0.5)*scale*aspect, z: zAxis +layerCount*0.001 },)
+		v.push({ x: (((cx+rx)-bounds.minX)/width-0.5)*scale, y: ((cy-bounds.minY)/height-0.5)*scale*aspect, z: zAxis +layerCount*0.001 + thickness },)
 			
 		const f2 = f.length
 		for (let i = 1; i <= sides; i++) {
@@ -327,8 +331,8 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 		  const angle = (i / sides) * 2 * Math.PI;
 		  const x = cx + rx * Math.cos(angle);
 		  const y = cy + ry * Math.sin(angle);
-			v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: 0 },)
-			v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: 1 },)
+			v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: zAxis +layerCount*0.001 },)
+			v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: zAxis +layerCount*0.001 + thickness },)
 			
 			f.push({ vertices: [v1+1,v1,v1-2,v1-1], attrs: { class: "petri-face", color: renewToRgba(r?.attributes?.attrs?.FillColor??{ r: 112, g: 219, b: 147 }), flip: false } },)
 			e.push({ vertices: [v1-2, v1-1], faces: [f2+(i+sides-2)%sides, f2+(i+sides-1)%sides],  attrs: { class: "petri-edge edge-3d", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
