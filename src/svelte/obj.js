@@ -371,10 +371,10 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 
 
 
-	v.push({ x: -0.55*scale, y: -0.55*scale*aspect, z: -0.5*layerCount-0.5 },)
-	v.push({ x: 0.55*scale, y: -0.55*scale*aspect, z: -0.5*layerCount-0.5 },)
-	v.push({ x: 0.55*scale, y: 0.55*scale*aspect, z: -0.5*layerCount-0.5 },)
-	v.push({ x: -0.55*scale, y: 0.55*scale*aspect, z: -0.5*layerCount-0.5 },)
+	v.push({ x: -0.55*scale, y: -0.55*scale*aspect, z: -0.5*layerCount-1 },)
+	v.push({ x: 0.55*scale, y: -0.55*scale*aspect, z: -0.5*layerCount-1 },)
+	v.push({ x: 0.55*scale, y: 0.55*scale*aspect, z: -0.5*layerCount-1 },)
+	v.push({ x: -0.55*scale, y: 0.55*scale*aspect, z: -0.5*layerCount-1 },)
 
 	const lastV = v.length-1
 	f.push({ vertices: [lastV-3,lastV-2,lastV-1,lastV], attrs: { class: "background", color: "#eee", flip: false } },)

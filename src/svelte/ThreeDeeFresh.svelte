@@ -4,6 +4,7 @@
 	import * as R from "ramda";
 	import * as U from "./utils";
 	import createREGL from 'regl'
+	import {parseColor} from './colors'
 
 
 
@@ -1620,12 +1621,6 @@
       	return (regl) => {
 	      	return {
 	          buffer: regl.buffer([
-	            [0, -0.5, 0],
-	            [-size, -0.5, 1],
-	            [-size, 0.5, 1],
-	            [0, -0.5, 0],
-	            [-size, 0.5, 1],
-	            [0, 0.5, 0],
 
 	            [0,0,1],
 	            [-size*1.25,size*0.5,1],
@@ -1635,7 +1630,7 @@
 	            [-size,0,1],
 	            [-size*1.25,-size*0.5,1],
 	          ]),
-	          count: 12
+	          count: 6
 	        }
       	}
       }
@@ -1643,12 +1638,6 @@
       function circleCapGeometry(size, resolution) {
 		return (regl) => {
 			const instanceRoundRound = [
-				[0, -0.5, 0],
-		          [-size*0.5, -0.5, 1],
-		          [-size*0.5, 0.5, 1],
-		          [0, -0.5, 0],
-		          [-size*0.5, 0.5, 1],
-		          [0, 0.5, 0]
 	        ];
 	        // Add the right cap.
 	        for (let step = 0; step < resolution*2; step++) {
@@ -1680,6 +1669,7 @@
           vert: `
             precision highp float;
             attribute vec3 position;
+            attribute vec2 shortening;
             attribute vec3 pointA, pointB;
             attribute vec3 normalFaceA, normalFaceB;
             uniform float width;
@@ -1689,6 +1679,7 @@
             uniform mat3 viewNormal, modelMatrixNormal;
             uniform mat4 model, view, projection;
 
+            uniform float dashFrequency;
             varying float texCoord;
 
             void main() {
@@ -1701,16 +1692,32 @@
           	  float normalDir = length(normalFaceA) == 0.0 || dot(normalClip0, normalDir0) > 0.0 || dot(normalClip1, normalDir1) > 0.0 ? 1.0 : -1.0;
               vec2 screen0 = resolution * (0.5 * clip0.xy/clip0.w + 0.5);
               vec2 screen1 = resolution * (0.5 * clip1.xy/clip1.w + 0.5);
+
+          	float exceedingShort = sign(length(screen1 - screen0) - (shortening.x + shortening.y) * width);
+          	normalDir *= exceedingShort;
+
               vec2 xBasis = normalize(screen1 - screen0);
               if(pointA==pointB) {
               	xBasis = vec2(1.0,0.0);
               }
+
+          	  vec3 shortenedPosition = vec3(
+          	(position.x
+          	-shortening.x*min(sign(position.z - 0.5), 0.0) + 
+          	-shortening.y*max(sign(position.z - 0.5), 0.0)) * sign(1.0 + exceedingShort)
+          	  ,position.y,
+          	  position.z * sign(1.0 + exceedingShort));
+
+          	  float adjustedZ = position.z + width * clamp(shortenedPosition.x / max(length(screen1 - screen0), 2.0), -1.0, 1.0);
+
               vec2 yBasis = vec2(-xBasis.y * normalDir, xBasis.x * normalDir);
-              vec2 pt0 = screen0 + width * (position.x * xBasis + position.y * yBasis);
-              vec2 pt1 = screen1 + width * (position.x * xBasis + position.y * yBasis);
-              vec2 pt = mix(pt0, pt1, position.z);
-              vec4 clip = mix(clip0, clip1, position.z);
-    	  	  texCoord = (0.5 - position.z) * length(screen1 - screen0) / log(length(resolution)) * 0.1;
+              vec2 pt0 = screen0 + width * (shortenedPosition.x * xBasis + shortenedPosition.y * yBasis);
+              vec2 pt1 = screen1 + width * (shortenedPosition.x * xBasis + shortenedPosition.y * yBasis);
+              vec2 pt = mix(pt0, pt1, shortenedPosition.z);
+              vec4 clipOrig = mix(clip0, clip1, position.z);
+              vec4 clip = mix(clip0, clip1, adjustedZ);
+    	  	  float tCo = (adjustedZ - 0.5) * length(screen1 - screen0) / log(resolution.x);
+    	  	  texCoord = tCo / width;
 
               gl_Position = vec4(clip.w * (2.0 * pt/resolution - 1.0), clip.z, clip.w);
             }`,
@@ -1720,10 +1727,10 @@
             uniform vec4 color;
             uniform float dashFrequency;
             uniform float dashRatio;
-            varying float texCoord;
             uniform float width;
+            varying float texCoord;
             void main() {
-              gl_FragColor = vec4(color.rgb, floor(dashRatio + fract(texCoord*dashFrequency)));
+              gl_FragColor = vec4(color.rgb, sign(cos(3.141*texCoord*dashFrequency) - 1.0 + dashRatio));
             }`,
 
           attributes: {
@@ -1755,6 +1762,12 @@
               divisor: 1,
               offset: (_, props) => ((props.segmentOffset??0) * 6 * Float32Array.BYTES_PER_ELEMENT) + Float32Array.BYTES_PER_ELEMENT * 3,
               stride: Float32Array.BYTES_PER_ELEMENT * 6
+            },
+            shortening: {
+              buffer: regl.prop("shortenings"),
+              divisor: 1,
+              offset: (_, props) => ((props.segmentOffset??0) * 4 * Float32Array.BYTES_PER_ELEMENT) + Float32Array.BYTES_PER_ELEMENT * 0,
+              stride: Float32Array.BYTES_PER_ELEMENT * 2
             },
           },
 
@@ -2194,24 +2207,28 @@
         let reglLineMesh = {
         	points: regl.buffer([]),
         	normals: regl.buffer([]),
+        	shortenings: regl.buffer([]),
         	count: 0
         }
 
         let reglArrowMesh = {
         	points: regl.buffer([]),
         	normals: regl.buffer([]),
+        	shortenings: regl.buffer([]),
         	count: 0
         }
 
         let reglCircleArrowMesh = {
         	points: regl.buffer([]),
         	normals: regl.buffer([]),
+        	shortenings: regl.buffer([]),
         	count: 0
         }
 
         let reglVertexMesh = {
         	points: regl.buffer([]),
         	normals: regl.buffer([]),
+        	shortenings: regl.buffer([]),
         	count: 0
         }
 
@@ -2221,48 +2238,15 @@
         	elements: regl.elements([0,1,2,3,4,5,6,7,8]),
         }
 
-        function parseColor(color, fallback) {
-        	if(!color) {
-        		return fallback
-        	}
-		  color = color.trim();
-
-		  if (color.startsWith('#')) {
-		    let hex = color.slice(1);
-		    if (hex.length === 3) {
-		      hex = hex.split('').map(c => c + c).join('');
-		    }
-		    const num = parseInt(hex, 16);
-		    return [
-		      ((num >> 16) & 255) / 255,
-		      ((num >> 8) & 255) / 255,
-		      (num & 255) / 255,
-		      1
-		    ];
-		  }
-
-		  const rgbaMatch = color.match(/rgba?\s*\(([^)]+)\)/i);
-		  if (rgbaMatch) {
-		    const parts = rgbaMatch[1].split(',').map(s => s.trim());
-		    const r = parseInt(parts[0], 10) / 255;
-		    const g = parseInt(parts[1], 10) / 255;
-		    const b = parseInt(parts[2], 10) / 255;
-		    const a = parts[3] !== undefined ? parseFloat(parts[3]) : 1;
-		    return [r, g, b, a];
-		  }
-
-		  throw new Error("Unsupported color format: " + color);
-		}
-
 		const hasMarker = (side, type) => e => !!e.attrs["marker-"+side] && (!type || "url(#"+type+")" === e.attrs["marker-"+side])
 
         $effect(() => {
         	const vs = worldGeo.value.vertices
-        	const edges = worldGeo.value.edges.filter(R.complement(R.anyPass([hasMarker("start"), hasMarker("end")]))).flatMap((e) =>
-				e.vertices.flatMap(vi => [vs[vi].x, -vs[vi].y, vs[vi].z]),
+        	const edges = worldGeo.value.edges.flatMap((e) =>
+				e.vertices.map(vi => [vs[vi].x, -vs[vi].y, vs[vi].z]),
 			)
 
-			const edgeNormals = worldGeo.value.edges.filter(R.complement(R.anyPass([hasMarker("start"), hasMarker("end")]))).flatMap((e) => {
+			const edgeNormals = worldGeo.value.edges.flatMap((e) => {
 					const normals = e.faces.flatMap(fi => {
 						const faceVerts = worldGeo.value.faces[fi].vertices.map(vi => worldGeo.value.vertices[vi])
 						const v1 = faceVerts[0]
@@ -2312,14 +2296,22 @@
 	        	}),
 	        	elements: regl.elements(faces),
 	        }
+
+	       
 			reglLineMesh = {
 	        	points: regl.buffer(edges),
+	        	shortenings: regl.buffer(worldGeo.value.edges.flatMap((e) => {
+	        		return [
+	        			(hasMarker("start")(e) ? 6 : 0),
+	        			(hasMarker("end")(e) ? 6 : 0),
+	        		]
+	        	})),
 	        	normals: regl.buffer(edgeNormals),
-	        	count: edges.length / 6
+	        	count: edges.length / 2
 	        }
 
 	        const arrowEdgesForward = worldGeo.value.edges.filter(hasMarker("end", "simple-arrow")).flatMap((e) =>
-				e.vertices.slice(-2).flatMap(vi => [vs[vi].x, -vs[vi].y, vs[vi].z]),
+				e.vertices.slice(-2).map(vi => [vs[vi].x, -vs[vi].y, vs[vi].z]),
 			)
 
 			const arrowEdgeNormalsForward = worldGeo.value.edges.filter(hasMarker("end", "simple-arrow")).flatMap((e) => {
@@ -2352,7 +2344,7 @@
 			)
 
 	        const arrowEdgesBackward = worldGeo.value.edges.filter(hasMarker("start", "simple-arrow")).flatMap((e) =>
-				e.vertices.slice(0,2).reverse().flatMap(vi => [vs[vi].x, -vs[vi].y, vs[vi].z]),
+				e.vertices.slice(0,2).reverse().map(vi => [vs[vi].x, -vs[vi].y, vs[vi].z]),
 			)
 
 			const arrowEdgeNormalsBackward = worldGeo.value.edges.filter(hasMarker("start", "simple-arrow")).flatMap((e) => {
@@ -2386,8 +2378,12 @@
 
 			reglArrowMesh = {
 	        	points: regl.buffer([...arrowEdgesForward, ...arrowEdgesBackward]),
+	        	shortenings: regl.buffer([
+	        		...worldGeo.value.edges.filter(hasMarker("start", "simple-arrow")).flatMap(() => [0,0]),
+	        		...worldGeo.value.edges.filter(hasMarker("end", "simple-arrow")).flatMap(() => [0,0])
+	        	]),
 	        	normals: regl.buffer([...arrowEdgeNormalsForward, ...arrowEdgeNormalsBackward]),
-	        	count: arrowEdgesForward.length / 6 + arrowEdgesBackward.length / 6
+	        	count: arrowEdgesForward.length / 2 + arrowEdgesBackward.length / 2
 	        }
 
 
@@ -2461,12 +2457,17 @@
 
 			reglCircleArrowMesh = {
 	        	points: regl.buffer([...arrowCircleEdgesForward, ...arrowCircleEdgesBackward]),
+	        	shortenings: regl.buffer([
+	        		...worldGeo.value.edges.filter(hasMarker("start", "circle-arrow")).flatMap(() => [0,0]),
+	        		...worldGeo.value.edges.filter(hasMarker("end", "circle-arrow")).flatMap(() => [0,0])
+	        	]),
 	        	normals: regl.buffer([...arrowCircleEdgeNormalsForward, ...arrowCircleEdgeNormalsBackward]),
 	        	count: arrowCircleEdgesForward.length / 6 + arrowCircleEdgesBackward.length / 6
 	        }
 
 			reglVertexMesh = {
 	        	points: regl.buffer(vs.flatMap(v => [v.x,-v.y,v.z,v.x,-v.y,v.z])),
+	        	shortenings: regl.buffer(vs.flatMap(v => [0,0])),
 	        	normals: regl.buffer(vs.flatMap(v => [0,0,0,0,0,0])),
 	        	count: vs.length
 	        }
@@ -2530,6 +2531,7 @@
 
 	            drawLine3D({
 	              points: reglLineMesh.points,
+	              shortenings: reglLineMesh.shortenings,
 	              normals: reglLineMesh.normals,
 	              model: modelMatrix.value,
 	              axisFilter: [1,1,1],
@@ -2543,29 +2545,8 @@
 	              cull: false,
 	              cullFace: "front",
 	              modelMatrixNormal: modelMatrixNormal.value,
-	              dashFrequency: 2.0,
-	              dashRatio: 0.4,
-	              depthOffset: strokeWidthBg.value
-	            })
-
-
-	            drawLine3D({
-	              points: reglArrowMesh.points,
-	              normals: reglArrowMesh.normals,
-	              model: modelMatrix.value,
-	              axisFilter: [1,1,1],
-	              axisShift: [0,0,0],
-	              color: meshColorGLDarker.value,
-	              width: strokeWidthBg.value * window.devicePixelRatio * 2,
-	              segments: reglArrowMesh.count,
-	              resolution: [reglCanvas.width,reglCanvas.height],
-	              depth: false,
-	              depthFunc: 'less',
-	              cull: false,
-	              cullFace: "front",
-	              modelMatrixNormal: modelMatrixNormal.value,
-	              dashFrequency: 2.0,
-	              dashRatio: 0.4,
+	              dashFrequency: 1.5,
+	              dashRatio: 0.5,
 	              depthOffset: strokeWidthBg.value
 	            })
 
@@ -2573,6 +2554,7 @@
 
 	            drawLine3D({
 	              points: reglLineMesh.points,
+	              shortenings: reglLineMesh.shortenings,
 	              normals: reglLineMesh.normals,
 	              model: modelMatrix.value,
 	              axisFilter: [1,1,1],
@@ -2586,7 +2568,7 @@
 	              cull: true,
 	              cullFace: "back",
 	              modelMatrixNormal: modelMatrixNormal.value,
-	              dashFrequency: 1.0,
+	              dashFrequency: 0.0,
 	              dashRatio: 1.0,
 	              depthOffset: strokeWidthFg.value 
 	            })
@@ -2596,6 +2578,7 @@
 
 	            drawArrow3D({
 	              points: reglArrowMesh.points,
+	              shortenings: reglArrowMesh.shortenings,
 	              normals: reglArrowMesh.normals,
 	              model: modelMatrix.value,
 	              axisFilter: [1,1,1],
@@ -2609,7 +2592,7 @@
 	              cull: false,
 	              cullFace: "back",
 	              modelMatrixNormal: modelMatrixNormal.value,
-	              dashFrequency: 1.0,
+	              dashFrequency: 0.0,
 	              dashRatio: 1.0,
 	              depthOffset: strokeWidthFg.value 
 	            })
@@ -2617,6 +2600,7 @@
 
 	            drawCircle3D({
 	              points: reglCircleArrowMesh.points,
+	              shortenings: reglCircleArrowMesh.shortenings,
 	              normals: reglCircleArrowMesh.normals,
 	              model: modelMatrix.value,
 	              axisFilter: [1,1,1],
@@ -2630,7 +2614,7 @@
 	              cull: false,
 	              cullFace: "back",
 	              modelMatrixNormal: modelMatrixNormal.value,
-	              dashFrequency: 1.0,
+	              dashFrequency: 0.0,
 	              dashRatio: 1.0,
 	              depthOffset: strokeWidthFg.value 
 	            })
@@ -2638,6 +2622,7 @@
 
 	            drawLine3D({
 	              points: reglVertexMesh.points,
+	              shortenings: reglVertexMesh.shortenings,
 	              normals: reglVertexMesh.normals,
 	              model: modelMatrix.value,
 	              axisFilter: [1,1,1],
@@ -2646,12 +2631,12 @@
 	              width: circleRad.value * window.devicePixelRatio * 4,
 	              segments: reglVertexMesh.count,
 	              resolution: [reglCanvas.width,reglCanvas.height],
-	              depth: true,
+	              depth: false,
 	              depthFunc: 'greater',
 	              cull: true,
 	              cullFace: "back",
 	              modelMatrixNormal: modelMatrixNormal.value,
-	              dashFrequency: 1.0,
+	              dashFrequency: 0.0,
 	              dashRatio: 1.0,
 	              depthOffset: 0
 	            })
