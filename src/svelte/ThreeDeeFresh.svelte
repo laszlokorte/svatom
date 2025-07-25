@@ -3,6 +3,8 @@
 	import * as G from "@svatom/basic/generators";
 	import * as R from "ramda";
 	import * as U from "./utils";
+	import * as M from "./matrix";
+	import * as S from "./reglShaders";
 	import createREGL from 'regl'
 	import {parseColor} from './colors'
 
@@ -1607,585 +1609,12 @@
 
 
 
-	function roundCapJoinGeometry(resolution) {
-		return (regl) => {
-			const instanceRoundRound = [
-	          [0, -0.5, 0],
-	          [0, -0.5, 1],
-	          [0, 0.5, 1],
-	          [0, -0.5, 0],
-	          [0, 0.5, 1],
-	          [0, 0.5, 0]
-	        ];
-	        // Add the left cap.
-	        for (let step = 0; step < resolution; step++) {
-	          const theta0 = Math.PI / 2 + ((step + 0) * Math.PI) / resolution;
-	          const theta1 = Math.PI / 2 + ((step + 1) * Math.PI) / resolution;
-	          instanceRoundRound.push([0, 0, 0]);
-	          instanceRoundRound.push([
-	            0.5 * Math.cos(theta0),
-	            0.5 * Math.sin(theta0),
-	            0
-	          ]);
-	          instanceRoundRound.push([
-	            0.5 * Math.cos(theta1),
-	            0.5 * Math.sin(theta1),
-	            0
-	          ]);
-	        }
-	        // Add the right cap.
-	        for (let step = 0; step < resolution; step++) {
-	          const theta0 = (3 * Math.PI) / 2 + ((step + 0) * Math.PI) / resolution;
-	          const theta1 = (3 * Math.PI) / 2 + ((step + 1) * Math.PI) / resolution;
-	          instanceRoundRound.push([0, 0, 1]);
-	          instanceRoundRound.push([
-	            0.5 * Math.cos(theta0),
-	            0.5 * Math.sin(theta0),
-	            1
-	          ]);
-	          instanceRoundRound.push([
-	            0.5 * Math.cos(theta1),
-	            0.5 * Math.sin(theta1),
-	            1
-	          ]);
-	        }
-	        return {
-	          buffer: regl.buffer(instanceRoundRound),
-	          count: instanceRoundRound.length
-	        };
-		}
-        
-      }
 
-      function arrowGeometry(size) {
-      	return (regl) => {
-	      	return {
-	          buffer: regl.buffer([
-
-	            [0,0,1],
-	            [-size*1.25,size*0.5,1],
-	            [-size,0,1],
-
-	            [0,0,1],
-	            [-size,0,1],
-	            [-size*1.25,-size*0.5,1],
-	          ]),
-	          count: 6
-	        }
-      	}
-      }
-
-      function circleCapGeometry(size, resolution) {
-		return (regl) => {
-			const instanceRoundRound = [
-	        ];
-	        // Add the right cap.
-	        for (let step = 0; step < resolution*2; step++) {
-	          const theta0 = (3 * Math.PI) / 2 + ((step + 0) * Math.PI) / resolution;
-	          const theta1 = (3 * Math.PI) / 2 + ((step + 1) * Math.PI) / resolution;
-	          instanceRoundRound.push([-size*0.5, 0, 1]);
-	          instanceRoundRound.push([
-	            -size*0.5+size*0.5 * Math.cos(theta0),
-	            size*0.5 * Math.sin(theta0),
-	            1
-	          ]);
-	          instanceRoundRound.push([
-	            -size*0.5+size*0.5 * Math.cos(theta1),
-	            size*0.5 * Math.sin(theta1),
-	            1
-	          ]);
-	        }
-	        return {
-	          buffer: regl.buffer(instanceRoundRound),
-	          count: instanceRoundRound.length
-	        };
-		}
-        
-      }
-
-	function interleavedStrip3D(regl, geometry) {
-        const geo = geometry(regl);
-        return regl({
-          vert: `
-            precision highp float;
-            attribute vec3 position;
-            attribute vec2 shortening;
-            attribute vec3 pointA, pointB;
-            attribute vec3 normalFaceA, normalFaceB;
-            uniform float width;
-            uniform vec2 resolution;
-            uniform vec3 axisFilter;
-            uniform vec3 axisShift;
-            uniform mat3 viewNormal, modelMatrixNormal;
-            uniform mat4 model, view, projection;
-
-            uniform float dashFrequency;
-            varying float texCoord;
-
-            void main() {
-              vec3 normalClip0 = normalize(viewNormal * modelMatrixNormal * normalFaceA);
-              vec3 normalClip1 = normalize(viewNormal * modelMatrixNormal * normalFaceB);
-              vec3 normalDir0 = normalize(-(view * model * vec4(axisFilter*pointA + axisShift, 1.0)).xyz);
-              vec3 normalDir1 = normalize(-(view * model * vec4(axisFilter*pointB + axisShift, 1.0)).xyz);
-              vec4 clip0 = projection * view * model * vec4(axisFilter*pointA + axisShift, 1.0);
-              vec4 clip1 = projection * view * model * vec4(axisFilter*pointB + axisShift, 1.0);
-          	  float normalDir = length(normalFaceA) == 0.0 || dot(normalClip0, normalDir0) > 0.0 || dot(normalClip1, normalDir1) > 0.0 ? 1.0 : -1.0;
-              vec2 screen0 = resolution * (0.5 * clip0.xy/clip0.w + 0.5);
-              vec2 screen1 = resolution * (0.5 * clip1.xy/clip1.w + 0.5);
-
-          	float exceedingShort = sign(length(screen1 - screen0) - (shortening.x + shortening.y) * width);
-          	normalDir *= exceedingShort;
-
-              vec2 xBasis = normalize(screen1 - screen0);
-              if(pointA==pointB) {
-              	xBasis = vec2(1.0,0.0);
-              }
-
-          	  vec3 shortenedPosition = vec3(
-          	(position.x
-          	-shortening.x*min(sign(position.z - 0.5), 0.0) + 
-          	-shortening.y*max(sign(position.z - 0.5), 0.0)) * sign(1.0 + exceedingShort)
-          	  ,position.y,
-          	  position.z * sign(1.0 + exceedingShort));
-
-          	  float adjustedZ = position.z + width * clamp(shortenedPosition.x / max(length(screen1 - screen0), 2.0), -1.0, 1.0);
-
-              vec2 yBasis = vec2(-xBasis.y * normalDir, xBasis.x * normalDir);
-              vec2 pt0 = screen0 + width * (shortenedPosition.x * xBasis + shortenedPosition.y * yBasis);
-              vec2 pt1 = screen1 + width * (shortenedPosition.x * xBasis + shortenedPosition.y * yBasis);
-              vec2 pt = mix(pt0, pt1, shortenedPosition.z);
-              vec4 clipOrig = mix(clip0, clip1, position.z);
-              vec4 clip = mix(clip0, clip1, adjustedZ);
-    	  	  float tCo = (adjustedZ - 0.5) * length(screen1 - screen0) / log(resolution.x);
-    	  	  texCoord = tCo / width;
-
-              gl_Position = vec4(clip.w * (2.0 * pt/resolution - 1.0), clip.z, clip.w);
-            }`,
-
-          frag: `
-            precision highp float;
-            uniform vec4 color;
-            uniform float dashFrequency;
-            uniform float dashRatio;
-            uniform float width;
-            varying float texCoord;
-            void main() {
-              gl_FragColor = vec4(color.rgb, sign(cos(3.141*texCoord*dashFrequency) - 1.0 + 2.0 * dashRatio));
-            }`,
-
-          attributes: {
-            position: {
-              buffer: geo.buffer,
-              divisor: 0
-            },
-            pointA: {
-              buffer: regl.prop("points"),
-              divisor: 1,
-              offset: (_, props) => ((props.segmentOffset??0) * 6 * Float32Array.BYTES_PER_ELEMENT) + Float32Array.BYTES_PER_ELEMENT * 0,
-              stride: Float32Array.BYTES_PER_ELEMENT * 6
-            },
-            pointB: {
-              buffer: regl.prop("points"),
-              divisor: 1,
-              offset: (_, props) => ((props.segmentOffset??0) * 6 * Float32Array.BYTES_PER_ELEMENT) + Float32Array.BYTES_PER_ELEMENT * 3,
-              stride: Float32Array.BYTES_PER_ELEMENT * 6
-            },
-
-            normalFaceA: {
-              buffer: regl.prop("normals"),
-              divisor: 1,
-              offset: (_, props) => ((props.segmentOffset??0) * 6 * Float32Array.BYTES_PER_ELEMENT) + Float32Array.BYTES_PER_ELEMENT * 0,
-              stride: Float32Array.BYTES_PER_ELEMENT * 6
-            },
-            normalFaceB: {
-              buffer: regl.prop("normals"),
-              divisor: 1,
-              offset: (_, props) => ((props.segmentOffset??0) * 6 * Float32Array.BYTES_PER_ELEMENT) + Float32Array.BYTES_PER_ELEMENT * 3,
-              stride: Float32Array.BYTES_PER_ELEMENT * 6
-            },
-            shortening: {
-              buffer: regl.prop("shortenings"),
-              divisor: 1,
-              offset: (_, props) => ((props.segmentOffset??0) * 4 * Float32Array.BYTES_PER_ELEMENT) + Float32Array.BYTES_PER_ELEMENT * 0,
-              stride: Float32Array.BYTES_PER_ELEMENT * 2
-            },
-          },
-
-          uniforms: {
-            width: regl.prop("width"),
-            axisFilter: regl.prop("axisFilter"),
-            axisShift: regl.prop("axisShift"),
-            color: regl.prop("color"),
-            model: regl.prop("model"),
-            resolution: regl.prop("resolution"),
-            modelMatrixNormal: regl.prop("modelMatrixNormal"),
-            dashFrequency: regl.prop("dashFrequency"),
-            dashRatio: regl.prop("dashRatio"),
-          },
-
-          depth: {
-            enable: regl.prop("depth"),
-            func: regl.prop("depthFunc"),
-          },
-
-          polygonOffset: {
-		    enable: true,
-		    offset: {
-		      factor: regl.prop("depthOffset"),
-		      units: 10
-		    }
-		  },
-
-          cull: {
-            enable: regl.prop("cull"),
-            face: regl.prop("cullFace")
-          },
-
-          blend: {
-            enable: true,
-            func: {
-              srcRGB: 'src alpha',
-              srcAlpha: 1,
-              dstRGB: 'one minus src alpha',
-              dstAlpha: 1
-            },
-            equation: {
-              rgb: 'add',
-              alpha: 'add'
-            },
-            color: [0, 0, 0, 0]
-          },
-
-          stencil: {
-            enable: (_, props) => props.stencilId >= 0,
-            func: {
-              cmp: 'equal',
-              ref: 0xff,
-              mask: (_, props) => 1 << props.stencilId,
-            },
-            op: {
-              fail: 'keep',
-              zfail: 'keep',
-              zpass: 'keep'
-            },
-          },
-
-          count: geo.count,
-          instances: regl.prop("segments")
-        });
-      }
-
-      function makeColorShader(regl) {
-        return regl({
-          frag: `
-          precision mediump float;
-          uniform vec4 color;
-          varying vec4 faceColor;
-          void main () {
-          	vec3 base = color.rgb * color.a;
-			vec3 accent = faceColor.rgb * faceColor.a;
-
-			vec3 outColor = base + accent; // optionally clamp or tone-map
-			float outAlpha = max(color.a, faceColor.a);
-
-			gl_FragColor = vec4(outColor, outAlpha);
-          }`,
-          vert: `
-          precision mediump float;
-          attribute vec3 position;
-          attribute vec4 vertexColor;
-          varying vec4 faceColor;
-          uniform vec4 color;
-          uniform mat4 model, projection, view;
-          void main() {
-            gl_Position = projection * view * model * vec4(position, 1);
-            faceColor = vertexColor;
-          }`,
-          attributes: {
-            position: regl.prop('positions'),
-            vertexColor: regl.prop('colors'),
-          },
-          cull: {
-            enable: regl.prop("cull"),
-            face: regl.prop("cullFace")
-          },
-
-          uniforms: {
-            color: regl.prop("color"),
-            model: regl.prop("model"),
-          },
-          depth: {
-            enable: regl.prop("depth"),
-            func: regl.prop("depthFunc"),
-          },
-          polygonOffset: {
-		    enable: true,
-		    offset: {
-		      factor: regl.prop("depthOffset"),
-		      units: 1
-		    }
-		  },
-
-
-
-          blend: {
-            enable: regl.prop('blend'),
-           func: {
-			    srcRGB: 'one',
-			    dstRGB: 'one minus src alpha',
-			    srcAlpha: 'one',
-			    dstAlpha: 'one minus src alpha'
-			  },
-			  equation: {
-			    rgb: 'add',
-			    alpha: 'add'
-			  },
-			  color: [0, 0, 0, 0]
-          },
-
-          elements: regl.prop("elements"),
-        })
-      }
-
-      function makeMatrixPerspective(fovDeg, aspect, near, far) {
-        const f = 1.0 / Math.tan(deg2rad(fovDeg) / 2)
-        const nf = 1 / (far - near)
-
-        return [
-          f / aspect, 0.0, 0.0, 0.0,
-          0.0, f, 0.0, 0.0,
-          0.0, 0.0, near * nf, -1.0,
-          0.0, 0.0, far * near * nf, 0.0
-        ]
-      }
-
-      function makeMatrixIdentity() {
-        return [
-          1, 0, 0, 0,
-          0, 1, 0, 0,
-          0, 0, 1, 0,
-          0, 0, 0, 1,
-        ]
-      }
-
-      function makeMatrixScale(x,y,z) {
-        return [
-          x, 0, 0, 0,
-          0, y, 0, 0,
-          0, 0, z, 0,
-          0, 0, 0, 1,
-        ]
-      }
-
-      function makeMatrixTranslate(x,y,z) {
-        return [
-          1, 0, 0, 0,
-          0, 1, 0, 0,
-          0, 0, 1, 0,
-          x, y, z, 1,
-        ]
-      }
-
-      function makeMatrixRotateZ(angle) {
-        const c = Math.cos(angle)
-        const s = Math.sin(angle)
-        return [
-          c, -s, 0, 0,
-          s,  c, 0, 0,
-          0,  0, 1, 0,
-          0,  0, 0, 1,
-        ]
-      }
-
-      function makeMatrixRotateX(angle) {
-        const c = Math.cos(angle)
-        const s = Math.sin(angle)
-        return [
-          1, 0,  0, 0,
-          0, c, -s, 0,
-          0, s,  c, 0,
-          0, 0,  0, 1,
-        ]
-      }
-
-      function makeMatrixRotateY(angle) {
-        const c = Math.cos(angle)
-        const s = Math.sin(angle)
-        return [
-           c, 0, s,  0,
-           0, 1, 0,  0,
-          -s, 0, c,  0,
-           0, 0, 0,  1,
-        ]
-      }
-
-
-      function matrixMultiplyMatrix([
-        _x1,  _x2,  _x3,  _x4,
-        _y1,  _y2,  _y3,  _y4,
-        _z1,  _z2,  _z3,  _z4,
-        _w1,  _w2,  _w3,  _w4,
-      ], [
-        x1,  x2,  x3,  x4,
-        y1,  y2,  y3,  y4,
-        z1,  z2,  z3,  z4,
-        w1,  w2,  w3,  w4,
-      ]) {
-        return [
-          x1 * _x1 + x2 * _y1 + x3 * _z1 + x4 * _w1,
-          x1 * _x2 + x2 * _y2 + x3 * _z2 + x4 * _w2,
-          x1 * _x3 + x2 * _y3 + x3 * _z3 + x4 * _w3,
-          x1 * _x4 + x2 * _y4 + x3 * _z4 + x4 * _w4,
-
-          y1 * _x1 + y2 * _y1 + y3 * _z1 + y4 * _w1,
-          y1 * _x2 + y2 * _y2 + y3 * _z2 + y4 * _w2,
-          y1 * _x3 + y2 * _y3 + y3 * _z3 + y4 * _w3,
-          y1 * _x4 + y2 * _y4 + y3 * _z4 + y4 * _w4,
-
-          z1 * _x1 + z2 * _y1 + z3 * _z1 + z4 * _w1,
-          z1 * _x2 + z2 * _y2 + z3 * _z2 + z4 * _w2,
-          z1 * _x3 + z2 * _y3 + z3 * _z3 + z4 * _w3,
-          z1 * _x4 + z2 * _y4 + z3 * _z4 + z4 * _w4,
-
-          w1 * _x1 + w2 * _y1 + w3 * _z1 + w4 * _w1,
-          w1 * _x2 + w2 * _y2 + w3 * _z2 + w4 * _w2,
-          w1 * _x3 + w2 * _y3 + w3 * _z3 + w4 * _w3,
-          w1 * _x4 + w2 * _y4 + w3 * _z4 + w4 * _w4,
-        ]
-      }
-
-      function deg2rad(deg) {
-        return deg/180 * Math.PI
-      }
-
-      function makeCubeBuffers(regl, w2, h2, d2) {
-        return {
-          vertices: regl.buffer([
-            [-w2, +h2, +d2],
-            [+w2, +h2, +d2],
-            [+w2, -h2, +d2],
-            [-w2, -h2, +d2], // positive z face.
-            [+w2, +h2, +d2],
-            [+w2, +h2, -d2],
-            [+w2, -h2, -d2],
-            [+w2, -h2, +d2], // positive x face
-            [+w2, +h2, -d2],
-            [-w2, +h2, -d2],
-            [-w2, -h2, -d2],
-            [+w2, -h2, -d2], // negative z face
-            [-w2, +h2, -d2],
-            [-w2, +h2, +d2],
-            [-w2, -h2, +d2],
-            [-w2, -h2, -d2], // negative x face.
-            [-w2, +h2, -d2],
-            [+w2, +h2, -d2],
-            [+w2, +h2, +d2],
-            [-w2, +h2, +d2], // top face
-            [-w2, -h2, -d2],
-            [+w2, -h2, -d2],
-            [+w2, -h2, +d2],
-            [-w2, -h2, +d2]  // bottom face
-          ]),
-          faceColors: regl.buffer([
-            [1,0,0],
-            [1,0,0],
-            [1,0,0],
-            [1,0,0], // positive z face.
-            [0,1,0],
-            [0,1,0],
-            [0,1,0],
-            [0,1,0], // positive x face
-            [0,1,1],
-            [0,1,1],
-            [0,1,1],
-            [0,1,1], // negative z face
-            [1,0,1],
-            [1,0,1],
-            [1,0,1],
-            [1,0,1], // negative x face.
-            [1,1,0],
-            [1,1,0],
-            [1,1,0],
-            [1,1,0], // top face
-            [0,0,1],
-            [0,0,1],
-            [0,0,1],
-            [0,0,1]
-          ]),
-          faceNormals: regl.buffer([
-            [0,0,1],
-            [0,0,1],
-            [0,0,1],
-            [0,0,1], // positive z face.
-            [1,0,0],
-            [1,0,0],
-            [1,0,0],
-            [1,0,0], // positive x face
-            [0,0,-1],
-            [0,0,-1],
-            [0,0,-1],
-            [0,0,-1], // negative z face
-            [-1,0,0],
-            [-1,0,0],
-            [-1,0,0],
-            [-1,0,0], // negative x face.
-            [0,1,0],
-            [0,1,0],
-            [0,1,0],
-            [0,1,0], // top face
-            [0,-1,0],
-            [0,-1,0],
-            [0,-1,0],
-            [0,-1,0]  // bottom face
-          ]),
-          uvCoords: regl.buffer([
-            [0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], // positive z face.
-            [0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], // positive x face.
-            [0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], // negative z face.
-            [0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], // negative x face.
-            [0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], // top face
-            [0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]  // bottom face
-          ]),
-          elements: regl.elements([
-            [2, 1, 0], [2, 0, 3],       // positive z face.
-            [6, 5, 4], [6, 4, 7],       // positive x face.
-            [10, 9, 8], [10, 8, 11],    // negative z face.
-            [14, 13, 12], [14, 12, 15], // negative x face.
-            [18, 17, 16], [18, 16, 19], // top face.
-            [20, 21, 22], [23, 20, 22]  // bottom face
-          ]),
-          outline: regl.buffer([
-            w2,h2,d2,
-            -w2,h2,d2,
-            -w2,h2,d2,
-            -w2,-h2,d2,
-            -w2,-h2,d2,
-            w2,-h2,d2,
-            w2,-h2,d2,
-            w2,h2,d2,
-
-            w2,h2,-d2,
-            -w2,h2,-d2,
-            -w2,h2,-d2,
-            -w2,-h2,-d2,
-            -w2,-h2,-d2,
-            w2,-h2,-d2,
-            w2,-h2,-d2,
-            w2,h2,-d2,
-
-
-            w2,h2,d2,
-            w2,h2,-d2,
-            -w2,h2,d2,
-            -w2,h2,-d2,
-            -w2,-h2,d2,
-            -w2,-h2,-d2,
-            w2,-h2,d2,
-            w2,-h2,-d2
-          ])
-        }
-      }
-
+	const arrowGeometries = {
+		"simple-arrow": S.arrowGeometry(4),
+		"circle-arrow": S.circleCapGeometry(5, 10),
+	}
+	const roundLineGeo = S.roundCapJoinGeometry(10)
 
 	const renderGL = (canvasRoot) => {
 		const reglCanvas = document.createElement('canvas')
@@ -2197,60 +1626,59 @@
 			canvas: reglCanvas,
 			extensions: ["ANGLE_instanced_arrays"],
 			attributes: {
-			antialias: true,
-			stencil: false,
-			premultipliedAlpha: false 
-		}
+				antialias: true,
+				stencil: false,
+				premultipliedAlpha: false 
+			}
 		})
 
+		const arrowDrawers = R.mapObjIndexed((geo, arrow) => S.interleavedStrip3D(regl, geo), arrowGeometries)
 
-        const drawLine3D = interleavedStrip3D(regl, roundCapJoinGeometry(10))
-        const drawArrow3D = interleavedStrip3D(regl, arrowGeometry(4))
-        const drawCircle3D = interleavedStrip3D(regl, circleCapGeometry(5, 10))
-        const drawFace3D = makeColorShader(regl)
+        const drawLine3D = S.interleavedStrip3D(regl, roundLineGeo)
+        const drawFace3D = S.makeColorShader(regl)
         var reglCamera = regl({
             context: {
               view: ({tick}) => {
                 return [
-                   makeMatrixTranslate(-cameraOffsetX.value,cameraOffsetY.value,-cameraOffsetZ.value),
+                   M.makeTranslate(-cameraOffsetX.value,cameraOffsetY.value,-cameraOffsetZ.value),
 
-                  makeMatrixRotateX(-L.getInverse(
+                  M.makeRotateX(-L.getInverse(
 						lensRadToDegree,
 						cameraEyeRotX.value,
 					)),
-                  makeMatrixRotateY(-L.getInverse(
+                  M.makeRotateY(-L.getInverse(
 						lensRadToDegree,
 						cameraEyeRotY.value,
 					)),
-                  makeMatrixRotateX(-L.getInverse(
+                  M.makeRotateX(-L.getInverse(
 						lensRadToDegree,
 						cameraEyeRotZ.value,
 					)),
-                 makeMatrixTranslate(cameraOffsetX.value,-cameraOffsetY.value,cameraOffsetZ.value),
+                 M.makeTranslate(cameraOffsetX.value,-cameraOffsetY.value,cameraOffsetZ.value),
 
-                   makeMatrixTranslate(-cameraEyePosX.value,cameraEyePosY.value,-cameraEyePosZ.value),
-                ].reduce(matrixMultiplyMatrix)
+                   M.makeTranslate(-cameraEyePosX.value,cameraEyePosY.value,-cameraEyePosZ.value),
+                ].reduce(M.matMulMat)
               },
               projection: ({viewportWidth, viewportHeight}) =>
-                makeMatrixPerspective(cameraFoV.value, viewportWidth/viewportHeight, cameraClipNear.value, cameraClipFar.value),
+                M.makePerspective(cameraFoV.value, viewportWidth/viewportHeight, cameraClipNear.value, cameraClipFar.value),
 
               viewport: () => ({ x: 0, y: 0, width: reglCanvas.width, height: reglCanvas.height }),
 
               viewNormal: () => {
                 const m = [
-                  makeMatrixRotateX(-L.getInverse(
+                  M.makeRotateX(-L.getInverse(
 						lensRadToDegree,
 						cameraEyeRotX.value,
 					)),
-                  makeMatrixRotateY(-L.getInverse(
+                  M.makeRotateY(-L.getInverse(
 						lensRadToDegree,
 						cameraEyeRotY.value,
 					)),
-                  makeMatrixRotateX(-L.getInverse(
+                  M.makeRotateX(-L.getInverse(
 						lensRadToDegree,
 						cameraEyeRotZ.value,
 					)),
-                ].reduce(matrixMultiplyMatrix)
+                ].reduce(M.matMulMat)
 
                 return [
                 	m[0], m[1], m[2],
@@ -2275,19 +1703,13 @@
         	count: 0
         }
 
-        let reglArrowMesh = {
-        	points: regl.buffer([]),
+		let reglArrowMeshes = R.mapObjIndexed((_, arrow) => ({
+			points: regl.buffer([]),
         	normals: regl.buffer([]),
         	shortenings: regl.buffer([]),
         	count: 0
-        }
+		}), arrowGeometries)
 
-        let reglCircleArrowMesh = {
-        	points: regl.buffer([]),
-        	normals: regl.buffer([]),
-        	shortenings: regl.buffer([]),
-        	count: 0
-        }
 
         let reglVertexMesh = {
         	points: regl.buffer([]),
@@ -2346,7 +1768,7 @@
 			const faces = worldGeo.value.faces.flatMap((f) => toTriangle(f.vertices))
 			const vertices = vs.map(({x,y,z}) => [x,-y,z])
 
-
+			R.pipe(R.props(['positions', 'colors']), R.forEach(R.pipe(R.prop("destroy"), R.call)))(reglFaceMesh)
 			reglFaceMesh = {
 	        	positions: regl.buffer({
 	        		type: "float",
@@ -2361,7 +1783,8 @@
 	        	elements: regl.elements(faces),
 	        }
 
-	       
+   			R.pipe(R.props(['points', 'shortenings', 'normals']), R.forEach(R.pipe(R.prop("destroy"), R.call)))(reglLineMesh)
+
 			reglLineMesh = {
 	        	points: regl.buffer(edges),
 	        	shortenings: regl.buffer(worldGeo.value.edges.flatMap((e) => {
@@ -2374,160 +1797,87 @@
 	        	count: edges.length / 2
 	        }
 
-	        const arrowEdgesForward = worldGeo.value.edges.filter(hasMarker("end", "simple-arrow")).flatMap((e) =>
-				e.vertices.slice(-2).map(vi => [vs[vi].x, -vs[vi].y, vs[vi].z]),
-			)
+	        reglArrowMeshes = R.mapObjIndexed((old, arrow) => {
+	        	const arrowEdgesForward = worldGeo.value.edges.filter(hasMarker("end", arrow)).flatMap((e) =>
+					e.vertices.slice(-2).map(vi => [vs[vi].x, -vs[vi].y, vs[vi].z]),
+				)
 
-			const arrowEdgeNormalsForward = worldGeo.value.edges.filter(hasMarker("end", "simple-arrow")).flatMap((e) => {
-					const normals = e.faces.flatMap(fi => {
-						const faceVerts = worldGeo.value.faces[fi].vertices.map(vi => worldGeo.value.vertices[vi])
-						const v1 = faceVerts[0]
-						const v2 = faceVerts[1]
-						const v3 = faceVerts[2]
+				const arrowEdgeNormalsForward = worldGeo.value.edges.filter(hasMarker("end", arrow)).flatMap((e) => {
+						const normals = e.faces.flatMap(fi => {
+							const faceVerts = worldGeo.value.faces[fi].vertices.map(vi => worldGeo.value.vertices[vi])
+							const v1 = faceVerts[0]
+							const v2 = faceVerts[1]
+							const v3 = faceVerts[2]
 
-						const d1x = v2.x - v1.x
-						const d1y = -(v2.y - v1.y)
-						const d1z = v2.z - v1.z
+							const d1x = v2.x - v1.x
+							const d1y = -(v2.y - v1.y)
+							const d1z = v2.z - v1.z
 
-						const d2x = v3.x - v1.x
-						const d2y = -(v3.y - v1.y)
-						const d2z = v3.z - v1.z
+							const d2x = v3.x - v1.x
+							const d2y = -(v3.y - v1.y)
+							const d2z = v3.z - v1.z
 
-						const normal = [
-							d1y*d2z - d1z*d2y,
-							d1z*d2x - d1x*d2z,
-							d1x*d2y - d1y*d2x,
-						]
+							const normal = [
+								d1y*d2z - d1z*d2y,
+								d1z*d2x - d1x*d2z,
+								d1x*d2y - d1y*d2x,
+							]
 
-						const length = Math.sqrt(normal.map(x => x*x).reduce((a,b) => a+b))
+							const length = Math.sqrt(normal.map(x => x*x).reduce((a,b) => a+b))
 
-						return normal.map(x => x/length)
-					})
-					return [...normals,...normals, 0,0,0,0,0,0].slice(0, 6)
-				}
-			)
+							return normal.map(x => x/length)
+						})
+						return [...normals,...normals, 0,0,0,0,0,0].slice(0, 6)
+					}
+				)
 
-	        const arrowEdgesBackward = worldGeo.value.edges.filter(hasMarker("start", "simple-arrow")).flatMap((e) =>
-				e.vertices.slice(0,2).reverse().map(vi => [vs[vi].x, -vs[vi].y, vs[vi].z]),
-			)
+		        const arrowEdgesBackward = worldGeo.value.edges.filter(hasMarker("start", arrow)).flatMap((e) =>
+					e.vertices.slice(0,2).reverse().map(vi => [vs[vi].x, -vs[vi].y, vs[vi].z]),
+				)
 
-			const arrowEdgeNormalsBackward = worldGeo.value.edges.filter(hasMarker("start", "simple-arrow")).flatMap((e) => {
-					const normals = e.faces.flatMap(fi => {
-						const faceVerts = worldGeo.value.faces[fi].vertices.map(vi => worldGeo.value.vertices[vi])
-						const v1 = faceVerts[0]
-						const v2 = faceVerts[1]
-						const v3 = faceVerts[2]
+				const arrowEdgeNormalsBackward = worldGeo.value.edges.filter(hasMarker("start", arrow)).flatMap((e) => {
+						const normals = e.faces.flatMap(fi => {
+							const faceVerts = worldGeo.value.faces[fi].vertices.map(vi => worldGeo.value.vertices[vi])
+							const v1 = faceVerts[0]
+							const v2 = faceVerts[1]
+							const v3 = faceVerts[2]
 
-						const d1x = v2.x - v1.x
-						const d1y = -(v2.y - v1.y)
-						const d1z = v2.z - v1.z
+							const d1x = v2.x - v1.x
+							const d1y = -(v2.y - v1.y)
+							const d1z = v2.z - v1.z
 
-						const d2x = v3.x - v1.x
-						const d2y = -(v3.y - v1.y)
-						const d2z = v3.z - v1.z
+							const d2x = v3.x - v1.x
+							const d2y = -(v3.y - v1.y)
+							const d2z = v3.z - v1.z
 
-						const normal = [
-							d1y*d2z - d1z*d2y,
-							d1z*d2x - d1x*d2z,
-							d1x*d2y - d1y*d2x,
-						]
+							const normal = [
+								d1y*d2z - d1z*d2y,
+								d1z*d2x - d1x*d2z,
+								d1x*d2y - d1y*d2x,
+							]
 
-						const length = Math.sqrt(normal.map(x => x*x).reduce((a,b) => a+b))
+							const length = Math.sqrt(normal.map(x => x*x).reduce((a,b) => a+b))
 
-						return normal.map(x => x/length)
-					})
-					return [...normals,...normals, 0,0,0,0,0,0].slice(0, 6)
-				}
-			)
+							return normal.map(x => x/length)
+						})
+						return [...normals,...normals, 0,0,0,0,0,0].slice(0, 6)
+					}
+				)
 
-			reglArrowMesh = {
-	        	points: regl.buffer([...arrowEdgesForward, ...arrowEdgesBackward]),
-	        	shortenings: regl.buffer([
-	        		...worldGeo.value.edges.filter(hasMarker("start", "simple-arrow")).flatMap(() => [0,0]),
-	        		...worldGeo.value.edges.filter(hasMarker("end", "simple-arrow")).flatMap(() => [0,0])
-	        	]),
-	        	normals: regl.buffer([...arrowEdgeNormalsForward, ...arrowEdgeNormalsBackward]),
-	        	count: arrowEdgesForward.length / 2 + arrowEdgesBackward.length / 2
-	        }
+				return {
+		        	points: regl.buffer([...arrowEdgesForward, ...arrowEdgesBackward]),
+		        	shortenings: regl.buffer([
+		        		...worldGeo.value.edges.filter(hasMarker("start", arrow)).flatMap(() => [0,0]),
+		        		...worldGeo.value.edges.filter(hasMarker("end", arrow)).flatMap(() => [0,0])
+		        	]),
+		        	normals: regl.buffer([...arrowEdgeNormalsForward, ...arrowEdgeNormalsBackward]),
+		        	count: arrowEdgesForward.length / 2 + arrowEdgesBackward.length / 2
+		        }
+	        }, reglArrowMeshes)
 
+	        
 
-
-
-	        const arrowCircleEdgesForward = worldGeo.value.edges.filter(hasMarker("end", "circle-arrow")).flatMap((e) =>
-				e.vertices.slice(-2).flatMap(vi => [vs[vi].x, -vs[vi].y, vs[vi].z]),
-			)
-
-			const arrowCircleEdgeNormalsForward = worldGeo.value.edges.filter(hasMarker("end", "circle-arrow")).flatMap((e) => {
-					const normals = e.faces.flatMap(fi => {
-						const faceVerts = worldGeo.value.faces[fi].vertices.map(vi => worldGeo.value.vertices[vi])
-						const v1 = faceVerts[0]
-						const v2 = faceVerts[1]
-						const v3 = faceVerts[2]
-
-						const d1x = v2.x - v1.x
-						const d1y = -(v2.y - v1.y)
-						const d1z = v2.z - v1.z
-
-						const d2x = v3.x - v1.x
-						const d2y = -(v3.y - v1.y)
-						const d2z = v3.z - v1.z
-
-						const normal = [
-							d1y*d2z - d1z*d2y,
-							d1z*d2x - d1x*d2z,
-							d1x*d2y - d1y*d2x,
-						]
-
-						const length = Math.sqrt(normal.map(x => x*x).reduce((a,b) => a+b))
-
-						return normal.map(x => x/length)
-					})
-					return [...normals,...normals, 0,0,0,0,0,0].slice(0, 6)
-				}
-			)
-
-	        const arrowCircleEdgesBackward = worldGeo.value.edges.filter(hasMarker("start", "circle-arrow")).flatMap((e) =>
-				e.vertices.slice(0,2).reverse().flatMap(vi => [vs[vi].x, -vs[vi].y, vs[vi].z]),
-			)
-
-			const arrowCircleEdgeNormalsBackward = worldGeo.value.edges.filter(hasMarker("start", "circle-arrow")).flatMap((e) => {
-					const normals = e.faces.flatMap(fi => {
-						const faceVerts = worldGeo.value.faces[fi].vertices.map(vi => worldGeo.value.vertices[vi])
-						const v1 = faceVerts[0]
-						const v2 = faceVerts[1]
-						const v3 = faceVerts[2]
-
-						const d1x = v2.x - v1.x
-						const d1y = -(v2.y - v1.y)
-						const d1z = v2.z - v1.z
-
-						const d2x = v3.x - v1.x
-						const d2y = -(v3.y - v1.y)
-						const d2z = v3.z - v1.z
-
-						const normal = [
-							d1y*d2z - d1z*d2y,
-							d1z*d2x - d1x*d2z,
-							d1x*d2y - d1y*d2x,
-						]
-
-						const length = Math.sqrt(normal.map(x => x*x).reduce((a,b) => a+b))
-
-						return normal.map(x => x/length)
-					})
-					return [...normals,...normals, 0,0,0,0,0,0].slice(0, 6)
-				}
-			)
-
-			reglCircleArrowMesh = {
-	        	points: regl.buffer([...arrowCircleEdgesForward, ...arrowCircleEdgesBackward]),
-	        	shortenings: regl.buffer([
-	        		...worldGeo.value.edges.filter(hasMarker("start", "circle-arrow")).flatMap(() => [0,0]),
-	        		...worldGeo.value.edges.filter(hasMarker("end", "circle-arrow")).flatMap(() => [0,0])
-	        	]),
-	        	normals: regl.buffer([...arrowCircleEdgeNormalsForward, ...arrowCircleEdgeNormalsBackward]),
-	        	count: arrowCircleEdgesForward.length / 6 + arrowCircleEdgesBackward.length / 6
-	        }
+   			R.pipe(R.props(['points', 'shortenings', 'normals']), R.forEach(R.pipe(R.prop("destroy"), R.call)))(reglVertexMesh)
 
 			reglVertexMesh = {
 	        	points: regl.buffer(vs.flatMap(v => [v.x,-v.y,v.z,v.x,-v.y,v.z])),
@@ -2538,20 +1888,20 @@
         })
 
         let modelMatrix = read((trans) => [
-			makeMatrixTranslate(trans.tx,-trans.ty,trans.tz),
-			makeMatrixRotateZ(trans.rz),
-			makeMatrixRotateY(trans.ry),
-			makeMatrixRotateX(trans.rx),
-			makeMatrixScale(trans.sx,trans.sy,trans.sz),
-        ].reduce(matrixMultiplyMatrix), worldTransform)
+			M.makeTranslate(trans.tx,-trans.ty,trans.tz),
+			M.makeRotateZ(trans.rz),
+			M.makeRotateY(trans.ry),
+			M.makeRotateX(trans.rx),
+			M.makeScale(trans.sx,trans.sy,trans.sz),
+        ].reduce(M.matMulMat), worldTransform)
 
         let modelMatrixNormal = read((trans) => {
         	const m = [
-        			makeMatrixRotateZ(trans.rz),
-					makeMatrixRotateY(trans.ry),
-					makeMatrixRotateX(trans.rx),
-        			makeMatrixScale(1/trans.sx,1/trans.sy,1/trans.sz),
-                ].reduce(matrixMultiplyMatrix)
+        			M.makeRotateZ(trans.rz),
+					M.makeRotateY(trans.ry),
+					M.makeRotateX(trans.rx),
+        			M.makeScale(1/trans.sx,1/trans.sy,1/trans.sz),
+                ].reduce(M.matMulMat)
 
                 return [
                 	m[0], m[1], m[2],
@@ -2659,50 +2009,29 @@
 	            })
 
 
-
-
-	            drawArrow3D({
-	              points: reglArrowMesh.points,
-	              shortenings: reglArrowMesh.shortenings,
-	              normals: reglArrowMesh.normals,
-	              model: modelMatrix.value,
-	              axisFilter: [1,1,1],
-	              axisShift: [0,0,0],
-	              color: meshColorGLDark.value,
-	              width: strokeWidthFg.value * window.devicePixelRatio * 2,
-	              segments: reglArrowMesh.count,
-	              resolution: [reglCanvas.width,reglCanvas.height],
-	              depth: true,
-	              depthFunc: 'gequal',
-	              cull: false,
-	              cullFace: "back",
-	              modelMatrixNormal: modelMatrixNormal.value,
-	              dashFrequency: 0.0,
-	              dashRatio: 1.0,
-	              depthOffset: strokeWidthFg.value 
-	            })
-
-
-	            drawCircle3D({
-	              points: reglCircleArrowMesh.points,
-	              shortenings: reglCircleArrowMesh.shortenings,
-	              normals: reglCircleArrowMesh.normals,
-	              model: modelMatrix.value,
-	              axisFilter: [1,1,1],
-	              axisShift: [0,0,0],
-	              color: meshColorGLDark.value,
-	              width: strokeWidthFg.value * window.devicePixelRatio * 2,
-	              segments: reglCircleArrowMesh.count,
-	              resolution: [reglCanvas.width,reglCanvas.height],
-	              depth: true,
-	              depthFunc: 'gequal',
-	              cull: false,
-	              cullFace: "back",
-	              modelMatrixNormal: modelMatrixNormal.value,
-	              dashFrequency: 0.0,
-	              dashRatio: 1.0,
-	              depthOffset: strokeWidthFg.value 
-	            })
+	            R.forEachObjIndexed((drawer, arrow) => {
+	            	 drawer({
+			              points: reglArrowMeshes[arrow].points,
+			              shortenings: reglArrowMeshes[arrow].shortenings,
+			              normals: reglArrowMeshes[arrow].normals,
+			              model: modelMatrix.value,
+			              axisFilter: [1,1,1],
+			              axisShift: [0,0,0],
+			              color: meshColorGLDark.value,
+			              width: strokeWidthFg.value * window.devicePixelRatio * 2,
+			              segments: reglArrowMeshes[arrow].count,
+			              resolution: [reglCanvas.width,reglCanvas.height],
+			              depth: true,
+			              depthFunc: 'gequal',
+			              cull: false,
+			              cullFace: "back",
+			              modelMatrixNormal: modelMatrixNormal.value,
+			              dashFrequency: 0.0,
+			              dashRatio: 1.0,
+			              depthOffset: strokeWidthFg.value 
+			            })
+	            }, arrowDrawers)
+	           
 
 
 	            drawLine3D({
