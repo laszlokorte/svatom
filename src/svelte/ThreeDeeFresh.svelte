@@ -576,9 +576,9 @@
 			const digits = hex.slice(1);
 			const int = parseInt(digits, 16);
 			return [
-				((int >> 16) & 0xff) * 0.6,
-				((int >> 8) & 0xff) * 0.6,
-				((int << 0) & 0xff) * 0.6,
+				((int >> 16) & 0xff),
+				((int >> 8) & 0xff),
+				((int << 0) & 0xff),
 				100,
 			].map((x) => x / 255);
 		}),
@@ -590,11 +590,11 @@
 			const digits = hex.slice(1);
 			const int = parseInt(digits, 16);
 			return [
-				((int >> 16) & 0xff),
-				((int >> 8) & 0xff),
-				((int << 0) & 0xff),
-				255,
-			].map((x) => x / 255).map(x => x*0.4 + (1 - x*0.4) / 2);
+				(170 - ((int >> 16) & 0xff) /3),
+				(170 - ((int >> 8) & 0xff) / 3),
+				(170 - ((int << 0) & 0xff) / 3),
+				250,
+			].map((x) => x / 255);
 		}),
 		meshColor,
 	);
@@ -1427,7 +1427,7 @@
 
 	const backfaceCull = atom({
 		cw: false,
-		ccw: true,
+		ccw: false,
 	});
 	const hideCW = view("cw", backfaceCull);
 	const hideCCW = view("ccw", backfaceCull);
@@ -1455,12 +1455,18 @@
 		bg: 1,
 		circleRad: 0,
 		fontSize: 12,
+		dashRatio: 0.5,
+		dashFrequency: 1.5,
+		alphaBlend: true,
 	});
 
+	const alphaBlend = view("alphaBlend", penSize);
 	const strokeWidthBg = view("bg", penSize);
 	const strokeWidthFg = view("fg", penSize);
 	const circleRad = view("circleRad", penSize);
 	const fontSize = view("fontSize", penSize);
+	const dashRatio = view("dashRatio", penSize);
+	const dashFrequency = view("dashFrequency", penSize);
 
 	const geoJson = view(L.inverse(L.json({ space: "  " })), worldGeo);
 
@@ -1763,7 +1769,7 @@
             uniform float width;
             varying float texCoord;
             void main() {
-              gl_FragColor = vec4(color.rgb, sign(cos(3.141*texCoord*dashFrequency) - 1.0 + dashRatio));
+              gl_FragColor = vec4(color.rgb, sign(cos(3.141*texCoord*dashFrequency) - 1.0 + 2.0 * dashRatio));
             }`,
 
           attributes: {
@@ -1875,7 +1881,13 @@
           uniform vec4 color;
           varying vec4 faceColor;
           void main () {
-            gl_FragColor = vec4(faceColor.rgb * faceColor.w + color.rgb * (1.0-faceColor.w), color.w);
+          	vec3 base = color.rgb * color.a;
+			vec3 accent = faceColor.rgb * faceColor.a;
+
+			vec3 outColor = base + accent; // optionally clamp or tone-map
+			float outAlpha = max(color.a, faceColor.a);
+
+			gl_FragColor = vec4(outColor, outAlpha);
           }`,
           vert: `
           precision mediump float;
@@ -1912,6 +1924,24 @@
 		      units: 1
 		    }
 		  },
+
+
+
+          blend: {
+            enable: regl.prop('blend'),
+           func: {
+			    srcRGB: 'one',
+			    dstRGB: 'one minus src alpha',
+			    srcAlpha: 'one',
+			    dstAlpha: 'one minus src alpha'
+			  },
+			  equation: {
+			    rgb: 'add',
+			    alpha: 'add'
+			  },
+			  color: [0, 0, 0, 0]
+          },
+
           elements: regl.prop("elements"),
         })
       }
@@ -2546,20 +2576,41 @@
 
 
 	       
+	         	if(!hideCCW.value) {
+	         		
+		            drawFace3D({
+		              model: modelMatrix.value,
+		              color: meshColorGLTranslucent.value,
+		              positions: reglFaceMesh.positions,
+		              colors: reglFaceMesh.colors,
+		              elements: reglFaceMesh.elements,
+		              depth: true,
+		              depthFunc: 'always',
+		              cull: true,
+					  cullFace: "front",
+					  depthOffset: -4,
+					  blend: alphaBlend.value,
+		            })
+	         	}
+	         	if(!hideCW.value) {
 
-	            drawFace3D({
-	              model: modelMatrix.value,
-	              color: meshColorGLTranslucent.value,
-	              positions: reglFaceMesh.positions,
-	              colors: reglFaceMesh.colors,
-	              elements: reglFaceMesh.elements,
-	              depth: true,
-	              depthFunc: 'gequal',
-	              cull: false,
-				  cullFace: "back",
-				  depthOffset: -4
-	            })
+		            drawFace3D({
+		              model: modelMatrix.value,
+		              color: meshColorGLTranslucent.value,
+		              positions: reglFaceMesh.positions,
+		              colors: reglFaceMesh.colors,
+		              elements: reglFaceMesh.elements,
+		              depth: true,
+		              depthFunc: 'always',
+		              cull: true,
+					  cullFace: "back",
+					  depthOffset: -4,
+					  blend: alphaBlend.value,
+		            })
+	         	}
 
+
+	       
 
 
 	            drawLine3D({
@@ -2574,12 +2625,12 @@
 	              segments: reglLineMesh.count,
 	              resolution: [reglCanvas.width,reglCanvas.height],
 	              depth: false,
-	              depthFunc: 'lequal',
+	              depthFunc: 'always',
 	              cull: false,
 	              cullFace: "front",
 	              modelMatrixNormal: modelMatrixNormal.value,
-	              dashFrequency: 1.5,
-	              dashRatio: 0.5,
+	              dashFrequency: dashFrequency.value,
+	              dashRatio: dashRatio.value,
 	              depthOffset: strokeWidthBg.value
 	            })
 
@@ -2917,6 +2968,9 @@
 			<label class="checkbox-list-item"
 				><input type="checkbox" bind:checked={screenTriangle.value} /> <span class="checkbox-list-item-label">Clipped Triangle</span></label
 			>
+			<label class="checkbox-list-item"
+				><input type="checkbox" bind:checked={alphaBlend.value} /> <span class="checkbox-list-item-label">Alpha Blend</span></label
+			>
 			</div>
 		</fieldset>
 		<fieldset>
@@ -2972,6 +3026,32 @@
 					bind:value={fontSize.value}
 				/><output class="number-picker-value ro"
 					>({numf.format(fontSize.value)})</output
+				>
+			</label>
+			<label class="number-picker"
+				><span class="number-picker-label">Dash Frequency:</span>
+				<input
+					type="range"
+					class="number-picker-slider"
+					min="0"
+					max="10"
+					step="0.1"
+					bind:value={dashFrequency.value}
+				/><output class="number-picker-value ro"
+					>({numf.format(dashFrequency.value)})</output
+				>
+			</label>
+			<label class="number-picker"
+				><span class="number-picker-label">Dash Ratio:</span>
+				<input
+					type="range"
+					class="number-picker-slider"
+					min="0"
+					max="1"
+					step="0.01"
+					bind:value={dashRatio.value}
+				/><output class="number-picker-value ro"
+					>({numf.format(dashRatio.value)})</output
 				>
 			</label>
 		</fieldset>
@@ -3212,8 +3292,7 @@
 
 				<div class="checkbox-list">
 					<label class="checkbox-list-item"
-					><input type="checkbox" bind:checked={hideCW.value} /> <span class="checkbox-list-item-label ">Hide Clockwise
-										Faces</span></label
+					><input type="checkbox" bind:checked={hideCW.value} /> <span class="checkbox-list-item-label ">Hide Clockwise Faces</span></label
 				>
 				<label class="checkbox-list-item"
 					><input type="checkbox" bind:checked={hideCCW.value} /> <span class="checkbox-list-item-label ">Hide
@@ -3435,6 +3514,8 @@
 					style:--stroke-width-fg={strokeWidthFg.value + "px"}
 					style:--stroke-width-bg={strokeWidthBg.value + "px"}
 					style:--stroke-width-bg2={strokeWidthBg.value * 2 + "px"}
+					style:--stroke-dash-ratio={dashRatio.value}
+					style:--stroke-dash-period={dashFrequency.value && 15 / dashFrequency.value}
 				>
 					{#each ndcGeoEdgePathsFast.value as p, i (i)}
 						<path
@@ -3614,8 +3695,8 @@
 	}
 
 	.cube-edge[data-any-clockwise="false"] {
-		stroke-dasharray: calc(var(--stroke-width-bg, 4) * 2)
-			calc(var(--stroke-width-bg, 4) * 2);
+		stroke-dashoffset: calc(var(--stroke-width-bg, 4) * var(--stroke-dash-period, 0) * (1 - var(--stroke-dash-ratio, 0)));
+		stroke-dasharray: calc(var(--stroke-width-bg, 4) * var(--stroke-dash-period, 0) * var(--stroke-dash-ratio, 0));
 		stroke-width: var(--stroke-width-bg, 2);
 		stroke-opacity: 0.7;
 	}
@@ -3710,8 +3791,10 @@
 	}
 
 	.obj-edge[data-any-clockwise="false"] {
-		stroke-dasharray: calc(var(--stroke-width-bg, 4) * 2)
-			calc(var(--stroke-width-bg, 4) * 2);
+		
+		stroke-dashoffset: calc(var(--stroke-width-bg, 4) * var(--stroke-dash-period, 0) * (1 - var(--stroke-dash-ratio, 0)));
+		stroke-dasharray: calc(var(--stroke-width-bg, 4) * var(--stroke-dash-period, 0) * var(--stroke-dash-ratio, 0))
+			calc(var(--stroke-width-bg, 4) * var(--stroke-dash-period, 0) * (1 - var(--stroke-dash-ratio, 0)));
 		stroke-width: var(--stroke-width-bg, 2);
 		stroke-opacity: 0.7;
 	}
@@ -3784,8 +3867,10 @@
 	}
 
 	.petri-edge[data-any-clockwise="false"] {
-		stroke-dasharray: calc(var(--stroke-width-bg, 4) * 2)
-			calc(var(--stroke-width-bg, 4) * 2);
+		
+		stroke-dashoffset: calc(var(--stroke-width-bg, 4) * var(--stroke-dash-period, 0) * (1 - var(--stroke-dash-ratio, 0)));
+		stroke-dasharray: calc(var(--stroke-width-bg, 4) * var(--stroke-dash-period, 0) * var(--stroke-dash-ratio, 0))
+			calc(var(--stroke-width-bg, 4) * var(--stroke-dash-period, 0) * (1 - var(--stroke-dash-ratio, 0)));
 		stroke-width: var(--stroke-width-bg, 2);
 		stroke-opacity: 0.7;
 	}
