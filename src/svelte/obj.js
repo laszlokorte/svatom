@@ -192,6 +192,7 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 	const width = (bounds.maxX - bounds.minX)||1
 	const height = (bounds.maxY - bounds.minY)||1
 	const aspect = height/width
+	const depth = Math.min(width, height) / 200
 
 
 	const v = []
@@ -200,13 +201,62 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 	let layerCount = 0;
 	let backthick = 0;
 
+
+
 	for(const r of rectangles) {
 
 	  let zAxis = 0;
-	  let thickness = 1;
+	  let thickness = 1 / depth;
+
+	  if(r[kindKey] != triangleType) {
+			continue;
+		}
+
+		zAxis = -0.5
+		thickness = 0.25 / depth
+		layerCount++;
+		
+		const {x,y,w,h} = r
+		const f1 = f.length
+		const v1 = v.length
+		const v2 = v.length + 3
+		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: zAxis +layerCount*0.001 },)
+		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: zAxis +layerCount*0.001 },)
+		v.push({ x: ((x+w-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: zAxis +layerCount*0.001 },)
+
+		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: zAxis +layerCount*0.001 + thickness },)
+		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: zAxis +layerCount*0.001 + thickness },)
+		v.push({ x: ((x+w-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: zAxis +layerCount*0.001 + thickness },)
+
+		f.push({ vertices: [v1,v1+1,v1+2].reverse(), attrs: { class: "petri-face", color: renewToRgba(r?.attributes?.attrs?.FillColor??{ r: 112, g: 219, b: 147 }), flip: false } },)
+		f.push({ vertices: [v2+1,v2,v2+2].reverse(), attrs: { class: "petri-face", color: renewToRgba(r?.attributes?.attrs?.FillColor??{ r: 112, g: 219, b: 147 }), flip: false } },)
+		f.push({ vertices: [v1+1,v1,v2,v2+1].reverse(), attrs: { class: "petri-face", color: renewToRgba(r?.attributes?.attrs?.FillColor??{ r: 112, g: 219, b: 147 }), flip: false } },)
+		f.push({ vertices: [v1+2,v1+1,v2+1,v2+2].reverse(), attrs: { class: "petri-face", color: renewToRgba(r?.attributes?.attrs?.FillColor??{ r: 112, g: 219, b: 147 }), flip: false } },)
+		f.push({ vertices: [v1,v1+2,v2+2,v2].reverse(), attrs: { class: "petri-face", color: renewToRgba(r?.attributes?.attrs?.FillColor??{ r: 112, g: 219, b: 147 }), flip: false } },)
+
+		e.push({ vertices: [v1+0,v1+1], faces: [f1,f1+2],  attrs: { class: "petri-edge", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
+		e.push({ vertices: [v1+1,v1+2], faces: [f1,f1+3],  attrs: { class: "petri-edge", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
+		e.push({ vertices: [v1+2,v1], faces: [f1,f1+4],  attrs: { class: "petri-edge", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
+		
+		e.push({ vertices: [v2+0,v2+1], faces: [f1+1,f1+2],  attrs: { class: "petri-edge", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
+		e.push({ vertices: [v2+1,v2+2], faces: [f1+1,f1+3],  attrs: { class: "petri-edge", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
+		e.push({ vertices: [v2+2,v2], faces: [f1+1,f1+4],  attrs: { class: "petri-edge", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
+		
+
+		e.push({ vertices: [v1,v2], faces: [f1+2,f1+4],  attrs: { class: "petri-edge edge-3d", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
+		e.push({ vertices: [v1+1,v2+1], faces: [f1+2,f1+3],  attrs: { class: "petri-edge edge-3d", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
+		e.push({ vertices: [v1+2,v2+2], faces: [f1+3,f1+4],  attrs: { class: "petri-edge edge-3d", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
+		
+	}
+
+
+	for(const r of rectangles) {
+
+	  let zAxis = 0;
+	  let thickness = 1 / depth;
 		if(plainRects.includes(r[kindKey])) {
 			zAxis = -0.5
-			thickness = 0.5
+			thickness = 0.5 / depth
 			layerCount++;
 			backthick = -1;
 		}
@@ -251,57 +301,10 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 	
 	}
 
-
-	for(const r of rectangles) {
-
-	  let zAxis = 0;
-	  let thickness = 1;
-
-	  if(r[kindKey] != triangleType) {
-			continue;
-		}
-
-		zAxis = 0.1
-		thickness = 0.25
-		layerCount++;
-		
-		const {x,y,w,h} = r
-		const f1 = f.length
-		const v1 = v.length
-		const v2 = v.length + 3
-		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: zAxis +layerCount*0.001 },)
-		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: zAxis +layerCount*0.001 },)
-		v.push({ x: ((x+w-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: zAxis +layerCount*0.001 },)
-
-		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y-bounds.minY)/height-0.5)*scale*aspect, z: zAxis +layerCount*0.001 + thickness },)
-		v.push({ x: ((x-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: zAxis +layerCount*0.001 + thickness },)
-		v.push({ x: ((x+w-bounds.minX)/width-0.5)*scale, y: ((y+h-bounds.minY)/height-0.5)*scale*aspect, z: zAxis +layerCount*0.001 + thickness },)
-
-		f.push({ vertices: [v1,v1+1,v1+2].reverse(), attrs: { class: "petri-face", color: renewToRgba(r?.attributes?.attrs?.FillColor??{ r: 112, g: 219, b: 147 }), flip: false } },)
-		f.push({ vertices: [v2+1,v2,v2+2].reverse(), attrs: { class: "petri-face", color: renewToRgba(r?.attributes?.attrs?.FillColor??{ r: 112, g: 219, b: 147 }), flip: false } },)
-		f.push({ vertices: [v1+1,v1,v2,v2+1].reverse(), attrs: { class: "petri-face", color: renewToRgba(r?.attributes?.attrs?.FillColor??{ r: 112, g: 219, b: 147 }), flip: false } },)
-		f.push({ vertices: [v1+2,v1+1,v2+1,v2+2].reverse(), attrs: { class: "petri-face", color: renewToRgba(r?.attributes?.attrs?.FillColor??{ r: 112, g: 219, b: 147 }), flip: false } },)
-		f.push({ vertices: [v1,v1+2,v2+2,v2].reverse(), attrs: { class: "petri-face", color: renewToRgba(r?.attributes?.attrs?.FillColor??{ r: 112, g: 219, b: 147 }), flip: false } },)
-
-		e.push({ vertices: [v1+0,v1+1], faces: [f1,f1+2],  attrs: { class: "petri-edge", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
-		e.push({ vertices: [v1+1,v1+2], faces: [f1,f1+3],  attrs: { class: "petri-edge", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
-		e.push({ vertices: [v1+2,v1], faces: [f1,f1+4],  attrs: { class: "petri-edge", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
-		
-		e.push({ vertices: [v2+0,v2+1], faces: [f1+1,f1+2],  attrs: { class: "petri-edge", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
-		e.push({ vertices: [v2+1,v2+2], faces: [f1+1,f1+3],  attrs: { class: "petri-edge", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
-		e.push({ vertices: [v2+2,v2], faces: [f1+1,f1+4],  attrs: { class: "petri-edge", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
-		
-
-		e.push({ vertices: [v1,v2], faces: [f1+2,f1+4],  attrs: { class: "petri-edge edge-3d", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
-		e.push({ vertices: [v1+1,v2+1], faces: [f1+2,f1+3],  attrs: { class: "petri-edge edge-3d", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
-		e.push({ vertices: [v1+2,v2+2], faces: [f1+3,f1+4],  attrs: { class: "petri-edge edge-3d", color: renewToRgba(r?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: false } },)
-		
-	}
-
 	for(const r of ellipsis) {
 		layerCount++;
 	  let zAxis = 0;
-	  let thickness = 1;
+	  let thickness = 1 / depth;
 
 		const {x,y,w,h} = r
 		const f1 = f.length
@@ -356,9 +359,9 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 		const v1 = v.length
 		const v2 = v.length+1
 
-		v.push({ x: ((t.fOriginX-bounds.minX)/width-0.5)*scale, y: ((t.fOriginY-bounds.minY)/height-0.5)*scale*aspect, z: 1.6 },)
-		v.push({ x: ((t.fOriginX-bounds.minX)/width-0.5)*scale+1, y: ((t.fOriginY-bounds.minY)/height-0.5)*scale*aspect, z: 1.6 },)
-		labels.push({ vertex: v1, anchor: v2, text: t.lines, attrs: { class:"petri-label", "font-family": "sans-serif", "pointer-events":"none", "text-anchor": "start","font-size": "1em", fill: "black", transform: "translate(0, 12)"} },)
+		v.push({ x: ((t.fOriginX-bounds.minX)/width-0.5)*scale, y: ((t.fOriginY-bounds.minY-((t?.fCurrentFontSize??16)/16)/2)/height-0.5)*scale*aspect, z: 1.6 },)
+		v.push({ x: ((t.fOriginX-bounds.minX)/width-0.5)*scale+1, y: ((t.fOriginY-bounds.minY-((t?.fCurrentFontSize??16)/16)/2)/height-0.5)*scale*aspect, z: 1.6 },)
+		labels.push({ vertex: v1, anchor: v2, text: t.lines, attrs: { "dominant-baseline": "top", class:"petri-label", "font-weight": t.fCurrentFontStyle&1 == 1 ? "bold" : "normal", "font-style": t.fCurrentFontStyle&2 == 2 ? "italic" : "none", "font-family": renewToFont(t?.fCurrentFontName ?? 'MonoSpace'), "pointer-events":"none", "text-anchor": "start","font-size": `${(t?.fCurrentFontSize??16)/16}em`, fill: renewToRgba(t?.attributes?.attrs?.TextColor??{ r: 0, g: 0, b: 0 }), transform: "translate(0, 12)"} },)
 	}
 
 	for(const l of lines) {
@@ -367,8 +370,8 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 		for(const [from, to] of segments) {
 			s++
 			const v1 = v.length
-			v.push({ x: ((from.x-bounds.minX)/width-0.5)*scale, y: ((from.y-bounds.minY)/height-0.5)*scale*aspect, z: 0.5 },)
-			v.push({ x: ((to.x-bounds.minX)/width-0.5)*scale, y: ((to.y-bounds.minY)/height-0.5)*scale*aspect, z: 0.5 },)
+			v.push({ x: ((from.x-bounds.minX)/width-0.5)*scale, y: ((from.y-bounds.minY)/height-0.5)*scale*aspect, z: 0.5/depth },)
+			v.push({ x: ((to.x-bounds.minX)/width-0.5)*scale, y: ((to.y-bounds.minY)/height-0.5)*scale*aspect, z: 0.5/depth },)
 
 			e.push({ vertices: [v1,v1+1], faces: [],  attrs: { "stroke-width": 4, "marker-end": segments.length === s ? "url(#simple-arrow)" : null, "marker-start": 1 === s ? "url(#circle-arrow)" : null, "class": "petri-line", color: renewToRgba(l?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: true } },)
 
@@ -397,6 +400,16 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 	}
 
 	return geo
+}
+
+function renewToFont(font) {
+	const mapping = {
+		"SansSerif": "sans-serif",
+		"Serif": "serif",
+		"MonoSpace": "monospace",
+	}
+
+	return mapping[font] ?? font
 }
 
 function renewToRgba(color) {

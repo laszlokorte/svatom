@@ -53,6 +53,7 @@
 		renew1: { label: "Renew #1", renew: renew.exampleRenew, scale: 5 },
 		renew2: { label: "Renew #2", renew: renew.exampleDoubleArrow, scale: 5 },
 		renew3: { label: "Renew #3", renew: renew.exampleEightPhil, scale: 5 },
+		renew4: { label: "Renew #4", renew: renew.exampleCloseDoor, scale: 5 },
 		marching: { label: "Marching Cubes", geo: marchingCubesToGeo(
 			(x, y, z) => (3*x * x/100 + 4*y * y/100 + 1.5*z * z/100) - Math.cos(z*Math.PI/10)*45 - Math.cos(x*Math.PI/12)*20 - Math.cos(y*Math.PI/14)*40,
 			-10,
@@ -1462,6 +1463,11 @@
 		alphaBlend: true,
 	});
 
+	const textRendering = atom({
+		perspective: true,
+		formatted: true,
+	});
+
 	const alphaBlend = view("alphaBlend", penSize);
 	const strokeWidthBg = view("bg", penSize);
 	const strokeWidthFg = view("fg", penSize);
@@ -1469,6 +1475,9 @@
 	const fontSize = view("fontSize", penSize);
 	const dashRatio = view("dashRatio", penSize);
 	const dashFrequency = view("dashFrequency", penSize);
+
+	const textFormatted = view("formatted", textRendering);
+	const textPerspective = view("perspective", textRendering);
 
 	const geoJson = view(L.inverse(L.json({ space: "  " })), worldGeo);
 
@@ -2311,6 +2320,26 @@
 			>
 			</div>
 		</fieldset>
+
+
+		<fieldset>
+			<legend>Text Rendering</legend>
+
+			<div class="checkbox-list">
+				
+			<label class="checkbox-list-item"
+
+		
+
+				><input type="checkbox" bind:checked={textFormatted.value} /> <span class="checkbox-list-item-label">Formatted Text</span></label
+			>
+			<label class="checkbox-list-item"
+				><input type="checkbox" bind:checked={textPerspective.value} /> <span class="checkbox-list-item-label">Perspective Text</span></label
+			>
+			</div>
+		</fieldset>
+
+		
 		<fieldset>
 			<legend>Drawing Style</legend>
 			<label class="number-picker"
@@ -2900,13 +2929,13 @@
 				</g>
 			</g>
 		{/if}
-		<g style:--font-size={fontSize.value + "px"}>
+		<g class={{"petri-plain": !textFormatted.value}} style:--font-size={fontSize.value + "px"} style:font-size="var(--font-size, 1em)">
 			{#each ndcGeoLabelsFast.value as v, i (i)}
 				{#if !v.clipped}
-					{@const perspectiveAngle = v.anchor ? Math.atan2(v.anchor.y - v.vertex.y, v.anchor.x - v.vertex.x) : 0}
+					{@const perspectiveAngle = textPerspective.value && v.anchor ? Math.atan2(v.anchor.y - v.vertex.y, v.anchor.x - v.vertex.x) : 0}
 					{@const perspectiveRotation = `rotate(${perspectiveAngle * 180 / Math.PI})`}
 					{@const attrs = upsert('transform', R.concat(R.__, perspectiveRotation), "", v.attrs)}
-					{@const fade = Math.max(0, Math.cos(Math.min(Math.PI/3, Math.abs(perspectiveAngle)) * 3))}
+					{@const fade = textPerspective.value ? Math.max(0, Math.cos(Math.min(Math.PI/3, Math.abs(perspectiveAngle)) * 3)) : 1}
 					<text
 						transform-origin="{v.vertex.x} {v.vertex.y}"
 						{...v.vertex}
@@ -3167,8 +3196,11 @@
 		stroke-linecap: round;
 	}
 
-	.petri-label {
+	.petri-plain .petri-label {
+		font-size: var(--font-size, 1em) !important;
 		font-family: monospace;
+		font-style: none;
+		font-weight: normal;
 	}
 
 	polygon.petri-face {
@@ -3193,9 +3225,6 @@
 		display: none;
 	}
 
-	text.petri-label {
-		font-size: var(--font-size, 1em) !important;
-	}
 
 	path.petri-edge {
 		stroke: currentColor;
