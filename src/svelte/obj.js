@@ -198,6 +198,7 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 	const f = []
 	const e = []
 	let layerCount = 0;
+	let backthick = 0;
 
 	for(const r of rectangles) {
 
@@ -207,6 +208,7 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 			zAxis = -0.5
 			thickness = 0.5
 			layerCount++;
+			backthick = -1;
 		}
 		if(r[kindKey] == triangleType) {
 			continue;
@@ -352,9 +354,11 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 
 	for(const t of textes) {
 		const v1 = v.length
+		const v2 = v.length+1
 
 		v.push({ x: ((t.fOriginX-bounds.minX)/width-0.5)*scale, y: ((t.fOriginY-bounds.minY)/height-0.5)*scale*aspect, z: 1.6 },)
-		labels.push({ vertex: v1, text: t.lines, attrs: { class:"petri-label", "font-family": "sans-serif", "pointer-events":"none", "text-anchor": "start","font-size": "1em", fill: "black", transform: "translate(0, 12)"} },)
+		v.push({ x: ((t.fOriginX-bounds.minX)/width-0.5)*scale+1, y: ((t.fOriginY-bounds.minY)/height-0.5)*scale*aspect, z: 1.6 },)
+		labels.push({ vertex: v1, anchor: v2, text: t.lines, attrs: { class:"petri-label", "font-family": "sans-serif", "pointer-events":"none", "text-anchor": "start","font-size": "1em", fill: "black", transform: "translate(0, 12)"} },)
 	}
 
 	for(const l of lines) {
@@ -375,10 +379,10 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 
 
 
-	v.push({ x: -0.55*scale, y: -0.55*scale*aspect, z: -0.5*layerCount-1 },)
-	v.push({ x: 0.55*scale, y: -0.55*scale*aspect, z: -0.5*layerCount-1 },)
-	v.push({ x: 0.55*scale, y: 0.55*scale*aspect, z: -0.5*layerCount-1 },)
-	v.push({ x: -0.55*scale, y: 0.55*scale*aspect, z: -0.5*layerCount-1 },)
+	v.push({ x: -0.55*scale, y: -0.55*scale*aspect, z: -0.5*backthick-2 },)
+	v.push({ x: 0.55*scale, y: -0.55*scale*aspect, z: -0.5*backthick-2 },)
+	v.push({ x: 0.55*scale, y: 0.55*scale*aspect, z: -0.5*backthick-2 },)
+	v.push({ x: -0.55*scale, y: 0.55*scale*aspect, z: -0.5*backthick-2 },)
 
 	const lastV = v.length-1
 	f.push({ vertices: [lastV-3,lastV-2,lastV-1,lastV], attrs: { class: "background", color: "#eee", flip: false } },)

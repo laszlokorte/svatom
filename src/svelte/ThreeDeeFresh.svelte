@@ -1589,11 +1589,12 @@
 	);
 	const ndcGeoLabelsFast = view(
 		({ ndcGeo, camera, screen, screenAspect }) => {
-			return ndcGeo.labels.map((v) => ({
-				...v,
-				vertex: fastProject(ndcGeo.vertices[v.vertex], camera, screen),
-				clipped: !clipVertex4D(ndcGeo.vertices[v.vertex]),
-				lines: Array.isArray(v.text) ? v.text : v.text.split("\n"),
+			return ndcGeo.labels.map((l) => ({
+				...l,
+				vertex: fastProject(ndcGeo.vertices[l.vertex], camera, screen),
+				anchor: l.anchor >= 0 ? fastProject(ndcGeo.vertices[l.anchor], camera, screen) : null,
+				clipped: !clipVertex4D(ndcGeo.vertices[l.vertex]),
+				lines: Array.isArray(l.text) ? l.text : l.text.split("\n"),
 			}));
 		},
 		combine({
@@ -2733,6 +2734,14 @@
 			canvasRoot.removeChild(reglCanvas)
 		};
 	};
+
+	const upsert = R.curry((key, updateFn, defaultVal, obj) =>
+	  R.assoc(
+	    key,
+	    updateFn(R.propOr(defaultVal, key, obj)),
+	    obj
+	  )
+	);
 </script>
 
 <div
@@ -3565,21 +3574,29 @@
 		<g style:--font-size={fontSize.value + "px"}>
 			{#each ndcGeoLabelsFast.value as v, i (i)}
 				{#if !v.clipped}
+					{@const perspectiveAngle = v.anchor ? Math.atan2(v.anchor.y - v.vertex.y, v.anchor.x - v.vertex.x) : 0}
+					{@const perspectiveRotation = `rotate(${perspectiveAngle * 180 / Math.PI})`}
+					{@const attrs = upsert('transform', R.concat(R.__, perspectiveRotation), "", v.attrs)}
+					{@const fade = Math.max(0, Math.cos(Math.min(Math.PI/3, Math.abs(perspectiveAngle)) * 3))}
 					<text
+						transform-origin="{v.vertex.x} {v.vertex.y}"
 						{...v.vertex}
 						text-anchor="middle"
 						transform="translate(0, -10)"
-						{...v.attrs}
+						opacity={fade}
+						{...attrs}
 						>{#each v.lines as line, l (l)}
 							<tspan x={v.vertex.x} dy="1em">{line}</tspan>
 						{/each}</text
 					>
-					{#if v.attrs.stroke}
+					{#if attrs.stroke}
 						<text
+							transform-origin="{v.vertex.x} {v.vertex.y}"
 							{...v.vertex}
 							text-anchor="middle"
 							transform="translate(0, -10)"
-							{...v.attrs}
+							opacity={fade}
+							{...attrs}
 							stroke="none"
 							stroke-width="0"
 							>{#each v.lines as line, l (l)}
