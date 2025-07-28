@@ -2079,17 +2079,19 @@
 
 
 	            R.forEachObjIndexed((drawer, arrow) => {
-	            	 drawer({
-			              segments: reglArrowMeshes[arrow],
-			              model: modelMatrix.value,
-			              color: meshColorGLDark.value,
-			              width: strokeWidthFg.value * window.devicePixelRatio * 2,
-			              depth: true,
-			              depthFunc: 'gequal',
-			              cullEnabled: false,
-			              modelMatrixNormal: modelMatrixNormal.value,
-			              depthOffsetFactor: strokeWidthFg.value,
-			            })
+	            	if(reglArrowMeshes[arrow].count) {
+		            	 drawer({
+				              segments: reglArrowMeshes[arrow],
+				              model: modelMatrix.value,
+				              color: meshColorGLDark.value,
+				              width: strokeWidthFg.value * window.devicePixelRatio * 2,
+				              depth: true,
+				              depthFunc: 'gequal',
+				              cullEnabled: false,
+				              modelMatrixNormal: modelMatrixNormal.value,
+				              depthOffsetFactor: strokeWidthFg.value,
+				         })
+	            	}
 	            }, arrowDrawers)
 	           
 	            drawLine3D({
