@@ -393,11 +393,15 @@ export const marchingCubesToGeo = (fn, minX, minY, minZ, maxX, maxY, maxZ, res =
         // Calculate cubeIndex by comparing corner values to isolevel=0
         let cubeIndex = 0;
         for (let i = 0; i < 8; i++) {
-          if (cubeValues[i] < 0) cubeIndex |= 1 << i;
+          if (cubeValues[i] < 0) {
+          	cubeIndex |= 1 << i;
+          }
         }
 
         // If cube is entirely inside or outside surface, skip
-        if (edgeTable[cubeIndex] === 0) continue;
+        if (edgeTable[cubeIndex] === 0) {
+        	continue;
+        }
 
         // Find the vertices where the surface intersects the cube
         const vertList = new Array(12);

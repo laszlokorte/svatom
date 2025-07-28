@@ -1,3 +1,16 @@
+import * as M from './matrix'
+
+function propOrDefault(propName, defaultValue = null) {
+  return (context, props) => {
+    return props[propName] ?? defaultValue
+  }
+}
+
+function instanceProp(instanceName, propName, defaultValue = null) {
+  return (context, props) => {
+    return props[instanceName]?.[propName] ?? props[propName] ?? defaultValue
+  }
+}
 
 export function roundCapJoinGeometry(resolution) {
   return (regl) => {
@@ -171,32 +184,32 @@ export function interleavedStrip3D(regl, geometry) {
             divisor: 0
           },
           pointA: {
-            buffer: regl.prop("points"),
+            buffer: instanceProp("segments", "points"),
             divisor: 1,
             offset: (_, props) => ((props.segmentOffset??0) * 6 * Float32Array.BYTES_PER_ELEMENT) + Float32Array.BYTES_PER_ELEMENT * 0,
             stride: Float32Array.BYTES_PER_ELEMENT * 6
           },
           pointB: {
-            buffer: regl.prop("points"),
+            buffer: instanceProp("segments", "points"),
             divisor: 1,
             offset: (_, props) => ((props.segmentOffset??0) * 6 * Float32Array.BYTES_PER_ELEMENT) + Float32Array.BYTES_PER_ELEMENT * 3,
             stride: Float32Array.BYTES_PER_ELEMENT * 6
           },
 
           normalFaceA: {
-            buffer: regl.prop("normals"),
+            buffer: instanceProp("segments", "normals"),
             divisor: 1,
             offset: (_, props) => ((props.segmentOffset??0) * 6 * Float32Array.BYTES_PER_ELEMENT) + Float32Array.BYTES_PER_ELEMENT * 0,
             stride: Float32Array.BYTES_PER_ELEMENT * 6
           },
           normalFaceB: {
-            buffer: regl.prop("normals"),
+            buffer: instanceProp("segments", "normals"),
             divisor: 1,
             offset: (_, props) => ((props.segmentOffset??0) * 6 * Float32Array.BYTES_PER_ELEMENT) + Float32Array.BYTES_PER_ELEMENT * 3,
             stride: Float32Array.BYTES_PER_ELEMENT * 6
           },
           shortening: {
-            buffer: regl.prop("shortenings"),
+            buffer: instanceProp("segments", "shortenings"),
             divisor: 1,
             offset: (_, props) => ((props.segmentOffset??0) * 4 * Float32Array.BYTES_PER_ELEMENT) + Float32Array.BYTES_PER_ELEMENT * 0,
             stride: Float32Array.BYTES_PER_ELEMENT * 2
@@ -204,33 +217,35 @@ export function interleavedStrip3D(regl, geometry) {
         },
 
         uniforms: {
-          width: regl.prop("width"),
-          axisFilter: regl.prop("axisFilter"),
-          axisShift: regl.prop("axisShift"),
-          color: regl.prop("color"),
-          model: regl.prop("model"),
-          resolution: regl.prop("resolution"),
-          modelMatrixNormal: regl.prop("modelMatrixNormal"),
-          dashFrequency: regl.prop("dashFrequency"),
-          dashRatio: regl.prop("dashRatio"),
+          width: propOrDefault("width", 1),
+          axisFilter: propOrDefault("axisFilter", [1,1,1]),
+          axisShift: propOrDefault("axisShift", [0,0,0]),
+          color: propOrDefault("color", [0,0,0,1]),
+          model: propOrDefault("model", M.makeIdentity()),
+          resolution: (context, prop) => {
+            return prop.resolution ?? [context.viewport.width, context.viewport.height]
+          },
+          modelMatrixNormal: propOrDefault("modelMatrixNormal", M.makeIdentity()),
+          dashFrequency: propOrDefault("dashFrequency", 0),
+          dashRatio: propOrDefault("dashRatio", 1),
         },
 
         depth: {
-          enable: regl.prop("depth"),
-          func: regl.prop("depthFunc"),
+          enable: propOrDefault("depth", false),
+          func: propOrDefault("depthFunc", "always"),
         },
 
         polygonOffset: {
-      enable: true,
-      offset: {
-        factor: regl.prop("depthOffset"),
-        units: 10
-      }
-    },
+          enable: propOrDefault("polygonOffsetEnabled", true),
+          offset: {
+            factor: propOrDefault("depthOffsetFactor", 0),
+            units: propOrDefault("depthOffsetUnits", 0)
+          }
+        },
 
         cull: {
-          enable: regl.prop("cull"),
-          face: regl.prop("cullFace")
+          enable: propOrDefault("cullEnabled", true),
+          face: propOrDefault("cullFace", 'back')
         },
 
         blend: {
@@ -249,7 +264,7 @@ export function interleavedStrip3D(regl, geometry) {
         },
 
         stencil: {
-          enable: (_, props) => props.stencilId >= 0,
+          enable: propOrDefault('stencil', false),
           func: {
             cmp: 'equal',
             ref: 0xff,
@@ -263,7 +278,7 @@ export function interleavedStrip3D(regl, geometry) {
         },
 
         count: geo.count,
-        instances: regl.prop("segments")
+        instances: (_,props) => props["segments"]?.["count"] ?? props["segments"]
       });
     }
 
@@ -294,49 +309,47 @@ export function makeColorShader(regl) {
           faceColor = vertexColor;
         }`,
         attributes: {
-          position: regl.prop('positions'),
-          vertexColor: regl.prop('colors'),
+          position: propOrDefault('positions'),
+          vertexColor: propOrDefault('colors'),
         },
         cull: {
-          enable: regl.prop("cull"),
-          face: regl.prop("cullFace")
+          enable: propOrDefault("cullEnabled", true),
+          face: propOrDefault("cullFace", 'back')
         },
 
         uniforms: {
-          color: regl.prop("color"),
-          model: regl.prop("model"),
+          color: propOrDefault("color", [0.5,0.6,0.5,1]),
+          model: propOrDefault("model", M.makeIdentity()),
         },
         depth: {
-          enable: regl.prop("depth"),
-          func: regl.prop("depthFunc"),
+          enable: propOrDefault("depth", false),
+          func: propOrDefault("depthFunc", "always"),
         },
         polygonOffset: {
-      enable: true,
-      offset: {
-        factor: regl.prop("depthOffset"),
-        units: 1
-      }
-    },
+          enable: propOrDefault("polygonOffsetEnabled", true),
+          offset: {
+            factor: propOrDefault("depthOffsetFactor", 0),
+            units: propOrDefault("depthOffsetUnits", 0)
+          }
+        },
 
+        blend: {
+          enable: propOrDefault('blend'),
+          func: {
+            srcRGB: 'one',
+            dstRGB: 'one minus src alpha',
+            srcAlpha: 'one',
+            dstAlpha: 'one minus src alpha'
+          },
+          equation: {
+            rgb: 'add',
+            alpha: 'add'
+          },
+          color: [0, 0, 0, 0]
+        },
 
-
-    blend: {
-      enable: regl.prop('blend'),
-      func: {
-        srcRGB: 'one',
-        dstRGB: 'one minus src alpha',
-        srcAlpha: 'one',
-        dstAlpha: 'one minus src alpha'
-      },
-      equation: {
-        rgb: 'add',
-        alpha: 'add'
-      },
-      color: [0, 0, 0, 0]
-    },
-
-    elements: regl.prop("elements"),
-  })
+        elements: propOrDefault("elements"),
+      })
 }
 
 

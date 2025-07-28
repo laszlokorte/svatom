@@ -1946,9 +1946,8 @@
 		              elements: reglFaceMesh.elements,
 		              depth: true,
 		              depthFunc: 'always',
-		              cull: true,
 					  cullFace: "front",
-					  depthOffset: -4,
+					  depthOffsetFactor: -4,
 					  blend: alphaBlend.value,
 		            })
 	         	}
@@ -1962,106 +1961,60 @@
 		              elements: reglFaceMesh.elements,
 		              depth: true,
 		              depthFunc: 'always',
-		              cull: true,
-					  cullFace: "back",
-					  depthOffset: -4,
+					  depthOffsetFactor: -4,
 					  blend: alphaBlend.value,
 		            })
 	         	}
-
-
-	       
-
-
+	         	
 	            drawLine3D({
-	              points: reglLineMesh.points,
-	              shortenings: reglLineMesh.shortenings,
-	              normals: reglLineMesh.normals,
+	              segments: reglLineMesh,
 	              model: modelMatrix.value,
-	              axisFilter: [1,1,1],
-	              axisShift: [0,0,0],
 	              color: meshColorGLDarker.value,
 	              width: strokeWidthBg.value * window.devicePixelRatio * 2,
-	              segments: reglLineMesh.count,
-	              resolution: [reglCanvas.width,reglCanvas.height],
-	              depth: false,
 	              depthFunc: 'always',
-	              cull: false,
+	              cullEnabled: false,
 	              cullFace: "front",
 	              modelMatrixNormal: modelMatrixNormal.value,
 	              dashFrequency: dashFrequency.value,
 	              dashRatio: dashRatio.value,
-	              depthOffset: strokeWidthBg.value
+	              depthOffsetFactor: strokeWidthBg.value,
 	            })
 
 
 
 	            drawLine3D({
-	              points: reglLineMesh.points,
-	              shortenings: reglLineMesh.shortenings,
-	              normals: reglLineMesh.normals,
+	              segments: reglLineMesh,
 	              model: modelMatrix.value,
-	              axisFilter: [1,1,1],
-	              axisShift: [0,0,0],
 	              color: meshColorGLDark.value,
 	              width: strokeWidthFg.value * window.devicePixelRatio * 2,
-	              segments: reglLineMesh.count,
-	              resolution: [reglCanvas.width,reglCanvas.height],
 	              depth: true,
 	              depthFunc: 'gequal',
-	              cull: true,
-	              cullFace: "back",
 	              modelMatrixNormal: modelMatrixNormal.value,
-	              dashFrequency: 0.0,
-	              dashRatio: 1.0,
-	              depthOffset: strokeWidthFg.value 
+	              depthOffsetFactor: strokeWidthFg.value,
 	            })
 
 
 	            R.forEachObjIndexed((drawer, arrow) => {
 	            	 drawer({
-			              points: reglArrowMeshes[arrow].points,
-			              shortenings: reglArrowMeshes[arrow].shortenings,
-			              normals: reglArrowMeshes[arrow].normals,
+			              segments: reglArrowMeshes[arrow],
 			              model: modelMatrix.value,
-			              axisFilter: [1,1,1],
-			              axisShift: [0,0,0],
 			              color: meshColorGLDark.value,
 			              width: strokeWidthFg.value * window.devicePixelRatio * 2,
-			              segments: reglArrowMeshes[arrow].count,
-			              resolution: [reglCanvas.width,reglCanvas.height],
 			              depth: true,
 			              depthFunc: 'gequal',
-			              cull: false,
-			              cullFace: "back",
+			              cullEnabled: false,
 			              modelMatrixNormal: modelMatrixNormal.value,
-			              dashFrequency: 0.0,
-			              dashRatio: 1.0,
-			              depthOffset: strokeWidthFg.value 
+			              depthOffsetFactor: strokeWidthFg.value,
 			            })
 	            }, arrowDrawers)
 	           
-
-
 	            drawLine3D({
-	              points: reglVertexMesh.points,
-	              shortenings: reglVertexMesh.shortenings,
-	              normals: reglVertexMesh.normals,
+	              segments: reglVertexMesh,
 	              model: modelMatrix.value,
-	              axisFilter: [1,1,1],
-	              axisShift: [0,0,0],
-	              color: [0,0,0,1],
 	              width: circleRad.value * window.devicePixelRatio * 4,
-	              segments: reglVertexMesh.count,
-	              resolution: [reglCanvas.width,reglCanvas.height],
-	              depth: false,
 	              depthFunc: 'gequal',
-	              cull: true,
-	              cullFace: "back",
 	              modelMatrixNormal: modelMatrixNormal.value,
-	              dashFrequency: 0.0,
-	              dashRatio: 1.0,
-	              depthOffset: 0
+	              depthOffsetFactor: 0,
 	            })
 	        })
 		})
