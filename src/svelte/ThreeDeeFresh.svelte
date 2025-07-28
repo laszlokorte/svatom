@@ -19,7 +19,7 @@
 		autofocusIf,
 		setValue,
 	} from "./svatom.svelte.js";
-	import { parserAutoDetect } from "@petristation/renewjs";
+	import { parserAutoDetect, kindKey, selfKey, refKey } from "@petristation/renewjs";
 	import exampleMesh, { cubeB } from "@svatom/threedee/exampleMesh";
 	import {
 		parse as parseObj,
@@ -1617,10 +1617,95 @@
 
 
 
+	export function doubleArrowGeometry(size) {
+	  return (regl) => {
+	    return {
+	      buffer: regl.buffer([
+
+	        [0,0,1],
+	        [-size,size*0.5,1],
+	        [-size,0,1],
+
+	        [-size*0.5,0,1],
+	        [-size*1.6,size*0.5,1],
+	        [-size*1.6,0,1],
+
+	        [0,0,1],
+	        [-size,0,1],
+	        [-size,-size*0.5,1],
+
+	        [-size*0.5,0,1],
+	        [-size*1.6,0,1],
+	        [-size*1.6,-size*0.5,1],
+	      ]),
+	      count: 12
+	    }
+	  }
+	}
+
+	export function flatArrowGeometry(size) {
+	  return (regl) => {
+	    return {
+	      buffer: regl.buffer([
+
+	        [0,0,1],
+	        [-size*1.5,size,1],
+	        [-size*1.5,0,1],
+
+
+	        [0,0,1],
+	        [-size*1.5,0,1],
+	        [-size*1.5,-size,1],
+
+	      ]),
+	      count: 6
+	    }
+	  }
+	}
+
+
+	export function lineArrowGeometry(size, thickness = 0.3) {
+	  return (regl) => {
+	  	const sq2 = 1.414
+	    return {
+	      buffer: regl.buffer([
+
+	        [0,0,1],
+	        [-size*1.5,size,1],
+	        [-size*(1.5+thickness/3*sq2),(size*(1-thickness/2*sq2)),1],
+
+	        [-size*(1.5+thickness/3*sq2),(size*(1-thickness/2*sq2)),1],
+	        [-size*thickness*sq2,0,1],
+	        [0,0,1],
+
+
+	        [0,0,1],
+	        [-size*(1.5+thickness/3*sq2),-(size*(1-thickness/2*sq2)),1],
+	        [-size*1.5,-size,1],
+
+
+
+	        [-size*thickness*sq2,0,1],
+	        [-size*(1.5+thickness/3*sq2),-(size*(1-thickness/2*sq2)),1],
+	        [0,0,1],
+
+	      ]),
+	      count: 12
+	    }
+	  }
+	}
+
 
 	const arrowGeometries = {
-		"simple-arrow": S.arrowGeometry(4),
-		"circle-arrow": S.circleCapGeometry(5, 10),
+		"CH.ifa.draw.figures.ArrowTip": S.arrowGeometry(4),
+		"de.renew.gui.CircleDecoration": S.circleCapGeometry(5, 10),
+		"de.renew.gui.AssocArrowTip": lineArrowGeometry(4), // TODO
+		"de.renew.diagram.AssocArrowTip": lineArrowGeometry(4), // TODO
+		"de.renew.gui.IsaArrowTip": flatArrowGeometry(5), // TODO
+		"de.renew.gui.fs.IsaArrowTip": flatArrowGeometry(5), // TODO
+		"de.renew.gui.fs.AssocArrowTip": lineArrowGeometry(4), // TODO
+		"de.renew.diagram.SynchronousMessageArrowTip": S.arrowGeometry(5), // TODO
+		"de.renew.gui.DoubleArrowTip": doubleArrowGeometry(5), // TODO
 	}
 	const roundLineGeo = S.roundCapJoinGeometry(10)
 
@@ -2649,9 +2734,14 @@
 							);
 						} else if (obj.renew) {
 							worldGeo.value = obj.geo = renewToGeo(
-								parserAutoDetect(obj.renew, false),
+								parserAutoDetect(obj.renew, false, {kind: kindKey,
+self: selfKey,
+ref: refKey}),
 								50,
 								20,
+								{kind: kindKey,
+self: selfKey,
+ref: refKey}
 							);
 						}
 					}}
@@ -2679,9 +2769,14 @@
 								.then((x) => x.json())
 								.then((x) => {
 									worldGeo.value = renewToGeo(
-										parserAutoDetect(x.content, false),
+										parserAutoDetect(x.content, false, {kind: kindKey,
+self: selfKey,
+ref: refKey}),
 										50,
 										20,
+										{kind: kindKey,
+self: selfKey,
+ref: refKey}
 									);
 								})
 								.catch((e) => {
@@ -2919,7 +3014,7 @@
 		</g>
 		<defs>
 			<marker
-				id="simple-arrow"
+				id="CH.ifa.draw.figures.ArrowTip"
 				viewBox="0 0 10 10"
 				refX="9"
 				refY="5"
@@ -2932,7 +3027,7 @@
 
 
 			<marker
-				id="circle-arrow"
+				id="de.renew.gui.CircleDecoration"
 				viewBox="0 0 10 10"
 				refX="9"
 				refY="5"
@@ -2941,6 +3036,85 @@
 				orient="auto-start-reverse"
 			>
 				<circle cx="5" cy="5" r=5 />
+			</marker>
+
+			<marker
+				id="de.renew.gui.AssocArrowTip"
+				viewBox="0 0 10 10"
+				refX="9"
+				refY="5"
+				markerWidth="6"
+				markerHeight="6"
+				orient="auto-start-reverse"
+			>
+			<!--TODO-->
+			</marker>
+			<marker
+				id="de.renew.diagram.AssocArrowTip"
+				viewBox="0 0 10 10"
+				refX="9"
+				refY="5"
+				markerWidth="6"
+				markerHeight="6"
+				orient="auto-start-reverse"
+			>
+			<!--TODO-->
+			</marker>
+			<marker
+				id="de.renew.gui.IsaArrowTip"
+				viewBox="0 0 10 10"
+				refX="9"
+				refY="5"
+				markerWidth="6"
+				markerHeight="6"
+				orient="auto-start-reverse"
+			>
+			<!--TODO-->
+			</marker>
+			<marker
+				id="de.renew.gui.fs.IsaArrowTip"
+				viewBox="0 0 10 10"
+				refX="9"
+				refY="5"
+				markerWidth="6"
+				markerHeight="6"
+				orient="auto-start-reverse"
+			>
+			<!--TODO-->
+			</marker>
+			<marker
+				id="de.renew.gui.fs.AssocArrowTip"
+				viewBox="0 0 10 10"
+				refX="9"
+				refY="5"
+				markerWidth="6"
+				markerHeight="6"
+				orient="auto-start-reverse"
+			>
+			<!--TODO-->
+			</marker>
+			<marker
+				id="de.renew.diagram.SynchronousMessageArrowTip"
+				viewBox="0 0 10 10"
+				refX="9"
+				refY="5"
+				markerWidth="6"
+				markerHeight="6"
+				orient="auto-start-reverse"
+			>
+			<!--TODO-->
+			</marker>
+			<marker
+				id="de.renew.gui.DoubleArrowTip"
+				viewBox="-5 0 15 10"
+				refX="9"
+				refY="5"
+				markerWidth="10"
+				markerHeight="6"
+				orient="auto-start-reverse"
+			>
+				<path d="M 0 0 L 10 5 L 0 10 z" />
+				<path d="M -5 0 L 5 5 L -5 10 z" />
 			</marker>
 
 			{#each ndcGeoMaskPathsFast.value as p, i (i)}

@@ -2,14 +2,14 @@ import * as R from 'ramda'
 import * as L from 'partial.lenses'
 import {
 		hierarchyV11,
-		tryDeref as tryDerefInternal,
+		tryDeref,
 		kindKey,
 		selfKey,
 		refKey,
 	} from "@petristation/renewjs";
 
 
-export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
+export const renewToGeo = (renewDocument, scale=50, sides = 12, metaKeys) =>  {
 	const plainRects = ["CH.ifa.draw.figures.RectangleFigure",
 		"CH.ifa.draw.figures.RoundRectangleFigure",]
 	const rectTypes = hierarchyV11.descendantsOf(
@@ -305,13 +305,26 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
 	for(const l of lines) {
 		const segments = R.aperture(2, l.points)
 		let s = 0;
+		const endMarker = tryDeref(
+								l,
+								renewDocument.refMap,
+								["endDecoration", metaKeys.kind],
+								{refKey: metaKeys.ref}
+							)
+		const startMarker = tryDeref(
+								l,
+								renewDocument.refMap,
+								["startDecoration", metaKeys.kind],
+								{refKey: metaKeys.ref}
+							)
+
 		for(const [from, to] of segments) {
 			s++
 			const v1 = v.length
 			v.push({ x: ((from.x-bounds.minX)/width-0.5)*scale, y: ((from.y-bounds.minY)/height-0.5)*scale*aspect, z: 0.5/depth },)
 			v.push({ x: ((to.x-bounds.minX)/width-0.5)*scale, y: ((to.y-bounds.minY)/height-0.5)*scale*aspect, z: 0.5/depth },)
 
-			e.push({ vertices: [v1,v1+1], faces: [],  attrs: { "stroke-width": 4, "marker-end": segments.length === s ? "url(#simple-arrow)" : null, "marker-start": 1 === s ? "url(#circle-arrow)" : null, "class": "petri-line", color: renewToRgba(l?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: true } },)
+			e.push({ vertices: [v1,v1+1], faces: [],  attrs: { "stroke-width": 4, "marker-end": segments.length === s ? markerToUrl(endMarker) : null, "marker-start": 1 === s ? markerToUrl(startMarker) : null, "class": "petri-line", color: renewToRgba(l?.attributes?.attrs?.FrameColor??{ r: 0, g: 0, b: 0 }), flip: true } },)
 
 		}
 		//v.push({ x: ((t.fOriginX-bounds.minX)/width-0.5)*scale, y: ((t.fOriginY-bounds.minY)/height-0.5)*scale*aspect, z: 0 },)
@@ -379,5 +392,13 @@ function renewToRgba(color) {
 			return `rgb(${color.r},${color.g},${color.b})`;
 		} else {
 			return "rgb(0,0,0)";
+		}
+	}
+
+	function markerToUrl(markerName) {
+		if (markerName) {
+			return `url(#${markerName})` 
+		} else {
+			return null
 		}
 	}
