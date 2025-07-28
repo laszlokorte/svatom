@@ -19,6 +19,7 @@
   "dependencies": {
     "@petristation/renewjs": "^1.0.0",
     "@svatom/basic": "^1.0.6",
+    "@svatom/threedee": "^1.0.3",
     "partial.lenses": "^14.17.0",
     "partial.lenses.history": "git+https://github.com/laszlokorte/partial.lenses.history#initialdate",
     "phoenix": "^1.7.14",

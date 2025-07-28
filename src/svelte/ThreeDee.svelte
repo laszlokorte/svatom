@@ -14,7 +14,7 @@
 		activeTouchMove,
 	} from "./svatom.svelte.js";
 	import ThreeDeeModel from "./ThreeDeeModel.svelte";
-	import { cube } from "./example_mesh.js";
+	import { cubeA } from "@svatom/threedee/exampleMesh";
 
 	const numf = new Intl.NumberFormat("en-US", {
 		maximumFractionDigits: 2,
@@ -225,7 +225,7 @@
 		sz: 0.4,
 	});
 
-	const geo2 = atom(cube);
+	const geo2 = atom(cubeA);
 
 	const camera = atom({
 		w: 50,

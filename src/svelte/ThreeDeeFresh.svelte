@@ -3,12 +3,10 @@
 	import * as G from "@svatom/basic/generators";
 	import * as R from "ramda";
 	import * as U from "./utils";
-	import * as M from "./matrix";
-	import * as S from "./reglShaders";
+	import * as M from "@svatom/threedee/matrix";
+	import * as S from "@svatom/threedee/shader";
 	import createREGL from 'regl'
 	import {parseColor} from './colors'
-
-
 
 	import {
 		atom,
@@ -22,24 +20,25 @@
 		setValue,
 	} from "./svatom.svelte.js";
 	import { parserAutoDetect } from "@petristation/renewjs";
-	import exampleMesh, { cube2 } from "./example_mesh";
-	import * as objData from "../data/obj";
-	import * as renew from "../data/renew";
+	import exampleMesh, { cubeB } from "@svatom/threedee/exampleMesh";
 	import {
 		parse as parseObj,
 		toGeo,
+	} from "@svatom/threedee/obj";
+	import * as objData from "../data/obj";
+	import * as renew from "../data/renew";
+	import {
 		renewToGeo,
-	} from "./obj.js";
+	} from "./renewObj.js";
 
 	import {
 		marchingCubesToGeo,
-	} from "./marchingCubes.js";
-	import { render } from "svelte/server";
+	} from "@svatom/threedee/marchingCubes";
 
 	const objs = {
 		initial: {
 			label: "Initial",
-			geo: cube2,
+			geo: cubeB,
 		},
 		cube: { label: "Cube", data: objData.cube, scale: 20 },
 		monkey: {
@@ -1965,7 +1964,7 @@
 					  blend: alphaBlend.value,
 		            })
 	         	}
-	         	
+
 	            drawLine3D({
 	              segments: reglLineMesh,
 	              model: modelMatrix.value,

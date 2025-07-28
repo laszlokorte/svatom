@@ -13,7 +13,7 @@
 		bindValue,
 		autofocusIf,
 	} from "./svatom.svelte.js";
-	import exampleMesh from "./example_mesh.js";
+	import exampleMesh from "@svatom/threedee/exampleMesh";
 
 	const numf = new Intl.NumberFormat("en-US", {
 		maximumFractionDigits: 2,

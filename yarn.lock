@@ -1124,6 +1124,13 @@
   resolved "https://registry.yarnpkg.com/@svatom/basic/-/basic-1.0.6.tgz#bd81d7c477c697c0422b70ddbd0731853e07c3cb"
   integrity sha512-pf00Gcc0GfZSvtAkBXnLrRo8YkTToDpaZEky2/5QsA/e0IrdeA7tnf69MZ8byOALRu6iXhz8u2dhIUKUpEiHsg==
 
+"@svatom/threedee@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@svatom/threedee/-/threedee-1.0.3.tgz#3f732a990fb25bd8e3d234b3e1cb694d71551b63"
+  integrity sha512-HlsVPn9OSoLNBYXeJ4PiFTqnFrOAl9oQYlRE60QiBHNEmSUhmDcbsPEMzztws2PPef9+F+SMsDjhtPrJW89EIw==
+  dependencies:
+    ramda "^0.31.3"
+
 "@sveltejs/acorn-typescript@^1.0.5":
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/@sveltejs/acorn-typescript/-/acorn-typescript-1.0.5.tgz#f518101d1b2e12ce80854f1cd850d3b9fb91d710"
@@ -2314,6 +2321,11 @@ ramda@^0.30.1:
   version "0.30.1"
   resolved "https://registry.yarnpkg.com/ramda/-/ramda-0.30.1.tgz#7108ac95673062b060025052cd5143ae8fc605bf"
   integrity sha512-tEF5I22zJnuclswcZMc8bDIrwRHRzf+NqVEmqg50ShAZMP7MWeR/RGDthfM/p+BlqvF2fXAzpn8i+SJcYD3alw==
+
+ramda@^0.31.3:
+  version "0.31.3"
+  resolved "https://registry.yarnpkg.com/ramda/-/ramda-0.31.3.tgz#0f54199ec99a7bd6702277d28d6bf7f93b916bb9"
+  integrity sha512-xKADKRNnqmDdX59PPKLm3gGmk1ZgNnj3k7DryqWwkamp4TJ6B36DdpyKEQ0EoEYmH2R62bV4Q+S0ym2z8N2f3Q==
 
 randombytes@^2.1.0:
   version "2.1.0"
