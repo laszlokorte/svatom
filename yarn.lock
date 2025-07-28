@@ -950,10 +950,10 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-"@petristation/renewjs@^1.0.0":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@petristation/renewjs/-/renewjs-1.0.1.tgz#fe9b6f02afafeb8e3a9bfdaa40c53b599f63266f"
-  integrity sha512-MpMZCiXPkDTUWLUEPXA7TcdFexHNR2dDJQnAQgMlr+poeC3Zg4z+Ce0W8F9s6B23AoQv5av56xpiUGH8Q8RuCQ==
+"@petristation/renewjs@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@petristation/renewjs/-/renewjs-1.0.3.tgz#11912dcdef8a36b8b102b3aacffd68df3406f74f"
+  integrity sha512-1JrBg6U4Wq2/VfGwWPKsol3BdBCKG1B9rzIW4v+ZYu9W6fCXYlk4iYRbvu5f9Pwy6pyxtt9Ek8iZxY0hZicDYg==
 
 "@rollup/plugin-babel@^5.2.0":
   version "5.3.1"

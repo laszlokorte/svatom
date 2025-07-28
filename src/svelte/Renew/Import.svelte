@@ -28,6 +28,8 @@
 		serializerV11,
 		stringify,
 		hierarchyV11,
+		makeSerializer,
+		makeGrammar,
 		tryDeref as tryDerefInternal,
 		kindKey as kindKeySymbol,
 		selfKey as selfKeySymbol,
@@ -101,18 +103,26 @@
 	const jsonLens = L.lens(
 		(x) => x.json,
 		(newJson, old) => {
-			const s = serializerV11(newJson.refMap, {
-				kind: kindKey,
-				ref: refKey,
-				self: selfKey,
-			});
-			s.context.writeVersion();
-			s.context.writeStorable(newJson.drawing);
+			let serialized = ""
+			try {
+				const ser = makeSerializer(makeGrammar(newJson.version), {
+							kind: kindKey,
+							ref: refKey,
+							self: selfKey,
+						})
+				const s = ser(newJson.refMap);
+				s.context.writeVersion();
+				s.context.writeStorable(newJson.drawing);
+				serialized = s.output.join(" ")
+			} catch(e) {
+				serialized = e.toString()
+			}
+
 			return {
 				selection: old.selection,
-				string: s.output.join(" "),
+				string: serialized,
 				json: {
-					version: 11,
+					version: newJson.version,
 					doctype: newJson.doctype,
 					drawing: newJson.drawing,
 					refMap: newJson.refMap,
@@ -633,7 +643,7 @@
 	const renderedRefMap = view(
 		[
 			jsonLens,
-			L.reread((x) => x.refMap[x.drawing["__ref"]]["figures"]),
+			L.reread((x) => x.refMap[x.drawing[refKey]]["figures"]),
 			L.partsOf(
 				L.elems,
 				L.choices(
@@ -1224,6 +1234,7 @@
 										: L.choose((v) =>
 												typeof v === "object"
 													? [
+															L.rewrite(v => v && v[refKey] ? {...v, [refKeySymbol]: true, ref: v[refKey]} : v),
 															L.define(null),
 															L.rewrite((e) =>
 																e instanceof
@@ -1239,11 +1250,38 @@
 								],
 								refMap,
 							)}
+							{@const propIsRef = view(
+								[
+									s,
+									prop,
+									L.lens((v) => v?.[refKeySymbol] ? v?.[refKey] : false, (v, o) => {
+										const i = parseInt(v, 10);
+										if (i>=0) {
+											return {[refKeySymbol]: true, ref: i, [refKey]: i}
+										} else {
+											return v ? v : null
+										}
+									}),
+								],
+								refMap,
+							)}
 							<dt>{prop}</dt>
 							<dd>
 								{#if prop === "lines"}
 									<textarea bind:value={propValue.value}
 									></textarea>
+								{:else if propIsRef.value !== false}
+									<select bind:value={propIsRef.value}>
+										{#each currentRefMap as ref, r (r)}
+												<option
+													value={r}
+													>#{r}</option
+												>
+										{/each}
+									</select>
+									<button type="button" onclick={e => {propIsRef.value = null}}>x</button>
+									<small><code>{propValue.value}</code></small>
+
 								{:else}
 									<input
 										type={isNumeric ? "number" : "text"}
@@ -1745,9 +1783,7 @@
 							{@const decoration = tryDeref(
 								diag,
 								currentRefMap,
-								["decoration"],
-								diag[kindKey] ===
-									"de.renew.diagram.HSplitFigure",
+								["decoration"]
 							)}
 							<g
 								class={{
