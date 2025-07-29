@@ -159,30 +159,52 @@
 		),
 	];
 
-	const lens3dPerspectiveBuilder =
-		(ax1, ax2, ax3, ax4) => (fov, aspect, near, far) => {
-			const tanfov = 1 / Math.tan(fov / 2);
-			const fpn = -(far + near) / (far - near);
-			const ftn = -(2 * far * near) / (far - near);
+    const lens3dPerspectiveBuilder =
+        (ax1, ax2, ax3, ax4) => (fov, aspect, near, far) => {
+            const tanfov = 1 / Math.tan(fov / 2);
+            const fpn = -(far + near) / (far - near);
+            const ftn = -(2 * far * near) / (far - near);
 
-			return [
-				L.applyAt(ax1, [L.multiply(tanfov), L.multiply(aspect)]),
-				L.applyAt(ax2, L.multiply(tanfov)),
-				L.applyAt(
-					L.pick({ ax3, ax4 }),
-					L.iso(
-						({ ax3, ax4 }) => ({
-							ax3: fpn * ax3 + ftn * ax4,
-							ax4: -ax3,
-						}),
-						({ ax3, ax4 }) => ({
-							ax3: -ax4,
-							ax4: (ax3 + fpn * ax4) / ftn,
-						}),
-					),
-				),
-			];
-		};
+            return [
+                L.applyAt(ax1, [L.multiply(tanfov), L.multiply(aspect)]),
+                L.applyAt(ax2, L.multiply(tanfov)),
+                L.applyAt(
+                    L.pick({ ax3, ax4 }),
+                    L.iso(
+                        ({ ax3, ax4 }) => ({
+                            ax3: fpn * ax3 + ftn * ax4,
+                            ax4: -ax3,
+                        }),
+                        ({ ax3, ax4 }) => ({
+                            ax3: -ax4,
+                            ax4: (ax3 + fpn * ax4) / ftn,
+                        }),
+                    ),
+                ),
+            ];
+        };
+
+    const lens3dOrthographicBuilder =
+        (ax1, ax2, ax3, ax4) => (fov, aspect, near, far) => {
+            const tanfov = 1 / Math.tan(fov / 2);
+              
+              const top    = ((near+far)/2 / tanfov) * aspect
+              const bottom = -top 
+              const right  = (top / aspect)
+              const left   = -right
+
+              const rl = right - left;
+              const tb = top - bottom;
+              const fn = far - near;
+
+
+            return [
+                L.applyAt(ax1, [L.multiply(2), L.divide(rl), L.add(-(right + left) / rl)]),
+                L.applyAt(ax2, [L.multiply(2), L.divide(tb), L.add(-(top + bottom) / tb)]),
+                L.applyAt(ax3, [L.multiply(-2), L.divide(fn), L.add(-(far + near) / fn)]),
+                L.applyAt(ax4, [R.always(1)]),
+            ];
+        };
 
 	const lerp = (a, b, t) => b * t + (1 - t) * a;
 
@@ -193,15 +215,15 @@
 				L.pick({ ax1, ax2, ax3, ax4 }),
 				L.iso(
 					expect(R.is(Object), ({ ax1, ax2, ax3, ax4 }) => ({
-						ax1: ax1 / lerp(ax4, 1.5, ortho),
-						ax2: ax2 / lerp(ax4, 1.5, ortho),
-						ax3: ax3 / lerp(ax4, 1.5, ortho),
+						ax1: ax1 / ax4,
+						ax2: ax2 / ax4,
+						ax3: ax3 / ax4,
 						ax4: ax4,
 					})),
 					expect(R.is(Object), ({ ax1, ax2, ax3, ax4 }) => ({
-						ax1: ax1 * lerp(ax4, 1.5, ortho),
-						ax2: ax2 * lerp(ax4, 1.5, ortho),
-						ax3: ax3 * lerp(ax4, 1.5, ortho),
+						ax1: ax1 * ax4,
+						ax2: ax2 * ax4,
+						ax3: ax3 * ax4,
 						ax4: ax4,
 					})),
 				),
@@ -217,6 +239,7 @@
 	const lens3dRotateZ = lensRotateBuilder("x", "y");
 	const lens2dRotate = lensRotateBuilder("x", "y");
 	const lens3dPerspective = lens3dPerspectiveBuilder("x", "y", "z", "w");
+    const lens3dOrthographic = lens3dOrthographicBuilder("x", "y", "z", "w");
 	const lens3dProject = lens3dProjectBuilder("x", "y", "z", "w");
 
 	const coordPair = L.iso(
@@ -668,7 +691,7 @@
 				),
 			),
 			lensAddProp("w", 1),
-			lens3dPerspective(
+			lens3dOrthographic(
 				camera.fov,
 				camera.aspectRatio * screenAspect,
 				camera.clip.near,
@@ -734,13 +757,36 @@
 			(camera.clip.far - camera.clip.near);
 		const aspect = camera.aspectRatio * screenAspect;
 
-		const r = {
+        // TODO: orthographic
+
+        const top    = ((camera.clip.near+camera.clip.far)/2 / tanfov) * aspect
+        const bottom = -top 
+        const right  = (top / aspect)
+        const left   = -right
+
+        const rl = right - left;
+        const tb = top - bottom;
+        const fn = camera.clip.far - camera.clip.near;
+
+        //  L.applyAt(ax1, [L.multiply(2), L.divide(rl), L.add(-(right + left) / rl)]),
+        // L.applyAt(ax2, [L.multiply(2), L.divide(tb), L.add(-(top + bottom) / tb)]),
+        // L.applyAt(ax3, [L.multiply(-2), L.divide(fn), L.add(-(far + near) / fn)]),
+        // L.applyAt(ax4, [R.always(1)]),
+
+        const ort = {
+            x: v0.x * 2 / rl - (right + left) / rl,
+            y: v0.y * 2 / tb - (top + bottom) / tb,
+            z: v0.z * -2 / fn - (camera.clip.far - camera.clip.near) / fn,
+            w: 1,
+        };
+
+		const per = {
 			x: v0.x * tanfov * aspect,
 			y: v0.y * tanfov,
 			z: v0.z * fpn + ftn,
 			w: -v0.z,
 		};
-		return r;
+		return ort
 	};
 
 	const ratio = (a, b) => [
@@ -1160,7 +1206,8 @@
 		combine({ screen, geo: ndcGeo, camera }),
 	);
 
-	const cameraFoV = view(["fov", lensRadToDegree], camera);
+	const cameraFoVDeg = view(["fov", lensRadToDegree], camera);
+	const cameraFoVRad = view(["fov"], camera);
 	const cameraAspectRatio = view(["aspectRatio"], camera);
 	const cameraOrtho = view(
 		["orthogonality", L.normalize(R.clamp(0, 1))],
@@ -1249,7 +1296,7 @@
 			L.normalize(R.clamp(0.001, 180)),
 			L.setter((a, b) => b * Math.exp(a / 1000)),
 		],
-		cameraFoV,
+		cameraFoVDeg,
 	);
 
 	const eyePointerRotate = view(
@@ -1437,7 +1484,7 @@
 	const hideAll = view(allProps(true), backfaceCull);
 
 	const debugLabels = atom({
-		svg: false,
+		svg: true,
 		canvas: true,
 		edge: false,
 		face: false,
@@ -1485,12 +1532,12 @@
 	const fastProject = (v, camera, screen) => {
 		return {
 			x:
-				((v.x / lerp(v.w, 1.5, camera.orthogonality)) * screen.size.x) /
-				2,
+				((v.x / v.w) * screen.size.x) /
+				1,
 			y:
-				((v.y / lerp(v.w, 1.5, camera.orthogonality)) * screen.size.y) /
-				2,
-			z: v.z / lerp(v.w, 1.5, camera.orthogonality),
+				((v.y / v.w) * screen.size.y) /
+				1,
+			z: v.z / v.w,
 			w: 1,
 		};
 	};
@@ -1709,6 +1756,58 @@
 	}
 	const roundLineGeo = S.roundCapJoinGeometry(10)
 
+
+    function makePerspectiveMatrix(fovRad, aspect, near, far) {
+      const f = 1.0 / Math.tan(fovRad / 2)
+      const nf = 1 / (far - near)
+      
+      return [
+        f / aspect, 0.0, 0.0, 0.0,
+        0.0, f, 0.0, 0.0,
+        0.0, 0.0, near * nf, -1.0,
+        0.0, 0.0, far * near * nf, 0.0
+      ]
+  }
+
+    function makeOrthographicMatrix(fovRad, aspect, near, far) {
+      const f = 1.0 / Math.tan(fovRad / 2)
+      const nf = 1 / (far - near)
+      
+      const top    = ((near+far)/2 / f) * aspect
+      const bottom = -top 
+      const right  = (top / aspect)
+      const left   = -right
+
+      const rl = right - left;
+      const tb = top - bottom;
+      const fn = far - near;
+
+      return  [
+          2 / rl,       0,          0,              0,
+          0,            2 / tb,     0,              0,
+          0,            0,         -2 / fn,         0,
+          -(right + left) / rl,
+          -(top + bottom) / tb,
+          -(far + near) / fn,
+          1
+        ]
+      
+    }
+
+    function blendProjectionMatrix(persp, ortho, orthoFactor) {
+        const proj = [...persp]
+        proj[2] = lerp(persp[2], ortho[2], orthoFactor);
+        proj[6] = lerp(persp[6], ortho[6], orthoFactor);
+        proj[10] = lerp(persp[10], ortho[10], orthoFactor);
+        proj[14] = lerp(persp[14], ortho[14], orthoFactor);
+        proj[3] = lerp(persp[3], ortho[3], orthoFactor);
+        proj[7] = lerp(persp[7], ortho[7], orthoFactor);
+        proj[11] = lerp(persp[11], ortho[11], orthoFactor);
+        proj[15] = lerp(persp[15], ortho[15], orthoFactor);
+
+      return proj
+    }
+
 	const renderGL = (canvasRoot) => {
 		const reglCanvas = document.createElement('canvas')
 		canvasRoot.appendChild(reglCanvas)
@@ -1753,7 +1852,13 @@
                 ].reduce(M.matMulMat)
               },
               projection: ({viewportWidth, viewportHeight}) =>
-                M.makePerspective(cameraFoV.value, viewportWidth/viewportHeight, cameraClipNear.value, cameraClipFar.value),
+              [blendProjectionMatrix(
+                makePerspectiveMatrix(cameraFoVRad.value, viewportWidth/viewportHeight, cameraClipNear.value, cameraClipFar.value),
+                makeOrthographicMatrix(cameraFoVRad.value, viewportWidth/viewportHeight, cameraClipNear.value, cameraClipFar.value),
+                cameraOrtho.value
+              ),
+                M.makeScale(1/(1+42*cameraOrtho.value),1/(1+42*cameraOrtho.value),1/(1+42*cameraOrtho.value))
+            ].reduce(M.matMulMat),
 
               viewport: () => ({ x: 0, y: 0, width: reglCanvas.width, height: reglCanvas.height }),
 
@@ -2492,9 +2597,9 @@
 					min="1"
 					max="120"
 					step="1"
-					bind:value={cameraFoV.value}
+					bind:value={cameraFoVDeg.value}
 				/><output class="number-picker-value ro"
-					>({numf.format(cameraFoV.value)})</output
+					>({numf.format(cameraFoVDeg.value)})</output
 				>
 			</label>
 
