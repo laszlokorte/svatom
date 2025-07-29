@@ -1769,10 +1769,10 @@
       return  [
           mid*2 / rl,       0,          0,              0,
           0,            mid*2 / tb,     0,              0,
-          0,            0,         mid*-2 / fn,         0,
+          0,            0,         mid*2 / fn,         0,
           -(right + left) / rl,
           -(top + bottom) / tb,
-          -(far + near) / fn,
+          (far + near) / fn,
           mid*1
         ]
       
