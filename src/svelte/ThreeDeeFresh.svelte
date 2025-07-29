@@ -748,9 +748,9 @@
 			z: v1.z / camera.eye.sz,
 		};
 
-		const projection = [blendProjectionMatrix(
-            makePerspectiveMatrix(camera.fov, 1/camera.aspectRatio * 1/screenAspect, camera.clip.near,camera.clip.far),
-            makeOrthographicMatrix(camera.fov, 1/camera.aspectRatio * 1/screenAspect, camera.clip.near,camera.clip.far),
+		const projection = [M.blendProjections(
+            M.makePerspective(camera.fov / Math.PI * 180, 1/camera.aspectRatio * 1/screenAspect, camera.clip.near,camera.clip.far),
+            M.makeOrthographic(camera.fov / Math.PI * 180, 1/camera.aspectRatio * 1/screenAspect, camera.clip.near,camera.clip.far),
             camera.orthogonality
           ),
         ].reduce(M.matMulMat)
@@ -1740,57 +1740,7 @@
 	const roundLineGeo = S.roundCapJoinGeometry(10)
 
 
-    function makePerspectiveMatrix(fovRad, aspect, near, far) {
-      const f = 1.0 / Math.tan(fovRad / 2)
-      const nf = 1 / (far - near)
-      
-      return [
-        f / aspect, 0.0, 0.0, 0.0,
-        0.0, f, 0.0, 0.0,
-        0.0, 0.0, near * nf, -1.0,
-        0.0, 0.0, far * near * nf, 0.0
-      ]
-  }
 
-    function makeOrthographicMatrix(fovRad, aspect, near, far) {
-      const f = 1.0 / Math.tan(fovRad / 2)
-      const nf = 1 / (far - near)
-      
-      const mid = (far)/2
-      const top    = ((near+far)/2 / f) * aspect
-      const bottom = -top 
-      const right  = (top / aspect)
-      const left   = -right
-
-      const rl = right - left;
-      const tb = top - bottom;
-      const fn = far - near;
-
-      return  [
-          mid*2 / rl,       0,          0,              0,
-          0,            mid*2 / tb,     0,              0,
-          0,            0,         mid*2 / fn,         0,
-          -(right + left) / rl,
-          -(top + bottom) / tb,
-          (far + near) / fn,
-          mid*1
-        ]
-      
-    }
-
-    function blendProjectionMatrix(persp, ortho, orthoFactor) {
-        const proj = [...persp]
-        proj[2] = lerp(persp[2], ortho[2], orthoFactor);
-        proj[6] = lerp(persp[6], ortho[6], orthoFactor);
-        proj[10] = lerp(persp[10], ortho[10], orthoFactor);
-        proj[14] = lerp(persp[14], ortho[14], orthoFactor);
-        proj[3] = lerp(persp[3], ortho[3], orthoFactor);
-        proj[7] = lerp(persp[7], ortho[7], orthoFactor);
-        proj[11] = lerp(persp[11], ortho[11], orthoFactor);
-        proj[15] = lerp(persp[15], ortho[15], orthoFactor);
-
-      return proj
-    }
 
 	const renderGL = (canvasRoot) => {
 		const reglCanvas = document.createElement('canvas')
@@ -1836,9 +1786,9 @@
                 ].reduce(M.matMulMat)
               },
               projection: ({viewportWidth, viewportHeight}) =>
-              [blendProjectionMatrix(
-                makePerspectiveMatrix(cameraFoVRad.value, viewportWidth/viewportHeight, cameraClipNear.value, cameraClipFar.value),
-                makeOrthographicMatrix(cameraFoVRad.value, viewportWidth/viewportHeight, cameraClipNear.value, cameraClipFar.value),
+              [M.blendProjections(
+                M.makePerspective(cameraFoVDeg.value, viewportWidth/viewportHeight, cameraClipNear.value, cameraClipFar.value),
+                M.makeOrthographic(cameraFoVDeg.value, viewportWidth/viewportHeight, cameraClipNear.value, cameraClipFar.value),
                 cameraOrtho.value
               ),
             ].reduce(M.matMulMat),

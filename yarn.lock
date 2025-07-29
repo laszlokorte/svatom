@@ -1124,10 +1124,10 @@
   resolved "https://registry.yarnpkg.com/@svatom/basic/-/basic-1.0.6.tgz#bd81d7c477c697c0422b70ddbd0731853e07c3cb"
   integrity sha512-pf00Gcc0GfZSvtAkBXnLrRo8YkTToDpaZEky2/5QsA/e0IrdeA7tnf69MZ8byOALRu6iXhz8u2dhIUKUpEiHsg==
 
-"@svatom/threedee@^1.0.3":
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/@svatom/threedee/-/threedee-1.0.3.tgz#3f732a990fb25bd8e3d234b3e1cb694d71551b63"
-  integrity sha512-HlsVPn9OSoLNBYXeJ4PiFTqnFrOAl9oQYlRE60QiBHNEmSUhmDcbsPEMzztws2PPef9+F+SMsDjhtPrJW89EIw==
+"@svatom/threedee@^1.0.5":
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/@svatom/threedee/-/threedee-1.0.5.tgz#3d5396ab05c158e67236146f3dcd0b335684aba6"
+  integrity sha512-VMEVp35h3VXdFFu4qXmuaGFGr4X1vZGUkmOe/l9wPUoKh3Ikdmm5ccQACaLIvYGx5xB1GCEMpS30oR4txzkjag==
   dependencies:
     ramda "^0.31.3"
 
