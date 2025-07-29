@@ -97,7 +97,7 @@
 			},
 			aspectRatio: 1,
 			fov: Math.PI / 2 / 6,
-			orthogonality: 0,
+			orthogonality: 1,
 			eye: {
 				tx: 0,
 				ty: 0,
@@ -748,45 +748,30 @@
 			z: v1.z / camera.eye.sz,
 		};
 
-		const tanfov = 1 / Math.tan(camera.fov / 2);
-		const fpn =
-			-(camera.clip.far + camera.clip.near) /
-			(camera.clip.far - camera.clip.near);
-		const ftn =
-			-(2 * camera.clip.far * camera.clip.near) /
-			(camera.clip.far - camera.clip.near);
-		const aspect = camera.aspectRatio * screenAspect;
+		const projection = [blendProjectionMatrix(
+            makePerspectiveMatrix(camera.fov, 1/camera.aspectRatio * 1/screenAspect, camera.clip.near,camera.clip.far),
+            makeOrthographicMatrix(camera.fov, 1/camera.aspectRatio * 1/screenAspect, camera.clip.near,camera.clip.far),
+            camera.orthogonality
+          ),
+        ].reduce(M.matMulMat)
 
-        // TODO: orthographic
-
-        const top    = ((camera.clip.near+camera.clip.far)/2 / tanfov) * aspect
-        const bottom = -top 
-        const right  = (top / aspect)
-        const left   = -right
-
-        const rl = right - left;
-        const tb = top - bottom;
-        const fn = camera.clip.far - camera.clip.near;
-
-        //  L.applyAt(ax1, [L.multiply(2), L.divide(rl), L.add(-(right + left) / rl)]),
-        // L.applyAt(ax2, [L.multiply(2), L.divide(tb), L.add(-(top + bottom) / tb)]),
-        // L.applyAt(ax3, [L.multiply(-2), L.divide(fn), L.add(-(far + near) / fn)]),
-        // L.applyAt(ax4, [R.always(1)]),
-
-        const ort = {
-            x: v0.x * 2 / rl - (right + left) / rl,
-            y: v0.y * 2 / tb - (top + bottom) / tb,
-            z: v0.z * -2 / fn - (camera.clip.far - camera.clip.near) / fn,
-            w: 1,
+        const res = {
+            x: projection[0] * v0.x + projection[4] * v0.y + projection[8] * v0.z + projection[12],
+            y: projection[1] * v0.x + projection[5] * v0.y + projection[9] * v0.z + projection[13],
+            z: projection[2] * v0.x + projection[6] * v0.y + projection[10] * v0.z + projection[14],
+            w: projection[3] * v0.x + projection[7] * v0.y + projection[11] * v0.z + projection[15],
         };
 
-		const per = {
-			x: v0.x * tanfov * aspect,
-			y: v0.y * tanfov,
-			z: v0.z * fpn + ftn,
-			w: -v0.z,
-		};
-		return ort
+        // const res = {
+        //     x: projection[0] * v0.x + projection[1] * v0.y + projection[2] * v0.z + projection[3],
+        //     y: projection[4] * v0.x + projection[5] * v0.y + projection[6] * v0.z + projection[7],
+        //     z: projection[8] * v0.x + projection[9] * v0.y + projection[10] * v0.z + projection[11],
+        //     w: projection[12] * v0.x + projection[13] * v0.y + projection[14] * v0.z + projection[15],
+        // };
+
+        //console.log(res)
+
+        return res;
 	};
 
 	const ratio = (a, b) => [
@@ -921,12 +906,12 @@
 	);
 
 	const ndcPlanes = [
-		{ axis: "x", sign: +1, offset: 0.2 }, // x ≤ w
-		{ axis: "x", sign: -1, offset: 0.2 }, // -x ≤ w
-		{ axis: "y", sign: +1, offset: 0.2 }, // y ≤ w
-		{ axis: "y", sign: -1, offset: 0.2 }, // -y ≤ w
-		{ axis: "z", sign: +1, offset: 0.2 }, // z ≤ w
-		{ axis: "z", sign: -1, offset: 0.2 }, // -z ≤ w
+		{ axis: "x", sign: +1, offset: -0.2 }, // x ≤ w
+		{ axis: "x", sign: -1, offset: -0.2 }, // -x ≤ w
+		{ axis: "y", sign: +1, offset: -0.2 }, // y ≤ w
+		{ axis: "y", sign: -1, offset: -0.2 }, // -y ≤ w
+		{ axis: "z", sign: +1, offset: -0.2 }, // z ≤ w
+		{ axis: "z", sign: -1, offset: -0.2 }, // -z ≤ w
 	];
 
 	const interpolate = (p0, p1, t, k) => p0[k] + (p1[k] - p0[k]) * t;
@@ -1484,7 +1469,7 @@
 	const hideAll = view(allProps(true), backfaceCull);
 
 	const debugLabels = atom({
-		svg: true,
+		svg: false,
 		canvas: true,
 		edge: false,
 		face: false,
@@ -1532,11 +1517,9 @@
 	const fastProject = (v, camera, screen) => {
 		return {
 			x:
-				((v.x / v.w) * screen.size.x) /
-				1,
+				((v.x / v.w) * screen.size.x) / 2,
 			y:
-				((v.y / v.w) * screen.size.y) /
-				1,
+				((v.y / v.w) * screen.size.y) / 2,
 			z: v.z / v.w,
 			w: 1,
 		};
@@ -1773,6 +1756,7 @@
       const f = 1.0 / Math.tan(fovRad / 2)
       const nf = 1 / (far - near)
       
+      const mid = (far)/2
       const top    = ((near+far)/2 / f) * aspect
       const bottom = -top 
       const right  = (top / aspect)
@@ -1783,13 +1767,13 @@
       const fn = far - near;
 
       return  [
-          2 / rl,       0,          0,              0,
-          0,            2 / tb,     0,              0,
-          0,            0,         -2 / fn,         0,
+          mid*2 / rl,       0,          0,              0,
+          0,            mid*2 / tb,     0,              0,
+          0,            0,         mid*-2 / fn,         0,
           -(right + left) / rl,
           -(top + bottom) / tb,
           -(far + near) / fn,
-          1
+          mid*1
         ]
       
     }
@@ -1857,7 +1841,6 @@
                 makeOrthographicMatrix(cameraFoVRad.value, viewportWidth/viewportHeight, cameraClipNear.value, cameraClipFar.value),
                 cameraOrtho.value
               ),
-                M.makeScale(1/(1+42*cameraOrtho.value),1/(1+42*cameraOrtho.value),1/(1+42*cameraOrtho.value))
             ].reduce(M.matMulMat),
 
               viewport: () => ({ x: 0, y: 0, width: reglCanvas.width, height: reglCanvas.height }),
