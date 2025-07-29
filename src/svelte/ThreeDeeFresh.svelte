@@ -97,7 +97,7 @@
 			},
 			aspectRatio: 1,
 			fov: Math.PI / 2 / 6,
-			orthogonality: 1,
+			orthogonality: 0,
 			eye: {
 				tx: 0,
 				ty: 0,
