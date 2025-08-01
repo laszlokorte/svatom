@@ -149,7 +149,7 @@ export const COLOR_NAMES = {
   "yellowgreen": "#9acd32"
 }
 
-export  function parseColor(color, fallback) {
+export function parseColor(color, fallback) {
   if(!color) {
     return fallback
   }

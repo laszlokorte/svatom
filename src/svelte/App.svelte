@@ -400,13 +400,17 @@
 	</p>
 
 	<div class="controls">
-		<button type="button" onclick={() => (newName.value = "New")}>
+		<button type="button"  onclick={(evt) => {
+		newName.value = "New"
+	}}>
 			Add Person
 		</button>
 		<button
 			style:--button-color="#a00"
 			type="button"
-			onclick={() => (allNames.value = [])}
+			onclick={(evt) => {
+				allNames.value = []
+			}}
 		>
 			Remove all
 		</button>
@@ -441,7 +445,9 @@
 						{ phantom: !thisEntry.value },
 					]}
 					type="button"
-					onclick={() => (thisName.value = "")}
+					onclick={(evt) => {
+						thisName.value = ""
+					}}
 					aria-label="Delete"
 				>
 					<svg width="10" height="10" viewBox="-16 -16 32 32">

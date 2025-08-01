@@ -10,6 +10,7 @@
 	import {
 		atom,
 		view,
+		mutableView,
 		read,
 		combine,
 		combineWithRest,
@@ -37,6 +38,9 @@
 	} from "@petristation/renewjs";
 	import Scroller from "../Scroller.svelte";
 	import * as renewFiles from "../../data/renew";
+
+
+	const sizeCache = atom();
 
 	const examples = Object.values(renewFiles);
 	const moreExamples = fetch("https://renew.laszlokorte.de/")
@@ -66,18 +70,23 @@
 		[
 			L.rewrite((x) => {
 				try {
-					return {
-						string: x,
-						json: parserAutoDetect(x, false, {
+					const json = parserAutoDetect(x, false, {
 							kind: kindKey,
+							kindKey: kindKeySymbol,
+							refKey: refKeySymbol,
 							ref: refKey,
 							self: selfKey,
-						}),
-						cachedSizes: undefined,
-					};
+						})
+
+
+					return  {
+							string: x,
+							json: json,
+						};
 				} catch (e) {
 					return e;
 				}
+				
 			}),
 			L.reread((x) => x.string),
 			L.defaults(""),
@@ -98,8 +107,6 @@
 	// 	renewDocument,
 	// );
 
-	const sizeCache = view(["cachedSizes", L.defaults({})], renewDocument);
-
 	const jsonLens = L.lens(
 		(x) => x.json,
 		(newJson, old) => {
@@ -107,6 +114,8 @@
 			try {
 				const ser = makeSerializer(makeGrammar(newJson.version), {
 							kind: kindKey,
+							kindKey: kindKeySymbol,
+							refKey: refKeySymbol,
 							ref: refKey,
 							self: selfKey,
 						})
@@ -115,7 +124,10 @@
 				s.context.writeStorable(newJson.drawing);
 				serialized = s.output.join(" ")
 			} catch(e) {
-				serialized = e.toString()
+				return {
+					string: e,
+					...old,
+				}
 			}
 
 			return {
@@ -127,12 +139,14 @@
 					drawing: newJson.drawing,
 					refMap: newJson.refMap,
 				},
-				cachedSizes: undefined,
 			};
 		},
 	);
 
 	const renewJsonCurrent = view(jsonLens, renewDocument);
+
+	$inspect(renewJsonCurrent.value)
+
 
 	const renewJson = view(
 		L.inverse(L.json({ space: "  " })),
@@ -547,7 +561,7 @@
 
 	const scrollPosition = view(
 		[
-			L.pick({ x: ["x", integerLens], y: ["y", integerLens] }),
+			L.pick({ x: ["x"], y: ["y"] }),
 			L.setter((newScroll, old) => ({
 				x:
 					(newScroll.atMinX && old.x < newScroll.x) ||

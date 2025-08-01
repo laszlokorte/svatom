@@ -2056,7 +2056,7 @@
 
 	const scrollPosition = view(
 		[
-			L.pick({ x: ["x", integerLens], y: ["y", integerLens], ls: "ls" }),
+			L.pick({ x: ["x"], y: ["y"], ls: "ls" }),
 			L.setter((newScroll, old) =>
 				old.ls
 					? old
