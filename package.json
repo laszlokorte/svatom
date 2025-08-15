@@ -17,7 +17,7 @@
     "vite-plugin-pwa": "^1.0.0"
   },
   "dependencies": {
-    "@petristation/renewjs": "^1.0.3",
+    "@petristation/renewjs": "^2.0.3",
     "@svatom/basic": "^1.0.6",
     "@svatom/threedee": "^1.0.5",
     "partial.lenses": "^14.17.0",

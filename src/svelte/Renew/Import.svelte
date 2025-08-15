@@ -32,9 +32,6 @@
 		makeSerializer,
 		makeGrammar,
 		tryDeref as tryDerefInternal,
-		kindKey as kindKeySymbol,
-		selfKey as selfKeySymbol,
-		refKey as refKeySymbol,
 	} from "@petristation/renewjs";
 	import Scroller from "../Scroller.svelte";
 	import * as renewFiles from "../../data/renew";
@@ -56,13 +53,17 @@
 	const kindKey = "__kind";
 	const selfKey = "__self";
 	const refKey = "__ref";
+	const refKeyMarker = "__isRef";
+
+	const metaKeys = {
+		kindKey,
+		selfKey,
+		refKey,
+		refKeyMarker,
+	}
 
 	function tryDeref(...args) {
-		return tryDerefInternal(...args, {
-			kindKey,
-			selfKey,
-			refKey,
-		});
+		return tryDerefInternal(...args, metaKeys);
 	}
 
 	const renewDocument = atom({ string: undefined, json: undefined });
@@ -70,13 +71,7 @@
 		[
 			L.rewrite((x) => {
 				try {
-					const json = parserAutoDetect(x, false, {
-							kind: kindKey,
-							kindKey: kindKeySymbol,
-							refKey: refKeySymbol,
-							ref: refKey,
-							self: selfKey,
-						})
+					const json = parserAutoDetect(x, false, metaKeys)
 
 
 					return  {
@@ -112,13 +107,7 @@
 		(newJson, old) => {
 			let serialized = ""
 			try {
-				const ser = makeSerializer(makeGrammar(newJson.version), {
-							kind: kindKey,
-							kindKey: kindKeySymbol,
-							refKey: refKeySymbol,
-							ref: refKey,
-							self: selfKey,
-						})
+				const ser = makeSerializer(makeGrammar(newJson.version), metaKeys)
 				const s = ser(newJson.refMap);
 				s.context.writeVersion();
 				s.context.writeStorable(newJson.drawing);
@@ -660,10 +649,7 @@
 			L.reread((x) => x.refMap[x.drawing[refKey]]["figures"]),
 			L.partsOf(
 				L.elems,
-				L.choices(
-					(e) => e[selfKey],
-					(e) => e.ref,
-				),
+				refKey,
 			),
 		],
 		renewDocument,
@@ -1248,7 +1234,7 @@
 										: L.choose((v) =>
 												typeof v === "object"
 													? [
-															L.rewrite(v => v && v[refKey] ? {...v, [refKeySymbol]: true, ref: v[refKey]} : v),
+															L.rewrite(v => v && v[refKey] ? {...v, [refKeyMarker]: true, ref: v[refKey]} : v),
 															L.define(null),
 															L.rewrite((e) =>
 																e instanceof
@@ -1268,10 +1254,10 @@
 								[
 									s,
 									prop,
-									L.lens((v) => v?.[refKeySymbol] ? v?.[refKey] : false, (v, o) => {
+									L.lens((v) => v?.[refKeyMarker] ? v?.[refKey] : false, (v, o) => {
 										const i = parseInt(v, 10);
 										if (i>=0) {
-											return {[refKeySymbol]: true, ref: i, [refKey]: i}
+											return {[refKeyMarker]: true, ref: i, [refKey]: i}
 										} else {
 											return v ? v : null
 										}
@@ -1923,7 +1909,7 @@
 							>
 								{#each group.figures as f}
 									<use
-										href="#ref-{f[selfKey] || f.ref}"
+										href="#ref-{f[refKeyMarker] ? f[refKey] : f[selfKey]}"
 										pointer-events="all"
 									/>
 								{/each}

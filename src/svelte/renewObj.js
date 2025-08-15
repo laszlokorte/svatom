@@ -3,13 +3,11 @@ import * as L from 'partial.lenses'
 import {
 		hierarchyV11,
 		tryDeref,
-		kindKey,
-		selfKey,
-		refKey,
 	} from "@petristation/renewjs";
 
 
-export const renewToGeo = (renewDocument, scale=50, sides = 12, metaKeys) =>  {
+export const renewToGeo = (renewDocument, scale=50, sides = 12) =>  {
+	const metaKeys = renewDocument.metaKeys;
 	const plainRects = ["CH.ifa.draw.figures.RectangleFigure",
 		"CH.ifa.draw.figures.RoundRectangleFigure",]
 	const rectTypes = hierarchyV11.descendantsOf(
@@ -39,7 +37,7 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12, metaKeys) =>  {
 			"refMap",
 			L.partsOf(
 				L.elems,
-				L.when(R.pipe(R.prop(kindKey),R.anyPass([R.includes(R.__, rectTypes)]))),
+				L.when(R.pipe(R.prop(metaKeys.kindKey),R.anyPass([R.includes(R.__, rectTypes)]))),
 			),
 		],
 		renewDocument,
@@ -49,7 +47,7 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12, metaKeys) =>  {
 			"refMap",
 			L.partsOf(
 				L.elems,
-				L.when(R.pipe(R.prop(kindKey),R.anyPass([R.includes(R.__, ellipseTypes)]))),
+				L.when(R.pipe(R.prop(metaKeys.kindKey),R.anyPass([R.includes(R.__, ellipseTypes)]))),
 			),
 		],
 		renewDocument,
@@ -61,7 +59,7 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12, metaKeys) =>  {
 			"refMap",
 			L.partsOf(
 				L.elems,
-				L.when(R.pipe(R.prop(kindKey),R.anyPass([R.includes(R.__, rectTypes), R.includes(R.__, ellipseTypes)]))),
+				L.when(R.pipe(R.prop(metaKeys.kindKey),R.anyPass([R.includes(R.__, rectTypes), R.includes(R.__, ellipseTypes)]))),
 			),
 		],
 		renewDocument,
@@ -72,7 +70,7 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12, metaKeys) =>  {
 			"refMap",
 			L.partsOf(
 				L.elems,
-				L.when(R.compose(R.anyPass([R.includes(R.__, textTypes)]), R.prop(kindKey))),
+				L.when(R.compose(R.anyPass([R.includes(R.__, textTypes)]), R.prop(metaKeys.kindKey))),
 			),
 		],
 		renewDocument,
@@ -83,7 +81,7 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12, metaKeys) =>  {
 			"refMap",
 			L.partsOf(
 				L.elems,
-				L.when(R.compose(R.anyPass([R.includes(R.__, lineTypes)]), R.prop(kindKey))),
+				L.when(R.compose(R.anyPass([R.includes(R.__, lineTypes)]), R.prop(metaKeys.kindKey))),
 			),
 		],
 		renewDocument,
@@ -146,7 +144,7 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12, metaKeys) =>  {
 	  let zAxis = 0;
 	  let thickness = 1 / depth;
 
-	  if(r[kindKey] != triangleType) {
+	  if(r[metaKeys.kindKey] != triangleType) {
 			continue;
 		}
 
@@ -192,13 +190,13 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12, metaKeys) =>  {
 
 	  let zAxis = 0;
 	  let thickness = 1 / depth;
-		if(plainRects.includes(r[kindKey])) {
+		if(plainRects.includes(r[metaKeys.kindKey])) {
 			zAxis = -0.5
 			thickness = 0.5 / depth
 			layerCount++;
 			backthick = -1;
 		}
-		if(r[kindKey] == triangleType) {
+		if(r[metaKeys.kindKey] == triangleType) {
 			continue;
 		}
 		const {x,y,w,h} = r
@@ -308,15 +306,11 @@ export const renewToGeo = (renewDocument, scale=50, sides = 12, metaKeys) =>  {
 		const endMarker = tryDeref(
 								l,
 								renewDocument.refMap,
-								["endDecoration", metaKeys.kind],
-								{refKey: metaKeys.ref}
-							)
+								["endDecoration", metaKeys.kindKey])
 		const startMarker = tryDeref(
 								l,
 								renewDocument.refMap,
-								["startDecoration", metaKeys.kind],
-								{refKey: metaKeys.ref}
-							)
+								["startDecoration", metaKeys.kindKey])
 
 		for(const [from, to] of segments) {
 			s++

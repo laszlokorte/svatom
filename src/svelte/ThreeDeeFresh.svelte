@@ -19,7 +19,7 @@
 		autofocusIf,
 		setValue,
 	} from "./svatom.svelte.js";
-	import { parserAutoDetect, kindKey, selfKey, refKey } from "@petristation/renewjs";
+	import { parserAutoDetect } from "@petristation/renewjs";
 	import exampleMesh, { cubeB } from "@svatom/threedee/exampleMesh";
 	import {
 		parse as parseObj,
@@ -2774,15 +2774,9 @@
 							);
 						} else if (obj.renew) {
 							worldGeo.value = obj.geo = renewToGeo(
-								parserAutoDetect(obj.renew, false, {kind: kindKey,
-self: selfKey,
-ref: refKey}),
+								parserAutoDetect(obj.renew, false),
 								50,
-								20,
-								{kind: kindKey,
-self: selfKey,
-ref: refKey}
-							);
+								20);
 						}
 					}}
 				>
@@ -2809,15 +2803,9 @@ ref: refKey}
 								.then((x) => x.json())
 								.then((x) => {
 									worldGeo.value = renewToGeo(
-										parserAutoDetect(x.content, false, {kind: kindKey,
-self: selfKey,
-ref: refKey}),
+										parserAutoDetect(x.content, false),
 										50,
-										20,
-										{kind: kindKey,
-self: selfKey,
-ref: refKey}
-									);
+										20);
 								})
 								.catch((e) => {
 									worldGeo.value = {
