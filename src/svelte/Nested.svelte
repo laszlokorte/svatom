@@ -1,20 +1,20 @@
 <script>
-	let { greeting, onkeydown } = $props();
+    let { greeting, onkeydown } = $props();
 
-	let field = $state();
+    let field = $state();
 
-	export function focus() {
-		field.focus();
-	}
+    export function focus() {
+        field.focus();
+    }
 </script>
 
 <label class="simple-form-field"
-	><span class="simple-form-field-label">Greeting:</span>
-	<input
-		{onkeydown}
-		class="simple-form-field-input"
-		bind:this={field}
-		type="text"
-		bind:value={greeting.value}
-	/></label
+    ><span class="simple-form-field-label">Greeting:</span>
+    <input
+        {onkeydown}
+        class="simple-form-field-input"
+        bind:this={field}
+        type="text"
+        bind:value={greeting.value}
+    /></label
 >

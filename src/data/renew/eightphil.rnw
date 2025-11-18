@@ -391,4 +391,4 @@
                 CH.ifa.draw.standard.RelativeLocator 0.5 0.5   1
         de.renew.gui.CPNTextFigure "attributes" "attributes" 3 "TraceMode" "Boolean" "FALSE" "FrameColor" "Color" 255 199 158 "FillColor" "Color" 255 199 158 139 261 "action Test.test()" "Helvetica" 0 12 0 REF 109
             CH.ifa.draw.standard.OffsetLocator 52 -19
-                CH.ifa.draw.standard.RelativeLocator 0.5 0.5   1  
+                CH.ifa.draw.standard.RelativeLocator 0.5 0.5   1

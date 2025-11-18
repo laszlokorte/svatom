@@ -1,5 +1,5 @@
 body {
-  touch-action: pan-y pan-x;
+    touch-action: pan-y pan-x;
 }
 
 a,
@@ -7,87 +7,87 @@ a:visited,
 a:focus-visible,
 a:active,
 a:hover {
-	color: #aa1010;
+    color: #aa1010;
 }
 
 section {
-	margin: 3em auto;
-	max-width: 60em;
+    margin: 3em auto;
+    max-width: 60em;
 }
 
 ul {
-	list-style: none;
-	padding: 0;
-	margin: 0;
-	display: flex;
-	gap: 0.5em;
-	flex-direction: column;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    gap: 0.5em;
+    flex-direction: column;
 }
 
-pre, textarea[readonly] {
-	white-space: pre-wrap;
-	background: #333;
-	color: #aaa;
-	min-height: 10em;
-	overflow: auto;
-	resize: vertical;
-	padding: 1em;
-	box-sizing: border-box;
-	margin: 0;
-	font: inherit;
+pre,
+textarea[readonly] {
+    white-space: pre-wrap;
+    background: #333;
+    color: #aaa;
+    min-height: 10em;
+    overflow: auto;
+    resize: vertical;
+    padding: 1em;
+    box-sizing: border-box;
+    margin: 0;
+    font: inherit;
 }
 
 textarea {
-	white-space: pre-wrap;
-	background: #ffffee;
-	color: #000;
-	width: 100%;
-	min-height: 10em;
-	border: 0;
-	resize: vertical;
-	padding: 1em;
-	box-sizing: border-box;
-	scrollbar-gutter: stable;
-	font: inherit;
+    white-space: pre-wrap;
+    background: #ffffee;
+    color: #000;
+    width: 100%;
+    min-height: 10em;
+    border: 0;
+    resize: vertical;
+    padding: 1em;
+    box-sizing: border-box;
+    scrollbar-gutter: stable;
+    font: inherit;
 }
 
 fieldset {
-	margin-inline: 0;
-	border: 1px solid #aaa;
-	display: block;
-	min-height: min-content;
-	overflow: hidden;
+    margin-inline: 0;
+    border: 1px solid #aaa;
+    display: block;
+    min-height: min-content;
+    overflow: hidden;
 }
 
-input[type=range]{
-	border-radius: 0;
+input[type="range"] {
+    border-radius: 0;
     -webkit-appearance: none;
     appearance: none;
     font: inherit;
 
     flex-basis: 15em;
     /* fix for FF unable to apply focus style bug  */
-    border: 1px solid white; 
+    border: 1px solid white;
 
     /*required for proper track sizing in FF*/
     width: 100%;
 
     background: none;
-  	border: none;
-  	min-height: 1.5em;
+    border: none;
+    min-height: 1.5em;
 
-
-	-webkit-touch-callout: none;
-	-webkit-user-callout: none;
-	-webkit-user-select: none;
-	-webkit-user-drag: none;
-	-webkit-user-modify: none;
-	-webkit-highlight: none;
-	-webkit-tap-highlight-color: transparent;
-  	-webkit-tap-highlight-color: none;
+    -webkit-touch-callout: none;
+    -webkit-user-callout: none;
+    -webkit-user-select: none;
+    -webkit-user-drag: none;
+    -webkit-user-modify: none;
+    -webkit-highlight: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-tap-highlight-color: none;
 }
 
-input[type=range]::-moz-range-track {
+input[type="range"]::-moz-range-track {
     width: 100%;
     height: 4px;
     background: var(--track-color, #ddd);
@@ -96,7 +96,7 @@ input[type=range]::-moz-range-track {
     margin: 1.2em 0;
 }
 
-input[type=range]::-moz-range-thumb {
+input[type="range"]::-moz-range-thumb {
     border: none;
     border: none;
     height: 1rem;
@@ -107,34 +107,33 @@ input[type=range]::-moz-range-thumb {
     border: 2px solid var(--accent-color-light, #ffe0ee);
 }
 
-input[type=range]:not(:disabled)::-moz-range-thumb:hover,
-input[type=range]:not(:disabled)::-moz-range-thumb:active {
-	outline: 1px solid var(--accent-color, #dd4e40);
+input[type="range"]:not(:disabled)::-moz-range-thumb:hover,
+input[type="range"]:not(:disabled)::-moz-range-thumb:active {
+    outline: 1px solid var(--accent-color, #dd4e40);
 }
 
 /*hide the outline behind the border*/
-input[type=range]:-moz-focusring{
+input[type="range"]:-moz-focusring {
     outline: 1px solid white;
     outline-offset: -1px;
 }
 
-input[type=range]:focus::-moz-range-track {
+input[type="range"]:focus::-moz-range-track {
     background: var(--track-color, #aaa);
 }
 
-
-input[type=range]::-webkit-slider-runnable-track {
+input[type="range"]::-webkit-slider-runnable-track {
     width: 100%;
     height: 4px;
     background: var(--track-color, #ddd);
     border: none;
     border-radius: 0.25em;
     margin: 0.2em;
-	-webkit-tap-highlight-color: transparent;
-  	-webkit-tap-highlight-color: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-tap-highlight-color: none;
 }
 
-input[type=range]::-webkit-slider-thumb {
+input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     border: none;
     height: 1rem;
@@ -143,270 +142,268 @@ input[type=range]::-webkit-slider-thumb {
     background: var(--accent-color, #dd4e40);
     margin-top: calc(-0.5rem + 2px);
     border: 2px solid var(--accent-color-light, #ffe0ee);
-	-webkit-tap-highlight-color: transparent;
-  	-webkit-tap-highlight-color: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-tap-highlight-color: none;
 }
 
-input[type=range]:not(:disabled)::-webkit-slider-thumb:hover,
-input[type=range]:not(:disabled)::-webkit-slider-thumb:active {
-	outline: 1px solid var(--accent-color, #dd4e40);
+input[type="range"]:not(:disabled)::-webkit-slider-thumb:hover,
+input[type="range"]:not(:disabled)::-webkit-slider-thumb:active {
+    outline: 1px solid var(--accent-color, #dd4e40);
 }
 
+@media (pointer: coarse) {
+    input[type="range"]::-webkit-slider-thumb {
+        height: 2rem;
+        width: 2rem;
+        margin-top: calc(-1rem + 2px);
+    }
 
-@media (pointer:coarse) {
-	input[type=range]::-webkit-slider-thumb {
-	    height: 2rem;
-	    width: 2rem;
-    	margin-top: calc(-1rem + 2px);
-	}
+    input[type="range"]::-moz-range-thumb {
+        height: 2rem;
+        width: 2rem;
+        margin-top: calc(-1rem + 2px);
+    }
 
-	input[type=range]::-moz-range-thumb {
-	    height: 2rem;
-	    width: 2rem;
-    	margin-top: calc(-1rem + 2px);
-	}
-
-	input[type=range]{
-  	min-height: 3rem;
-
-	}
+    input[type="range"] {
+        min-height: 3rem;
+    }
 }
 
-input[type=range]:focus {
+input[type="range"]:focus {
     outline: none;
 }
 
-input[type=range]:focus::-webkit-slider-runnable-track {
+input[type="range"]:focus::-webkit-slider-runnable-track {
     background: var(--track-color, #aaa);
 }
 
-
-input[type=range]:disabled::-webkit-slider-thumb {
-	background: #fff;
-	border-color: #ccc;
+input[type="range"]:disabled::-webkit-slider-thumb {
+    background: #fff;
+    border-color: #ccc;
 }
 
-
-
-input[type=range]:disabled::-moz-range-thumb {
-	background: #fff;
-	border-color: #ccc;
+input[type="range"]:disabled::-moz-range-thumb {
+    background: #fff;
+    border-color: #ccc;
 }
-
 
 input[type="text"] {
-	margin: 0;
+    margin: 0;
 }
 
 .phantom {
-	visibility: hidden;
+    visibility: hidden;
 }
 
 .controls {
-	display: flex;
-	margin: 1em 0;
-	gap: 1ex;
+    display: flex;
+    margin: 1em 0;
+    gap: 1ex;
 }
 
-.button, button {
-	border: none;
-	background: var(--button-color, #222);
-	color: #fff;
-	padding: 0.3em 0.5em;
-	display: inline-block;
-	font: inherit;
-	cursor: pointer;
+.button,
+button {
+    border: none;
+    background: var(--button-color, #222);
+    color: #fff;
+    padding: 0.3em 0.5em;
+    display: inline-block;
+    font: inherit;
+    cursor: pointer;
 }
 
 button:disabled {
-	background: #777;
-	cursor: default;
+    background: #777;
+    cursor: default;
 }
 
-button:not(:disabled):hover, .button:not(:disabled):hover {
-	background: var(--button-color, #333);
-	color: #fff;
+button:not(:disabled):hover,
+.button:not(:disabled):hover {
+    background: var(--button-color, #333);
+    color: #fff;
 }
 
-button:not(:disabled):active, .button:not(:disabled):active {
-	background: #000;
-	color: #fff;
+button:not(:disabled):active,
+.button:not(:disabled):active {
+    background: #000;
+    color: #fff;
 }
 
-button:not(:disabled):focus-visible, .button:not(:disabled):focus-visible {
-	outline: 3px solid #00ccdd;
+button:not(:disabled):focus-visible,
+.button:not(:disabled):focus-visible {
+    outline: 3px solid #00ccdd;
 }
 
 .checkbox-list {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.2ex;
-	align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2ex;
+    align-items: center;
 }
 
 .checkbox-list-label {
-	margin-right: 1ex;
+    margin-right: 1ex;
 }
 
 .checkbox-list-item {
-	display: flex;
-	gap: 1ex;
-	padding: 1ex;
-	background: #f0f0f0;
-	align-items: center;
+    display: flex;
+    gap: 1ex;
+    padding: 1ex;
+    background: #f0f0f0;
+    align-items: center;
 }
 
-.checkbox-list-control  {
-	margin: 0;
+.checkbox-list-control {
+    margin: 0;
 }
 
 .form-ruler {
-	border: none;
-	height: 2px;
-	background: #eee;
+    border: none;
+    height: 2px;
+    background: #eee;
 }
 
 .simple-form {
-	display: grid;
-	grid-template-columns: auto 1fr;
-	gap: 1ex 2em;
-	justify-content: start;
-	max-width: 40em;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1ex 2em;
+    justify-content: start;
+    max-width: 40em;
 }
 
 .simple-form-field {
-	display: grid;
-	grid-template-columns: subgrid;
-	grid-column: span 2;
-	align-items: baseline;
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-column: span 2;
+    align-items: baseline;
 }
 
 .simple-form-field-input {
-	padding: 1ex;
-	box-sizing: border-box;
-	min-width: 4em;
+    padding: 1ex;
+    box-sizing: border-box;
+    min-width: 4em;
 }
 
 .number-picker {
-	display: grid;
-	grid-template-columns: 1fr auto auto;
-	grid-auto-columns: auto;
-	gap: 0.2ex 1em;
-	align-items: baseline;
-	margin: 1ex 0;
-	max-width: 40rem;
-	width: 100%;
-	justify-items: stretch;
-	justify-content: stretch;
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    grid-auto-columns: auto;
+    gap: 0.2ex 1em;
+    align-items: baseline;
+    margin: 1ex 0;
+    max-width: 40rem;
+    width: 100%;
+    justify-items: stretch;
+    justify-content: stretch;
 }
 
 .simple-form-help {
-	grid-column: span 2;
-	color: #555;
-	text-align: right;
+    grid-column: span 2;
+    color: #555;
+    text-align: right;
 }
 
 .number-picker-label {
-	grid-column: 1 / span 1;
-	grid-row: 1 / span 1;
-	font-weight: bold;
-	display: block;
+    grid-column: 1 / span 1;
+    grid-row: 1 / span 1;
+    font-weight: bold;
+    display: block;
 }
 
 .number-picker-numberfield {
-	grid-column: 3 / span 1;
-	grid-row: 1 / span 1;
-	padding: 0.5ex;
-	min-width: 10ch;
-	text-align: right;
+    grid-column: 3 / span 1;
+    grid-row: 1 / span 1;
+    padding: 0.5ex;
+    min-width: 10ch;
+    text-align: right;
 }
 
 .number-picker-value {
-	grid-column: 2 / span 1;
-	grid-row: 1 / span 1;
-	text-align: right;
+    grid-column: 2 / span 1;
+    grid-row: 1 / span 1;
+    text-align: right;
 }
 
 .number-picker-value.ro {
-	grid-column: 2 / span 2;
+    grid-column: 2 / span 2;
 }
 
 .number-picker-slider {
-	grid-column: 1 / -1;
-	grid-row: 2 / span 1;
-	width: 100%;
-	justify-self: stretch;
-	align-self: stretch; 
-	box-sizing: border-box;
-	display: block;
-	margin: 0;
-	padding: 0;
-	-webkit-text-size-adjust:none;
-	font-size-adjust: none;
+    grid-column: 1 / -1;
+    grid-row: 2 / span 1;
+    width: 100%;
+    justify-self: stretch;
+    align-self: stretch;
+    box-sizing: border-box;
+    display: block;
+    margin: 0;
+    padding: 0;
+    -webkit-text-size-adjust: none;
+    font-size-adjust: none;
 }
 
 .number-picker-help {
-	grid-column: 1 / -1;
-	grid-row: 3 / span 1;
+    grid-column: 1 / -1;
+    grid-row: 3 / span 1;
 }
 
 .error-message {
-	color: #aa0000;
+    color: #aa0000;
 }
 
 .has-error {
-	background: #ffeeee;
-	outline: 3px solid #aa0000;
-	color: #330000;
+    background: #ffeeee;
+    outline: 3px solid #aa0000;
+    color: #330000;
 }
 
 .beside {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(15em, 1fr));
-	grid-template-rows: 1fr;
-	grid-auto-rows: 1fr;
-	justify-items: stretch;
-	align-items: stretch;
-	gap: 0.5em;
-	resize: vertical;
-	overflow: hidden;
-	padding: 2px 0.5em 0.5em 2px;
-	min-height: 3em;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15em, 1fr));
+    grid-template-rows: 1fr;
+    grid-auto-rows: 1fr;
+    justify-items: stretch;
+    align-items: stretch;
+    gap: 0.5em;
+    resize: vertical;
+    overflow: hidden;
+    padding: 2px 0.5em 0.5em 2px;
+    min-height: 3em;
 }
 
 .beside > * {
-	flex-grow: 1;
-	box-sizing: border-box;
+    flex-grow: 1;
+    box-sizing: border-box;
 }
 
 .beside * {
-	resize: none !important;
+    resize: none !important;
 }
 
 .asciiart {
-	white-space: pre;
-	font-family: monospace;
-	line-height: 1;
-	font-size: 1em;
-	padding: 0;
-	line-break: strict;
-	border: none;
-	margin: 0;
-	width: 100%;
-	height: 10em;
-	min-height: 100%;
-	place-self: stretch;
-	vertical-align: baseline;
-	appearance: revert;
-	padding: 2px;
+    white-space: pre;
+    font-family: monospace;
+    line-height: 1;
+    font-size: 1em;
+    padding: 0;
+    line-break: strict;
+    border: none;
+    margin: 0;
+    width: 100%;
+    height: 10em;
+    min-height: 100%;
+    place-self: stretch;
+    vertical-align: baseline;
+    appearance: revert;
+    padding: 2px;
     overscroll-behavior: none;
     touch-action: pan-y pan-x;
 }
 
 .asciiart::after {
-	content: '\a';
+    content: "\a";
 }
 
 .scrollable {
-	overflow: scroll;
+    overflow: scroll;
 }

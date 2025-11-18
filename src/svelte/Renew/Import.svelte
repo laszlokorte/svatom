@@ -10,24 +10,15 @@
     import {
         atom,
         view,
-        mutableView,
         read,
         combine,
-        combineWithRest,
         failableView,
-        bindValue,
-        bindScroll,
-        bindScrollMax,
-        bindSize,
-        string,
         bindBoundingBox,
         update,
     } from "../svatom.svelte.js";
 
     import {
         parserAutoDetect,
-        serializerV11,
-        stringify,
         hierarchyV11,
         makeSerializer,
         makeGrammar,
@@ -133,8 +124,6 @@
     );
 
     const renewJsonCurrent = view(jsonLens, renewDocument);
-
-    $inspect(renewJsonCurrent.value);
 
     const renewJson = view(
         L.inverse(L.json({ space: "  " })),
@@ -542,14 +531,9 @@
         ),
     );
 
-    const integerLens = L.lens(
-        (x) => Math.round(x),
-        (newV, oldV) => Math.round(newV) + (oldV - Math.round(oldV)),
-    );
-
     const scrollPosition = view(
         [
-            L.pick({ x: ["x", integerLens], y: ["y", integerLens] }),
+            L.pick({ x: ["x"], y: ["y"] }),
             L.setter((newScroll, old) => ({
                 x:
                     (newScroll.atMinX && old.x < newScroll.x) ||
@@ -1140,12 +1124,12 @@
             style="display: grid; flex-direction: column; align-items: stretch; align-content: stretch;flex-grow: 1; grid-template-rows: auto 1fr;"
         >
             <input
-                type="search"
+                type="text"
                 placeholder="Search..."
                 bind:value={searchTerm.value}
                 style="flex-grow: 0; height: 2em;"
             />
-            <select size="10" bind:value={selection.value} multiple="multiple">
+            <select bind:value={selection.value} multiple="multiple">
                 {#each currentRefMap as ref, r (r)}
                     {#if !searchTerm.value.length || ref[kindKey].indexOf(searchTerm.value) > -1}
                         <option

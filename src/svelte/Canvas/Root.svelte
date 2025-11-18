@@ -2044,15 +2044,9 @@
     }));
     const boundsCenter = view(centerLens, cameraBounds);
 
-    // This is needed to prevent a ceil/floor feedback loop between integer scroll positions of scrollbars and camera position
-    const integerLens = L.lens(
-        (x) => Math.round(x),
-        (newV, oldV) => Math.round(newV) + (oldV - Math.round(oldV)),
-    );
-
     const scrollPosition = view(
         [
-            L.pick({ x: ["x", integerLens], y: ["y", integerLens] }),
+            L.pick({ x: ["x"], y: ["y"] }),
             L.setter((newScroll, old) =>
                 old.ls
                     ? old
