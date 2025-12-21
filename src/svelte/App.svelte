@@ -21,6 +21,7 @@
     import Canvas from "./Canvas/Root.svelte";
     import Split from "./SplitView/Split.svelte";
     import ThreeDee from "./ThreeDee.svelte";
+    import Robot from "./Robot.svelte";
     import ThreeDeeFresh from "./ThreeDeeFresh.svelte";
     import RenewImport from "./Renew/Import.svelte";
     import asciiLogo from "../data/asciiLogo.txt?raw";
@@ -922,6 +923,8 @@
     <h2>Clipping</h2>
 
     <ThreeDeeFresh />
+    <h2>Robot</h2>
+    <Robot></Robot>
     <div style:height="60vh"></div>
 </section>
 
