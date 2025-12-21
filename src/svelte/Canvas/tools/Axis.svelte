@@ -15,46 +15,49 @@
 
     const axis = atom(undefined);
 
-    const axisStart = view(
-        [L.removable("start"), "start", L.removable("x", "y")],
-        axis,
+    const axisStart = $derived(
+        view([L.removable("start"), "start", L.removable("x", "y")], axis),
     );
-    const axisSize = view(
-        L.ifElse(
-            R.prop("start"),
-            [L.removable("size"), "size", L.removable("x", "y")],
-            L.zero,
+    const axisSize = $derived(
+        view(
+            L.ifElse(
+                R.prop("start"),
+                [L.removable("size"), "size", L.removable("x", "y")],
+                L.zero,
+            ),
+            axis,
         ),
-        axis,
     );
-    const isActive = view(
-        L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
-        axis,
-    );
-
-    const axisAngle = view([L.removable("angle"), "angle"], axis);
-    const axisAngleCos = view(
-        [L.reread((r) => Math.cos((r / 180) * Math.PI))],
-        axisAngle,
-    );
-    const axisAngleSin = view(
-        [L.reread((r) => Math.sin((r / 180) * Math.PI))],
-        axisAngle,
+    const isActive = $derived(
+        view(
+            L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
+            axis,
+        ),
     );
 
-    const axisPath = read(
-        L.getter(({ axis: b, cameraScale: scale }) =>
-            b && b.start && b.size
-                ? U.formattedNumbers`M${b.start.x - 10 * scale * Math.sign(b.size.x)},${b.start.y}h${b.size.x}
+    const axisAngle = $derived(view([L.removable("angle"), "angle"], axis));
+    const axisAngleCos = $derived(
+        view([L.reread((r) => Math.cos((r / 180) * Math.PI))], axisAngle),
+    );
+    const axisAngleSin = $derived(
+        view([L.reread((r) => Math.sin((r / 180) * Math.PI))], axisAngle),
+    );
+
+    const axisPath = $derived(
+        read(
+            L.getter(({ axis: b, cameraScale: scale }) =>
+                b && b.start && b.size
+                    ? U.formattedNumbers`M${b.start.x - 10 * scale * Math.sign(b.size.x)},${b.start.y}h${b.size.x}
 				m${Math.sign(b.size.x) * (10 * scale)},0l${Math.sign(b.size.x) * (-10 * scale)},${-10 * scale}v${2 * 10 * scale}l${Math.sign(b.size.x) * (10 * scale)},${-10 * scale}
 				M${b.start.x},${b.start.y - 10 * scale * Math.sign(b.size.y)}v${b.size.y}
 				m0,${Math.sign(b.size.y) * (10 * scale)}l${-10 * scale},${Math.sign(b.size.y) * (-10 * scale)}h${2 * 10 * scale}l${-10 * scale},${Math.sign(b.size.y) * (10 * scale)}
 				`
-                : "",
+                    : "",
+            ),
+            combine({ axis, cameraScale }),
         ),
-        combine({ axis, cameraScale }),
     );
-    export const canCancel = read(R.identity, isActive);
+    export const canCancel = () => isActive.value;
     export function cancel() {
         isActive.value = false;
     }

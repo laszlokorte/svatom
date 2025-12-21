@@ -48,46 +48,49 @@
 
     const plot = atom(undefined);
 
-    const plotStart = view(
-        [L.removable("start"), "start", L.removable("x", "y")],
-        plot,
+    const plotStart = $derived(
+        view([L.removable("start"), "start", L.removable("x", "y")], plot),
     );
-    const plotSize = view(
-        L.ifElse(
-            R.prop("start"),
-            [L.removable("size"), "size", L.removable("x", "y")],
-            L.zero,
+    const plotSize = $derived(
+        view(
+            L.ifElse(
+                R.prop("start"),
+                [L.removable("size"), "size", L.removable("x", "y")],
+                L.zero,
+            ),
+            plot,
         ),
-        plot,
     );
-    const isActive = view(
-        L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
-        plot,
-    );
-
-    const plotAngle = view([L.removable("angle"), "angle"], plot);
-    const plotAngleCos = view(
-        [L.reread((r) => Math.cos((r / 180) * Math.PI))],
-        plotAngle,
-    );
-    const plotAngleSin = view(
-        [L.reread((r) => Math.sin((r / 180) * Math.PI))],
-        plotAngle,
+    const isActive = $derived(
+        view(
+            L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
+            plot,
+        ),
     );
 
-    const plotPath = read(
-        L.getter(({ plot: b, cameraScale: scale }) =>
-            b && b.start && b.size
-                ? U.formattedNumbers`M${b.start.x - 10 * scale * Math.sign(b.size.x)},${b.start.y}h${b.size.x}
+    const plotAngle = $derived(view([L.removable("angle"), "angle"], plot));
+    const plotAngleCos = $derived(
+        view([L.reread((r) => Math.cos((r / 180) * Math.PI))], plotAngle),
+    );
+    const plotAngleSin = $derived(
+        view([L.reread((r) => Math.sin((r / 180) * Math.PI))], plotAngle),
+    );
+
+    const plotPath = $derived(
+        read(
+            L.getter(({ plot: b, cameraScale: scale }) =>
+                b && b.start && b.size
+                    ? U.formattedNumbers`M${b.start.x - 10 * scale * Math.sign(b.size.x)},${b.start.y}h${b.size.x}
 				m${Math.sign(b.size.x) * (10 * scale)},0l${Math.sign(b.size.x) * (-10 * scale)},${-10 * scale}v${2 * 10 * scale}l${Math.sign(b.size.x) * (10 * scale)},${-10 * scale}
 				M${b.start.x},${b.start.y - 10 * scale * Math.sign(b.size.y)}v${b.size.y}
 				m0,${Math.sign(b.size.y) * (10 * scale)}l${-10 * scale},${Math.sign(b.size.y) * (-10 * scale)}h${2 * 10 * scale}l${-10 * scale},${Math.sign(b.size.y) * (10 * scale)}
 				`
-                : "",
+                    : "",
+            ),
+            combine({ plot, cameraScale }),
         ),
-        combine({ plot, cameraScale }),
     );
-    export const canCancel = read(R.identity, isActive);
+    export const canCancel = () => isActive.value;
     export function cancel() {
         isActive.value = false;
     }

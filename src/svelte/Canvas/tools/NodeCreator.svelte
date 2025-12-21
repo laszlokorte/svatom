@@ -15,13 +15,15 @@
 
     const creator = atom(undefined);
 
-    const draft = view([L.removable("x", "y")], creator);
-    const isActive = view(
-        L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
-        draft,
+    const draft = $derived(view([L.removable("x", "y")], creator));
+    const isActive = $derived(
+        view(
+            L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
+            draft,
+        ),
     );
 
-    export const canCancel = read(R.identity, isActive);
+    export const canCancel = () => isActive.value;
 
     export function cancel() {
         isActive.value = false;

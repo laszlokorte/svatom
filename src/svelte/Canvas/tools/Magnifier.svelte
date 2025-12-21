@@ -17,93 +17,108 @@
 
     const magnifierFrame = atom(undefined);
 
-    const magnifierFrameStart = view(
-        [L.removable("start"), "start", L.removable("x", "y")],
-        magnifierFrame,
-    );
-    const magnifierFrameSize = view(
-        L.ifElse(
-            R.prop("start"),
-            [L.removable("size"), "size", L.removable("x", "y")],
-            L.zero,
+    const magnifierFrameStart = $derived(
+        view(
+            [L.removable("start"), "start", L.removable("x", "y")],
+            magnifierFrame,
         ),
-        magnifierFrame,
     );
-    const isActive = view(
-        L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
-        magnifierFrameStart,
+    const magnifierFrameSize = $derived(
+        view(
+            L.ifElse(
+                R.prop("start"),
+                [L.removable("size"), "size", L.removable("x", "y")],
+                L.zero,
+            ),
+            magnifierFrame,
+        ),
     );
-
-    const magnifierFrameAngle = view(
-        [L.removable("angle"), "angle", L.valueOr(0)],
-        magnifierFrame,
-    );
-    const magnifierFrameAngleCos = view(
-        [L.reread((r) => Math.cos((r / 180) * Math.PI))],
-        magnifierFrameAngle,
-    );
-    const magnifierFrameAngleSin = view(
-        [L.reread((r) => Math.sin((r / 180) * Math.PI))],
-        magnifierFrameAngle,
+    const isActive = $derived(
+        view(
+            L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
+            magnifierFrameStart,
+        ),
     );
 
-    const magnifierFramePath = read(
-        L.reread(({ frame, b, cos, sin }) => {
-            if (b && b.start && b.size) {
-                const h = cos * b.size.x - sin * b.size.y;
-                const v = sin * b.size.x + cos * b.size.y;
+    const magnifierFrameAngle = $derived(
+        view([L.removable("angle"), "angle", L.valueOr(0)], magnifierFrame),
+    );
+    const magnifierFrameAngleCos = $derived(
+        view(
+            [L.reread((r) => Math.cos((r / 180) * Math.PI))],
+            magnifierFrameAngle,
+        ),
+    );
+    const magnifierFrameAngleSin = $derived(
+        view(
+            [L.reread((r) => Math.sin((r / 180) * Math.PI))],
+            magnifierFrameAngle,
+        ),
+    );
 
-                const A = L.get(["start", cameraRotationLens], b);
-                const B = L.get(cameraRotationLens, {
-                    x: b.start.x + cos * b.size.x,
-                    y: b.start.y + sin * b.size.x,
-                }); // h
-                const C = L.get(cameraRotationLens, {
-                    x: b.start.x + cos * b.size.x - sin * b.size.y,
-                    y: b.start.y + sin * b.size.x + cos * b.size.y,
-                }); //h v
-                const D = L.get(cameraRotationLens, {
-                    x: b.start.x - sin * b.size.y,
-                    y: b.start.y + cos * b.size.y,
-                }); // v
+    const magnifierFramePath = $derived(
+        read(
+            L.reread(({ frame, b, cos, sin }) => {
+                if (b && b.start && b.size) {
+                    const h = cos * b.size.x - sin * b.size.y;
+                    const v = sin * b.size.x + cos * b.size.y;
 
-                return U.formattedNumbers`${frame}M${A.x},${A.y}
+                    const A = L.get(["start", cameraRotationLens], b);
+                    const B = L.get(cameraRotationLens, {
+                        x: b.start.x + cos * b.size.x,
+                        y: b.start.y + sin * b.size.x,
+                    }); // h
+                    const C = L.get(cameraRotationLens, {
+                        x: b.start.x + cos * b.size.x - sin * b.size.y,
+                        y: b.start.y + sin * b.size.x + cos * b.size.y,
+                    }); //h v
+                    const D = L.get(cameraRotationLens, {
+                        x: b.start.x - sin * b.size.y,
+                        y: b.start.y + cos * b.size.y,
+                    }); // v
+
+                    return U.formattedNumbers`${frame}M${A.x},${A.y}
 				L${B.x},${B.y}
 				L${C.x},${C.y}
 				L${D.x},${D.y}z`;
-            } else {
-                return "";
-            }
-        }),
-        combine({
-            frame: frameBoxPath,
-            b: magnifierFrame,
-            sin: magnifierFrameAngleSin,
-            cos: magnifierFrameAngleCos,
-        }),
-    );
-
-    const magnifierFrameTransform = read(
-        L.reread((r) => ``),
-        magnifierFrame,
-    );
-
-    const magnifierFrameStretched = read(
-        [
-            L.valueOr({}),
-            L.getter(({ start, size }) => {
-                return start &&
-                    size &&
-                    (1 * cameraScale.value < Math.abs(size.x) ||
-                        1 * cameraScale.value < Math.abs(size.y))
-                    ? true
-                    : false;
+                } else {
+                    return "";
+                }
             }),
-        ],
-        magnifierFrame,
+            combine({
+                frame: frameBoxPath,
+                b: magnifierFrame,
+                sin: magnifierFrameAngleSin,
+                cos: magnifierFrameAngleCos,
+            }),
+        ),
     );
 
-    export const canCancel = read(R.identity, isActive);
+    const magnifierFrameTransform = $derived(
+        read(
+            L.reread((r) => ``),
+            magnifierFrame,
+        ),
+    );
+
+    const magnifierFrameStretched = $derived(
+        read(
+            [
+                L.valueOr({}),
+                L.getter(({ start, size }) => {
+                    return start &&
+                        size &&
+                        (1 * cameraScale.value < Math.abs(size.x) ||
+                            1 * cameraScale.value < Math.abs(size.y))
+                        ? true
+                        : false;
+                }),
+            ],
+            magnifierFrame,
+        ),
+    );
+
+    export const canCancel = () => isActive.value;
     export function cancel() {
         isActive.value = false;
     }

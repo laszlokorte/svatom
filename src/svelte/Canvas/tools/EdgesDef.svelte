@@ -6,14 +6,16 @@
 
     const { nodes, edges, rotationTransform, cameraScale } = $props();
 
-    const paths = view(
-        ({ ns, es }) =>
-            R.map(
-                (e) =>
-                    U.formattedNumbers`M${ns[e.source].x} ${ns[e.source].y} L${ns[e.target].x} ${ns[e.target].y}`,
-                es,
-            ),
-        combine({ ns: nodes, es: edges }),
+    const paths = $derived(
+        view(
+            ({ ns, es }) =>
+                R.map(
+                    (e) =>
+                        U.formattedNumbers`M${ns[e.source].x} ${ns[e.source].y} L${ns[e.target].x} ${ns[e.target].y}`,
+                    es,
+                ),
+            combine({ ns: nodes, es: edges }),
+        ),
     );
 </script>
 

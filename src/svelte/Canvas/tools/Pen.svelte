@@ -14,63 +14,71 @@
     } = $props();
 
     const pen = atom({});
-    const path = view(["path", L.define([])], pen);
-    const isActive = view(
-        [L.lens(R.compose(R.lt(0), R.length), (n, o) => (n ? o : []))],
-        path,
+    const path = $derived(view(["path", L.define([])], pen));
+    const isActive = $derived(
+        view(
+            [L.lens(R.compose(R.lt(0), R.length), (n, o) => (n ? o : []))],
+            path,
+        ),
     );
-    export const canCancel = read(R.identity, isActive);
+    export const canCancel = () => isActive.value;
     export function cancel() {
         isActive.value = false;
     }
-    const currentPath = view(
-        [
-            L.setter(
-                // discard very close samples
-                R.dropRepeatsWith(
-                    R.compose(
-                        (x) => x < cameraScale.value * 10,
-                        Math.sqrt,
-                        R.uncurryN(
-                            2,
-                            C.Phi1(R.add)(
-                                C.Psi(R.compose((x) => x * x, R.subtract))(
-                                    R.prop("x"),
-                                ),
-                            )(
-                                C.Psi(R.compose((x) => x * x, R.subtract))(
-                                    R.prop("y"),
+    const currentPath = $derived(
+        view(
+            [
+                L.setter(
+                    // discard very close samples
+                    R.dropRepeatsWith(
+                        R.compose(
+                            (x) => x < cameraScale.value * 10,
+                            Math.sqrt,
+                            R.uncurryN(
+                                2,
+                                C.Phi1(R.add)(
+                                    C.Psi(R.compose((x) => x * x, R.subtract))(
+                                        R.prop("x"),
+                                    ),
+                                )(
+                                    C.Psi(R.compose((x) => x * x, R.subtract))(
+                                        R.prop("y"),
+                                    ),
                                 ),
                             ),
                         ),
                     ),
                 ),
-            ),
-            L.setter((n, o) => (n ? [...o, n] : [])),
-            L.removable("x", "y"),
-            L.defaults(false),
-        ],
-        path,
+                L.setter((n, o) => (n ? [...o, n] : [])),
+                L.removable("x", "y"),
+                L.defaults(false),
+            ],
+            path,
+        ),
     );
 
-    const pathPath = view(
-        L.iso(
-            R.ifElse(
-                R.length,
-                R.compose(
-                    R.concat("M"),
-                    R.join("L"),
-                    R.map(R.compose(R.join(","), R.props(["x", "y"]))),
+    const pathPath = $derived(
+        view(
+            L.iso(
+                R.ifElse(
+                    R.length,
+                    R.compose(
+                        R.concat("M"),
+                        R.join("L"),
+                        R.map(R.compose(R.join(","), R.props(["x", "y"]))),
+                    ),
+                    R.always(""),
                 ),
-                R.always(""),
+                R.compose(
+                    R.map(
+                        R.compose(R.zipWith(R.assoc, ["x", "y"]), R.split(",")),
+                    ),
+                    R.split("L"),
+                    R.slice(1),
+                ),
             ),
-            R.compose(
-                R.map(R.compose(R.zipWith(R.assoc, ["x", "y"]), R.split(","))),
-                R.split("L"),
-                R.slice(1),
-            ),
+            path,
         ),
-        path,
     );
 
     let preventNextClick = $state(false);

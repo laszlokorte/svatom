@@ -5,10 +5,16 @@
 
     const { extension, cameraBounds, rotationTransform, show } = $props();
 
-    const extensionPath = string`M${read("minX", extension)} ${read("minY", extension)} H${read("maxX", extension)} V${read("maxY", extension)} H ${read("minX", extension)} z`;
-    const cameraBoundsPath = string`M${read("minX", cameraBounds)} ${read("minY", cameraBounds)} H${read("maxX", cameraBounds)} V${read("maxY", cameraBounds)} H ${read("minX", cameraBounds)} z`;
+    const extensionPath = $derived(
+        string`M${read("minX", extension)} ${read("minY", extension)} H${read("maxX", extension)} V${read("maxY", extension)} H ${read("minX", extension)} z`,
+    );
+    const cameraBoundsPath = $derived(
+        string`M${read("minX", cameraBounds)} ${read("minY", cameraBounds)} H${read("maxX", cameraBounds)} V${read("maxY", cameraBounds)} H ${read("minX", cameraBounds)} z`,
+    );
 
-    const cameraBoundsTransform = string`rotate(${read(["angle", R.negate], cameraBounds)} ${read(({ minX, maxX }) => (minX + maxX) / 2, cameraBounds)} ${read(({ minY, maxY }) => (minY + maxY) / 2, cameraBounds)})`;
+    const cameraBoundsTransform = $derived(
+        string`rotate(${read(["angle", R.negate], cameraBounds)} ${read(({ minX, maxX }) => (minX + maxX) / 2, cameraBounds)} ${read(({ minY, maxY }) => (minY + maxY) / 2, cameraBounds)})`,
+    );
 </script>
 
 {#if show.value}

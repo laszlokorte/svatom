@@ -19,36 +19,39 @@
         $props();
 
     const svgElement = atom(null);
-    const thisElement = view(
-        L.setter((g) => g.ownerSVGElement),
-        svgElement,
+    const thisElement = $derived(
+        view(
+            L.setter((g) => g.ownerSVGElement),
+            svgElement,
+        ),
     );
 
-    const liveLenses = constructLenses(svgElement, camera);
-    const frameBoxObject = read(frameBoxLens, camera);
+    const liveLenses = $derived(constructLenses(svgElement, camera));
+    const frameBoxObject = $derived(read(frameBoxLens, camera));
 
-    const panMovement = view(panMovementLens, camera);
-    const cameraFocus = view("focus", camera);
-
-    if (cameraTow) {
-        during(cameraTow, (v) => {
-            untrack(() => {
-                const cameraQuad = frameBoxObject.value.worldSpace;
-                if (!Geo.quadContainsPoint(cameraQuad, v)) {
-                    tick().then(() => {
-                        panMovement.value = {
-                            x: (v.x - cameraFocus.value.x) / 100,
-                            y: (v.y - cameraFocus.value.y) / 100,
-                        };
-                        cameraTow.value = {
-                            x: v.x + (v.x - cameraFocus.value.x) / 100,
-                            y: v.y + (v.y - cameraFocus.value.y) / 100,
-                        };
-                    });
-                }
+    const panMovement = $derived(view(panMovementLens, camera));
+    const cameraFocus = $derived(view("focus", camera));
+    $effect(() => {
+        if (cameraTow) {
+            during(cameraTow, (v) => {
+                untrack(() => {
+                    const cameraQuad = frameBoxObject.value.worldSpace;
+                    if (!Geo.quadContainsPoint(cameraQuad, v)) {
+                        tick().then(() => {
+                            panMovement.value = {
+                                x: (v.x - cameraFocus.value.x) / 100,
+                                y: (v.y - cameraFocus.value.y) / 100,
+                            };
+                            cameraTow.value = {
+                                x: v.x + (v.x - cameraFocus.value.x) / 100,
+                                y: v.y + (v.y - cameraFocus.value.y) / 100,
+                            };
+                        });
+                    }
+                });
             });
-        });
-    }
+        }
+    });
 </script>
 
 <g

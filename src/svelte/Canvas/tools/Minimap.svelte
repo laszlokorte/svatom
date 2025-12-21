@@ -14,10 +14,12 @@
         visible = atom(true),
     } = $props();
 
-    const viewBox = read(
-        ({ minX, maxX, minY, maxY }) =>
-            `${minX} ${minY} ${maxX - minX} ${maxY - minY}`,
-        extension,
+    const viewBox = $derived(
+        read(
+            ({ minX, maxX, minY, maxY }) =>
+                `${minX} ${minY} ${maxX - minX} ${maxY - minY}`,
+            extension,
+        ),
     );
 
     const isActive = atom(false);

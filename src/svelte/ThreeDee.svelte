@@ -250,111 +250,129 @@
     const debug = atom(false);
 
     const radToDeg = [L.multiply(180), L.divide(Math.PI)];
-    const rx = view(["rx", radToDeg], trans);
-    const ry = view(["ry", radToDeg], trans);
-    const rz = view(["rz", radToDeg], trans);
-    const rx2 = view(["rx", radToDeg], trans2);
-    const ry2 = view(["ry", radToDeg], trans2);
-    const rz2 = view(["rz", radToDeg], trans2);
-    const tx = view(["tx"], trans);
-    const ty = view(["ty"], trans);
-    const tz = view(["tz"], trans);
-    const sx = view(["sx"], trans);
-    const sy = view(["sy"], trans);
-    const sz = view(["sz"], trans);
-    const np = view(
-        L.lens(
-            ({ np, fp }) => np,
-            (n, { fp, np, ...rest }) => ({
-                ...rest,
-                fp: n + (fp - np),
-                np: n,
-            }),
+    const rx = $derived(view(["rx", radToDeg], trans));
+    const ry = $derived(view(["ry", radToDeg], trans));
+    const rz = $derived(view(["rz", radToDeg], trans));
+    const rx2 = $derived(view(["rx", radToDeg], trans2));
+    const ry2 = $derived(view(["ry", radToDeg], trans2));
+    const rz2 = $derived(view(["rz", radToDeg], trans2));
+    const tx = $derived(view(["tx"], trans));
+    const ty = $derived(view(["ty"], trans));
+    const tz = $derived(view(["tz"], trans));
+    const sx = $derived(view(["sx"], trans));
+    const sy = $derived(view(["sy"], trans));
+    const sz = $derived(view(["sz"], trans));
+    const np = $derived(
+        view(
+            L.lens(
+                ({ np, fp }) => np,
+                (n, { fp, np, ...rest }) => ({
+                    ...rest,
+                    fp: n + (fp - np),
+                    np: n,
+                }),
+            ),
+            camera,
         ),
-        camera,
     );
-    const fp = view(
-        L.lens(
-            ({ np, fp }) => fp - np,
-            (n, { np, ...rest }) => ({
-                ...rest,
-                np,
-                fp: np + n,
-                cp: Math.min(n, rest.cp),
-            }),
+    const fp = $derived(
+        view(
+            L.lens(
+                ({ np, fp }) => fp - np,
+                (n, { np, ...rest }) => ({
+                    ...rest,
+                    np,
+                    fp: np + n,
+                    cp: Math.min(n, rest.cp),
+                }),
+            ),
+            camera,
         ),
-        camera,
     );
-    const cp = view(
-        L.lens(
-            ({ cp }) => cp,
-            (n, rest) => ({
-                ...rest,
-                cp: Math.min(n, rest.fp - rest.np),
-            }),
+    const cp = $derived(
+        view(
+            L.lens(
+                ({ cp }) => cp,
+                (n, rest) => ({
+                    ...rest,
+                    cp: Math.min(n, rest.fp - rest.np),
+                }),
+            ),
+            camera,
         ),
-        camera,
     );
 
-    const crx = view(["orientation", "rx", radToDeg], camera);
-    const cry = view(["orientation", "ry", radToDeg], camera);
-    const crz = view(["orientation", "rz", radToDeg], camera);
-    const ctx = view(["orientation", "tx"], camera);
-    const cty = view(["orientation", "ty"], camera);
-    const ctz = view(["orientation", "tz"], camera);
+    const crx = $derived(view(["orientation", "rx", radToDeg], camera));
+    const cry = $derived(view(["orientation", "ry", radToDeg], camera));
+    const crz = $derived(view(["orientation", "rz", radToDeg], camera));
+    const ctx = $derived(view(["orientation", "tx"], camera));
+    const cty = $derived(view(["orientation", "ty"], camera));
+    const ctz = $derived(view(["orientation", "tz"], camera));
 
     const clamp = (min, max) => L.normalize(R.clamp(min, max));
-    const scale = view(["scale"], camera);
-    const fov = view(["fov", radToDeg, clamp(0.01, 160)], camera);
-    const orthogonality = view(["orthogonality", clamp(0, 1)], camera);
-    const aspect = view(["aspect", clamp(0.1, 10)], camera);
+    const scale = $derived(view(["scale"], camera));
+    const fov = $derived(view(["fov", radToDeg, clamp(0.01, 160)], camera));
+    const orthogonality = $derived(
+        view(["orthogonality", clamp(0, 1)], camera),
+    );
+    const aspect = $derived(view(["aspect", clamp(0.1, 10)], camera));
     const samples = 64;
     const curve = atom({ freq: 5, amp: 1, phase: 0, damp: 0 });
-    const freq = view("freq", curve);
-    const amp = view("amp", curve);
-    const phase = view("phase", curve);
-    const damp = view("damp", curve);
-    const curveGeo = view(
-        ({ freq, amp, phase, damp }) => ({
-            vertices: Array(samples)
-                .fill(null)
-                .map((_, i) => ({
-                    x: -10 + (20 * i) / samples,
-                    y:
-                        Math.exp(
-                            (-damp / Math.max(1, amp)) * (i / samples - 0.5),
-                        ) *
-                        amp *
-                        Math.cos(freq * (i / samples - 0.5 + phase) * Math.PI),
-                    z:
-                        Math.exp(
-                            (-damp / Math.max(1, amp)) * (i / samples - 0.5),
-                        ) *
-                        amp *
-                        Math.sin(freq * (i / samples - 0.5 + phase) * Math.PI),
-                })),
-            edges: Array(samples)
-                .fill(null)
-                .slice(1)
-                .map((_, i) => ({ from: i, to: i + 1 })),
-        }),
-        curve,
+    const freq = $derived(view("freq", curve));
+    const amp = $derived(view("amp", curve));
+    const phase = $derived(view("phase", curve));
+    const damp = $derived(view("damp", curve));
+    const curveGeo = $derived(
+        view(
+            ({ freq, amp, phase, damp }) => ({
+                vertices: Array(samples)
+                    .fill(null)
+                    .map((_, i) => ({
+                        x: -10 + (20 * i) / samples,
+                        y:
+                            Math.exp(
+                                (-damp / Math.max(1, amp)) *
+                                    (i / samples - 0.5),
+                            ) *
+                            amp *
+                            Math.cos(
+                                freq * (i / samples - 0.5 + phase) * Math.PI,
+                            ),
+                        z:
+                            Math.exp(
+                                (-damp / Math.max(1, amp)) *
+                                    (i / samples - 0.5),
+                            ) *
+                            amp *
+                            Math.sin(
+                                freq * (i / samples - 0.5 + phase) * Math.PI,
+                            ),
+                    })),
+                edges: Array(samples)
+                    .fill(null)
+                    .slice(1)
+                    .map((_, i) => ({ from: i, to: i + 1 })),
+            }),
+            curve,
+        ),
     );
 
     const pointer = atom({ x: 0, y: 0, dx: 0, dy: 0 });
-    const pointerPos = view(
-        L.lens(
-            ({ x, y }) => ({ clientX: x, clientY: y }),
-            ({ clientX: x, clientY: y }, o) => ({
-                x,
-                y,
-                dx: x - o.x,
-                dy: y - o.y,
-            }),
+    const pointerPos = $derived(
+        view(
+            L.lens(
+                ({ x, y }) => ({ clientX: x, clientY: y }),
+                ({ clientX: x, clientY: y }, o) => ({
+                    x,
+                    y,
+                    dx: x - o.x,
+                    dy: y - o.y,
+                }),
+            ),
+            pointer,
         ),
-        pointer,
     );
-    const pointerDelta = view(L.props("dx", "dy"), pointer);
+    const pointerDelta = $derived(view(L.props("dx", "dy"), pointer));
 </script>
 
 <p>

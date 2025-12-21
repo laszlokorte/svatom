@@ -18,9 +18,8 @@
 
     const { properties = atom({}) } = $props();
 
-    const currentFillColor = view(
-        ["fillColor", L.valueOr("#00aaff")],
-        properties,
+    const currentFillColor = $derived(
+        view(["fillColor", L.valueOr("#00aaff")], properties),
     );
 </script>
 

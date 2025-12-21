@@ -20,72 +20,82 @@
         state = atom({}),
     } = $props();
 
-    const minRadius = read(R.multiply(40), cameraScale);
+    const minRadius = $derived(read(R.multiply(40), cameraScale));
 
-    const rotation = state;
-    const rotationPivot = view(
-        [
-            L.props("pivot", "ref"),
-            L.rewrite(({ pivot }) => ({ pivot, ref: pivot })),
-            L.removable("pivot"),
-            "pivot",
-            L.removable("x", "y"),
-        ],
-        rotation,
+    const rotation = $derived(state);
+    const rotationPivot = $derived(
+        view(
+            [
+                L.props("pivot", "ref"),
+                L.rewrite(({ pivot }) => ({ pivot, ref: pivot })),
+                L.removable("pivot"),
+                "pivot",
+                L.removable("x", "y"),
+            ],
+            rotation,
+        ),
     );
-    const isActive = view(
-        L.lens(R.compose(R.not, R.isNil), (b, o) => (b ? o : undefined)),
-        rotationPivot,
+    const isActive = $derived(
+        view(
+            L.lens(R.compose(R.not, R.isNil), (b, o) => (b ? o : undefined)),
+            rotationPivot,
+        ),
     );
-    const rotationRef = view("ref", rotation);
+    const rotationRef = $derived(view("ref", rotation));
 
-    const rotationRadius = view(
-        [
-            L.props("pivot", "ref"),
-            L.lens(
-                ({ pivot, ref }) => {
-                    return Math.hypot(ref.x - pivot.x, ref.y - pivot.y);
-                },
-                (newRadius, { pivot, ref }) => {
-                    const dx = ref.x - pivot.x;
-                    const dy = ref.y - pivot.y;
+    const rotationRadius = $derived(
+        view(
+            [
+                L.props("pivot", "ref"),
+                L.lens(
+                    ({ pivot, ref }) => {
+                        return Math.hypot(ref.x - pivot.x, ref.y - pivot.y);
+                    },
+                    (newRadius, { pivot, ref }) => {
+                        const dx = ref.x - pivot.x;
+                        const dy = ref.y - pivot.y;
 
-                    const oldRadius = Math.hypot(dx, dy);
+                        const oldRadius = Math.hypot(dx, dy);
 
-                    return {
-                        pivot,
-                        ref: {
-                            x: pivot.x + (newRadius * dx) / oldRadius,
-                            y: pivot.y + (newRadius * dy) / oldRadius,
-                        },
-                    };
-                },
-            ),
-        ],
-        rotation,
+                        return {
+                            pivot,
+                            ref: {
+                                x: pivot.x + (newRadius * dx) / oldRadius,
+                                y: pivot.y + (newRadius * dy) / oldRadius,
+                            },
+                        };
+                    },
+                ),
+            ],
+            rotation,
+        ),
     );
 
-    const radiusIsLargeEnough = read(
-        ({ r, m }) => r >= m,
-        combine({ r: rotationRadius, m: minRadius }),
+    const radiusIsLargeEnough = $derived(
+        read(
+            ({ r, m }) => r >= m,
+            combine({ r: rotationRadius, m: minRadius }),
+        ),
     );
-    const clampedRef = read(
-        ({ rot: { pivot, ref }, min }) => {
-            const dx = ref.x - pivot.x;
-            const dy = ref.y - pivot.y;
+    const clampedRef = $derived(
+        read(
+            ({ rot: { pivot, ref }, min }) => {
+                const dx = ref.x - pivot.x;
+                const dy = ref.y - pivot.y;
 
-            const oldRadius = Math.hypot(dx, dy);
+                const oldRadius = Math.hypot(dx, dy);
 
-            if (!oldRadius) {
-                return pivot;
-            }
+                if (!oldRadius) {
+                    return pivot;
+                }
 
-            return {
-                x: pivot.x + (R.clamp(0, min, oldRadius) * dx) / oldRadius,
-                y: pivot.y + (R.clamp(0, min, oldRadius) * dy) / oldRadius,
-            };
-        },
-        combine({ rot: rotation, min: minRadius }),
+                return {
+                    x: pivot.x + (R.clamp(0, min, oldRadius) * dx) / oldRadius,
+                    y: pivot.y + (R.clamp(0, min, oldRadius) * dy) / oldRadius,
+                };
+            },
+            combine({ rot: rotation, min: minRadius }),
+        ),
     );
 
     const rotPivot = $derived(rotationPivot.value);

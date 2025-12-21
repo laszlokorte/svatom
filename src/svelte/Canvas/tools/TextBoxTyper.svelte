@@ -35,67 +35,78 @@
     } = $props();
 
     const textBox = atom(undefined);
-    const text = view(["text"], textBox);
-    const isDragging = view(["dragging", L.valueOr(false)], textBox);
+    const text = $derived(view(["text"], textBox));
+    const isDragging = $derived(view(["dragging", L.valueOr(false)], textBox));
 
-    const textBoxStart = view(
-        [L.removable("start"), "start", L.removable("x", "y")],
-        textBox,
+    const textBoxStart = $derived(
+        view([L.removable("start"), "start", L.removable("x", "y")], textBox),
     );
-    const textBoxSize = view(
-        L.ifElse(
-            R.prop("start"),
-            [L.removable("size"), "size", L.removable("x", "y")],
-            L.zero,
+    const textBoxSize = $derived(
+        view(
+            L.ifElse(
+                R.prop("start"),
+                [L.removable("size"), "size", L.removable("x", "y")],
+                L.zero,
+            ),
+            textBox,
         ),
-        textBox,
     );
-    const textBoxFontSize = view(
-        L.ifElse(
-            R.prop("start"),
-            [L.removable("fontSize"), "fontSize", L.rewrite(R.max(0.1))],
-            L.zero,
+    const textBoxFontSize = $derived(
+        view(
+            L.ifElse(
+                R.prop("start"),
+                [L.removable("fontSize"), "fontSize", L.rewrite(R.max(0.1))],
+                L.zero,
+            ),
+            textBox,
         ),
-        textBox,
     );
-    const isActive = view(
-        L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
-        textBoxStart,
-    );
-
-    const textEmpty = view(L.reread(R.isEmpty), text);
-    const textBoxValid = view(
-        L.reread(({ fontSize, size }) => {
-            return (
-                Math.abs(size.x) > 20 * fontSize &&
-                Math.abs(size.y) > 20 * fontSize
-            );
-        }),
-        textBox,
-    );
-
-    const textBoxAngle = view([L.removable("angle"), "angle"], textBox);
-    const textBoxAngleCos = view(
-        [L.reread((r) => Math.cos((r / 180) * Math.PI))],
-        textBoxAngle,
-    );
-    const textBoxAngleSin = view(
-        [L.reread((r) => Math.sin((r / 180) * Math.PI))],
-        textBoxAngle,
-    );
-
-    const textBoxPath = read(
-        L.getter((b) =>
-            b && b.start && b.size
-                ? `M${numberSvgFormat.format(b.start.x)},${numberSvgFormat.format(b.start.y)}h${numberSvgFormat.format(b.size.x)}v${numberSvgFormat.format(b.size.y)}M${numberSvgFormat.format(b.start.x)},${numberSvgFormat.format(b.start.y)}v${numberSvgFormat.format(b.size.y)}h${numberSvgFormat.format(b.size.x)}`
-                : "",
+    const isActive = $derived(
+        view(
+            L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
+            textBoxStart,
         ),
-        textBox,
     );
 
-    const textBoxTransform = read(
-        L.reread((r) => `rotate(${r.angle}, ${r.start.x}, ${r.start.y})`),
-        textBox,
+    const textEmpty = $derived(view(L.reread(R.isEmpty), text));
+    const textBoxValid = $derived(
+        view(
+            L.reread(({ fontSize, size }) => {
+                return (
+                    Math.abs(size.x) > 20 * fontSize &&
+                    Math.abs(size.y) > 20 * fontSize
+                );
+            }),
+            textBox,
+        ),
+    );
+
+    const textBoxAngle = $derived(
+        view([L.removable("angle"), "angle"], textBox),
+    );
+    const textBoxAngleCos = $derived(
+        view([L.reread((r) => Math.cos((r / 180) * Math.PI))], textBoxAngle),
+    );
+    const textBoxAngleSin = $derived(
+        view([L.reread((r) => Math.sin((r / 180) * Math.PI))], textBoxAngle),
+    );
+
+    const textBoxPath = $derived(
+        read(
+            L.getter((b) =>
+                b && b.start && b.size
+                    ? `M${numberSvgFormat.format(b.start.x)},${numberSvgFormat.format(b.start.y)}h${numberSvgFormat.format(b.size.x)}v${numberSvgFormat.format(b.size.y)}M${numberSvgFormat.format(b.start.x)},${numberSvgFormat.format(b.start.y)}v${numberSvgFormat.format(b.size.y)}h${numberSvgFormat.format(b.size.x)}`
+                    : "",
+            ),
+            textBox,
+        ),
+    );
+
+    const textBoxTransform = $derived(
+        read(
+            L.reread((r) => `rotate(${r.angle}, ${r.start.x}, ${r.start.y})`),
+            textBox,
+        ),
     );
 
     const keepOrientationlens = L.lens(R.identity, (newV, { x, y }) => ({
@@ -103,10 +114,7 @@
         y: Math.sign(y) * Math.abs(newV.y),
     }));
 
-    export const canCancel = read(
-        ({ a, d }) => a || d,
-        combine({ d: isDragging, a: isActive }),
-    );
+    export const canCancel = () => isDragging.value || isActive.value;
 
     export function cancel() {
         isActive.value = false;

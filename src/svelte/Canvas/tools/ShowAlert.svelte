@@ -18,45 +18,54 @@
 
     const radius = 12;
 
-    const cameraTransform = view(
-        [
-            L.pick({
-                box: ["frameBoxObject", "screenSpaceAligned"],
-                angle: "cameraOrientation",
-            }),
-            ({ box: { minX, minY, width, height }, angle }) => ({
-                x: minX + width / 2,
-                y: minY + height / 2,
-                angle,
-                minX,
-                minY,
-                width,
-                height,
-            }),
-        ],
-        combine({ frameBoxObject, cameraOrientation }),
+    const cameraTransform = $derived(
+        view(
+            [
+                L.pick({
+                    box: ["frameBoxObject", "screenSpaceAligned"],
+                    angle: "cameraOrientation",
+                }),
+                ({ box: { minX, minY, width, height }, angle }) => ({
+                    x: minX + width / 2,
+                    y: minY + height / 2,
+                    angle,
+                    minX,
+                    minY,
+                    width,
+                    height,
+                }),
+            ],
+            combine({ frameBoxObject, cameraOrientation }),
+        ),
     );
 
-    const screenspacePositions = view(
-        ({ alerts, rect, scale }) => {
-            return R.map((p) => {
-                const { minX, minY, width, height } = rect;
-                return {
-                    screenPos: Geo.clamp2DBox(
-                        { minX, minY, width, height },
-                        Geo.rotatePivotXYDegree(rect.x, rect.y, rect.angle, p),
-                    ),
-                    x: p.x,
-                    y: p.y,
-                    msg: p.msg,
-                    color: p.color,
-                };
-            }, alerts);
-        },
-        combine({ rect: cameraTransform, alerts, scale: cameraScale }),
+    const screenspacePositions = $derived(
+        view(
+            ({ alerts, rect, scale }) => {
+                return R.map((p) => {
+                    const { minX, minY, width, height } = rect;
+                    return {
+                        screenPos: Geo.clamp2DBox(
+                            { minX, minY, width, height },
+                            Geo.rotatePivotXYDegree(
+                                rect.x,
+                                rect.y,
+                                rect.angle,
+                                p,
+                            ),
+                        ),
+                        x: p.x,
+                        y: p.y,
+                        msg: p.msg,
+                        color: p.color,
+                    };
+                }, alerts);
+            },
+            combine({ rect: cameraTransform, alerts, scale: cameraScale }),
+        ),
     );
 
-    const cameraCenter = view(L.props("x", "y"), cameraFocus);
+    const cameraCenter = $derived(view(L.props("x", "y"), cameraFocus));
 
     function scrollToClick(evt) {
         const x = parseFloat(evt.currentTarget.getAttribute("data-pos-x"));
@@ -75,29 +84,33 @@
         }
     }
 
-    const basePath = view(
-        L.reread(
-            (scale) =>
-                `m 0 ${scale * radius} l ${scale * -radius} ${scale * -radius}  l ${scale * radius} ${scale * -radius}  l ${scale * radius} ${scale * radius}  z`,
+    const basePath = $derived(
+        view(
+            L.reread(
+                (scale) =>
+                    `m 0 ${scale * radius} l ${scale * -radius} ${scale * -radius}  l ${scale * radius} ${scale * -radius}  l ${scale * radius} ${scale * radius}  z`,
+            ),
+            cameraScale,
         ),
-        cameraScale,
     );
 
-    const paths = view(
-        L.reread(({ basePath, positions }) =>
-            G.map(
-                (pos) => ({
-                    path: `M ${pos.screenPos.x} ${pos.screenPos.y} ${basePath}`,
-                    x: pos.x,
-                    y: pos.y,
-                    screenPos: pos.screenPos,
-                    msg: pos.msg,
-                    color: pos.color,
-                }),
-                positions,
+    const paths = $derived(
+        view(
+            L.reread(({ basePath, positions }) =>
+                G.map(
+                    (pos) => ({
+                        path: `M ${pos.screenPos.x} ${pos.screenPos.y} ${basePath}`,
+                        x: pos.x,
+                        y: pos.y,
+                        screenPos: pos.screenPos,
+                        msg: pos.msg,
+                        color: pos.color,
+                    }),
+                    positions,
+                ),
             ),
+            combine({ positions: screenspacePositions, basePath }),
         ),
-        combine({ positions: screenspacePositions, basePath }),
     );
 </script>
 

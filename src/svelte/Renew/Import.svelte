@@ -77,7 +77,7 @@
         renewDocument,
     );
 
-    // const reserialized = view(
+    // const reserialized = $derived(view(
     // 	[
     // 		"json",
     // 		L.reread((j) => {
@@ -123,11 +123,10 @@
         },
     );
 
-    const renewJsonCurrent = view(jsonLens, renewDocument);
+    const renewJsonCurrent = $derived(view(jsonLens, renewDocument));
 
-    const renewJson = view(
-        L.inverse(L.json({ space: "  " })),
-        renewJsonCurrent,
+    const renewJson = $derived(
+        view(L.inverse(L.json({ space: "  " })), renewJsonCurrent),
     );
 
     const drawingTypes = hierarchyV11.descendantsOf(
@@ -198,7 +197,7 @@
     ];
 
     // currently FigureIds are not GUARANTEED to be unique
-    // const ids = view(
+    // const ids = $derived(view(
     // 	[
     // 		"json",
     // 		"drawing",
@@ -212,82 +211,109 @@
     // 	renewDocument,
     // );
 
-    const rectangles = view(
-        [
-            "json",
-            "refMap",
-            L.partsOf(
-                L.elems,
-                L.when(R.compose(R.includes(R.__, rectTypes), R.prop(kindKey))),
-            ),
-        ],
-        renewDocument,
-    );
-
-    const diagramFigs = view(
-        [
-            "json",
-            "refMap",
-            L.partsOf(
-                L.elems,
-                L.when(
-                    R.compose(R.includes(R.__, diagramTypes), R.prop(kindKey)),
+    const rectangles = $derived(
+        view(
+            [
+                "json",
+                "refMap",
+                L.partsOf(
+                    L.elems,
+                    L.when(
+                        R.compose(R.includes(R.__, rectTypes), R.prop(kindKey)),
+                    ),
                 ),
-            ),
-        ],
-        renewDocument,
+            ],
+            renewDocument,
+        ),
     );
 
-    const groupFigs = view(
-        [
-            "json",
-            "refMap",
-            L.partsOf(
-                L.elems,
-                L.when(
-                    R.compose(R.includes(R.__, groupTypes), R.prop(kindKey)),
+    const diagramFigs = $derived(
+        view(
+            [
+                "json",
+                "refMap",
+                L.partsOf(
+                    L.elems,
+                    L.when(
+                        R.compose(
+                            R.includes(R.__, diagramTypes),
+                            R.prop(kindKey),
+                        ),
+                    ),
                 ),
-            ),
-        ],
-        renewDocument,
+            ],
+            renewDocument,
+        ),
     );
 
-    const ellipses = view(
-        [
-            "json",
-            "refMap",
-            L.partsOf(
-                L.elems,
-                L.when(
-                    R.compose(R.includes(R.__, ellipseTypes), R.prop(kindKey)),
+    const groupFigs = $derived(
+        view(
+            [
+                "json",
+                "refMap",
+                L.partsOf(
+                    L.elems,
+                    L.when(
+                        R.compose(
+                            R.includes(R.__, groupTypes),
+                            R.prop(kindKey),
+                        ),
+                    ),
                 ),
-            ),
-        ],
-        renewDocument,
+            ],
+            renewDocument,
+        ),
     );
 
-    const lines = view(
-        [
-            "json",
-            "refMap",
-            L.partsOf(
-                L.elems,
-                L.when(R.compose(R.includes(R.__, lineTypes), R.prop(kindKey))),
-            ),
-        ],
-        renewDocument,
+    const ellipses = $derived(
+        view(
+            [
+                "json",
+                "refMap",
+                L.partsOf(
+                    L.elems,
+                    L.when(
+                        R.compose(
+                            R.includes(R.__, ellipseTypes),
+                            R.prop(kindKey),
+                        ),
+                    ),
+                ),
+            ],
+            renewDocument,
+        ),
     );
 
-    const textes = view(
-        [
-            "json",
-            "refMap",
-            L.partsOf(
-                L.elems,
-                L.when(R.compose(R.includes(R.__, textTypes), R.prop(kindKey))),
-            ),
-        ],
-        renewDocument,
+    const lines = $derived(
+        view(
+            [
+                "json",
+                "refMap",
+                L.partsOf(
+                    L.elems,
+                    L.when(
+                        R.compose(R.includes(R.__, lineTypes), R.prop(kindKey)),
+                    ),
+                ),
+            ],
+            renewDocument,
+        ),
+    );
+
+    const textes = $derived(
+        view(
+            [
+                "json",
+                "refMap",
+                L.partsOf(
+                    L.elems,
+                    L.when(
+                        R.compose(R.includes(R.__, textTypes), R.prop(kindKey)),
+                    ),
+                ),
+            ],
+            renewDocument,
+        ),
     );
 
     const boundsLens = L.branch({
@@ -356,44 +382,46 @@
         ],
     });
 
-    const extension = read(
-        [
-            L.pick({
-                minX: [
-                    L.foldTraversalLens(L.minimum, [boundsLens, "minX"]),
-                    L.reread((x) => (isNaN(x) ? 0 : x)),
-                    L.defaults(0),
-                ],
-                maxX: [
-                    L.foldTraversalLens(L.maximum, [boundsLens, "maxX"]),
-                    L.reread((x) => (isNaN(x) ? 0 : x)),
-                    L.defaults(0),
-                ],
-                minY: [
-                    L.foldTraversalLens(L.minimum, [boundsLens, "minY"]),
-                    L.reread((x) => (isNaN(x) ? 0 : x)),
-                    L.defaults(0),
-                ],
-                maxY: [
-                    L.foldTraversalLens(L.maximum, [boundsLens, "maxY"]),
-                    L.reread((x) => (isNaN(x) ? 0 : x)),
-                    L.defaults(0),
-                ],
+    const extension = $derived(
+        read(
+            [
+                L.pick({
+                    minX: [
+                        L.foldTraversalLens(L.minimum, [boundsLens, "minX"]),
+                        L.reread((x) => (isNaN(x) ? 0 : x)),
+                        L.defaults(0),
+                    ],
+                    maxX: [
+                        L.foldTraversalLens(L.maximum, [boundsLens, "maxX"]),
+                        L.reread((x) => (isNaN(x) ? 0 : x)),
+                        L.defaults(0),
+                    ],
+                    minY: [
+                        L.foldTraversalLens(L.minimum, [boundsLens, "minY"]),
+                        L.reread((x) => (isNaN(x) ? 0 : x)),
+                        L.defaults(0),
+                    ],
+                    maxY: [
+                        L.foldTraversalLens(L.maximum, [boundsLens, "maxY"]),
+                        L.reread((x) => (isNaN(x) ? 0 : x)),
+                        L.defaults(0),
+                    ],
+                }),
+            ],
+            combine({
+                rectangles,
+                textes,
+                lines,
+                ellipses,
+                diagramFigs,
+                sizeCache,
             }),
-        ],
-        combine({
-            rectangles,
-            textes,
-            lines,
-            ellipses,
-            diagramFigs,
-            sizeCache,
-        }),
+        ),
     );
 
     const extensionCurrentValue = $derived(extension.value);
 
-    // const viewBox = view(
+    // const viewBox = $derived(view(
     // 	L.reread(
     // 		({ minX, minY, maxX, maxY }) =>
     // 			`${minX - 50} ${minY - 50} ${Math.max(600, maxX - minX) + 100} ${Math.max(200, maxY - minY) + 100}`,
@@ -421,21 +449,23 @@
     });
     const cameraScaleLens = L.reread((c) => Math.exp(-c.focus.z));
 
-    const cameraX = view(["focus", "x"], camera);
-    const cameraY = view(["focus", "y"], camera);
-    const cameraScale = read(cameraScaleLens, camera);
+    const cameraX = $derived(view(["focus", "x"], camera));
+    const cameraY = $derived(view(["focus", "y"], camera));
+    const cameraScale = $derived(read(cameraScaleLens, camera));
 
-    const scrollWindowSize = view(
-        [
-            L.lens(R.prop("frame"), (newSize) => ({
-                frame: newSize,
-                plane: newSize,
-            })),
-        ],
-        combine({
-            plane: view(["plane", L.props("x", "y")], camera),
-            frame: view(["frame", "size"], camera),
-        }),
+    const scrollWindowSize = $derived(
+        view(
+            [
+                L.lens(R.prop("frame"), (newSize) => ({
+                    frame: newSize,
+                    plane: newSize,
+                })),
+            ],
+            combine({
+                plane: view(["plane", L.props("x", "y")], camera),
+                frame: view(["frame", "size"], camera),
+            }),
+        ),
     );
 
     function rotatedBounds(degree, rect) {
@@ -480,74 +510,80 @@
         };
     }
 
-    const cameraBounds = read(
-        ({ c, e }) => {
-            return rotatedBounds(c.focus.w, e);
-        },
-        combine({ c: camera, e: extension }),
-    );
-
-    const cameraInBounds = view(
-        L.lens(
-            ({ x, y, s, w, b }) => {
-                const rot = Geo.rotatePivotXYDegree(
-                    (b.minX + b.maxX) / 2,
-                    (b.minY + b.maxY) / 2,
-                    b.angle,
-                    { x, y },
-                );
-
-                return {
-                    x: (rot.x - b.minX) / s - w.x / 2,
-                    y: (rot.y - b.minY) / s - w.y / 2,
-                };
+    const cameraBounds = $derived(
+        read(
+            ({ c, e }) => {
+                return rotatedBounds(c.focus.w, e);
             },
-            ({ x, y }, { s, w, b }) => {
-                const rot = Geo.rotatePivotXYDegree(
-                    (b.minX + b.maxX) / 2,
-                    (b.minY + b.maxY) / 2,
-                    -b.angle,
-                    {
-                        x: (x + w.x / 2) * s + b.minX,
-                        y: (y + w.y / 2) * s + b.minY,
-                    },
-                );
-
-                return {
-                    x: rot.x,
-                    y: rot.y,
-                };
-            },
-        ),
-        combine(
-            {
-                x: cameraX,
-                y: cameraY,
-                s: cameraScale,
-                w: scrollWindowSize,
-                b: cameraBounds,
-            },
-            { x: true, y: true },
+            combine({ c: camera, e: extension }),
         ),
     );
 
-    const scrollPosition = view(
-        [
-            L.pick({ x: ["x"], y: ["y"] }),
-            L.setter((newScroll, old) => ({
-                x:
-                    (newScroll.atMinX && old.x < newScroll.x) ||
-                    (newScroll.atMaxX && old.x > newScroll.x)
-                        ? old.x
-                        : newScroll.x,
-                y:
-                    (newScroll.atMinY && old.y < newScroll.y) ||
-                    (newScroll.atMaxY && old.y > newScroll.y)
-                        ? old.y
-                        : newScroll.y,
-            })),
-        ],
-        cameraInBounds,
+    const cameraInBounds = $derived(
+        view(
+            L.lens(
+                ({ x, y, s, w, b }) => {
+                    const rot = Geo.rotatePivotXYDegree(
+                        (b.minX + b.maxX) / 2,
+                        (b.minY + b.maxY) / 2,
+                        b.angle,
+                        { x, y },
+                    );
+
+                    return {
+                        x: (rot.x - b.minX) / s - w.x / 2,
+                        y: (rot.y - b.minY) / s - w.y / 2,
+                    };
+                },
+                ({ x, y }, { s, w, b }) => {
+                    const rot = Geo.rotatePivotXYDegree(
+                        (b.minX + b.maxX) / 2,
+                        (b.minY + b.maxY) / 2,
+                        -b.angle,
+                        {
+                            x: (x + w.x / 2) * s + b.minX,
+                            y: (y + w.y / 2) * s + b.minY,
+                        },
+                    );
+
+                    return {
+                        x: rot.x,
+                        y: rot.y,
+                    };
+                },
+            ),
+            combine(
+                {
+                    x: cameraX,
+                    y: cameraY,
+                    s: cameraScale,
+                    w: scrollWindowSize,
+                    b: cameraBounds,
+                },
+                { x: true, y: true },
+            ),
+        ),
+    );
+
+    const scrollPosition = $derived(
+        view(
+            [
+                L.pick({ x: ["x"], y: ["y"] }),
+                L.setter((newScroll, old) => ({
+                    x:
+                        (newScroll.atMinX && old.x < newScroll.x) ||
+                        (newScroll.atMaxX && old.x > newScroll.x)
+                            ? old.x
+                            : newScroll.x,
+                    y:
+                        (newScroll.atMinY && old.y < newScroll.y) ||
+                        (newScroll.atMaxY && old.y > newScroll.y)
+                            ? old.y
+                            : newScroll.y,
+                })),
+            ],
+            cameraInBounds,
+        ),
     );
 
     const boxPathLens = L.reread(
@@ -555,9 +591,8 @@
             `M${numberSvgFormat.format(minX)},${numberSvgFormat.format(minY)}h${numberSvgFormat.format(width)}v${numberSvgFormat.format(height)}h${numberSvgFormat.format(-width)}z`,
     );
 
-    const frameBoxPath = read(
-        [frameBoxLens, "screenSpaceAligned", boxPathLens],
-        camera,
+    const frameBoxPath = $derived(
+        read([frameBoxLens, "screenSpaceAligned", boxPathLens], camera),
     );
 
     const cameraRotationTransformLens = L.reread(
@@ -568,10 +603,11 @@
         (c) => `rotate(${-c.focus.w}, ${c.focus.x}, ${c.focus.y})`,
     );
 
-    const rotationTransform = read(cameraRotationTransformLens, camera);
-    const rotationInverseTransform = read(
-        cameraRotationInverseTransformLens,
-        camera,
+    const rotationTransform = $derived(
+        read(cameraRotationTransformLens, camera),
+    );
+    const rotationInverseTransform = $derived(
+        read(cameraRotationInverseTransformLens, camera),
     );
 
     const preserveAspectRatioLens = [
@@ -596,7 +632,7 @@
         ),
     ];
 
-    const preserveAspectRatio = read(preserveAspectRatioLens, camera);
+    const preserveAspectRatio = $derived(read(preserveAspectRatioLens, camera));
 
     const numberSvgFormat = new Intl.NumberFormat("en-US", {
         minimumFractionDigits: 5,
@@ -610,13 +646,13 @@
 		${numberSvgFormat.format(cam.plane.x * Math.exp(-cam.focus.z))}
 		${numberSvgFormat.format(cam.plane.y * Math.exp(-cam.focus.z))}`;
     });
-    const viewBox = view(viewBoxLens, camera);
+    const viewBox = $derived(view(viewBoxLens, camera));
 
-    const version = view(["json", "version"], renewDocument);
-    const doctype = view(["json", "doctype"], renewDocument);
-    const refMap = view([jsonLens, "refMap"], renewDocument);
+    const version = $derived(view(["json", "version"], renewDocument));
+    const doctype = $derived(view(["json", "doctype"], renewDocument));
+    const refMap = $derived(view([jsonLens, "refMap"], renewDocument));
 
-    // const renderedRefMap = view((map) => {
+    // const renderedRefMap = $derived(view((map) => {
     // 	return map
     // 		.map(
     // 			(ref, i) =>
@@ -626,30 +662,36 @@
     // 		.filter((i) => i !== false && i !== null);
     // }, refMap);
 
-    const renderedRefMap = view(
-        [
-            jsonLens,
-            L.reread((x) => x.refMap[x.drawing[refKey]]["figures"]),
-            L.partsOf(L.elems, refKey),
-        ],
-        renewDocument,
+    const renderedRefMap = $derived(
+        view(
+            [
+                jsonLens,
+                L.reread((x) => x.refMap[x.drawing[refKey]]["figures"]),
+                L.partsOf(L.elems, refKey),
+            ],
+            renewDocument,
+        ),
     );
 
-    const scrollContentSize = view(
-        ({ s, w, b }) => ({
-            x: (b.maxX - b.minX) / s,
-            y: (b.maxY - b.minY) / s,
-        }),
-        combine({
-            s: cameraScale,
-            b: cameraBounds,
-        }),
+    const scrollContentSize = $derived(
+        view(
+            ({ s, w, b }) => ({
+                x: (b.maxX - b.minX) / s,
+                y: (b.maxY - b.minY) / s,
+            }),
+            combine({
+                s: cameraScale,
+                b: cameraBounds,
+            }),
+        ),
     );
 
     const dragging = atom(0);
     const debug = atom(false);
     const searchTerm = atom("");
-    const selection = view(["selection", L.defaults([])], renewDocument);
+    const selection = $derived(
+        view(["selection", L.defaults([])], renewDocument),
+    );
 
     const currentSelection = $derived(selection.value);
 

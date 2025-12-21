@@ -17,137 +17,172 @@
     const snapRadiusVisual = 8;
 
     const polygon = atom({ path: [], draft: null });
-    const dragging = view(["dragging", L.valueOr(false)], polygon);
-    const path = view([L.removable("path"), "path", L.defaults([])], polygon);
-    const isActive = view(
-        [L.lens(R.compose(R.lt(0), R.length), (n, o) => (n ? o : []))],
-        path,
+    const dragging = $derived(view(["dragging", L.valueOr(false)], polygon));
+    const path = $derived(
+        view([L.removable("path"), "path", L.defaults([])], polygon),
     );
-    const draft = view(["draft"], polygon);
-    const freeDraft = view(
-        [
-            L.pick({
-                pos: "pos",
-                type: ["type", L.define("free"), L.normalize(R.always("free"))],
-            }),
-            "pos",
-        ],
-        draft,
-    );
-    const closeDraft = view(
-        [
-            L.pick({
-                pos: "pos",
-                type: [
-                    "type",
-                    L.define("close"),
-                    L.normalize(R.always("close")),
-                ],
-            }),
-            "pos",
-        ],
-        draft,
-    );
-    const finishDraft = view(
-        [
-            L.pick({
-                pos: "pos",
-                type: [
-                    "type",
-                    L.define("finish"),
-                    L.normalize(R.always("finish")),
-                ],
-            }),
-            "pos",
-        ],
-        draft,
-    );
-    const popDraft = view(
-        [
-            L.pick({
-                pos: "pos",
-                type: ["type", L.define("pop"), L.normalize(R.always("pop"))],
-            }),
-            "pos",
-        ],
-        draft,
-    );
-    const draftPos = view([L.removable("pos"), "pos"], draft);
-    const draftSnappedFinish = view(
-        [
-            "type",
-            L.lens(R.equals("finish"), (force, old) =>
-                force ? "finish" : old,
-            ),
-        ],
-        draft,
-    );
-    const draftSnappedClose = view(
-        [
-            "type",
-            L.lens(R.equals("close"), (force, old) => (force ? "close" : old)),
-        ],
-        draft,
-    );
-    const draftSnappedPop = view(
-        [
-            "type",
-            L.lens(R.equals("pop"), (force, old) => (force ? "pop" : old)),
-        ],
-        draft,
-    );
-
-    const startPath = view([L.index(0), L.defaults(false)], path);
-    const currentPath = view(
-        [L.appendTo, L.removable("x", "y"), L.defaults(false)],
-        path,
-    );
-
-    const pathPath = view(
-        L.iso(
-            R.ifElse(
-                R.length,
-                R.compose(
-                    R.join(" "),
-                    R.map(R.compose(R.join(","), R.props(["x", "y"]))),
-                ),
-                R.always(""),
-            ),
-            R.compose(
-                R.map(R.compose(R.zipWith(R.assoc, ["x", "y"]), R.split(","))),
-                R.split(" "),
-            ),
+    const isActive = $derived(
+        view(
+            [L.lens(R.compose(R.lt(0), R.length), (n, o) => (n ? o : []))],
+            path,
         ),
-        path,
+    );
+    const draft = $derived(view(["draft"], polygon));
+    const freeDraft = $derived(
+        view(
+            [
+                L.pick({
+                    pos: "pos",
+                    type: [
+                        "type",
+                        L.define("free"),
+                        L.normalize(R.always("free")),
+                    ],
+                }),
+                "pos",
+            ],
+            draft,
+        ),
+    );
+    const closeDraft = $derived(
+        view(
+            [
+                L.pick({
+                    pos: "pos",
+                    type: [
+                        "type",
+                        L.define("close"),
+                        L.normalize(R.always("close")),
+                    ],
+                }),
+                "pos",
+            ],
+            draft,
+        ),
+    );
+    const finishDraft = $derived(
+        view(
+            [
+                L.pick({
+                    pos: "pos",
+                    type: [
+                        "type",
+                        L.define("finish"),
+                        L.normalize(R.always("finish")),
+                    ],
+                }),
+                "pos",
+            ],
+            draft,
+        ),
+    );
+    const popDraft = $derived(
+        view(
+            [
+                L.pick({
+                    pos: "pos",
+                    type: [
+                        "type",
+                        L.define("pop"),
+                        L.normalize(R.always("pop")),
+                    ],
+                }),
+                "pos",
+            ],
+            draft,
+        ),
+    );
+    const draftPos = $derived(view([L.removable("pos"), "pos"], draft));
+    const draftSnappedFinish = $derived(
+        view(
+            [
+                "type",
+                L.lens(R.equals("finish"), (force, old) =>
+                    force ? "finish" : old,
+                ),
+            ],
+            draft,
+        ),
+    );
+    const draftSnappedClose = $derived(
+        view(
+            [
+                "type",
+                L.lens(R.equals("close"), (force, old) =>
+                    force ? "close" : old,
+                ),
+            ],
+            draft,
+        ),
+    );
+    const draftSnappedPop = $derived(
+        view(
+            [
+                "type",
+                L.lens(R.equals("pop"), (force, old) => (force ? "pop" : old)),
+            ],
+            draft,
+        ),
     );
 
-    const pathLength = read([L.valueOr([]), "length"], path);
-    const pathRoot = read([0], path);
-    const pathHead = read(L.last, path);
-    const pathNeck = read(
-        L.choose((l) => (l && l.length >= 2 ? l.length - 2 : L.zero)),
-        path,
+    const startPath = $derived(view([L.index(0), L.defaults(false)], path));
+    const currentPath = $derived(
+        view([L.appendTo, L.removable("x", "y"), L.defaults(false)], path),
     );
 
-    const pathCanFinish = read(R.lt(1), pathLength);
-    const pathCanClose = read(R.lt(2), pathLength);
-    const pathCanPop = read(R.lt(1), pathLength);
+    const pathPath = $derived(
+        view(
+            L.iso(
+                R.ifElse(
+                    R.length,
+                    R.compose(
+                        R.join(" "),
+                        R.map(R.compose(R.join(","), R.props(["x", "y"]))),
+                    ),
+                    R.always(""),
+                ),
+                R.compose(
+                    R.map(
+                        R.compose(R.zipWith(R.assoc, ["x", "y"]), R.split(",")),
+                    ),
+                    R.split(" "),
+                ),
+            ),
+            path,
+        ),
+    );
 
-    const draftPath = read(
-        ({ p, d }) =>
-            p && d
-                ? R.join(", ", R.props(["x", "y"], p)) +
-                  " " +
-                  R.join(", ", R.props(["x", "y"], d))
-                : "0,0 0,0",
-        combine({ p: pathHead, d: draftPos }),
+    const pathLength = $derived(read([L.valueOr([]), "length"], path));
+    const pathRoot = $derived(read([0], path));
+    const pathHead = $derived(read(L.last, path));
+    const pathNeck = $derived(
+        read(
+            L.choose((l) => (l && l.length >= 2 ? l.length - 2 : L.zero)),
+            path,
+        ),
+    );
+
+    const pathCanFinish = $derived(read(R.lt(1), pathLength));
+    const pathCanClose = $derived(read(R.lt(2), pathLength));
+    const pathCanPop = $derived(read(R.lt(1), pathLength));
+
+    const draftPath = $derived(
+        read(
+            ({ p, d }) =>
+                p && d
+                    ? R.join(", ", R.props(["x", "y"], p)) +
+                      " " +
+                      R.join(", ", R.props(["x", "y"], d))
+                    : "0,0 0,0",
+            combine({ p: pathHead, d: draftPos }),
+        ),
     );
 
     export function cancel() {
         isActive.value = false;
     }
 
-    export const canCancel = read(R.identity, isActive);
+    export const canCancel = () => isActive.value;
 </script>
 
 <path

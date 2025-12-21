@@ -453,54 +453,56 @@
         );
     });
 
-    const points3d = view(["vertices", L.defaults([])], geo);
-    const edges = view(["edges", L.defaults([])], geo);
-    const faces = view(["faces", L.defaults([])], geo);
-    const masks = view(["masks", L.defaults([])], geo);
-    const quads = view(["quads", L.defaults([])], geo);
+    const points3d = $derived(view(["vertices", L.defaults([])], geo));
+    const edges = $derived(view(["edges", L.defaults([])], geo));
+    const faces = $derived(view(["faces", L.defaults([])], geo));
+    const masks = $derived(view(["masks", L.defaults([])], geo));
+    const quads = $derived(view(["quads", L.defaults([])], geo));
 
-    const transformedPoints = view(
-        transformAll,
-        combine({ ps: points3d, mat: trans }),
+    const transformedPoints = $derived(
+        view(transformAll, combine({ ps: points3d, mat: trans })),
     );
-    const projectedPoints = view(
-        projectAll,
-        combine({ ps: transformedPoints, camera }),
+    const projectedPoints = $derived(
+        view(projectAll, combine({ ps: transformedPoints, camera })),
     );
 
     const radToDeg = [L.multiply(180), L.divide(Math.PI)];
-    const rx = view(["rx", radToDeg], trans);
-    const ry = view(["ry", radToDeg], trans);
-    const rz = view(["rz", radToDeg], trans);
-    const tx = view(["tx"], trans);
-    const ty = view(["ty"], trans);
-    const tz = view(["tz"], trans);
-    const sx = view(["sx"], trans);
-    const sy = view(["sy"], trans);
-    const sz = view(["sz"], trans);
-    const np = view(
-        L.lens(
-            ({ np, fp }) => np,
-            (n, { fp, np, ...rest }) => ({
-                ...rest,
-                fp: n + (fp - np),
-                np: n,
-            }),
+    const rx = $derived(view(["rx", radToDeg], trans));
+    const ry = $derived(view(["ry", radToDeg], trans));
+    const rz = $derived(view(["rz", radToDeg], trans));
+    const tx = $derived(view(["tx"], trans));
+    const ty = $derived(view(["ty"], trans));
+    const tz = $derived(view(["tz"], trans));
+    const sx = $derived(view(["sx"], trans));
+    const sy = $derived(view(["sy"], trans));
+    const sz = $derived(view(["sz"], trans));
+    const np = $derived(
+        view(
+            L.lens(
+                ({ np, fp }) => np,
+                (n, { fp, np, ...rest }) => ({
+                    ...rest,
+                    fp: n + (fp - np),
+                    np: n,
+                }),
+            ),
+            camera,
         ),
-        camera,
     );
-    const fp = view(
-        L.lens(
-            ({ np, fp }) => fp - np,
-            (n, { np, ...rest }) => ({ ...rest, np, fp: np + n }),
+    const fp = $derived(
+        view(
+            L.lens(
+                ({ np, fp }) => fp - np,
+                (n, { np, ...rest }) => ({ ...rest, np, fp: np + n }),
+            ),
+            camera,
         ),
-        camera,
     );
-    const scale = view(["scale"], camera);
-    const pointIndices = view(indices, points3d);
-    const edgeIndices = view(indices, edges);
-    const faceIndices = view(indices, faces);
-    const maskIndices = view(indices, masks);
+    const scale = $derived(view(["scale"], camera));
+    const pointIndices = $derived(view(indices, points3d));
+    const edgeIndices = $derived(view(indices, edges));
+    const faceIndices = $derived(view(indices, faces));
+    const maskIndices = $derived(view(indices, masks));
 
     function getIndices(idx) {
         return idx ? L.reread((arr) => idx.map((i) => arr[i])) : L.zero;

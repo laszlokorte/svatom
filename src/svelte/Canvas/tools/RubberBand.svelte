@@ -2,19 +2,7 @@
     import * as L from "partial.lenses";
     import * as R from "ramda";
     import * as U from "../../utils";
-    import {
-        atom,
-        view,
-        read,
-        combine,
-        combineWithRest,
-        failableView,
-        bindValue,
-        bindScroll,
-        bindSize,
-        autofocusIf,
-        string,
-    } from "../../svatom.svelte.js";
+    import { atom, view, read } from "../../svatom.svelte.js";
     const {
         frameBoxPath,
         clientToCanvas,
@@ -26,50 +14,62 @@
 
     const rubberBand = atom(undefined);
 
-    const rubberBandStart = view(
-        [L.removable("start"), "start", L.removable("x", "y")],
-        rubberBand,
-    );
-    const rubberBandSize = view(
-        L.ifElse(
-            R.prop("start"),
-            [L.removable("size"), "size", L.removable("x", "y")],
-            L.zero,
+    const rubberBandStart = $derived(
+        view(
+            [L.removable("start"), "start", L.removable("x", "y")],
+            rubberBand,
         ),
-        rubberBand,
     );
-    const isActive = view(
-        L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
-        rubberBandStart,
-    );
-
-    const hasProgressed = view(["progressed", L.valueOr(false)], rubberBand);
-
-    const rubberBandAngle = view([L.removable("angle"), "angle"], rubberBand);
-    const rubberBandAngleCos = view(
-        [L.reread((r) => Math.cos((r / 180) * Math.PI))],
-        rubberBandAngle,
-    );
-    const rubberBandAngleSin = view(
-        [L.reread((r) => Math.sin((r / 180) * Math.PI))],
-        rubberBandAngle,
-    );
-
-    const rubberBandPath = read(
-        L.getter((b) =>
-            b && b.start && b.size
-                ? U.formattedNumbers`M${b.start.x},${b.start.y}h${b.size.x}v${b.size.y}M${b.start.x},${b.start.y}v${b.size.y}h${b.size.x}`
-                : "",
+    const rubberBandSize = $derived(
+        view(
+            L.ifElse(
+                R.prop("start"),
+                [L.removable("size"), "size", L.removable("x", "y")],
+                L.zero,
+            ),
+            rubberBand,
         ),
-        rubberBand,
+    );
+    const isActive = $derived(
+        view(
+            L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
+            rubberBandStart,
+        ),
     );
 
-    const rubberBandTransform = read(
-        L.reread((r) => `rotate(${r.angle}, ${r.start.x}, ${r.start.y})`),
-        rubberBand,
+    const hasProgressed = $derived(
+        view(["progressed", L.valueOr(false)], rubberBand),
     );
 
-    export const canCancel = read(R.identity, hasProgressed);
+    const rubberBandAngle = $derived(
+        view([L.removable("angle"), "angle"], rubberBand),
+    );
+    const rubberBandAngleCos = $derived(
+        view([L.reread((r) => Math.cos((r / 180) * Math.PI))], rubberBandAngle),
+    );
+    const rubberBandAngleSin = $derived(
+        view([L.reread((r) => Math.sin((r / 180) * Math.PI))], rubberBandAngle),
+    );
+
+    const rubberBandPath = $derived(
+        read(
+            L.getter((b) =>
+                b && b.start && b.size
+                    ? U.formattedNumbers`M${b.start.x},${b.start.y}h${b.size.x}v${b.size.y}M${b.start.x},${b.start.y}v${b.size.y}h${b.size.x}`
+                    : "",
+            ),
+            rubberBand,
+        ),
+    );
+
+    const rubberBandTransform = $derived(
+        read(
+            L.reread((r) => `rotate(${r.angle}, ${r.start.x}, ${r.start.y})`),
+            rubberBand,
+        ),
+    );
+
+    export const canCancel = () => hasProgressed.value;
     export function cancel() {
         hasProgressed.value = false;
     }

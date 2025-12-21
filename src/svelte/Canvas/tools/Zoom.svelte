@@ -25,69 +25,84 @@
 
     const minRadius = 3;
 
-    const zoom = state;
-    const zoomPivotClient = view(
-        [
-            L.props("pivotClient", "pivotWorld", "refClient"),
-            L.rewrite(({ pivotClient }) => ({
-                pivotClient,
-                pivotWorld: clientToCanvas(pivotClient.x, pivotClient.y),
-                refClient: pivotClient,
-            })),
-            L.removable("pivotClient"),
-            "pivotClient",
-            L.removable("x", "y"),
-        ],
-        zoom,
+    const zoom = $derived(state);
+    const zoomPivotClient = $derived(
+        view(
+            [
+                L.props("pivotClient", "pivotWorld", "refClient"),
+                L.rewrite(({ pivotClient }) => ({
+                    pivotClient,
+                    pivotWorld: clientToCanvas(pivotClient.x, pivotClient.y),
+                    refClient: pivotClient,
+                })),
+                L.removable("pivotClient"),
+                "pivotClient",
+                L.removable("x", "y"),
+            ],
+            zoom,
+        ),
     );
-    const zoomPivotWorld = view(["pivotWorld"], zoom);
+    const zoomPivotWorld = $derived(view(["pivotWorld"], zoom));
 
-    const zoomRefClient = view(
-        [L.removable("refClient"), "refClient", L.removable("x", "y")],
-        zoom,
-    );
-
-    const zoomRefWorld = view(
-        [
-            "refClient",
-            L.reread((refClient) => clientToCanvas(refClient.x, refClient.y)),
-        ],
-        zoom,
+    const zoomRefClient = $derived(
+        view(
+            [L.removable("refClient"), "refClient", L.removable("x", "y")],
+            zoom,
+        ),
     );
 
-    const zoomPivotCurrentWorld = read(
-        [
-            "pivotClient",
-            L.reread((pivotClient) =>
-                clientToCanvas(pivotClient.x, pivotClient.y),
-            ),
-        ],
-        zoom,
-    );
-    const isActive = view(
-        L.lens(R.compose(R.not, R.isNil), (b, o) => (b ? o : undefined)),
-        zoomPivotWorld,
+    const zoomRefWorld = $derived(
+        view(
+            [
+                "refClient",
+                L.reread((refClient) =>
+                    clientToCanvas(refClient.x, refClient.y),
+                ),
+            ],
+            zoom,
+        ),
     );
 
-    const zoomAngle = read(
-        ({ r, p }) => Math.atan2(r.y - p.y, r.x - p.x),
-        combine({ r: zoomRefClient, p: zoomPivotClient }),
+    const zoomPivotCurrentWorld = $derived(
+        read(
+            [
+                "pivotClient",
+                L.reread((pivotClient) =>
+                    clientToCanvas(pivotClient.x, pivotClient.y),
+                ),
+            ],
+            zoom,
+        ),
+    );
+    const isActive = $derived(
+        view(
+            L.lens(R.compose(R.not, R.isNil), (b, o) => (b ? o : undefined)),
+            zoomPivotWorld,
+        ),
     );
 
-    const piePath = view(
-        ({ pivotWorld, currentWorld, scale }) => {
-            if (
-                Math.hypot(
-                    pivotWorld.y - currentWorld.y,
-                    pivotWorld.x - currentWorld.x,
-                ) /
-                    scale <
-                55
-            ) {
-                return undefined;
-            }
+    const zoomAngle = $derived(
+        read(
+            ({ r, p }) => Math.atan2(r.y - p.y, r.x - p.x),
+            combine({ r: zoomRefClient, p: zoomPivotClient }),
+        ),
+    );
 
-            return `
+    const piePath = $derived(
+        view(
+            ({ pivotWorld, currentWorld, scale }) => {
+                if (
+                    Math.hypot(
+                        pivotWorld.y - currentWorld.y,
+                        pivotWorld.x - currentWorld.x,
+                    ) /
+                        scale <
+                    55
+                ) {
+                    return undefined;
+                }
+
+                return `
 				 M ${pivotWorld.x} ${pivotWorld.y}
 				L${
                     currentWorld.x +
@@ -135,12 +150,13 @@
                                         ),
                                 )
                         } Z`;
-        },
-        combine({
-            pivotWorld: zoomPivotWorld,
-            currentWorld: zoomPivotCurrentWorld,
-            scale: cameraScale,
-        }),
+            },
+            combine({
+                pivotWorld: zoomPivotWorld,
+                currentWorld: zoomPivotCurrentWorld,
+                scale: cameraScale,
+            }),
+        ),
     );
 
     const currentWorld = $derived(zoomPivotCurrentWorld.value);

@@ -286,30 +286,33 @@
         ),
     );
 
-    const viewBox = view(
-        ["size", ({ x, y }) => `${-x / 2} ${-y / 2} ${x} ${y}`],
-        screen,
+    const viewBox = $derived(
+        view(["size", ({ x, y }) => `${-x / 2} ${-y / 2} ${x} ${y}`], screen),
     );
-    const aspectRatio = view(
-        ({ alignX, alignY, aspect }) => `x${alignX}Y${alignY} ${aspect}`,
-        screen,
+    const aspectRatio = $derived(
+        view(
+            ({ alignX, alignY, aspect }) => `x${alignX}Y${alignY} ${aspect}`,
+            screen,
+        ),
     );
-    const clientWidth = view(["size", "x"], screen);
-    const clientHeight = view(["size", "y"], screen);
+    const clientWidth = $derived(view(["size", "x"], screen));
+    const clientHeight = $derived(view(["size", "y"], screen));
 
-    const debugRect = view(
-        [
-            "size",
-            L.pick({
-                x: ["x", L.subtract(10), L.divide(2), L.negate],
-                y: ["y", L.subtract(10), L.divide(2), L.negate],
-                width: ["x", L.subtract(10)],
-                height: ["y", L.subtract(10)],
-                fill: R.always("red"),
-                opacity: R.always(0.1),
-            }),
-        ],
-        screen,
+    const debugRect = $derived(
+        view(
+            [
+                "size",
+                L.pick({
+                    x: ["x", L.subtract(10), L.divide(2), L.negate],
+                    y: ["y", L.subtract(10), L.divide(2), L.negate],
+                    width: ["x", L.subtract(10)],
+                    height: ["y", L.subtract(10)],
+                    fill: R.always("red"),
+                    opacity: R.always(0.1),
+                }),
+            ],
+            screen,
+        ),
     );
 
     const lensRectEdges = L.lens(
@@ -334,25 +337,29 @@
         }),
     );
 
-    const debugBounds = view(
-        [
-            L.pick({
-                points: lensRectEdges,
-            }),
-        ],
-        debugRect,
+    const debugBounds = $derived(
+        view(
+            [
+                L.pick({
+                    points: lensRectEdges,
+                }),
+            ],
+            debugRect,
+        ),
     );
 
-    const debugBoundsSvg = view(
-        [
-            L.pickIn({
-                points: coordString,
-                stroke: R.always("cyan"),
-                fill: R.always("white"),
-                "fill-opacity": R.always("0.1"),
-            }),
-        ],
-        debugBounds,
+    const debugBoundsSvg = $derived(
+        view(
+            [
+                L.pickIn({
+                    points: coordString,
+                    stroke: R.always("cyan"),
+                    fill: R.always("white"),
+                    "fill-opacity": R.always("0.1"),
+                }),
+            ],
+            debugBounds,
+        ),
     );
 
     const lensRadToDegree = [L.multiply(180), L.divide(Math.PI)];
@@ -363,44 +370,50 @@
     });
     const rotation = atom(0);
     const scale = atom({ x: 1, y: 1 });
-    const rotationAngle = view(lensRadToDegree, rotation);
+    const rotationAngle = $derived(view(lensRadToDegree, rotation));
 
-    const debugCircle = view(
-        [
-            L.pick({
-                fill: R.always("black"),
-                r: R.always(3),
-                cx: ["x"],
-                cy: ["y"],
-            }),
-        ],
-        offset,
+    const debugCircle = $derived(
+        view(
+            [
+                L.pick({
+                    fill: R.always("black"),
+                    r: R.always(3),
+                    cx: ["x"],
+                    cy: ["y"],
+                }),
+            ],
+            offset,
+        ),
     );
 
-    const rangeX = view(
-        [
-            "size",
-            L.pick({
-                min: ["x", L.divide(2), L.negate],
-                max: ["x", L.divide(2)],
-            }),
-        ],
-        screen,
+    const rangeX = $derived(
+        view(
+            [
+                "size",
+                L.pick({
+                    min: ["x", L.divide(2), L.negate],
+                    max: ["x", L.divide(2)],
+                }),
+            ],
+            screen,
+        ),
     );
-    const rangeY = view(
-        [
-            "size",
-            L.pick({
-                min: ["y", L.divide(2), L.negate],
-                max: ["y", L.divide(2)],
-            }),
-        ],
-        screen,
+    const rangeY = $derived(
+        view(
+            [
+                "size",
+                L.pick({
+                    min: ["y", L.divide(2), L.negate],
+                    max: ["y", L.divide(2)],
+                }),
+            ],
+            screen,
+        ),
     );
-    const offsetX = view("x", offset);
-    const offsetY = view("y", offset);
-    const scaleX = view("x", scale);
-    const scaleY = view("y", scale);
+    const offsetX = $derived(view("x", offset));
+    const offsetY = $derived(view("y", offset));
+    const scaleX = $derived(view("x", scale));
+    const scaleY = $derived(view("y", scale));
 
     const polygon2DShape = atom({
         points: [
@@ -427,12 +440,17 @@
             lens2dTranslate(x, y),
         ]);
 
-    const polygon2D = view(
-        L.choose(({ offset, scale, rotation }) => [
-            "poly",
-            L.applyAt("points", transformChain({ offset, scale, rotation })),
-        ]),
-        combine({ offset, rotation, scale, poly: polygon2DShape }),
+    const polygon2D = $derived(
+        view(
+            L.choose(({ offset, scale, rotation }) => [
+                "poly",
+                L.applyAt(
+                    "points",
+                    transformChain({ offset, scale, rotation }),
+                ),
+            ]),
+            combine({ offset, rotation, scale, poly: polygon2DShape }),
+        ),
     );
 
     function intersect(l1p1, l1p2, l2p1, l2p2) {
@@ -499,40 +517,44 @@
         );
     };
 
-    const debugPolygon = view(
-        L.pickIn({
-            points: coordString,
-            stroke: R.always("blue"),
-            "stroke-dasharray": R.always("10 10"),
-            fill: R.always("white"),
-            "fill-opacity": R.always("0.3"),
-        }),
-        polygon2D,
+    const debugPolygon = $derived(
+        view(
+            L.pickIn({
+                points: coordString,
+                stroke: R.always("blue"),
+                "stroke-dasharray": R.always("10 10"),
+                fill: R.always("white"),
+                "fill-opacity": R.always("0.3"),
+            }),
+            polygon2D,
+        ),
     );
 
     const inset = atom(10);
 
-    const debugPolygonClipped = view(
-        L.choose(({ inset }) =>
-            L.pick({
-                stroke: R.always("purple"),
-                points: [
-                    L.applyAt("bounds", [
-                        offsetRect(inset),
-                        L.pick({ points: lensRectEdges }),
-                    ]),
-                    ({ poly, bounds }) => clipPolygonPolygon(poly, bounds),
-                    "points",
-                    coordString,
-                ],
-                fill: R.always("purple"),
-                "stroke-width": R.always(5),
-                "vector-effect": R.always("non-scaling-stroke"),
-                "fill-opacity": R.always("0.1"),
-                "stroke-opacity": R.always(0.5),
-            }),
+    const debugPolygonClipped = $derived(
+        view(
+            L.choose(({ inset }) =>
+                L.pick({
+                    stroke: R.always("purple"),
+                    points: [
+                        L.applyAt("bounds", [
+                            offsetRect(inset),
+                            L.pick({ points: lensRectEdges }),
+                        ]),
+                        ({ poly, bounds }) => clipPolygonPolygon(poly, bounds),
+                        "points",
+                        coordString,
+                    ],
+                    fill: R.always("purple"),
+                    "stroke-width": R.always(5),
+                    "vector-effect": R.always("non-scaling-stroke"),
+                    "fill-opacity": R.always("0.1"),
+                    "stroke-opacity": R.always(0.5),
+                }),
+            ),
+            combine({ poly: polygon2D, bounds: debugRect, inset }),
         ),
-        combine({ poly: polygon2D, bounds: debugRect, inset }),
     );
 
     const ndcCube = atom({
@@ -571,12 +593,14 @@
         pos: { x: 0, y: 0, z: -100 },
         dir: { x: -1, y: 0.8, z: 0.5 },
     });
-    const sunLight = view(
-        L.pickIn({
-            pos: [],
-            dir: [normLength],
-        }),
-        sunLightDir,
+    const sunLight = $derived(
+        view(
+            L.pickIn({
+                pos: [],
+                dir: [normLength],
+            }),
+            sunLightDir,
+        ),
     );
 
     const worldTransform = atom({
@@ -591,59 +615,67 @@
         sz: 1,
     });
     const meshColor = atom("#5fdfb4");
-    const meshColorGL = view(
-        L.reread((hex) => {
-            const digits = hex.slice(1);
-            const int = parseInt(digits, 16);
-            return [
-                (int >> 16) & 0xff,
-                (int >> 8) & 0xff,
-                (int << 0) & 0xff,
-                255,
-            ].map((x) => x / 255);
-        }),
-        meshColor,
+    const meshColorGL = $derived(
+        view(
+            L.reread((hex) => {
+                const digits = hex.slice(1);
+                const int = parseInt(digits, 16);
+                return [
+                    (int >> 16) & 0xff,
+                    (int >> 8) & 0xff,
+                    (int << 0) & 0xff,
+                    255,
+                ].map((x) => x / 255);
+            }),
+            meshColor,
+        ),
     );
 
-    const meshColorGLDark = view(
-        L.reread((hex) => {
-            const digits = hex.slice(1);
-            const int = parseInt(digits, 16);
-            return [
-                ((int >> 16) & 0xff) * 0.6,
-                ((int >> 8) & 0xff) * 0.6,
-                ((int << 0) & 0xff) * 0.6,
-                255,
-            ].map((x) => x / 255);
-        }),
-        meshColor,
+    const meshColorGLDark = $derived(
+        view(
+            L.reread((hex) => {
+                const digits = hex.slice(1);
+                const int = parseInt(digits, 16);
+                return [
+                    ((int >> 16) & 0xff) * 0.6,
+                    ((int >> 8) & 0xff) * 0.6,
+                    ((int << 0) & 0xff) * 0.6,
+                    255,
+                ].map((x) => x / 255);
+            }),
+            meshColor,
+        ),
     );
-    const meshColorGLTranslucent = view(
-        L.reread((hex) => {
-            const digits = hex.slice(1);
-            const int = parseInt(digits, 16);
-            return [
-                (int >> 16) & 0xff,
-                (int >> 8) & 0xff,
-                (int << 0) & 0xff,
-                100,
-            ].map((x) => x / 255);
-        }),
-        meshColor,
+    const meshColorGLTranslucent = $derived(
+        view(
+            L.reread((hex) => {
+                const digits = hex.slice(1);
+                const int = parseInt(digits, 16);
+                return [
+                    (int >> 16) & 0xff,
+                    (int >> 8) & 0xff,
+                    (int << 0) & 0xff,
+                    100,
+                ].map((x) => x / 255);
+            }),
+            meshColor,
+        ),
     );
 
-    const meshColorGLDarker = view(
-        L.reread((hex) => {
-            const digits = hex.slice(1);
-            const int = parseInt(digits, 16);
-            return [
-                170 - ((int >> 16) & 0xff) / 3,
-                170 - ((int >> 8) & 0xff) / 3,
-                170 - ((int << 0) & 0xff) / 3,
-                250,
-            ].map((x) => x / 255);
-        }),
-        meshColor,
+    const meshColorGLDarker = $derived(
+        view(
+            L.reread((hex) => {
+                const digits = hex.slice(1);
+                const int = parseInt(digits, 16);
+                return [
+                    170 - ((int >> 16) & 0xff) / 3,
+                    170 - ((int >> 8) & 0xff) / 3,
+                    170 - ((int << 0) & 0xff) / 3,
+                    250,
+                ].map((x) => x / 255);
+            }),
+            meshColor,
+        ),
     );
     const lensMatrixTransform = (transform) => [
         lens3dScale(transform.sx, transform.sy, transform.sz),
@@ -828,69 +860,75 @@
         L.choose(({ a }) => ["b", L.divide(a)]),
     ];
 
-    const screenAspect = view(["size", ratio("x", "y")], screen);
-    const screenSize = view(["size", L.props("x", "y")], screen);
+    const screenAspect = $derived(view(["size", ratio("x", "y")], screen));
+    const screenSize = $derived(view(["size", L.props("x", "y")], screen));
 
-    const ndcGeo = view(
-        L.choose(({ camera, transform, screenAspect }) => {
-            return [
-                "geo",
-                L.applyAt("vertices", [
-                    mapIso([
-                        lensMatrixTransform(transform),
-                        cameraTransform(camera, screenAspect),
+    const ndcGeo = $derived(
+        view(
+            L.choose(({ camera, transform, screenAspect }) => {
+                return [
+                    "geo",
+                    L.applyAt("vertices", [
+                        mapIso([
+                            lensMatrixTransform(transform),
+                            cameraTransform(camera, screenAspect),
+                        ]),
                     ]),
-                ]),
-            ];
-        }),
-        combine({
-            geo: worldGeo,
-            transform: worldTransform,
-            camera,
-            screenAspect,
-        }),
+                ];
+            }),
+            combine({
+                geo: worldGeo,
+                transform: worldTransform,
+                camera,
+                screenAspect,
+            }),
+        ),
     );
 
-    const ndcGeoFast = view(
-        ({ geo, camera, transform, screenAspect }) => {
-            const t = L.compose(cameraTransform(camera, screenAspect));
+    const ndcGeoFast = $derived(
+        view(
+            ({ geo, camera, transform, screenAspect }) => {
+                const t = L.compose(cameraTransform(camera, screenAspect));
 
-            return {
-                ...geo,
-                vertices: geo.vertices.map((v) => {
-                    const r = fastCameraTransform(
-                        fastMatrixTransform(v, transform),
-                        camera,
-                        screenAspect,
-                    );
+                return {
+                    ...geo,
+                    vertices: geo.vertices.map((v) => {
+                        const r = fastCameraTransform(
+                            fastMatrixTransform(v, transform),
+                            camera,
+                            screenAspect,
+                        );
 
-                    return r;
-                }),
-            };
-        },
-        combine({
-            geo: worldGeo,
-            transform: worldTransform,
-            camera,
-            screenAspect,
-        }),
+                        return r;
+                    }),
+                };
+            },
+            combine({
+                geo: worldGeo,
+                transform: worldTransform,
+                camera,
+                screenAspect,
+            }),
+        ),
     );
 
-    const ndcLight = view(
-        L.choose(({ camera, transform, screenAspect }) => {
-            return [
-                "light",
-                L.applyAt(
-                    L.values,
-                    cameraTransform(camera, screenAspect, false),
-                ),
-            ];
-        }),
-        combine({
-            light: sunLight,
-            camera,
-            screenAspect,
-        }),
+    const ndcLight = $derived(
+        view(
+            L.choose(({ camera, transform, screenAspect }) => {
+                return [
+                    "light",
+                    L.applyAt(
+                        L.values,
+                        cameraTransform(camera, screenAspect, false),
+                    ),
+                ];
+            }),
+            combine({
+                light: sunLight,
+                camera,
+                screenAspect,
+            }),
+        ),
     );
 
     const coordPathString = (r) =>
@@ -918,40 +956,46 @@
             ),
         );
 
-    const ndcCubeVertices = view(
-        L.choose(
-            ({
-                screen: { size },
-                cube: { vertices },
-                camera: { orthogonality },
-            }) => {
-                return [
-                    "cube",
-                    "vertices",
-                    mapIso([
-                        lens3dProject(orthogonality),
-                        lens2dScale(size.x / 2, size.y / 2),
-                    ]),
-                ];
-            },
+    const ndcCubeVertices = $derived(
+        view(
+            L.choose(
+                ({
+                    screen: { size },
+                    cube: { vertices },
+                    camera: { orthogonality },
+                }) => {
+                    return [
+                        "cube",
+                        "vertices",
+                        mapIso([
+                            lens3dProject(orthogonality),
+                            lens2dScale(size.x / 2, size.y / 2),
+                        ]),
+                    ];
+                },
+            ),
+            combine({ screen, cube: ndcCube, camera }),
         ),
-        combine({ screen, cube: ndcCube, camera }),
     );
 
-    const ndcCubeVertexPath = view(coordPathString(3), ndcCubeVertices);
+    const ndcCubeVertexPath = $derived(
+        view(coordPathString(3), ndcCubeVertices),
+    );
 
-    const ndcCubeEdgePath = view(
-        ({ geo: { edges }, projectedVertices }) => {
-            return R.join(
-                " ",
-                R.map(
-                    ({ from, to }) =>
-                        `M${L.get(coordPair, projectedVertices[from])} L ${L.get(coordPair, projectedVertices[to])}`,
-                    edges,
-                ),
-            );
-        },
-        combine({ projectedVertices: ndcCubeVertices, geo: ndcCube }),
+    const ndcCubeEdgePath = $derived(
+        view(
+            ({ geo: { edges }, projectedVertices }) => {
+                return R.join(
+                    " ",
+                    R.map(
+                        ({ from, to }) =>
+                            `M${L.get(coordPair, projectedVertices[from])} L ${L.get(coordPair, projectedVertices[to])}`,
+                        edges,
+                    ),
+                );
+            },
+            combine({ projectedVertices: ndcCubeVertices, geo: ndcCube }),
+        ),
     );
 
     const ndcPlanes = [
@@ -1043,50 +1087,54 @@
         }, ndcPlanes);
     };
 
-    const ndcGeoEdgePaths = view(
-        L.choose(
-            ({
-                screen: { size },
-                geo: { vertices, edges },
-                camera: { orthogonality },
-            }) => {
+    const ndcGeoEdgePaths = $derived(
+        view(
+            L.choose(
+                ({
+                    screen: { size },
+                    geo: { vertices, edges },
+                    camera: { orthogonality },
+                }) => {
+                    const project = L.compose(
+                        lens3dProject(orthogonality),
+                        lens2dScale(size.x / 2, size.y / 2),
+                    );
+
+                    return [
+                        "geo",
+                        "edges",
+                        L.applyAt(
+                            L.compose(L.elems, "vertices", L.elems),
+                            (i) => vertices[i],
+                        ),
+                        mapIso(
+                            L.applyAt(
+                                "vertices",
+                                L.compose(
+                                    clipFace4D(edgeClipper),
+                                    L.applyAt(L.elems, project),
+                                ),
+                            ),
+                        ),
+                    ];
+                },
+            ),
+            combine({ screen, geo: ndcGeo, camera }),
+        ),
+    );
+
+    const lightRay = $derived(
+        view(
+            L.choose(({ screen: { size }, camera: { orthogonality } }) => {
                 const project = L.compose(
                     lens3dProject(orthogonality),
                     lens2dScale(size.x / 2, size.y / 2),
                 );
 
-                return [
-                    "geo",
-                    "edges",
-                    L.applyAt(
-                        L.compose(L.elems, "vertices", L.elems),
-                        (i) => vertices[i],
-                    ),
-                    mapIso(
-                        L.applyAt(
-                            "vertices",
-                            L.compose(
-                                clipFace4D(edgeClipper),
-                                L.applyAt(L.elems, project),
-                            ),
-                        ),
-                    ),
-                ];
-            },
+                return ["light", L.applyAt(L.values, project)];
+            }),
+            combine({ screen, light: ndcLight, camera }),
         ),
-        combine({ screen, geo: ndcGeo, camera }),
-    );
-
-    const lightRay = view(
-        L.choose(({ screen: { size }, camera: { orthogonality } }) => {
-            const project = L.compose(
-                lens3dProject(orthogonality),
-                lens2dScale(size.x / 2, size.y / 2),
-            );
-
-            return ["light", L.applyAt(L.values, project)];
-        }),
-        combine({ screen, light: ndcLight, camera }),
     );
 
     const isClockwise = (points) => {
@@ -1111,110 +1159,93 @@
             }),
         );
 
-    const ndcGeoFacePaths = view(
-        L.choose(
-            ({
-                screen: { size },
-                geo: { vertices, faces },
-                camera: { orthogonality },
-            }) => {
-                const project = mapIso(
-                    L.compose(
-                        lens3dProject(orthogonality),
-                        lens2dScale(size.x / 2, size.y / 2),
-                    ),
-                );
+    const ndcGeoFacePaths = $derived(
+        view(
+            L.choose(
+                ({
+                    screen: { size },
+                    geo: { vertices, faces },
+                    camera: { orthogonality },
+                }) => {
+                    const project = mapIso(
+                        L.compose(
+                            lens3dProject(orthogonality),
+                            lens2dScale(size.x / 2, size.y / 2),
+                        ),
+                    );
 
-                return [
-                    "geo",
-                    "faces",
-                    L.applyAt(
-                        L.compose(L.elems, "vertices", L.elems),
-                        (i) => vertices[i],
-                    ),
-                    mapIso(
+                    return [
+                        "geo",
+                        "faces",
                         L.applyAt(
-                            "vertices",
-                            L.compose(
-                                clipFace4D(polygonClipper),
-                                project,
-                                L.pick({
-                                    clockwise: isClockwise,
-                                    points: [],
-                                }),
+                            L.compose(L.elems, "vertices", L.elems),
+                            (i) => vertices[i],
+                        ),
+                        mapIso(
+                            L.applyAt(
+                                "vertices",
+                                L.compose(
+                                    clipFace4D(polygonClipper),
+                                    project,
+                                    L.pick({
+                                        clockwise: isClockwise,
+                                        points: [],
+                                    }),
+                                ),
                             ),
                         ),
-                    ),
-                ];
-            },
+                    ];
+                },
+            ),
+            combine({ screen, geo: ndcGeo, camera }),
         ),
-        combine({ screen, geo: ndcGeo, camera }),
     );
 
-    const ndcGeoMaskPaths = view(
-        L.choose(
-            ({
-                screen: { size },
-                geo: { vertices },
-                camera: { orthogonality },
-            }) => {
-                const project = mapIso(
-                    L.compose(
-                        lens3dProject(orthogonality),
-                        lens2dScale(size.x / 2, size.y / 2),
-                    ),
-                );
+    const ndcGeoMaskPaths = $derived(
+        view(
+            L.choose(
+                ({
+                    screen: { size },
+                    geo: { vertices },
+                    camera: { orthogonality },
+                }) => {
+                    const project = mapIso(
+                        L.compose(
+                            lens3dProject(orthogonality),
+                            lens2dScale(size.x / 2, size.y / 2),
+                        ),
+                    );
 
-                return [
-                    "geo",
-                    "masks",
-                    L.applyAt(
-                        L.compose(L.elems, "vertices", L.elems),
-                        (i) => vertices[i],
-                    ),
-                    mapIso(
+                    return [
+                        "geo",
+                        "masks",
                         L.applyAt(
-                            "vertices",
-                            L.compose(
-                                clipFace4D(polygonClipper),
-                                project,
-                                L.pick({
-                                    clockwise: isClockwise,
-                                    points: [],
-                                }),
+                            L.compose(L.elems, "vertices", L.elems),
+                            (i) => vertices[i],
+                        ),
+                        mapIso(
+                            L.applyAt(
+                                "vertices",
+                                L.compose(
+                                    clipFace4D(polygonClipper),
+                                    project,
+                                    L.pick({
+                                        clockwise: isClockwise,
+                                        points: [],
+                                    }),
+                                ),
                             ),
                         ),
-                    ),
-                ];
-            },
+                    ];
+                },
+            ),
+            combine({ screen, geo: ndcGeo, camera }),
         ),
-        combine({ screen, geo: ndcGeo, camera }),
     );
 
-    const ndcGeoVertices = view(
-        L.choose(({ screen: { size }, camera: { orthogonality } }) => {
-            const project = L.compose(
-                lens3dProject(orthogonality),
-                lens2dScale(size.x / 2, size.y / 2),
-            );
-
-            return [
-                "geo",
-                "vertices",
-                R.map((o) => ({ ...o, clipped: !clipVertex4D(o) })),
-                mapIso(project),
-            ];
-        }),
-        combine({ screen, geo: ndcGeo, camera }),
-    );
-
-    const ndcGeoLabels = view(
-        L.choose(
-            ({
-                screen: { size },
-                geo: { vertices },
-                camera: { orthogonality },
-            }) => {
+    const ndcGeoVertices = $derived(
+        view(
+            L.choose(({ screen: { size }, camera: { orthogonality } }) => {
                 const project = L.compose(
                     lens3dProject(orthogonality),
                     lens2dScale(size.x / 2, size.y / 2),
@@ -1222,69 +1253,118 @@
 
                 return [
                     "geo",
-                    "labels",
-                    mapIso([
-                        L.applyAt(
-                            "vertex",
-                            L.compose(
-                                (i) => vertices[i],
-                                (o) => ({ ...o, clipped: !clipVertex4D(o) }),
-                                project,
-                                L.props("x", "y", "clipped"),
-                            ),
-                        ),
-                    ]),
+                    "vertices",
+                    R.map((o) => ({ ...o, clipped: !clipVertex4D(o) })),
+                    mapIso(project),
                 ];
-            },
+            }),
+            combine({ screen, geo: ndcGeo, camera }),
         ),
-        combine({ screen, geo: ndcGeo, camera }),
     );
 
-    const cameraFoVDeg = view(["fov", lensRadToDegree], camera);
-    const cameraFoVRad = view(["fov"], camera);
-    const cameraAspectRatio = view(["aspectRatio"], camera);
-    const cameraOrtho = view(
-        ["orthogonality", L.normalize(R.clamp(0, 1))],
-        camera,
+    const ndcGeoLabels = $derived(
+        view(
+            L.choose(
+                ({
+                    screen: { size },
+                    geo: { vertices },
+                    camera: { orthogonality },
+                }) => {
+                    const project = L.compose(
+                        lens3dProject(orthogonality),
+                        lens2dScale(size.x / 2, size.y / 2),
+                    );
+
+                    return [
+                        "geo",
+                        "labels",
+                        mapIso([
+                            L.applyAt(
+                                "vertex",
+                                L.compose(
+                                    (i) => vertices[i],
+                                    (o) => ({
+                                        ...o,
+                                        clipped: !clipVertex4D(o),
+                                    }),
+                                    project,
+                                    L.props("x", "y", "clipped"),
+                                ),
+                            ),
+                        ]),
+                    ];
+                },
+            ),
+            combine({ screen, geo: ndcGeo, camera }),
+        ),
     );
 
-    const cameraEye = view(["eye"], camera);
-    const cameraOffset = view(["offset"], camera);
-    const cameraEyePosX = view(["tx"], cameraEye);
-    const cameraEyePosY = view(["ty"], cameraEye);
-    const cameraEyePosZ = view(["tz"], cameraEye);
-    const cameraOffsetX = view(["x"], cameraOffset);
-    const cameraOffsetY = view(["y"], cameraOffset);
-    const cameraOffsetZ = view(["z"], cameraOffset);
-    const cameraEyeRotX = view(["rx", lensRadToDegree], cameraEye);
-    const cameraEyeRotY = view(["ry", lensRadToDegree], cameraEye);
-    const cameraEyeRotZ = view(["rz", lensRadToDegree], cameraEye);
-    const cameraClipNear = view(
-        [["clip", L.choose(({ far }) => ["near", L.normalize(R.min(far))])]],
-        camera,
-    );
-    const cameraClipFar = view(
-        [["clip", L.choose(({ near }) => ["far", L.normalize(R.max(near))])]],
-        camera,
+    const cameraFoVDeg = $derived(view(["fov", lensRadToDegree], camera));
+    const cameraFoVRad = $derived(view(["fov"], camera));
+    const cameraAspectRatio = $derived(view(["aspectRatio"], camera));
+    const cameraOrtho = $derived(
+        view(["orthogonality", L.normalize(R.clamp(0, 1))], camera),
     );
 
-    const worldTransformRotX = view(["rx", lensRadToDegree], worldTransform);
-    const worldTransformRotY = view(["ry", lensRadToDegree], worldTransform);
-    const worldTransformRotZ = view(["rz", lensRadToDegree], worldTransform);
+    const cameraEye = $derived(view(["eye"], camera));
+    const cameraOffset = $derived(view(["offset"], camera));
+    const cameraEyePosX = $derived(view(["tx"], cameraEye));
+    const cameraEyePosY = $derived(view(["ty"], cameraEye));
+    const cameraEyePosZ = $derived(view(["tz"], cameraEye));
+    const cameraOffsetX = $derived(view(["x"], cameraOffset));
+    const cameraOffsetY = $derived(view(["y"], cameraOffset));
+    const cameraOffsetZ = $derived(view(["z"], cameraOffset));
+    const cameraEyeRotX = $derived(view(["rx", lensRadToDegree], cameraEye));
+    const cameraEyeRotY = $derived(view(["ry", lensRadToDegree], cameraEye));
+    const cameraEyeRotZ = $derived(view(["rz", lensRadToDegree], cameraEye));
+    const cameraClipNear = $derived(
+        view(
+            [
+                [
+                    "clip",
+                    L.choose(({ far }) => ["near", L.normalize(R.min(far))]),
+                ],
+            ],
+            camera,
+        ),
+    );
+    const cameraClipFar = $derived(
+        view(
+            [
+                [
+                    "clip",
+                    L.choose(({ near }) => ["far", L.normalize(R.max(near))]),
+                ],
+            ],
+            camera,
+        ),
+    );
 
-    const worldTransformPosX = view(["tx"], worldTransform);
-    const worldTransformPosY = view(["ty"], worldTransform);
-    const worldTransformPosZ = view(["tz"], worldTransform);
+    const worldTransformRotX = $derived(
+        view(["rx", lensRadToDegree], worldTransform),
+    );
+    const worldTransformRotY = $derived(
+        view(["ry", lensRadToDegree], worldTransform),
+    );
+    const worldTransformRotZ = $derived(
+        view(["rz", lensRadToDegree], worldTransform),
+    );
 
-    const worldTransformScaleX = view(["sx"], worldTransform);
-    const worldTransformScaleY = view(["sy"], worldTransform);
-    const worldTransformScaleZ = view(["sz"], worldTransform);
+    const worldTransformPosX = $derived(view(["tx"], worldTransform));
+    const worldTransformPosY = $derived(view(["ty"], worldTransform));
+    const worldTransformPosZ = $derived(view(["tz"], worldTransform));
 
-    const worldTransformMatrix = view(
-        L.reread(({ rx, ry, rz, tx, ty, tz, sx, sy, sz }) => [
-            [sx, 0, 0, tx, 0, sy, 0, ty, 0, 0, sz, tz, 0, 0, 0, 1],
-        ]),
-        worldTransform,
+    const worldTransformScaleX = $derived(view(["sx"], worldTransform));
+    const worldTransformScaleY = $derived(view(["sy"], worldTransform));
+    const worldTransformScaleZ = $derived(view(["sz"], worldTransform));
+
+    const worldTransformMatrix = $derived(
+        view(
+            L.reread(({ rx, ry, rz, tx, ty, tz, sx, sy, sz }) => [
+                [sx, 0, 0, tx, 0, sy, 0, ty, 0, 0, sz, tz, 0, 0, 0, 1],
+            ]),
+            worldTransform,
+        ),
     );
 
     const wrapRange = (a, b) => {
@@ -1294,63 +1374,69 @@
         );
     };
 
-    const objectPointerRotate = view(
-        L.pick({
-            dx: L.cond(
-                [
-                    R.pipe(R.prop("rx"), Math.abs, R.lt(Math.PI / 2)),
+    const objectPointerRotate = $derived(
+        view(
+            L.pick({
+                dx: L.cond(
                     [
-                        "ry",
-                        wrapRange(-Math.PI, Math.PI),
-                        lensRadToDegree,
-                        L.setter((a, b) => b + a / 1.5),
+                        R.pipe(R.prop("rx"), Math.abs, R.lt(Math.PI / 2)),
+                        [
+                            "ry",
+                            wrapRange(-Math.PI, Math.PI),
+                            lensRadToDegree,
+                            L.setter((a, b) => b + a / 1.5),
+                        ],
                     ],
-                ],
-                [
                     [
-                        "ry",
-                        wrapRange(-Math.PI, Math.PI),
-                        lensRadToDegree,
-                        L.setter((a, b) => b - a / 1.5),
+                        [
+                            "ry",
+                            wrapRange(-Math.PI, Math.PI),
+                            lensRadToDegree,
+                            L.setter((a, b) => b - a / 1.5),
+                        ],
                     ],
-                ],
-            ),
-            dy: [
-                "rx",
-                wrapRange(-Math.PI, Math.PI),
-                lensRadToDegree,
-                L.setter((a, b) => b - a / 1.5),
-            ],
-        }),
-        worldTransform,
-    );
-
-    const cameraFoVWheel = view(
-        [
-            L.normalize(R.clamp(0.001, 180)),
-            L.setter((a, b) => b * Math.exp(a / 1000)),
-        ],
-        cameraFoVDeg,
-    );
-
-    const eyePointerRotate = view(
-        L.pick({
-            dx: [
-                L.choose(({ rx }) =>
-                    Math.cos(rx) > 0 ? "ry" : ["ry", L.negate],
                 ),
-                wrapRange(-Math.PI, Math.PI),
-                lensRadToDegree,
-                L.setter((a, b) => b + a / 3),
+                dy: [
+                    "rx",
+                    wrapRange(-Math.PI, Math.PI),
+                    lensRadToDegree,
+                    L.setter((a, b) => b - a / 1.5),
+                ],
+            }),
+            worldTransform,
+        ),
+    );
+
+    const cameraFoVWheel = $derived(
+        view(
+            [
+                L.normalize(R.clamp(0.001, 180)),
+                L.setter((a, b) => b * Math.exp(a / 1000)),
             ],
-            dy: [
-                "rx",
-                wrapRange(-Math.PI, Math.PI),
-                lensRadToDegree,
-                L.setter((a, b) => b + a / 3),
-            ],
-        }),
-        cameraEye,
+            cameraFoVDeg,
+        ),
+    );
+
+    const eyePointerRotate = $derived(
+        view(
+            L.pick({
+                dx: [
+                    L.choose(({ rx }) =>
+                        Math.cos(rx) > 0 ? "ry" : ["ry", L.negate],
+                    ),
+                    wrapRange(-Math.PI, Math.PI),
+                    lensRadToDegree,
+                    L.setter((a, b) => b + a / 3),
+                ],
+                dy: [
+                    "rx",
+                    wrapRange(-Math.PI, Math.PI),
+                    lensRadToDegree,
+                    L.setter((a, b) => b + a / 3),
+                ],
+            }),
+            cameraEye,
+        ),
     );
 
     const getCameraUpVector = (rx, ry, rz) => {
@@ -1382,92 +1468,112 @@
         };
     };
 
-    const eyePointerPan = view(
-        L.pick({
-            dx: [
-                L.setter((dist, cam) =>
-                    R.pipe(
-                        R.modify("tx", R.add(-Math.cos(cam.ry) * dist * 0.1)),
-                        R.modify("tz", R.add(-Math.sin(cam.ry) * dist * 0.1)),
-                    )(cam),
-                ),
-            ],
-            dy: L.setter((dist, cam) => {
-                const up = getCameraUpVector(cam.rx, cam.ry, cam.rz);
-                return R.pipe(
-                    R.modify("tx", R.add(up.x * dist * 0.1)),
-                    R.modify("ty", R.add(-up.y * dist * 0.1)),
-                    R.modify("tz", R.add(-up.z * dist * 0.1)),
-                )(cam);
+    const eyePointerPan = $derived(
+        view(
+            L.pick({
+                dx: [
+                    L.setter((dist, cam) =>
+                        R.pipe(
+                            R.modify(
+                                "tx",
+                                R.add(-Math.cos(cam.ry) * dist * 0.1),
+                            ),
+                            R.modify(
+                                "tz",
+                                R.add(-Math.sin(cam.ry) * dist * 0.1),
+                            ),
+                        )(cam),
+                    ),
+                ],
+                dy: L.setter((dist, cam) => {
+                    const up = getCameraUpVector(cam.rx, cam.ry, cam.rz);
+                    return R.pipe(
+                        R.modify("tx", R.add(up.x * dist * 0.1)),
+                        R.modify("ty", R.add(-up.y * dist * 0.1)),
+                        R.modify("tz", R.add(-up.z * dist * 0.1)),
+                    )(cam);
+                }),
             }),
-        }),
-        cameraEye,
+            cameraEye,
+        ),
     );
 
-    const eyePointerWalk = view(
-        L.pick({
-            dx: [
-                "tx",
-                wrapRange(-Math.PI, Math.PI),
-                lensRadToDegree,
-                L.setter((a, b) => b),
-            ],
-            dy: [
-                "tz",
-                wrapRange(-Math.PI, Math.PI),
-                lensRadToDegree,
-                L.setter((a, b) => b - a * 2),
-            ],
-        }),
-        cameraEye,
+    const eyePointerWalk = $derived(
+        view(
+            L.pick({
+                dx: [
+                    "tx",
+                    wrapRange(-Math.PI, Math.PI),
+                    lensRadToDegree,
+                    L.setter((a, b) => b),
+                ],
+                dy: [
+                    "tz",
+                    wrapRange(-Math.PI, Math.PI),
+                    lensRadToDegree,
+                    L.setter((a, b) => b - a * 2),
+                ],
+            }),
+            cameraEye,
+        ),
     );
-    const eyeArrowWalk = view(
-        L.pick({
-            dx: [
-                L.setter((dist, cam) =>
-                    R.pipe(
-                        R.modify("tx", R.add(Math.cos(cam.ry) * dist * 2)),
-                        R.modify("tz", R.add(Math.sin(cam.ry) * dist * 2)),
-                    )(cam),
-                ),
-            ],
-            dy: [
-                L.setter((dist, cam) =>
-                    R.pipe(
-                        R.modify(
-                            "tz",
-                            R.add(
-                                -Math.cos(cam.ry) * Math.cos(cam.rx) * dist * 2,
+    const eyeArrowWalk = $derived(
+        view(
+            L.pick({
+                dx: [
+                    L.setter((dist, cam) =>
+                        R.pipe(
+                            R.modify("tx", R.add(Math.cos(cam.ry) * dist * 2)),
+                            R.modify("tz", R.add(Math.sin(cam.ry) * dist * 2)),
+                        )(cam),
+                    ),
+                ],
+                dy: [
+                    L.setter((dist, cam) =>
+                        R.pipe(
+                            R.modify(
+                                "tz",
+                                R.add(
+                                    -Math.cos(cam.ry) *
+                                        Math.cos(cam.rx) *
+                                        dist *
+                                        2,
+                                ),
                             ),
-                        ),
-                        R.modify(
-                            "tx",
-                            R.add(
-                                Math.sin(cam.ry) * Math.cos(cam.rx) * dist * 2,
+                            R.modify(
+                                "tx",
+                                R.add(
+                                    Math.sin(cam.ry) *
+                                        Math.cos(cam.rx) *
+                                        dist *
+                                        2,
+                                ),
                             ),
-                        ),
-                        R.modify("ty", R.add(Math.sin(cam.rx) * dist * 2)),
-                    )(cam),
-                ),
-            ],
-        }),
-        cameraEye,
+                            R.modify("ty", R.add(Math.sin(cam.rx) * dist * 2)),
+                        )(cam),
+                    ),
+                ],
+            }),
+            cameraEye,
+        ),
     );
 
     const pointer = atom({ x: 0, y: 0, dx: 0, dy: 0 });
-    const pointerPos = view(
-        L.lens(
-            ({ x, y }) => ({ clientX: x, clientY: y }),
-            ({ clientX: x, clientY: y }, o) => ({
-                x,
-                y,
-                dx: x - o.x,
-                dy: y - o.y,
-            }),
+    const pointerPos = $derived(
+        view(
+            L.lens(
+                ({ x, y }) => ({ clientX: x, clientY: y }),
+                ({ clientX: x, clientY: y }, o) => ({
+                    x,
+                    y,
+                    dx: x - o.x,
+                    dy: y - o.y,
+                }),
+            ),
+            pointer,
         ),
-        pointer,
     );
-    const pointerDelta = view(L.props("dx", "dy"), pointer);
+    const pointerDelta = $derived(view(L.props("dx", "dy"), pointer));
 
     const arrowKeys = atom({
         Shift: false,
@@ -1477,46 +1583,52 @@
         ArrowUp: false,
     });
 
-    const arrowDirection = view((map) => {
-        const dx = (map.ArrowLeft ? -1 : 0) + (map.ArrowRight ? 1 : 0);
-        const dy = (map.ArrowDown ? -1 : 0) + (map.ArrowUp ? 1 : 0);
-        const len = Math.hypot(dy, dx);
+    const arrowDirection = $derived(
+        view((map) => {
+            const dx = (map.ArrowLeft ? -1 : 0) + (map.ArrowRight ? 1 : 0);
+            const dy = (map.ArrowDown ? -1 : 0) + (map.ArrowUp ? 1 : 0);
+            const len = Math.hypot(dy, dx);
 
-        return {
-            dx: (len ? dx / len : 0) * (map.Shift ? 3 : 1),
-            dy: (len ? dy / len : 0) * (map.Shift ? 3 : 1),
-        };
-    }, arrowKeys);
-
-    const keyDown = view(
-        L.lens(
-            (map) => {
-                return Object.entries(map)
-                    .filter(([k, v]) => v)
-                    .map(([k, v]) => k);
-            },
-            (key, map) => {
-                return Object.prototype.hasOwnProperty.call(map, key)
-                    ? { ...map, [key]: true }
-                    : map;
-            },
-        ),
-        arrowKeys,
+            return {
+                dx: (len ? dx / len : 0) * (map.Shift ? 3 : 1),
+                dy: (len ? dy / len : 0) * (map.Shift ? 3 : 1),
+            };
+        }, arrowKeys),
     );
-    const keyUp = view(
-        L.lens(
-            (map) => {
-                return Object.entries(map)
-                    .filter(([k, v]) => !v)
-                    .map(([k, v]) => k);
-            },
-            (key, map) => {
-                return Object.prototype.hasOwnProperty.call(map, key)
-                    ? { ...map, [key]: false }
-                    : map;
-            },
+
+    const keyDown = $derived(
+        view(
+            L.lens(
+                (map) => {
+                    return Object.entries(map)
+                        .filter(([k, v]) => v)
+                        .map(([k, v]) => k);
+                },
+                (key, map) => {
+                    return Object.prototype.hasOwnProperty.call(map, key)
+                        ? { ...map, [key]: true }
+                        : map;
+                },
+            ),
+            arrowKeys,
         ),
-        arrowKeys,
+    );
+    const keyUp = $derived(
+        view(
+            L.lens(
+                (map) => {
+                    return Object.entries(map)
+                        .filter(([k, v]) => !v)
+                        .map(([k, v]) => k);
+                },
+                (key, map) => {
+                    return Object.prototype.hasOwnProperty.call(map, key)
+                        ? { ...map, [key]: false }
+                        : map;
+                },
+            ),
+            arrowKeys,
+        ),
     );
 
     let raf = null;
@@ -1549,10 +1661,10 @@
         cw: false,
         ccw: false,
     });
-    const hideCW = view("cw", backfaceCull);
-    const hideCCW = view("ccw", backfaceCull);
-    const hideNone = view(allProps(false), backfaceCull);
-    const hideAll = view(allProps(true), backfaceCull);
+    const hideCW = $derived(view("cw", backfaceCull));
+    const hideCCW = $derived(view("ccw", backfaceCull));
+    const hideNone = $derived(view(allProps(false), backfaceCull));
+    const hideAll = $derived(view(allProps(true), backfaceCull));
 
     const debugLabels = atom({
         svg: false,
@@ -1563,13 +1675,13 @@
         ndcCube: false,
         screenTriangle: false,
     });
-    const showSvg = view("svg", debugLabels);
-    const showCanvas = view("canvas", debugLabels);
-    const labelFace = view("face", debugLabels);
-    const labelVertex = view("vertex", debugLabels);
-    const labelEdge = view("edge", debugLabels);
-    const showNDCCube = view("ndcCube", debugLabels);
-    const screenTriangle = view("screenTriangle", debugLabels);
+    const showSvg = $derived(view("svg", debugLabels));
+    const showCanvas = $derived(view("canvas", debugLabels));
+    const labelFace = $derived(view("face", debugLabels));
+    const labelVertex = $derived(view("vertex", debugLabels));
+    const labelEdge = $derived(view("edge", debugLabels));
+    const showNDCCube = $derived(view("ndcCube", debugLabels));
+    const screenTriangle = $derived(view("screenTriangle", debugLabels));
     const penSize = atom({
         fg: 2,
         bg: 1,
@@ -1585,18 +1697,20 @@
         formatted: true,
     });
 
-    const alphaBlend = view("alphaBlend", penSize);
-    const strokeWidthBg = view("bg", penSize);
-    const strokeWidthFg = view("fg", penSize);
-    const circleRad = view("circleRad", penSize);
-    const fontSize = view("fontSize", penSize);
-    const dashRatio = view("dashRatio", penSize);
-    const dashFrequency = view("dashFrequency", penSize);
+    const alphaBlend = $derived(view("alphaBlend", penSize));
+    const strokeWidthBg = $derived(view("bg", penSize));
+    const strokeWidthFg = $derived(view("fg", penSize));
+    const circleRad = $derived(view("circleRad", penSize));
+    const fontSize = $derived(view("fontSize", penSize));
+    const dashRatio = $derived(view("dashRatio", penSize));
+    const dashFrequency = $derived(view("dashFrequency", penSize));
 
-    const textFormatted = view("formatted", textRendering);
-    const textPerspective = view("perspective", textRendering);
+    const textFormatted = $derived(view("formatted", textRendering));
+    const textPerspective = $derived(view("perspective", textRendering));
 
-    const geoJson = view(L.inverse(L.json({ space: "  " })), worldGeo);
+    const geoJson = $derived(
+        view(L.inverse(L.json({ space: "  " })), worldGeo),
+    );
 
     const clipEdge = clipFace4D(edgeClipper);
     const clipFace = clipFace4D(polygonClipper);
@@ -1608,128 +1722,146 @@
             w: 1,
         };
     };
-    const ndcGeoEdgePathsFast = view(
-        ({ ndcGeo, camera, screen, screenAspect }) => {
-            const vertices = ndcGeo.vertices;
-            return ndcGeo.edges.map((edge) => {
-                const vs = clipEdge(
-                    edge.vertices.map((vi) => vertices[vi]),
-                ).map((v) => fastProject(v, camera, screen));
-                return {
-                    attrs: edge.attrs,
-                    frontFacing: edge.faces.some((fi) => {
-                        const face = ndcGeo.faces[fi];
-                        return isClockwise(
-                            clipFace(
-                                face.vertices.map((vi) => vertices[vi]),
-                            ).map((v) => fastProject(v, camera, screen)),
-                        );
-                    }),
-                    path: "M" + vs.map((c) => c.x + "," + c.y).join(" L"),
-                    center: vs.length
-                        ? vs.reduce(
-                              ({ x: ax, y: ay }, { x, y }) => ({
-                                  x: ax + x / vs.length,
-                                  y: ay + y / vs.length,
-                              }),
-                              { x: 0, y: 0 },
-                          )
-                        : { "data-count": 0 },
-                };
-            });
-        },
-        combine({
-            ndcGeo: ndcGeoFast,
-            camera,
-            screen,
-            screenAspect,
-        }),
+    const ndcGeoEdgePathsFast = $derived(
+        view(
+            ({ ndcGeo, camera, screen, screenAspect }) => {
+                const vertices = ndcGeo.vertices;
+                return ndcGeo.edges.map((edge) => {
+                    const vs = clipEdge(
+                        edge.vertices.map((vi) => vertices[vi]),
+                    ).map((v) => fastProject(v, camera, screen));
+                    return {
+                        attrs: edge.attrs,
+                        frontFacing: edge.faces.some((fi) => {
+                            const face = ndcGeo.faces[fi];
+                            return isClockwise(
+                                clipFace(
+                                    face.vertices.map((vi) => vertices[vi]),
+                                ).map((v) => fastProject(v, camera, screen)),
+                            );
+                        }),
+                        path: "M" + vs.map((c) => c.x + "," + c.y).join(" L"),
+                        center: vs.length
+                            ? vs.reduce(
+                                  ({ x: ax, y: ay }, { x, y }) => ({
+                                      x: ax + x / vs.length,
+                                      y: ay + y / vs.length,
+                                  }),
+                                  { x: 0, y: 0 },
+                              )
+                            : { "data-count": 0 },
+                    };
+                });
+            },
+            combine({
+                ndcGeo: ndcGeoFast,
+                camera,
+                screen,
+                screenAspect,
+            }),
+        ),
     );
-    const ndcGeoFacePathsFast = view(
-        ({ ndcGeo, camera, screen, screenAspect }) => {
-            const vertices = ndcGeo.vertices;
-            return ndcGeo.faces.map((face) => {
-                const vs = clipFace(
-                    face.vertices.map((vi) => vertices[vi]),
-                ).map((v) => fastProject(v, camera, screen));
-                return {
-                    attrs: face.attrs,
-                    clockwise: isClockwise(vs),
-                    path: vs.map((c) => c.x + "," + c.y).join(","),
-                    center: vs.length
-                        ? vs.reduce(
-                              ({ x: ax, y: ay }, { x, y }) => ({
-                                  x: ax + x / vs.length,
-                                  y: ay + y / vs.length,
-                              }),
-                              { x: 0, y: 0 },
-                          )
-                        : { "data-count": 0 },
-                };
-            });
-        },
-        combine({
-            ndcGeo: ndcGeoFast,
-            camera,
-            screen,
-            screenAspect,
-        }),
+    const ndcGeoFacePathsFast = $derived(
+        view(
+            ({ ndcGeo, camera, screen, screenAspect }) => {
+                const vertices = ndcGeo.vertices;
+                return ndcGeo.faces.map((face) => {
+                    const vs = clipFace(
+                        face.vertices.map((vi) => vertices[vi]),
+                    ).map((v) => fastProject(v, camera, screen));
+                    return {
+                        attrs: face.attrs,
+                        clockwise: isClockwise(vs),
+                        path: vs.map((c) => c.x + "," + c.y).join(","),
+                        center: vs.length
+                            ? vs.reduce(
+                                  ({ x: ax, y: ay }, { x, y }) => ({
+                                      x: ax + x / vs.length,
+                                      y: ay + y / vs.length,
+                                  }),
+                                  { x: 0, y: 0 },
+                              )
+                            : { "data-count": 0 },
+                    };
+                });
+            },
+            combine({
+                ndcGeo: ndcGeoFast,
+                camera,
+                screen,
+                screenAspect,
+            }),
+        ),
     );
-    const ndcGeoMaskPathsFast = view(
-        ({ ndcGeo, camera, screen, screenAspect }) => {
-            const vertices = ndcGeo.vertices;
-            return (ndcGeo.masks ?? []).map((face) => {
-                const vs = clipFace(
-                    face.vertices.map((vi) => vertices[vi]),
-                ).map((v) => fastProject(v, camera, screen));
-                return {
-                    attrs: face.attrs,
-                    clockwise: isClockwise(vs),
-                    path: vs.map((c) => c.x + "," + c.y).join(","),
-                };
-            });
-        },
-        combine({
-            ndcGeo: ndcGeoFast,
-            camera,
-            screen,
-            screenAspect,
-        }),
+    const ndcGeoMaskPathsFast = $derived(
+        view(
+            ({ ndcGeo, camera, screen, screenAspect }) => {
+                const vertices = ndcGeo.vertices;
+                return (ndcGeo.masks ?? []).map((face) => {
+                    const vs = clipFace(
+                        face.vertices.map((vi) => vertices[vi]),
+                    ).map((v) => fastProject(v, camera, screen));
+                    return {
+                        attrs: face.attrs,
+                        clockwise: isClockwise(vs),
+                        path: vs.map((c) => c.x + "," + c.y).join(","),
+                    };
+                });
+            },
+            combine({
+                ndcGeo: ndcGeoFast,
+                camera,
+                screen,
+                screenAspect,
+            }),
+        ),
     );
-    const ndcGeoVerticesFast = view(
-        ({ ndcGeo, camera, screen, screenAspect }) => {
-            return ndcGeo.vertices.map((v) => ({
-                ...fastProject(v, camera, screen),
-                clipped: !clipVertex4D(v),
-            }));
-        },
-        combine({
-            ndcGeo: ndcGeoFast,
-            worldTransform,
-            camera,
-            screen,
-            screenAspect,
-        }),
+    const ndcGeoVerticesFast = $derived(
+        view(
+            ({ ndcGeo, camera, screen, screenAspect }) => {
+                return ndcGeo.vertices.map((v) => ({
+                    ...fastProject(v, camera, screen),
+                    clipped: !clipVertex4D(v),
+                }));
+            },
+            combine({
+                ndcGeo: ndcGeoFast,
+                worldTransform,
+                camera,
+                screen,
+                screenAspect,
+            }),
+        ),
     );
-    const ndcGeoLabelsFast = view(
-        ({ ndcGeo, camera, screen, screenAspect }) => {
-            return ndcGeo.labels.map((l) => ({
-                ...l,
-                vertex: fastProject(ndcGeo.vertices[l.vertex], camera, screen),
-                anchor:
-                    l.anchor >= 0
-                        ? fastProject(ndcGeo.vertices[l.anchor], camera, screen)
-                        : null,
-                clipped: !clipVertex4D(ndcGeo.vertices[l.vertex]),
-                lines: Array.isArray(l.text) ? l.text : l.text.split("\n"),
-            }));
-        },
-        combine({
-            ndcGeo: ndcGeoFast,
-            camera,
-            screen,
-            screenAspect,
-        }),
+    const ndcGeoLabelsFast = $derived(
+        view(
+            ({ ndcGeo, camera, screen, screenAspect }) => {
+                return ndcGeo.labels.map((l) => ({
+                    ...l,
+                    vertex: fastProject(
+                        ndcGeo.vertices[l.vertex],
+                        camera,
+                        screen,
+                    ),
+                    anchor:
+                        l.anchor >= 0
+                            ? fastProject(
+                                  ndcGeo.vertices[l.anchor],
+                                  camera,
+                                  screen,
+                              )
+                            : null,
+                    clipped: !clipVertex4D(ndcGeo.vertices[l.vertex]),
+                    lines: Array.isArray(l.text) ? l.text : l.text.split("\n"),
+                }));
+            },
+            combine({
+                ndcGeo: ndcGeoFast,
+                camera,
+                screen,
+                screenAspect,
+            }),
+        ),
     );
 
     export function doubleArrowGeometry(size) {
@@ -2205,28 +2337,32 @@
             };
         });
 
-        let modelMatrix = read(
-            (trans) =>
-                [
-                    M.makeTranslate(trans.tx, -trans.ty, trans.tz),
+        let modelMatrix = $derived(
+            read(
+                (trans) =>
+                    [
+                        M.makeTranslate(trans.tx, -trans.ty, trans.tz),
+                        M.makeRotateZ(trans.rz),
+                        M.makeRotateY(trans.ry),
+                        M.makeRotateX(trans.rx),
+                        M.makeScale(trans.sx, trans.sy, trans.sz),
+                    ].reduce(M.matMulMat),
+                worldTransform,
+            ),
+        );
+
+        let modelMatrixNormal = $derived(
+            read((trans) => {
+                const m = [
                     M.makeRotateZ(trans.rz),
                     M.makeRotateY(trans.ry),
                     M.makeRotateX(trans.rx),
-                    M.makeScale(trans.sx, trans.sy, trans.sz),
-                ].reduce(M.matMulMat),
-            worldTransform,
+                    M.makeScale(1 / trans.sx, 1 / trans.sy, 1 / trans.sz),
+                ].reduce(M.matMulMat);
+
+                return [m[0], m[1], m[2], m[4], m[5], m[6], m[8], m[9], m[10]];
+            }, worldTransform),
         );
-
-        let modelMatrixNormal = read((trans) => {
-            const m = [
-                M.makeRotateZ(trans.rz),
-                M.makeRotateY(trans.ry),
-                M.makeRotateX(trans.rx),
-                M.makeScale(1 / trans.sx, 1 / trans.sy, 1 / trans.sz),
-            ].reduce(M.matMulMat);
-
-            return [m[0], m[1], m[2], m[4], m[5], m[6], m[8], m[9], m[10]];
-        }, worldTransform);
 
         regl.frame(() => {
             reglCanvas.width =

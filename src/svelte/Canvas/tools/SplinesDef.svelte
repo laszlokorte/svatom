@@ -5,38 +5,40 @@
 
     const { splines, rotationTransform } = $props();
 
-    const beziers = read(
-        L.reread(
-            R.map(({ path: p }) => {
-                if (p.length >= 2) {
-                    return (
-                        `M${p[0].point.x} ${p[0].point.y}` +
-                        R.join(
-                            " ",
-                            R.map(
-                                ([from, to]) => {
-                                    if (!from.front && !to.back) {
-                                        return `L ${to.point.x} ${to.point.y}`;
-                                    } else if (from.front && !to.back) {
-                                        return `Q ${from.front.x} ${from.front.y} ${to.point.x} ${to.point.y}`;
-                                    } else if (!from.front && to.back) {
-                                        return `Q ${to.back.x} ${to.back.y} ${to.point.x} ${to.point.y}`;
-                                    } else {
-                                        return `C  ${from.front.x} ${from.front.y}  ${to.back.x} ${to.back.y} ${to.point.x} ${to.point.y}`;
-                                    }
-                                },
-                                R.aperture(2, p),
-                            ),
-                        )
-                    );
-                } else if (p.length == 1) {
-                    return "";
-                } else {
-                    return "";
-                }
-            }),
+    const beziers = $derived(
+        read(
+            L.reread(
+                R.map(({ path: p }) => {
+                    if (p.length >= 2) {
+                        return (
+                            `M${p[0].point.x} ${p[0].point.y}` +
+                            R.join(
+                                " ",
+                                R.map(
+                                    ([from, to]) => {
+                                        if (!from.front && !to.back) {
+                                            return `L ${to.point.x} ${to.point.y}`;
+                                        } else if (from.front && !to.back) {
+                                            return `Q ${from.front.x} ${from.front.y} ${to.point.x} ${to.point.y}`;
+                                        } else if (!from.front && to.back) {
+                                            return `Q ${to.back.x} ${to.back.y} ${to.point.x} ${to.point.y}`;
+                                        } else {
+                                            return `C  ${from.front.x} ${from.front.y}  ${to.back.x} ${to.back.y} ${to.point.x} ${to.point.y}`;
+                                        }
+                                    },
+                                    R.aperture(2, p),
+                                ),
+                            )
+                        );
+                    } else if (p.length == 1) {
+                        return "";
+                    } else {
+                        return "";
+                    }
+                }),
+            ),
+            splines,
         ),
-        splines,
     );
 </script>
 

@@ -23,104 +23,121 @@
     } = $props();
 
     const guide = atom(undefined);
-    const isActive = view(
-        L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
-        guide,
-    );
-
-    const guideStart = view(
-        [L.removable("start"), "start", L.removable("x", "y")],
-        guide,
-    );
-    const guideEnd = view(
-        L.ifElse(
-            R.prop("start"),
-            [L.removable("end"), "end", L.removable("x", "y")],
-            L.zero,
+    const isActive = $derived(
+        view(
+            L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
+            guide,
         ),
-        guide,
     );
 
-    const guideAngle = view(
-        [
-            L.props("start", "end"),
-            L.reread(({ start, end }) => {
-                const dx = end.x - start.x;
-                const dy = end.y - start.y;
-
-                return Math.atan2(dy, dx);
-            }),
-        ],
-        guide,
+    const guideStart = $derived(
+        view([L.removable("start"), "start", L.removable("x", "y")], guide),
     );
-
-    const guideDistance = view(
-        [
-            L.props("start", "end"),
-            L.reread(({ start, end }) => {
-                const dx = end.x - start.x;
-                const dy = end.y - start.y;
-
-                return (
-                    (start.x * -dy + start.y * dx) /
-                    Math.sqrt(dx * dx + dy * dy)
-                );
-            }),
-        ],
-        guide,
-    );
-
-    const guideLength = read(
-        [
-            L.props("start", "end"),
-            L.reread(({ start, end }) => {
-                const dx = end.x - start.x;
-                const dy = end.y - start.y;
-
-                return Math.sqrt(dx * dx + dy * dy);
-            }),
-        ],
-        guide,
-    );
-
-    const newGuideValid = read(
-        [
-            L.reread(({ len, scale }) => {
-                return len / scale > minDragDistance;
-            }),
-            L.valueOr(false),
-        ],
-        combine({ len: guideLength, scale: cameraScale }),
-    );
-
-    const guidePath = read(
-        L.getter((b) =>
-            b && b.start && b.end
-                ? `M${numberSvgFormat.format(b.start.x)},${numberSvgFormat.format(b.start.y)}L${numberSvgFormat.format(b.end.x)},${numberSvgFormat.format(b.end.y)}`
-                : "",
-        ),
-        guide,
-    );
-
-    const newGuideEdgePoints = read(
-        L.reread(
-            R.compose(
-                R.apply(Geo.rayInsideQuad),
-                R.props(["angle", "dist", "quad"]),
+    const guideEnd = $derived(
+        view(
+            L.ifElse(
+                R.prop("start"),
+                [L.removable("end"), "end", L.removable("x", "y")],
+                L.zero,
             ),
+            guide,
         ),
-        combine({
-            angle: guideAngle,
-            dist: guideDistance,
-            quad: read("worldSpace", frameBoxObject),
-        }),
     );
 
-    const newGuideRayPath = read(
-        L.reread(({ a, b }) => `M${a.x},${a.y}L${b.x},${b.y}`),
-        newGuideEdgePoints,
+    const guideAngle = $derived(
+        view(
+            [
+                L.props("start", "end"),
+                L.reread(({ start, end }) => {
+                    const dx = end.x - start.x;
+                    const dy = end.y - start.y;
+
+                    return Math.atan2(dy, dx);
+                }),
+            ],
+            guide,
+        ),
     );
-    export const canCancel = read(R.identity, isActive);
+
+    const guideDistance = $derived(
+        view(
+            [
+                L.props("start", "end"),
+                L.reread(({ start, end }) => {
+                    const dx = end.x - start.x;
+                    const dy = end.y - start.y;
+
+                    return (
+                        (start.x * -dy + start.y * dx) /
+                        Math.sqrt(dx * dx + dy * dy)
+                    );
+                }),
+            ],
+            guide,
+        ),
+    );
+
+    const guideLength = $derived(
+        read(
+            [
+                L.props("start", "end"),
+                L.reread(({ start, end }) => {
+                    const dx = end.x - start.x;
+                    const dy = end.y - start.y;
+
+                    return Math.sqrt(dx * dx + dy * dy);
+                }),
+            ],
+            guide,
+        ),
+    );
+
+    const newGuideValid = $derived(
+        read(
+            [
+                L.reread(({ len, scale }) => {
+                    return len / scale > minDragDistance;
+                }),
+                L.valueOr(false),
+            ],
+            combine({ len: guideLength, scale: cameraScale }),
+        ),
+    );
+
+    const guidePath = $derived(
+        read(
+            L.getter((b) =>
+                b && b.start && b.end
+                    ? `M${numberSvgFormat.format(b.start.x)},${numberSvgFormat.format(b.start.y)}L${numberSvgFormat.format(b.end.x)},${numberSvgFormat.format(b.end.y)}`
+                    : "",
+            ),
+            guide,
+        ),
+    );
+
+    const newGuideEdgePoints = $derived(
+        read(
+            L.reread(
+                R.compose(
+                    R.apply(Geo.rayInsideQuad),
+                    R.props(["angle", "dist", "quad"]),
+                ),
+            ),
+            combine({
+                angle: guideAngle,
+                dist: guideDistance,
+                quad: read("worldSpace", frameBoxObject),
+            }),
+        ),
+    );
+
+    const newGuideRayPath = $derived(
+        read(
+            L.reread(({ a, b }) => `M${a.x},${a.y}L${b.x},${b.y}`),
+            newGuideEdgePoints,
+        ),
+    );
+    export const canCancel = () => isActive.value;
     export function cancel() {
         isActive.value = false;
     }

@@ -19,30 +19,32 @@
         cameraScale,
     } = $props();
 
-    const axisStart = view(
-        [L.removable("start"), "start", L.removable("x", "y")],
-        axis,
+    const axisStart = $derived(
+        view([L.removable("start"), "start", L.removable("x", "y")], axis),
     );
-    const axisAngle = view([L.removable("angle"), "angle"], axis);
+    const axisAngle = $derived(view([L.removable("angle"), "angle"], axis));
 
-    const axisPath = read(
-        L.getter(({ axis: b, cameraScale: scale }) =>
-            b && b.start && b.size
-                ? U.formattedNumbers`M${b.start.x - 10 * scale * Math.sign(b.size.x)},${b.start.y}
+    const axisPath = $derived(
+        read(
+            L.getter(({ axis: b, cameraScale: scale }) =>
+                b && b.start && b.size
+                    ? U.formattedNumbers`M${b.start.x - 10 * scale * Math.sign(b.size.x)},${b.start.y}
 				m${b.size.x},0
 				h${-b.size.x}
 				m${10 * scale * Math.sign(b.size.x)},${-10 * scale * Math.sign(b.size.y)}
 				v${b.size.y}
 				`
-                : "",
+                    : "",
+            ),
+            combine({ axis, cameraScale }),
         ),
-        combine({ axis, cameraScale }),
     );
 
-    const axisArrowPath = read(
-        L.getter(({ axis: b, cameraScale: scale }) =>
-            b && b.start && b.size
-                ? U.formattedNumbers`M${b.start.x},${b.start.y}
+    const axisArrowPath = $derived(
+        read(
+            L.getter(({ axis: b, cameraScale: scale }) =>
+                b && b.start && b.size
+                    ? U.formattedNumbers`M${b.start.x},${b.start.y}
 				m0,${b.size.y}
 
 				m0,${0}l${-10 * scale},${Math.sign(b.size.y) * (-10 * scale)}h${2 * 10 * scale}z
@@ -52,9 +54,10 @@
 				m${0},0l${Math.sign(b.size.x) * (-10 * scale)},${-10 * scale}v${2 * 10 * scale}z
 
 				`
-                : "",
+                    : "",
+            ),
+            combine({ axis, cameraScale }),
         ),
-        combine({ axis, cameraScale }),
     );
 </script>
 

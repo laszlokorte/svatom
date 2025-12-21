@@ -73,201 +73,259 @@
     const scrollPosition = atom({ x: 0, y: 0 });
     const scrollWindowSize = atom({ x: 0, y: 0 });
 
-    const contentSize = read(
-        L.reread(
-            R.compose(
-                ({ x, hx, y, hy }) => ({ x: hx + x, y: hy + y }),
-                R.map(R.sum),
+    const contentSize = $derived(
+        read(
+            L.reread(
+                R.compose(
+                    ({ x, hx, y, hy }) => ({ x: hx + x, y: hy + y }),
+                    R.map(R.sum),
+                ),
             ),
+            combine({
+                x: columnSizes,
+                y: rowSizes,
+                hx: columnHeadWidths,
+                hy: rowHeadHeights,
+            }),
         ),
-        combine({
-            x: columnSizes,
-            y: rowSizes,
-            hx: columnHeadWidths,
-            hy: rowHeadHeights,
-        }),
     );
 
-    const columnHeadStarts = read(
-        (hw) => R.last(startAccum(0, hw)),
-        columnHeadWidths,
+    const columnHeadStarts = $derived(
+        read((hw) => R.last(startAccum(0, hw)), columnHeadWidths),
     );
 
-    const columnHeadWidthSum = read((x) => endAccum(0, x)[0], columnHeadWidths);
-    const rowHeadStarts = read(
-        (rhh) => R.last(startAccum(0, rhh)),
-        rowHeadHeights,
+    const columnHeadWidthSum = $derived(
+        read((x) => endAccum(0, x)[0], columnHeadWidths),
     );
-    const rowHeadHeightSum = read((rhh) => endAccum(0, rhh)[0], rowHeadHeights);
-
-    const columnPinnedIndices = read(extractIndices(), columnPins);
-    const rowPinnedIndices = read(extractIndices(), rowPins);
-    const columnNotPinnedIndices = read(extractIndices(R.not), columnPins);
-    const rowNotPinnedIndices = read(extractIndices(R.not), rowPins);
-
-    const columnPinnedSizes = read(
-        ({ s, is }) => R.map((i) => s[i], is),
-        combine({ s: columnSizes, is: columnPinnedIndices }),
+    const rowHeadStarts = $derived(
+        read((rhh) => R.last(startAccum(0, rhh)), rowHeadHeights),
     );
-    const rowPinnedSizes = read(
-        ({ s, is }) => R.map((i) => s[i], is),
-        combine({ s: rowSizes, is: rowPinnedIndices }),
-    );
-    const columnNotPinnedSizes = read(
-        ({ s, is }) => R.map((i) => s[i], is),
-        combine({ s: columnSizes, is: columnNotPinnedIndices }),
-    );
-    const rowNotPinnedSizes = read(
-        ({ s, is }) => R.map((i) => s[i], is),
-        combine({ s: rowSizes, is: rowNotPinnedIndices }),
+    const rowHeadHeightSum = $derived(
+        read((rhh) => endAccum(0, rhh)[0], rowHeadHeights),
     );
 
-    const columnPinnedStarts = read(
-        ({ a, b }) => R.last(startAccum(a, b)),
-        combine({ a: columnHeadWidthSum, b: columnPinnedSizes }),
+    const columnPinnedIndices = $derived(read(extractIndices(), columnPins));
+    const rowPinnedIndices = $derived(read(extractIndices(), rowPins));
+    const columnNotPinnedIndices = $derived(
+        read(extractIndices(R.not), columnPins),
     );
-    const columnPinnedSizeSum_columnPinnedEnds = read(
-        ({ a, b }) => endAccum(a, b),
-        combine({ a: columnHeadWidthSum, b: columnPinnedSizes }),
+    const rowNotPinnedIndices = $derived(read(extractIndices(R.not), rowPins));
+
+    const columnPinnedSizes = $derived(
+        read(
+            ({ s, is }) => R.map((i) => s[i], is),
+            combine({ s: columnSizes, is: columnPinnedIndices }),
+        ),
     );
-    const columnPinnedSizeSum = read(
-        R.nth(0),
-        columnPinnedSizeSum_columnPinnedEnds,
+    const rowPinnedSizes = $derived(
+        read(
+            ({ s, is }) => R.map((i) => s[i], is),
+            combine({ s: rowSizes, is: rowPinnedIndices }),
+        ),
     );
-    const columnPinnedEnds = read(
-        R.nth(1),
-        columnPinnedSizeSum_columnPinnedEnds,
+    const columnNotPinnedSizes = $derived(
+        read(
+            ({ s, is }) => R.map((i) => s[i], is),
+            combine({ s: columnSizes, is: columnNotPinnedIndices }),
+        ),
+    );
+    const rowNotPinnedSizes = $derived(
+        read(
+            ({ s, is }) => R.map((i) => s[i], is),
+            combine({ s: rowSizes, is: rowNotPinnedIndices }),
+        ),
     );
 
-    const rowPinnedStarts = read(
-        ({ a, b }) => R.last(startAccum(a, b)),
-        combine({ a: rowHeadHeightSum, b: rowPinnedSizes }),
+    const columnPinnedStarts = $derived(
+        read(
+            ({ a, b }) => R.last(startAccum(a, b)),
+            combine({ a: columnHeadWidthSum, b: columnPinnedSizes }),
+        ),
     );
-    const rowPinnedSizeSum_rowPinnedEnds = read(
-        ({ a, b }) => endAccum(a, b),
-        combine({ a: rowHeadHeightSum, b: rowPinnedSizes }),
+    const columnPinnedSizeSum_columnPinnedEnds = $derived(
+        read(
+            ({ a, b }) => endAccum(a, b),
+            combine({ a: columnHeadWidthSum, b: columnPinnedSizes }),
+        ),
     );
-
-    const rowPinnedSizeSum = read(R.nth(0), rowPinnedSizeSum_rowPinnedEnds);
-    const rowPinnedEnds = read(R.nth(1), rowPinnedSizeSum_rowPinnedEnds);
-
-    const firstPinnedColumn = read(
-        ({ chw, cpe }) => R.findIndex(R.lte(chw), cpe),
-        combine({ cpe: columnPinnedEnds, chw: columnHeadWidthSum }),
+    const columnPinnedSizeSum = $derived(
+        read(R.nth(0), columnPinnedSizeSum_columnPinnedEnds),
     );
-    const lastPinnedColumn = read(
-        ({ ws, cps }) => R.findLastIndex(R.gte(ws.x), cps),
-        combine({ ws: scrollWindowSize, cps: columnPinnedStarts }),
-    );
-    const firstPinnedRow = read(
-        ({ rhs, rpe }) => R.findIndex(R.lte(rhs), rpe),
-        combine({ rhs: rowHeadHeightSum, rpe: rowPinnedEnds }),
-    );
-    const lastPinnedRow = read(
-        ({ rps, sw }) => R.findLastIndex(R.gte(sw.y), rps),
-        combine({
-            rps: rowPinnedStarts,
-            sw: scrollWindowSize,
-        }),
+    const columnPinnedEnds = $derived(
+        read(R.nth(1), columnPinnedSizeSum_columnPinnedEnds),
     );
 
-    const visiblePinnedColumns = read(
-        ({ fpc, lpc }) =>
-            () =>
-                G.range(fpc, R.inc(lpc)),
-        combine({ fpc: firstPinnedColumn, lpc: lastPinnedColumn }),
+    const rowPinnedStarts = $derived(
+        read(
+            ({ a, b }) => R.last(startAccum(a, b)),
+            combine({ a: rowHeadHeightSum, b: rowPinnedSizes }),
+        ),
     );
-    const visiblePinnedRows = read(
-        ({ fpr, lpr }) =>
-            () =>
-                G.range(fpr, R.inc(lpr)),
-        combine({ fpr: firstPinnedRow, lpr: lastPinnedRow }),
-    );
-
-    const columnStarts = read(
-        ({ a, b }) => R.last(startAccum(a, b)),
-        combine({ a: columnPinnedSizeSum, b: columnNotPinnedSizes }),
-    );
-    const columnSizeSum_columnEnds = read(
-        ({ a, b }) => endAccum(a, b),
-        combine({ a: columnPinnedSizeSum, b: columnNotPinnedSizes }),
-    );
-    const columnSizeSum = read(R.nth(0), columnSizeSum_columnEnds);
-    const columnEnds = read(R.nth(1), columnSizeSum_columnEnds);
-
-    const rowStarts = read(
-        ({ a, b }) => R.last(startAccum(a, b)),
-        combine({ a: rowPinnedSizeSum, b: rowNotPinnedSizes }),
-    );
-    const rowSizeSum_rowEnds = read(
-        ({ a, b }) => endAccum(a, b),
-        combine({ a: rowPinnedSizeSum, b: rowNotPinnedSizes }),
+    const rowPinnedSizeSum_rowPinnedEnds = $derived(
+        read(
+            ({ a, b }) => endAccum(a, b),
+            combine({ a: rowHeadHeightSum, b: rowPinnedSizes }),
+        ),
     );
 
-    const rowSizeSum = read(R.nth(0), rowSizeSum_rowEnds);
-    const rowEnds = read(R.nth(1), rowSizeSum_rowEnds);
-
-    const firstColumn = read(
-        ({ sp, cps, ce }) => R.findIndex(R.lte(sp.x + cps), ce),
-        combine({
-            sp: scrollPosition,
-            cps: columnPinnedSizeSum,
-            ce: columnEnds,
-        }),
+    const rowPinnedSizeSum = $derived(
+        read(R.nth(0), rowPinnedSizeSum_rowPinnedEnds),
     );
-    const lastColumn = read(
-        ({ sp, sw, cs }) => R.findLastIndex(R.gte(sp.x + sw.x), cs),
-        combine({
-            sp: scrollPosition,
-            sw: scrollWindowSize,
-            cs: columnStarts,
-        }),
-    );
-    const firstRow = read(
-        ({ a, b, c }) => R.findIndex(R.lte(a.y + b), c),
-        combine({
-            a: scrollPosition,
-            b: rowPinnedSizeSum,
-            c: rowEnds,
-        }),
-    );
-    const lastRow = read(
-        ({ a, b, c }) => R.findLastIndex(R.gte(a.y + b.y), c),
-        combine({
-            a: scrollPosition,
-            b: scrollWindowSize,
-            c: rowStarts,
-        }),
+    const rowPinnedEnds = $derived(
+        read(R.nth(1), rowPinnedSizeSum_rowPinnedEnds),
     );
 
-    const visibleColumns = read(
-        ({ a, b }) =>
-            () =>
-                G.range(a, R.inc(b)),
-        combine({ a: firstColumn, b: lastColumn }),
+    const firstPinnedColumn = $derived(
+        read(
+            ({ chw, cpe }) => R.findIndex(R.lte(chw), cpe),
+            combine({ cpe: columnPinnedEnds, chw: columnHeadWidthSum }),
+        ),
     );
-    const visibleRows = read(
-        ({ a, b }) =>
-            () =>
-                G.range(a, R.inc(b)),
-        combine({ a: firstRow, b: lastRow }),
+    const lastPinnedColumn = $derived(
+        read(
+            ({ ws, cps }) => R.findLastIndex(R.gte(ws.x), cps),
+            combine({ ws: scrollWindowSize, cps: columnPinnedStarts }),
+        ),
+    );
+    const firstPinnedRow = $derived(
+        read(
+            ({ rhs, rpe }) => R.findIndex(R.lte(rhs), rpe),
+            combine({ rhs: rowHeadHeightSum, rpe: rowPinnedEnds }),
+        ),
+    );
+    const lastPinnedRow = $derived(
+        read(
+            ({ rps, sw }) => R.findLastIndex(R.gte(sw.y), rps),
+            combine({
+                rps: rowPinnedStarts,
+                sw: scrollWindowSize,
+            }),
+        ),
     );
 
-    const lastHeadColumn = read(
-        ({ a, b }) => R.findLastIndex(R.gte(a.x), b),
-        combine({ a: scrollWindowSize, b: columnHeadStarts }),
+    const visiblePinnedColumns = $derived(
+        read(
+            ({ fpc, lpc }) =>
+                () =>
+                    G.range(fpc, R.inc(lpc)),
+            combine({ fpc: firstPinnedColumn, lpc: lastPinnedColumn }),
+        ),
     );
-    const lastHeadRow = read(
-        ({ a, b }) => R.findLastIndex(R.gte(a.y), b),
-        combine({ a: scrollWindowSize, b: rowHeadStarts }),
+    const visiblePinnedRows = $derived(
+        read(
+            ({ fpr, lpr }) =>
+                () =>
+                    G.range(fpr, R.inc(lpr)),
+            combine({ fpr: firstPinnedRow, lpr: lastPinnedRow }),
+        ),
     );
-    const visibleHeadColumns = read(
-        (x) => () => G.range(0, R.inc(x)),
-        lastHeadColumn,
+
+    const columnStarts = $derived(
+        read(
+            ({ a, b }) => R.last(startAccum(a, b)),
+            combine({ a: columnPinnedSizeSum, b: columnNotPinnedSizes }),
+        ),
     );
-    const visibleHeadRows = read(
-        (lhr) => () => G.range(0, R.inc(lhr)),
-        lastHeadRow,
+    const columnSizeSum_columnEnds = $derived(
+        read(
+            ({ a, b }) => endAccum(a, b),
+            combine({ a: columnPinnedSizeSum, b: columnNotPinnedSizes }),
+        ),
+    );
+    const columnSizeSum = $derived(read(R.nth(0), columnSizeSum_columnEnds));
+    const columnEnds = $derived(read(R.nth(1), columnSizeSum_columnEnds));
+
+    const rowStarts = $derived(
+        read(
+            ({ a, b }) => R.last(startAccum(a, b)),
+            combine({ a: rowPinnedSizeSum, b: rowNotPinnedSizes }),
+        ),
+    );
+    const rowSizeSum_rowEnds = $derived(
+        read(
+            ({ a, b }) => endAccum(a, b),
+            combine({ a: rowPinnedSizeSum, b: rowNotPinnedSizes }),
+        ),
+    );
+
+    const rowSizeSum = $derived(read(R.nth(0), rowSizeSum_rowEnds));
+    const rowEnds = $derived(read(R.nth(1), rowSizeSum_rowEnds));
+
+    const firstColumn = $derived(
+        read(
+            ({ sp, cps, ce }) => R.findIndex(R.lte(sp.x + cps), ce),
+            combine({
+                sp: scrollPosition,
+                cps: columnPinnedSizeSum,
+                ce: columnEnds,
+            }),
+        ),
+    );
+    const lastColumn = $derived(
+        read(
+            ({ sp, sw, cs }) => R.findLastIndex(R.gte(sp.x + sw.x), cs),
+            combine({
+                sp: scrollPosition,
+                sw: scrollWindowSize,
+                cs: columnStarts,
+            }),
+        ),
+    );
+    const firstRow = $derived(
+        read(
+            ({ a, b, c }) => R.findIndex(R.lte(a.y + b), c),
+            combine({
+                a: scrollPosition,
+                b: rowPinnedSizeSum,
+                c: rowEnds,
+            }),
+        ),
+    );
+    const lastRow = $derived(
+        read(
+            ({ a, b, c }) => R.findLastIndex(R.gte(a.y + b.y), c),
+            combine({
+                a: scrollPosition,
+                b: scrollWindowSize,
+                c: rowStarts,
+            }),
+        ),
+    );
+
+    const visibleColumns = $derived(
+        read(
+            ({ a, b }) =>
+                () =>
+                    G.range(a, R.inc(b)),
+            combine({ a: firstColumn, b: lastColumn }),
+        ),
+    );
+    const visibleRows = $derived(
+        read(
+            ({ a, b }) =>
+                () =>
+                    G.range(a, R.inc(b)),
+            combine({ a: firstRow, b: lastRow }),
+        ),
+    );
+
+    const lastHeadColumn = $derived(
+        read(
+            ({ a, b }) => R.findLastIndex(R.gte(a.x), b),
+            combine({ a: scrollWindowSize, b: columnHeadStarts }),
+        ),
+    );
+    const lastHeadRow = $derived(
+        read(
+            ({ a, b }) => R.findLastIndex(R.gte(a.y), b),
+            combine({ a: scrollWindowSize, b: rowHeadStarts }),
+        ),
+    );
+    const visibleHeadColumns = $derived(
+        read((x) => () => G.range(0, R.inc(x)), lastHeadColumn),
+    );
+    const visibleHeadRows = $derived(
+        read((lhr) => () => G.range(0, R.inc(lhr)), lastHeadRow),
     );
 
     const cellValues = atom({});

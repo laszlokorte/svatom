@@ -10,61 +10,70 @@
 
     const lasso = atom({});
 
-    const lassoPoints = view(["points", L.defaults([])], lasso);
-    const isActive = view(
-        [L.lens(R.compose(R.lt(0), R.length), (n, old) => (n ? old : []))],
-        lassoPoints,
+    const lassoPoints = $derived(view(["points", L.defaults([])], lasso));
+    const isActive = $derived(
+        view(
+            [L.lens(R.compose(R.lt(0), R.length), (n, old) => (n ? old : []))],
+            lassoPoints,
+        ),
     );
-    const currentLasso = view(
-        [
-            L.setter(R.takeLast(200)), // limit the lasso length just for fun
-            L.setter(
-                // discard very close samples
-                R.dropRepeatsWith(
-                    R.compose(
-                        (x) => x < cameraScale.value * 10,
-                        Math.sqrt,
-                        R.uncurryN(
-                            2,
-                            C.Phi1(R.add)(
-                                C.Psi(R.compose((x) => x * x, R.subtract))(
-                                    R.prop("x"),
-                                ),
-                            )(
-                                C.Psi(R.compose((x) => x * x, R.subtract))(
-                                    R.prop("y"),
+    const currentLasso = $derived(
+        view(
+            [
+                L.setter(R.takeLast(200)), // limit the lasso length just for fun
+                L.setter(
+                    // discard very close samples
+                    R.dropRepeatsWith(
+                        R.compose(
+                            (x) => x < cameraScale.value * 10,
+                            Math.sqrt,
+                            R.uncurryN(
+                                2,
+                                C.Phi1(R.add)(
+                                    C.Psi(R.compose((x) => x * x, R.subtract))(
+                                        R.prop("x"),
+                                    ),
+                                )(
+                                    C.Psi(R.compose((x) => x * x, R.subtract))(
+                                        R.prop("y"),
+                                    ),
                                 ),
                             ),
                         ),
                     ),
                 ),
-            ),
-            L.setter((n, o) => (n ? [...o, n] : [])),
-            L.removable("x", "y"),
-            L.defaults(false),
-        ],
-        lassoPoints,
+                L.setter((n, o) => (n ? [...o, n] : [])),
+                L.removable("x", "y"),
+                L.defaults(false),
+            ],
+            lassoPoints,
+        ),
     );
 
-    const lassoPath = view(
-        [
-            L.iso(
-                R.compose(
-                    R.join(" "),
-                    R.map(R.compose(R.join(","), R.props(["x", "y"]))),
-                ),
-                R.compose(
-                    R.map(
-                        R.compose(R.zipWith(R.assoc, ["x", "y"]), R.split(",")),
+    const lassoPath = $derived(
+        view(
+            [
+                L.iso(
+                    R.compose(
+                        R.join(" "),
+                        R.map(R.compose(R.join(","), R.props(["x", "y"]))),
                     ),
-                    R.split(" "),
+                    R.compose(
+                        R.map(
+                            R.compose(
+                                R.zipWith(R.assoc, ["x", "y"]),
+                                R.split(","),
+                            ),
+                        ),
+                        R.split(" "),
+                    ),
                 ),
-            ),
-        ],
-        lassoPoints,
+            ],
+            lassoPoints,
+        ),
     );
 
-    export const canCancel = read(R.identity, isActive);
+    export const canCancel = () => isActive.value;
     export function cancel() {
         isActive.value = false;
     }

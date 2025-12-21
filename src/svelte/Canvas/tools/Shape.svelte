@@ -28,58 +28,63 @@
         ],
     });
     const shape = atom(undefined);
-    const isActive = view(
-        L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
-        shape,
-    );
-
-    const shapeStart = view(
-        [L.removable("start"), "start", L.removable("x", "y")],
-        shape,
-    );
-    const shapeSize = view(
-        L.ifElse(
-            R.prop("start"),
-            [
-                L.removable("size"),
-                "size",
-                L.removable("x", "y"),
-                L.pick({
-                    x: ["x", L.normalize(R.max(minSize))],
-                    y: ["y", L.normalize(R.max(minSize))],
-                }),
-            ],
-            L.zero,
+    const isActive = $derived(
+        view(
+            L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
+            shape,
         ),
-        shape,
-    );
-    const shapeAngle = view(
-        [L.removable("angle"), "angle" /*L.normalize(R.always(0))*/],
-        shape,
-    );
-    const shapeAngleCos = view(
-        [L.reread((r) => Math.cos((r / 180) * Math.PI))],
-        shapeAngle,
-    );
-    const shapeAngleSin = view(
-        [L.reread((r) => Math.sin((r / 180) * Math.PI))],
-        shapeAngle,
     );
 
-    const shapePath = read(
-        L.getter(({ shape: b, cameraScale: scale }) =>
-            b && b.start && b.size
-                ? `M${numberSvgFormat.format(b.start.x - 10 * scale * Math.sign(b.size.x))},${numberSvgFormat.format(b.start.y)}h${numberSvgFormat.format(b.size.x)}
+    const shapeStart = $derived(
+        view([L.removable("start"), "start", L.removable("x", "y")], shape),
+    );
+    const shapeSize = $derived(
+        view(
+            L.ifElse(
+                R.prop("start"),
+                [
+                    L.removable("size"),
+                    "size",
+                    L.removable("x", "y"),
+                    L.pick({
+                        x: ["x", L.normalize(R.max(minSize))],
+                        y: ["y", L.normalize(R.max(minSize))],
+                    }),
+                ],
+                L.zero,
+            ),
+            shape,
+        ),
+    );
+    const shapeAngle = $derived(
+        view(
+            [L.removable("angle"), "angle" /*L.normalize(R.always(0))*/],
+            shape,
+        ),
+    );
+    const shapeAngleCos = $derived(
+        view([L.reread((r) => Math.cos((r / 180) * Math.PI))], shapeAngle),
+    );
+    const shapeAngleSin = $derived(
+        view([L.reread((r) => Math.sin((r / 180) * Math.PI))], shapeAngle),
+    );
+
+    const shapePath = $derived(
+        read(
+            L.getter(({ shape: b, cameraScale: scale }) =>
+                b && b.start && b.size
+                    ? `M${numberSvgFormat.format(b.start.x - 10 * scale * Math.sign(b.size.x))},${numberSvgFormat.format(b.start.y)}h${numberSvgFormat.format(b.size.x)}
 				m${Math.sign(b.size.x) * (10 * scale)},0l${Math.sign(b.size.x) * (-10 * scale)},${-10 * scale}v${2 * 10 * scale}l${Math.sign(b.size.x) * (10 * scale)},${-10 * scale}
 				M${numberSvgFormat.format(b.start.x)},${numberSvgFormat.format(b.start.y - 10 * scale * Math.sign(b.size.y))}v${numberSvgFormat.format(b.size.y)}
 				m0,${Math.sign(b.size.y) * (10 * scale)}l${-10 * scale},${Math.sign(b.size.y) * (-10 * scale)}h${2 * 10 * scale}l${-10 * scale},${Math.sign(b.size.y) * (10 * scale)}
 				`
-                : "",
+                    : "",
+            ),
+            combine({ shape, cameraScale }),
         ),
-        combine({ shape, cameraScale }),
     );
 
-    export const canCancel = read(R.identity, isActive);
+    export const canCancel = () => isActive.value;
     export function cancel() {
         isActive.value = false;
     }

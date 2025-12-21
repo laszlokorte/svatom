@@ -17,10 +17,14 @@
         state = atom({}),
     } = $props();
 
-    const grabPosition = view([L.removable("position"), "position"], state);
-    const isActive = view(
-        L.lens(R.compose(R.not, R.isNil), (b, o) => (b ? o : undefined)),
-        grabPosition,
+    const grabPosition = $derived(
+        view([L.removable("position"), "position"], state),
+    );
+    const isActive = $derived(
+        view(
+            L.lens(R.compose(R.not, R.isNil), (b, o) => (b ? o : undefined)),
+            grabPosition,
+        ),
     );
 </script>
 

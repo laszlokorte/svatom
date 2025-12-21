@@ -109,29 +109,36 @@
     ];
 
     const transformation = atom({});
-    const activeGrab = view([L.removable("grab"), "grab"], transformation);
-    const activeHandle = view(["handle"], transformation);
-    const activeScalePivot = view(["pivotTranslation"], transformation);
-    const activeRotationPivot = view(["pivotRotation"], transformation);
-    const translationAccum = view(
-        ["translationAccum", L.defaults({ x: 0, y: 0 })],
-        transformation,
+    const activeGrab = $derived(
+        view([L.removable("grab"), "grab"], transformation),
     );
-    const scaleAccum = view(
-        ["scaleAccum", L.defaults({ x: 1, y: 1 })],
-        transformation,
+    const activeHandle = $derived(view(["handle"], transformation));
+    const activeScalePivot = $derived(
+        view(["pivotTranslation"], transformation),
     );
-    const rotationAccum = view(
-        ["rotationAccum", L.defaults(0)],
-        transformation,
+    const activeRotationPivot = $derived(
+        view(["pivotRotation"], transformation),
     );
-    const moved = view(["moved", L.defaults(false)], transformation);
-    const offset = view(["offset", L.defaults({ x: 0, y: 0 })], transformation);
-    const activeSelection = view(["activeSelection"], transformation);
+    const translationAccum = $derived(
+        view(["translationAccum", L.defaults({ x: 0, y: 0 })], transformation),
+    );
+    const scaleAccum = $derived(
+        view(["scaleAccum", L.defaults({ x: 1, y: 1 })], transformation),
+    );
+    const rotationAccum = $derived(
+        view(["rotationAccum", L.defaults(0)], transformation),
+    );
+    const moved = $derived(view(["moved", L.defaults(false)], transformation));
+    const offset = $derived(
+        view(["offset", L.defaults({ x: 0, y: 0 })], transformation),
+    );
+    const activeSelection = $derived(view(["activeSelection"], transformation));
 
-    const isGrabbing = view(
-        L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
-        activeGrab,
+    const isGrabbing = $derived(
+        view(
+            L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
+            activeGrab,
+        ),
     );
 
     const selectionExtensionValue = $derived(
@@ -167,7 +174,7 @@
         isGrabbing.value = false;
     }
 
-    export const canCancel = isGrabbing;
+    export const canCancel = () => isGrabbing.value;
 </script>
 
 {#if selectionExtensionValue !== null}

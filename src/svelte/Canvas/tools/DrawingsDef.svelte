@@ -4,16 +4,18 @@
     import { atom, view, read } from "../../svatom.svelte.js";
     const { drawings, rotationTransform } = $props();
 
-    const paths = view(
-        R.map(
-            R.compose(
-                R.concat("M"),
-                R.join("L"),
-                R.map(({ x, y }) => `${x},${y}`),
-                R.prop("path"),
+    const paths = $derived(
+        view(
+            R.map(
+                R.compose(
+                    R.concat("M"),
+                    R.join("L"),
+                    R.map(({ x, y }) => `${x},${y}`),
+                    R.prop("path"),
+                ),
             ),
+            drawings,
         ),
-        drawings,
     );
 
     const pathsValue = $derived(paths.value);

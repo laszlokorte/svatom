@@ -94,20 +94,26 @@
             return path;
         };
 
-    const gridPathGeneral = view(
-        [
-            L.pick({
-                rect: ["frameBoxObject", "worldSpace"],
-                screen: ["frameBoxObject", "screenSpaceAligned"],
-                scale: "cameraScale",
-                cellSize: "gridDistance",
-            }),
-        ],
-        combine({ gridDistance, frameBoxObject, cameraScale }),
+    const gridPathGeneral = $derived(
+        view(
+            [
+                L.pick({
+                    rect: ["frameBoxObject", "worldSpace"],
+                    screen: ["frameBoxObject", "screenSpaceAligned"],
+                    scale: "cameraScale",
+                    cellSize: "gridDistance",
+                }),
+            ],
+            combine({ gridDistance, frameBoxObject, cameraScale }),
+        ),
     );
 
-    const gridPathPrimary = view(L.reread(gridBuilder(0)), gridPathGeneral);
-    const gridPathSecondary = view(L.reread(gridBuilder(1)), gridPathGeneral);
+    const gridPathPrimary = $derived(
+        view(L.reread(gridBuilder(0)), gridPathGeneral),
+    );
+    const gridPathSecondary = $derived(
+        view(L.reread(gridBuilder(1)), gridPathGeneral),
+    );
 </script>
 
 <g transform={rotationTransform.value} pointer-events="none">

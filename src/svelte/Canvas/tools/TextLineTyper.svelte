@@ -22,22 +22,23 @@
 
     const typer = atom({});
 
-    const position = view([L.removable("position"), "position"], typer);
-    const text = view(["text", L.valueOr("")], typer);
-    const fontSize = view(["fontSize", L.valueOr(1)], typer);
-    const isEditing = view(R.compose(R.not, R.isNil), position);
-    const textEmpty = view(L.reread(R.isEmpty), text);
-
-    const isActive = view(
-        L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
-        position,
+    const position = $derived(
+        view([L.removable("position"), "position"], typer),
     );
-    const isDragging = view(["dragging", L.valueOr(false)], typer);
+    const text = $derived(view(["text", L.valueOr("")], typer));
+    const fontSize = $derived(view(["fontSize", L.valueOr(1)], typer));
+    const isEditing = $derived(view(R.compose(R.not, R.isNil), position));
+    const textEmpty = $derived(view(L.reread(R.isEmpty), text));
 
-    export const canCancel = read(
-        ({ a, d }) => a || d,
-        combine({ d: isDragging, a: isActive }),
+    const isActive = $derived(
+        view(
+            L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined)),
+            position,
+        ),
     );
+    const isDragging = $derived(view(["dragging", L.valueOr(false)], typer));
+
+    export const canCancel = () => isActive.value || isDragging.value;
 
     export function cancel() {
         isActive.value = false;

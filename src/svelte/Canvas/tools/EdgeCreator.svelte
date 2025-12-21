@@ -15,91 +15,109 @@
     } = $props();
 
     const snapRadius = 30;
-    const snapRadiusScaled = view(
-        R.compose(R.multiply(snapRadius), R.min(1)),
-        cameraScale,
+    const snapRadiusScaled = $derived(
+        view(R.compose(R.multiply(snapRadius), R.min(1)), cameraScale),
     );
     const draft = atom({});
 
-    const draftSourceId = view(
-        [
-            L.removable("source"),
-            "source",
-            L.rewrite((v, old) => (isNaN(v) ? old : v)),
-            L.rewrite((v) => parseInt(v, 10)),
-        ],
-        draft,
-    );
-    const draftSourcePosition = view(
-        L.lens(
-            ({ n, s }) => {
-                return s !== undefined ? n[s] : undefined;
-            },
-            (newPos, { n, s }) => {
-                return { n, s };
-            },
+    const draftSourceId = $derived(
+        view(
+            [
+                L.removable("source"),
+                "source",
+                L.rewrite((v, old) => (isNaN(v) ? old : v)),
+                L.rewrite((v) => parseInt(v, 10)),
+            ],
+            draft,
         ),
-        combine({ n: nodes, s: draftSourceId }),
     );
-    const draftTarget = view([L.removable("target"), "target"], draft);
-    const draftTargetPosition = view(
-        [L.removable("position"), "position"],
-        draftTarget,
-    );
-    const draftTargetIds = view(
-        L.lens(R.prop("ids"), (newIds, old) =>
-            old.ids && newIds && old.ids.length !== newIds.length
-                ? { ...old, ids: newIds, cycle: 0 }
-                : { ...old, ids: newIds },
-        ),
-        draftTarget,
-    );
-    const draftTargetSnapCycle = view(["cycle", L.defaults(0)], draftTarget);
-    const draftTargetId = view(
-        L.reread(({ ids, cycle }) =>
-            ids ? ids[(cycle || 0) % ids.length] : undefined,
-        ),
-        draftTarget,
-    );
-    const isActive = view(
-        [L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined))],
-        draftSourceId,
-    );
-
-    const connection = combine({
-        source: draftSourceId,
-        target: draftTargetId,
-    });
-    const validConnection = view(
-        R.both(
-            R.compose(R.not, R.isNil, R.prop("source")),
-            R.compose(R.not, R.isNil, R.prop("target")),
-        ),
-        connection,
-    );
-
-    const draftTargetSnappedPosition = view(
-        [
+    const draftSourcePosition = $derived(
+        view(
             L.lens(
-                ({ n, t }) => {
-                    const snapId = t.ids
-                        ? t.ids[(t.cycle || 0) % t.ids.length]
-                        : undefined;
-                    return t !== undefined
-                        ? snapId !== undefined
-                            ? n[snapId]
-                            : t.position
-                        : undefined;
+                ({ n, s }) => {
+                    return s !== undefined ? n[s] : undefined;
                 },
                 (newPos, { n, s }) => {
                     return { n, s };
                 },
             ),
-        ],
-        combine({ n: nodes, t: draftTarget }),
+            combine({ n: nodes, s: draftSourceId }),
+        ),
+    );
+    const draftTarget = $derived(
+        view([L.removable("target"), "target"], draft),
+    );
+    const draftTargetPosition = $derived(
+        view([L.removable("position"), "position"], draftTarget),
+    );
+    const draftTargetIds = $derived(
+        view(
+            L.lens(R.prop("ids"), (newIds, old) =>
+                old.ids && newIds && old.ids.length !== newIds.length
+                    ? { ...old, ids: newIds, cycle: 0 }
+                    : { ...old, ids: newIds },
+            ),
+            draftTarget,
+        ),
+    );
+    const draftTargetSnapCycle = $derived(
+        view(["cycle", L.defaults(0)], draftTarget),
+    );
+    const draftTargetId = $derived(
+        view(
+            L.reread(({ ids, cycle }) =>
+                ids ? ids[(cycle || 0) % ids.length] : undefined,
+            ),
+            draftTarget,
+        ),
+    );
+    const isActive = $derived(
+        view(
+            [L.lens(R.compose(R.not, R.isNil), (n, o) => (n ? o : undefined))],
+            draftSourceId,
+        ),
     );
 
-    export const canCancel = read(R.identity, isActive);
+    const connection = $derived(
+        combine({
+            source: draftSourceId,
+            target: draftTargetId,
+        }),
+    );
+    const validConnection = $derived(
+        view(
+            R.both(
+                R.compose(R.not, R.isNil, R.prop("source")),
+                R.compose(R.not, R.isNil, R.prop("target")),
+            ),
+            connection,
+        ),
+    );
+
+    const draftTargetSnappedPosition = $derived(
+        view(
+            [
+                L.lens(
+                    ({ n, t }) => {
+                        const snapId = t.ids
+                            ? t.ids[(t.cycle || 0) % t.ids.length]
+                            : undefined;
+                        return t !== undefined
+                            ? snapId !== undefined
+                                ? n[snapId]
+                                : t.position
+                            : undefined;
+                    },
+                    (newPos, { n, s }) => {
+                        return { n, s };
+                    },
+                ),
+            ],
+            combine({ n: nodes, t: draftTarget }),
+        ),
+    );
+
+    export const canCancel = () => isActive.value;
 
     export function cancel() {
         isActive.value = false;

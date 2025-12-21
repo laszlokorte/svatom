@@ -266,91 +266,93 @@
 
     const machine = fsm(machineDef);
 
-    const dragging = read("dragging", machine);
+    const dragging = $derived(read("dragging", machine));
 
-    const currentDraft = read(
-        L.pick({
-            bezier: [
-                "path",
-                L.reread((p) => {
-                    if (p.length >= 2) {
-                        return (
-                            `M${p[0].point.x} ${p[0].point.y}` +
-                            R.join(
-                                " ",
-                                R.map(
-                                    ([from, to]) => {
-                                        if (!from.front && !to.back) {
-                                            return `L ${to.point.x} ${to.point.y}`;
-                                        } else if (from.front && !to.back) {
-                                            return `Q ${from.front.x} ${from.front.y} ${to.point.x} ${to.point.y}`;
-                                        } else if (!from.front && to.back) {
-                                            return `Q ${to.back.x} ${to.back.y} ${to.point.x} ${to.point.y}`;
-                                        } else {
-                                            return `C  ${from.front.x} ${from.front.y}  ${to.back.x} ${to.back.y} ${to.point.x} ${to.point.y}`;
-                                        }
-                                    },
-                                    R.aperture(2, p),
-                                ),
-                            )
-                        );
-                    } else if (p.length == 1) {
-                        return "";
-                    } else {
-                        return "";
-                    }
-                }),
-            ],
-            draftBezier: [
-                L.pick({
-                    from: ["path", L.last],
-                    to: {
-                        point: "draftPoint",
-                        front: "draftFrontHandle",
-                        back: "draftBackHandle",
-                    },
-                }),
-                L.reread(({ from, to }) => {
-                    if (from && to.point) {
-                        const start = `M${from.point.x} ${from.point.y}`;
-                        if (!from.front && !to.back) {
-                            return start + `L ${to.point.x} ${to.point.y}`;
-                        } else if (from.front && !to.back) {
+    const currentDraft = $derived(
+        read(
+            L.pick({
+                bezier: [
+                    "path",
+                    L.reread((p) => {
+                        if (p.length >= 2) {
                             return (
-                                start +
-                                `Q ${from.front.x} ${from.front.y} ${to.point.x} ${to.point.y}`
+                                `M${p[0].point.x} ${p[0].point.y}` +
+                                R.join(
+                                    " ",
+                                    R.map(
+                                        ([from, to]) => {
+                                            if (!from.front && !to.back) {
+                                                return `L ${to.point.x} ${to.point.y}`;
+                                            } else if (from.front && !to.back) {
+                                                return `Q ${from.front.x} ${from.front.y} ${to.point.x} ${to.point.y}`;
+                                            } else if (!from.front && to.back) {
+                                                return `Q ${to.back.x} ${to.back.y} ${to.point.x} ${to.point.y}`;
+                                            } else {
+                                                return `C  ${from.front.x} ${from.front.y}  ${to.back.x} ${to.back.y} ${to.point.x} ${to.point.y}`;
+                                            }
+                                        },
+                                        R.aperture(2, p),
+                                    ),
+                                )
                             );
-                        } else if (!from.front && to.back) {
-                            return (
-                                start +
-                                `Q ${to.back.x} ${to.back.y} ${to.point.x} ${to.point.y}`
-                            );
+                        } else if (p.length == 1) {
+                            return "";
                         } else {
-                            return (
-                                start +
-                                `C  ${from.front.x} ${from.front.y}  ${to.back.x} ${to.back.y} ${to.point.x} ${to.point.y}`
-                            );
+                            return "";
                         }
-                    } else {
-                        return "";
-                    }
-                }),
-            ],
-            path: "path",
-            pathHead: ["path", L.last],
-            pathRoot: ["path", L.first],
-            pathNeck: [
-                "path",
-                L.reread((x) =>
-                    x.length > 0 ? x[Math.max(0, x.length - 2)] : undefined,
-                ),
-            ],
-            draftPoint: "draftPoint",
-            draftFrontHandle: "draftFrontHandle",
-            draftBackHandle: "draftBackHandle",
-            isDetached: "detached",
-        }),
-        machine.context,
+                    }),
+                ],
+                draftBezier: [
+                    L.pick({
+                        from: ["path", L.last],
+                        to: {
+                            point: "draftPoint",
+                            front: "draftFrontHandle",
+                            back: "draftBackHandle",
+                        },
+                    }),
+                    L.reread(({ from, to }) => {
+                        if (from && to.point) {
+                            const start = `M${from.point.x} ${from.point.y}`;
+                            if (!from.front && !to.back) {
+                                return start + `L ${to.point.x} ${to.point.y}`;
+                            } else if (from.front && !to.back) {
+                                return (
+                                    start +
+                                    `Q ${from.front.x} ${from.front.y} ${to.point.x} ${to.point.y}`
+                                );
+                            } else if (!from.front && to.back) {
+                                return (
+                                    start +
+                                    `Q ${to.back.x} ${to.back.y} ${to.point.x} ${to.point.y}`
+                                );
+                            } else {
+                                return (
+                                    start +
+                                    `C  ${from.front.x} ${from.front.y}  ${to.back.x} ${to.back.y} ${to.point.x} ${to.point.y}`
+                                );
+                            }
+                        } else {
+                            return "";
+                        }
+                    }),
+                ],
+                path: "path",
+                pathHead: ["path", L.last],
+                pathRoot: ["path", L.first],
+                pathNeck: [
+                    "path",
+                    L.reread((x) =>
+                        x.length > 0 ? x[Math.max(0, x.length - 2)] : undefined,
+                    ),
+                ],
+                draftPoint: "draftPoint",
+                draftFrontHandle: "draftFrontHandle",
+                draftBackHandle: "draftBackHandle",
+                isDetached: "detached",
+            }),
+            machine.context,
+        ),
     );
 
     machine.on("COMPLETED", (event) => {
@@ -372,7 +374,7 @@
         machine.send({ type: "CANCEL" });
     }
 
-    export const canCancel = read((s) => s != "EMPTY", machine.state);
+    export const canCancel = () => "EMPTY" != machine.state.value;
 </script>
 
 <g

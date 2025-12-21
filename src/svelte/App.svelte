@@ -34,27 +34,33 @@
 
     // Atoms
     const summingValues = atom([10, 10, 10]);
-    const summingValuesSum = view(
-        L.lens(R.sum, (n, o) => {
-            const factor = n / R.sum(o);
-            return R.map(R.multiply(factor), o);
-        }),
-        summingValues,
+    const summingValuesSum = $derived(
+        view(
+            L.lens(R.sum, (n, o) => {
+                const factor = n / R.sum(o);
+                return R.map(R.multiply(factor), o);
+            }),
+            summingValues,
+        ),
     );
     const textScroller = atom({ x: 0, y: 0 });
     const textScrollerMax = atom({ x: 0, y: 0 });
-    const textScrollerY = view(
-        ["y", L.normalize((x) => parseInt(x, 10)), L.normalize(Math.round)],
-        textScroller,
+    const textScrollerY = $derived(
+        view(
+            ["y", L.normalize((x) => parseInt(x, 10)), L.normalize(Math.round)],
+            textScroller,
+        ),
     );
-    const textScrollerX = view(
-        ["x", L.normalize((x) => parseInt(x, 10)), L.normalize(Math.round)],
-        textScroller,
+    const textScrollerX = $derived(
+        view(
+            ["x", L.normalize((x) => parseInt(x, 10)), L.normalize(Math.round)],
+            textScroller,
+        ),
     );
     const inputFields = atom([]);
     const size = atom(15);
     const allNamesInternal = atom([{ name: "Laszlo" }]);
-    const allNames = view(L.define([]), allNamesInternal);
+    const allNames = $derived(view(L.define([]), allNamesInternal));
     const wins = atom({ x: 100, y: 100 });
     const theNumber = atom(2);
     const settings = atom({ local: "de" });
@@ -102,52 +108,55 @@
     );
 
     // Views into the Atom
-    const clampedSize = view(L.normalize(R.clamp(10, 30)), size);
-    const fontSize = string`font-size: ${clampedSize}px`;
-    const count = view("length", allNames);
-    const newName = view(
-        [L.appendTo, L.removable("name"), "name", L.defaults("")],
-        allNames,
+    const clampedSize = $derived(view(L.normalize(R.clamp(10, 30)), size));
+    const fontSize = $derived(string`font-size: ${clampedSize}px`);
+    const count = $derived(view("length", allNames));
+    const newName = $derived(
+        view(
+            [L.appendTo, L.removable("name"), "name", L.defaults("")],
+            allNames,
+        ),
     );
-    const peopleJson = failableView(
-        L.inverse(L.json({ space: "  " })),
-        allNames,
-        false,
+    const peopleJson = $derived(
+        failableView(L.inverse(L.json({ space: "  " })), allNames, false),
     );
 
-    const theNumberClamped = view(
-        [L.normalize(R.clamp(0, 200)), numeric],
-        theNumber,
+    const theNumberClamped = $derived(
+        view([L.normalize(R.clamp(0, 200)), numeric], theNumber),
     );
-    const theNumberDoubled = view(doubleNumber, theNumberClamped);
+    const theNumberDoubled = $derived(view(doubleNumber, theNumberClamped));
 
-    const allLangs = read(L.foldTraversalLens(L.collect, L.keys), translation);
-    const allLangsCount = read("length", allLangs);
-    const lang = view("local", settings);
+    const allLangs = $derived(
+        read(L.foldTraversalLens(L.collect, L.keys), translation),
+    );
+    const allLangsCount = $derived(read("length", allLangs));
+    const lang = $derived(view("local", settings));
     const langAndTranslation = combineWithRest({
         lang: view("local", settings),
         translation,
     });
 
-    const currentTranslation = view(
-        [
-            L.choose((x) => {
-                return ["translation", L.prop(x.lang || "de")];
-            }),
-        ],
-        langAndTranslation,
+    const currentTranslation = $derived(
+        view(
+            [
+                L.choose((x) => {
+                    return ["translation", L.prop(x.lang || "de")];
+                }),
+            ],
+            langAndTranslation,
+        ),
     );
 
-    const langAndTransJson = failableView(
-        L.inverse(L.json({ space: "  " })),
-        langAndTranslation,
+    const langAndTransJson = $derived(
+        failableView(L.inverse(L.json({ space: "  " })), langAndTranslation),
     );
 
-    const currentGreeting = view(
-        ["greeting", L.defaults("")],
-        currentTranslation,
+    const currentGreeting = $derived(
+        view(["greeting", L.defaults("")], currentTranslation),
     );
-    const yourName = view(["name", L.removable(), L.defaults("")], settings);
+    const yourName = $derived(
+        view(["name", L.removable(), L.defaults("")], settings),
+    );
 
     const ascii = atom(asciiLogo);
 
@@ -157,96 +166,109 @@
         content: { x: 2000, y: 4000 },
         extraPadding: true,
     });
-    const scrollerPosition = view("pos", scrollerState);
-    const rawScrollPos = view("rawPos", scrollerState);
-    const browserChromeOverscroll = view(
-        ["overscroll", L.define({ x: 0, y: 0 })],
-        scrollerState,
+    const scrollerPosition = $derived(view("pos", scrollerState));
+    const rawScrollPos = $derived(view("rawPos", scrollerState));
+    const browserChromeOverscroll = $derived(
+        view(["overscroll", L.define({ x: 0, y: 0 })], scrollerState),
     );
-    const scrollerDebug = view(["debug", L.defaults(true)], scrollerState);
-    const scrollerWindow = view("window", scrollerState);
-    const extraScrollPadding = view("extraPadding", scrollerState);
-    const scrollerSize = view("content", scrollerState);
-    const scrollerSizeX = view("x", scrollerSize);
-    const scrollerSizeY = view("y", scrollerSize);
-    const scrollerPositionX = view("x", scrollerPosition);
-    const scrollerPositionY = view("y", scrollerPosition);
+    const scrollerDebug = $derived(
+        view(["debug", L.defaults(true)], scrollerState),
+    );
+    const scrollerWindow = $derived(view("window", scrollerState));
+    const extraScrollPadding = $derived(view("extraPadding", scrollerState));
+    const scrollerSize = $derived(view("content", scrollerState));
+    const scrollerSizeX = $derived(view("x", scrollerSize));
+    const scrollerSizeY = $derived(view("y", scrollerSize));
+    const scrollerPositionX = $derived(view("x", scrollerPosition));
+    const scrollerPositionY = $derived(view("y", scrollerPosition));
 
-    const scrollerPositionXClamped = read(
-        ({ v, max, w }) => R.clamp(0, Math.max(0, max - w.x), v),
-        combine({
-            v: scrollerPositionX,
-            max: scrollerSizeX,
-            w: scrollerWindow,
-        }),
+    const scrollerPositionXClamped = $derived(
+        read(
+            ({ v, max, w }) => R.clamp(0, Math.max(0, max - w.x), v),
+            combine({
+                v: scrollerPositionX,
+                max: scrollerSizeX,
+                w: scrollerWindow,
+            }),
+        ),
     );
-    const scrollerPositionYClamped = read(
-        ({ v, max, w }) => R.clamp(0, Math.max(0, max - w.y), v),
-        combine({
-            v: scrollerPositionY,
-            max: scrollerSizeY,
-            w: scrollerWindow,
-        }),
+    const scrollerPositionYClamped = $derived(
+        read(
+            ({ v, max, w }) => R.clamp(0, Math.max(0, max - w.y), v),
+            combine({
+                v: scrollerPositionY,
+                max: scrollerSizeY,
+                w: scrollerWindow,
+            }),
+        ),
     );
 
-    const scrollerPositionXClampedSoft = read(
-        ({ v, max, w }) => lerp(R.clamp(0, Math.max(0, max - w.x), v), v, 0.8),
-        combine({
-            v: scrollerPositionX,
-            max: scrollerSizeX,
-            w: scrollerWindow,
-        }),
-    );
-    const scrollerPositionYClampedSoft = read(
-        [
+    const scrollerPositionXClampedSoft = $derived(
+        read(
             ({ v, max, w }) =>
-                lerp(R.clamp(0, Math.max(0, max - w.y), v), v, 0.8),
-        ],
-        combine({
-            v: scrollerPositionY,
-            max: scrollerSizeY,
-            w: scrollerWindow,
-        }),
+                lerp(R.clamp(0, Math.max(0, max - w.x), v), v, 0.8),
+            combine({
+                v: scrollerPositionX,
+                max: scrollerSizeX,
+                w: scrollerWindow,
+            }),
+        ),
+    );
+    const scrollerPositionYClampedSoft = $derived(
+        read(
+            [
+                ({ v, max, w }) =>
+                    lerp(R.clamp(0, Math.max(0, max - w.y), v), v, 0.8),
+            ],
+            combine({
+                v: scrollerPositionY,
+                max: scrollerSizeY,
+                w: scrollerWindow,
+            }),
+        ),
     );
 
-    const bgOffsetX = view([R.negate], scrollerPositionXClampedSoft);
-    const bgOffsetY = view([R.negate], scrollerPositionYClampedSoft);
+    const bgOffsetX = $derived(view([R.negate], scrollerPositionXClampedSoft));
+    const bgOffsetY = $derived(view([R.negate], scrollerPositionYClampedSoft));
 
-    const scrollerOutside = read(
-        ({ x, y, xc, yc, win }) =>
-            Math.pow(
-                Math.min(
-                    2,
-                    Math.hypot(
-                        Math.abs(x - xc) / (win.x || 1),
-                        Math.abs(y - yc) / (win.y || 1),
-                    ),
-                ) / 1.4,
-                1,
-            ),
-        combine({
-            x: scrollerPositionX,
-            y: scrollerPositionY,
-            xc: scrollerPositionXClamped,
-            yc: scrollerPositionYClamped,
-            win: scrollerWindow,
-        }),
+    const scrollerOutside = $derived(
+        read(
+            ({ x, y, xc, yc, win }) =>
+                Math.pow(
+                    Math.min(
+                        2,
+                        Math.hypot(
+                            Math.abs(x - xc) / (win.x || 1),
+                            Math.abs(y - yc) / (win.y || 1),
+                        ),
+                    ) / 1.4,
+                    1,
+                ),
+            combine({
+                x: scrollerPositionX,
+                y: scrollerPositionY,
+                xc: scrollerPositionXClamped,
+                yc: scrollerPositionYClamped,
+                win: scrollerWindow,
+            }),
+        ),
     );
 
-    const browserChromeOverscrollSum = view(
-        ({ x, y }) => Math.hypot(x, y) / 100,
-        browserChromeOverscroll,
+    const browserChromeOverscrollSum = $derived(
+        view(({ x, y }) => Math.hypot(x, y) / 100, browserChromeOverscroll),
     );
 
-    const formatedGreeting = string`${read(["greeting", L.valueOr("Hi")], currentTranslation)}${read(
-        [
-            "name",
-            L.inverse(L.dropPrefix(" ")),
-            L.inverse(L.dropSuffix("!")),
-            L.valueOr(", whats your name?"),
-        ],
-        settings,
-    )}`;
+    const formatedGreeting = $derived(
+        string`${read(["greeting", L.valueOr("Hi")], currentTranslation)}${read(
+            [
+                "name",
+                L.inverse(L.dropPrefix(" ")),
+                L.inverse(L.dropSuffix("!")),
+                L.valueOr(", whats your name?"),
+            ],
+            settings,
+        )}`,
+    );
 </script>
 
 <SplashScreen icon={favicon} color="#fef0f0" />

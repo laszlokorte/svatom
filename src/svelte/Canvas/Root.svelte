@@ -105,7 +105,9 @@
     const cameraTow = atom(undefined);
     const currentToolElement = atom(undefined);
     const fullScreenContainer = atom(undefined);
-    const canFullScreen = read("requestFullscreen", fullScreenContainer);
+    const canFullScreen = $derived(
+        read("requestFullscreen", fullScreenContainer),
+    );
 
     const debugFrames = atom(false);
     const showBounds = atom(false);
@@ -414,46 +416,50 @@
         },
     });
 
-    const cameraFocus = view(
-        [
-            L.choose(({ current, docs }) => [
-                "tabs",
-                L.defaults([]),
-                L.choices(current, L.appendTo),
-                "camera",
-                L.valueOr({ x: 0, y: 0, z: 0, w: 0 }),
-            ]),
-        ],
-        allTabs,
+    const cameraFocus = $derived(
+        view(
+            [
+                L.choose(({ current, docs }) => [
+                    "tabs",
+                    L.defaults([]),
+                    L.choices(current, L.appendTo),
+                    "camera",
+                    L.valueOr({ x: 0, y: 0, z: 0, w: 0 }),
+                ]),
+            ],
+            allTabs,
+        ),
     );
 
-    const camera = view(
-        [
-            L.pick({
-                focus: "focus",
-                frame: ["settings", "frame"],
-                plane: ["settings", "plane"],
-            }),
-            L.valueOr({
-                focus: { x: 0, y: 0, z: 0, w: 0 },
-                plane: {
-                    autosize: true,
-                    x: 1000,
-                    y: 1000,
-                },
-                frame: {
-                    aspect: "meet",
-                    alignX: "Mid",
-                    alignY: "Mid",
-                    autoPadding: true,
-                    size: {
-                        x: 100,
-                        y: 100,
+    const camera = $derived(
+        view(
+            [
+                L.pick({
+                    focus: "focus",
+                    frame: ["settings", "frame"],
+                    plane: ["settings", "plane"],
+                }),
+                L.valueOr({
+                    focus: { x: 0, y: 0, z: 0, w: 0 },
+                    plane: {
+                        autosize: true,
+                        x: 1000,
+                        y: 1000,
                     },
-                },
-            }),
-        ],
-        combine({ focus: cameraFocus, settings: cameraSettings }),
+                    frame: {
+                        aspect: "meet",
+                        alignX: "Mid",
+                        alignY: "Mid",
+                        autoPadding: true,
+                        size: {
+                            x: 100,
+                            y: 100,
+                        },
+                    },
+                }),
+            ],
+            combine({ focus: cameraFocus, settings: cameraSettings }),
+        ),
     );
 
     const {
@@ -463,7 +469,7 @@
         pageToClient,
         worldPageIso,
         worldClientIso,
-    } = constructLenses(svgElement, camera);
+    } = $derived(constructLenses(svgElement, camera));
 
     const aspectRatioAlignLens = L.iso(
         ({ alignX, alignY }) => `x${alignX}Y${alignY}`,
@@ -493,7 +499,7 @@
             ),
         ),
     ];
-    const preserveAspectRatio = read(preserveAspectRatioLens, camera);
+    const preserveAspectRatio = $derived(read(preserveAspectRatioLens, camera));
 
     const viewBoxLens = L.reread((cam) => {
         return `${numberSvgFormat.format(cam.focus.x - (cam.plane.x / 2) * Math.exp(-cam.focus.z))}
@@ -501,7 +507,7 @@
 		${numberSvgFormat.format(cam.plane.x * Math.exp(-cam.focus.z))}
 		${numberSvgFormat.format(cam.plane.y * Math.exp(-cam.focus.z))}`;
     });
-    const viewBox = view(viewBoxLens, camera);
+    const viewBox = $derived(view(viewBoxLens, camera));
 
     const viewBoxPathLens = L.reread((cam) => {
         return `M${numberSvgFormat.format(cam.focus.x - (cam.plane.x / 2) * Math.exp(-cam.focus.z))},
@@ -511,18 +517,19 @@
 		H${numberSvgFormat.format(cam.focus.x - (cam.plane.x / 2) * Math.exp(-cam.focus.z))}z`;
     });
 
-    const viewBoxPath = view(viewBoxPathLens, camera);
+    const viewBoxPath = $derived(view(viewBoxPathLens, camera));
 
     const boxPathLens = L.reread(
         ({ minX, minY, width, height }) =>
             `M${numberSvgFormat.format(minX)},${numberSvgFormat.format(minY)}h${numberSvgFormat.format(width)}v${numberSvgFormat.format(height)}h${numberSvgFormat.format(-width)}z`,
     );
 
-    const frameBoxObject = read(frameBoxLens, camera);
-    const frameBoxScreen = read([frameBoxLens, "screenSpaceAligned"], camera);
-    const frameBoxPath = read(
-        [frameBoxLens, "screenSpaceAligned", boxPathLens],
-        camera,
+    const frameBoxObject = $derived(read(frameBoxLens, camera));
+    const frameBoxScreen = $derived(
+        read([frameBoxLens, "screenSpaceAligned"], camera),
+    );
+    const frameBoxPath = $derived(
+        read([frameBoxLens, "screenSpaceAligned", boxPathLens], camera),
     );
 
     const cameraRotationTransformLens = L.reread(
@@ -533,10 +540,11 @@
         (c) => `rotate(${-c.focus.w}, ${c.focus.x}, ${c.focus.y})`,
     );
 
-    const rotationTransform = read(cameraRotationTransformLens, camera);
-    const rotationInverseTransform = read(
-        cameraRotationInverseTransformLens,
-        camera,
+    const rotationTransform = $derived(
+        read(cameraRotationTransformLens, camera),
+    );
+    const rotationInverseTransform = $derived(
+        read(cameraRotationInverseTransformLens, camera),
     );
     const cameraRotationLens = L.iso(
         ({ x, y }) => {
@@ -568,9 +576,9 @@
     );
 
     const cameraScaleLens = L.reread((c) => Math.exp(-c.focus.z));
-    const cameraScale = read(cameraScaleLens, camera);
+    const cameraScale = $derived(read(cameraScaleLens, camera));
     const cameraOrientationLens = L.reread((c) => c.focus.w);
-    const cameraOrientation = read(cameraOrientationLens, camera);
+    const cameraOrientation = $derived(read(cameraOrientationLens, camera));
     const gridDistance = atom(128);
 
     const affineLens = (dim, xDim, yDim, angleDim) => {
@@ -625,38 +633,33 @@
         }
     };
 
-    const cameraZoom = view(["focus", "z", numberLens], camera);
+    const cameraZoom = $derived(view(["focus", "z", numberLens], camera));
     const cameraZoomMin = atom(-5);
-    const cameraZoomFormatted = view([numberLens], cameraZoom);
-    const cameraAutoPadding = view(["frame", "autoPadding"], camera);
+    const cameraZoomFormatted = $derived(view([numberLens], cameraZoom));
+    const cameraAutoPadding = $derived(view(["frame", "autoPadding"], camera));
 
-    const cameraX = view(["focus", "x"], camera);
-    const cameraY = view(["focus", "y"], camera);
-    const cameraXFormatted = view([numberLens], cameraX);
-    const cameraYFormatted = view([numberLens], cameraY);
-    const cameraAngle = view(["focus", "w", numberLens], camera);
-    const cameraAngleFormatted = view([numberLens], cameraAngle);
-    const cameraXScreen = view(
-        ["focus", affineLens("x", "x", "y", "w")],
-        camera,
+    const cameraX = $derived(view(["focus", "x"], camera));
+    const cameraY = $derived(view(["focus", "y"], camera));
+    const cameraXFormatted = $derived(view([numberLens], cameraX));
+    const cameraYFormatted = $derived(view([numberLens], cameraY));
+    const cameraAngle = $derived(view(["focus", "w", numberLens], camera));
+    const cameraAngleFormatted = $derived(view([numberLens], cameraAngle));
+    const cameraXScreen = $derived(
+        view(["focus", affineLens("x", "x", "y", "w")], camera),
     );
-    const cameraYScreen = view(
-        ["focus", affineLens("y", "x", "y", "w")],
-        camera,
+    const cameraYScreen = $derived(
+        view(["focus", affineLens("y", "x", "y", "w")], camera),
     );
 
-    const cameraXScreenFormatted = view(
-        ["focus", affineLens("x", "x", "y", "w"), numberLens],
-        camera,
+    const cameraXScreenFormatted = $derived(
+        view(["focus", affineLens("x", "x", "y", "w"), numberLens], camera),
     );
-    const cameraYScreenFormatted = view(
-        ["focus", affineLens("y", "x", "y", "w"), numberLens],
-        camera,
+    const cameraYScreenFormatted = $derived(
+        view(["focus", affineLens("y", "x", "y", "w"), numberLens], camera),
     );
 
-    const zoomDelta = view(
-        ["focus", L.setter(CamNavigation.zoomWithPivot)],
-        camera,
+    const zoomDelta = $derived(
+        view(["focus", L.setter(CamNavigation.zoomWithPivot)], camera),
     );
 
     const cameraZoomFrameLens = [
@@ -690,221 +693,257 @@
         }),
     ];
 
-    const canvasDocumentHistory = view(
-        [
-            L.choose(({ current, docs }) => [
+    const canvasDocumentHistory = $derived(
+        view(
+            [
+                L.choose(({ current, docs }) => [
+                    "tabs",
+                    current || 0,
+                    "document",
+                    L.define(
+                        H.init(HISTORY_SETTINGS, {
+                            content: {
+                                axis: undefined,
+                                nodes: [],
+                                textes: [],
+                                drawings: [],
+                            },
+                        }),
+                    ),
+                ]),
+            ],
+            allTabs,
+        ),
+    );
+
+    const canvasDocument = $derived(view([H.present], canvasDocumentHistory));
+
+    const canvasDocumentMut = $derived(
+        view(H.presentMut, canvasDocumentHistory),
+    );
+
+    const canvasUndoIndex = $derived(view(H.undoIndex, canvasDocumentHistory));
+
+    const canvasRedoIndex = $derived(view(H.redoIndex, canvasDocumentHistory));
+
+    const newTab = $derived(
+        view(
+            L.setter((n, prev) => ({
+                tabs: [
+                    ...prev.tabs,
+                    {
+                        document: H.init(HISTORY_SETTINGS, n),
+                        camera: { x: 100, y: -50, z: 0, w: 20 },
+                    },
+                    {
+                        document: H.init(HISTORY_SETTINGS, n),
+                        camera: { x: 100, y: -50, z: 0, w: 20 },
+                    },
+                ].slice(0, Math.max(prev.tabs.length, 1) + 1),
+                current: Math.max(prev.tabs.length, 1),
+            })),
+            allTabs,
+        ),
+    );
+
+    const tabIds = $derived(
+        read(
+            [
                 "tabs",
-                current || 0,
-                "document",
-                L.define(
-                    H.init(HISTORY_SETTINGS, {
-                        content: {
-                            axis: undefined,
-                            nodes: [],
-                            textes: [],
-                            drawings: [],
-                        },
-                    }),
-                ),
-            ]),
-        ],
-        allTabs,
+                L.valueOr([0]),
+                L.reread(R.compose(R.range(0), R.max(1), R.length)),
+            ],
+            allTabs,
+        ),
     );
 
-    const canvasDocument = view([H.present], canvasDocumentHistory);
-
-    const canvasDocumentMut = view(H.presentMut, canvasDocumentHistory);
-
-    const canvasUndoIndex = view(H.undoIndex, canvasDocumentHistory);
-
-    const canvasRedoIndex = view(H.redoIndex, canvasDocumentHistory);
-
-    const newTab = view(
-        L.setter((n, prev) => ({
-            tabs: [
-                ...prev.tabs,
-                {
-                    document: H.init(HISTORY_SETTINGS, n),
-                    camera: { x: 100, y: -50, z: 0, w: 20 },
-                },
-                {
-                    document: H.init(HISTORY_SETTINGS, n),
-                    camera: { x: 100, y: -50, z: 0, w: 20 },
-                },
-            ].slice(0, Math.max(prev.tabs.length, 1) + 1),
-            current: Math.max(prev.tabs.length, 1),
-        })),
-        allTabs,
+    const closeTab = $derived(
+        view(
+            L.setter((r, old) => ({
+                current:
+                    old.current >= r
+                        ? Math.max(0, old.current - 1)
+                        : old.current,
+                tabs: R.addIndex(R.filter)((v, i) => i !== r, old.tabs),
+            })),
+            allTabs,
+        ),
     );
 
-    const tabIds = read(
-        [
-            "tabs",
-            L.valueOr([0]),
-            L.reread(R.compose(R.range(0), R.max(1), R.length)),
-        ],
-        allTabs,
-    );
-
-    const closeTab = view(
-        L.setter((r, old) => ({
-            current:
-                old.current >= r ? Math.max(0, old.current - 1) : old.current,
-            tabs: R.addIndex(R.filter)((v, i) => i !== r, old.tabs),
-        })),
-        allTabs,
-    );
-
-    const currentTabId = view("current", allTabs);
+    const currentTabId = $derived(view("current", allTabs));
 
     const tool = atom("none");
-    const currentDocumentContent = view(["content"], canvasDocument);
-    const currentDocumentContentMut = view(["content"], canvasDocumentMut);
-
-    const nodes = view(["nodes", L.define([])], currentDocumentContent);
-    const edges = view(["edges", L.define([])], currentDocumentContent);
-    const textes = view(["textes", L.defaults([])], currentDocumentContent);
-    const textBoxes = view(
-        ["textBoxes", L.defaults([])],
-        currentDocumentContent,
+    const currentDocumentContent = $derived(view(["content"], canvasDocument));
+    const currentDocumentContentMut = $derived(
+        view(["content"], canvasDocumentMut),
     );
-    const guides = view(["guides", L.defaults([])], currentDocumentContent);
-    const axis = view(["axis"], currentDocumentContent);
-    const drawings = view(["drawings", L.defaults([])], currentDocumentContent);
-    const splines = view(["splines", L.defaults([])], currentDocumentContent);
-    const shapes = view(["shapes", L.defaults([])], currentDocumentContent);
-    const plots = view(["plots", L.defaults([])], currentDocumentContent);
-    const alerts = view(["alerts", L.defaults([])], currentDocumentContent);
+
+    const nodes = $derived(
+        view(["nodes", L.define([])], currentDocumentContent),
+    );
+    const edges = $derived(
+        view(["edges", L.define([])], currentDocumentContent),
+    );
+    const textes = $derived(
+        view(["textes", L.defaults([])], currentDocumentContent),
+    );
+    const textBoxes = $derived(
+        view(["textBoxes", L.defaults([])], currentDocumentContent),
+    );
+    const guides = $derived(
+        view(["guides", L.defaults([])], currentDocumentContent),
+    );
+    const axis = $derived(view(["axis"], currentDocumentContent));
+    const drawings = $derived(
+        view(["drawings", L.defaults([])], currentDocumentContent),
+    );
+    const splines = $derived(
+        view(["splines", L.defaults([])], currentDocumentContent),
+    );
+    const shapes = $derived(
+        view(["shapes", L.defaults([])], currentDocumentContent),
+    );
+    const plots = $derived(
+        view(["plots", L.defaults([])], currentDocumentContent),
+    );
+    const alerts = $derived(
+        view(["alerts", L.defaults([])], currentDocumentContent),
+    );
     const rubberBand = atom(undefined);
 
-    const zLayers = view(
-        [
-            L.partsOf(
-                L.branch({
-                    shapes: [
-                        L.defaults([]),
-                        L.elems,
-                        L.lens(
-                            (s, i) => ({
-                                id: "shape-" + i,
-                                zIndex: s.zIndex,
-                            }),
-                            (newVal, old) => ({
-                                ...old,
-                                zIndex: newVal.zIndex,
-                            }),
-                        ),
-                    ],
-                    edges: [
-                        L.defaults([]),
-                        L.elems,
-                        L.lens(
-                            (s, i) => ({
-                                id: "edge-" + i,
-                                zIndex: s.zIndex,
-                            }),
-                            (newVal, old) => ({
-                                ...old,
-                                zIndex: newVal.zIndex,
-                            }),
-                        ),
-                    ],
-                    nodes: [
-                        L.defaults([]),
-                        L.elems,
-                        L.lens(
-                            (s, i) => ({
-                                id: "node-" + i,
-                                zIndex: s.zIndex,
-                            }),
-                            (newVal, old) => ({
-                                ...old,
-                                zIndex: newVal.zIndex,
-                            }),
-                        ),
-                    ],
-                    textes: [
-                        L.defaults([]),
-                        L.elems,
-                        L.lens(
-                            (s, i) => ({
-                                id: "textline-" + i,
-                                zIndex: s.zIndex,
-                            }),
-                            (newVal, old) => ({
-                                ...old,
-                                zIndex: newVal.zIndex,
-                            }),
-                        ),
-                    ],
-                    textBoxes: [
-                        L.defaults([]),
-                        L.elems,
-                        L.lens(
-                            (s, i) => ({
-                                id: "textbox-" + i,
-                                zIndex: s.zIndex,
-                            }),
-                            (newVal, old) => ({
-                                ...old,
-                                zIndex: newVal.zIndex,
-                            }),
-                        ),
-                    ],
-                    splines: [
-                        L.defaults([]),
-                        L.elems,
-                        L.lens(
-                            (s, i) => ({
-                                id: "spline-" + i,
-                                zIndex: s.zIndex,
-                            }),
-                            (newVal, old) => ({
-                                ...old,
-                                zIndex: newVal.zIndex,
-                            }),
-                        ),
-                    ],
-                    drawings: [
-                        L.defaults([]),
-                        L.elems,
-                        L.lens(
-                            (s, i) => ({
-                                id: "drawing-" + i,
-                                zIndex: s.zIndex,
-                            }),
-                            (newVal, old) => ({
-                                ...old,
-                                zIndex: newVal.zIndex,
-                            }),
-                        ),
-                    ],
-                }),
-            ),
-            L.lens(R.sortBy(R.propOr(Infinity, "zIndex")), (newZ, olds) => {
-                if (newZ.length !== olds.length) {
-                    return olds;
-                }
-
-                const sortedNew = R.sortBy(R.propOr(Infinity, "zIndex"), newZ);
-
-                return R.map(
-                    (o) => ({
-                        id: o.id,
-                        zIndex: R.findIndex(
-                            R.compose(R.equals(o.id), R.prop("id")),
-                            sortedNew,
-                        ),
+    const zLayers = $derived(
+        view(
+            [
+                L.partsOf(
+                    L.branch({
+                        shapes: [
+                            L.defaults([]),
+                            L.elems,
+                            L.lens(
+                                (s, i) => ({
+                                    id: "shape-" + i,
+                                    zIndex: s.zIndex,
+                                }),
+                                (newVal, old) => ({
+                                    ...old,
+                                    zIndex: newVal.zIndex,
+                                }),
+                            ),
+                        ],
+                        edges: [
+                            L.defaults([]),
+                            L.elems,
+                            L.lens(
+                                (s, i) => ({
+                                    id: "edge-" + i,
+                                    zIndex: s.zIndex,
+                                }),
+                                (newVal, old) => ({
+                                    ...old,
+                                    zIndex: newVal.zIndex,
+                                }),
+                            ),
+                        ],
+                        nodes: [
+                            L.defaults([]),
+                            L.elems,
+                            L.lens(
+                                (s, i) => ({
+                                    id: "node-" + i,
+                                    zIndex: s.zIndex,
+                                }),
+                                (newVal, old) => ({
+                                    ...old,
+                                    zIndex: newVal.zIndex,
+                                }),
+                            ),
+                        ],
+                        textes: [
+                            L.defaults([]),
+                            L.elems,
+                            L.lens(
+                                (s, i) => ({
+                                    id: "textline-" + i,
+                                    zIndex: s.zIndex,
+                                }),
+                                (newVal, old) => ({
+                                    ...old,
+                                    zIndex: newVal.zIndex,
+                                }),
+                            ),
+                        ],
+                        textBoxes: [
+                            L.defaults([]),
+                            L.elems,
+                            L.lens(
+                                (s, i) => ({
+                                    id: "textbox-" + i,
+                                    zIndex: s.zIndex,
+                                }),
+                                (newVal, old) => ({
+                                    ...old,
+                                    zIndex: newVal.zIndex,
+                                }),
+                            ),
+                        ],
+                        splines: [
+                            L.defaults([]),
+                            L.elems,
+                            L.lens(
+                                (s, i) => ({
+                                    id: "spline-" + i,
+                                    zIndex: s.zIndex,
+                                }),
+                                (newVal, old) => ({
+                                    ...old,
+                                    zIndex: newVal.zIndex,
+                                }),
+                            ),
+                        ],
+                        drawings: [
+                            L.defaults([]),
+                            L.elems,
+                            L.lens(
+                                (s, i) => ({
+                                    id: "drawing-" + i,
+                                    zIndex: s.zIndex,
+                                }),
+                                (newVal, old) => ({
+                                    ...old,
+                                    zIndex: newVal.zIndex,
+                                }),
+                            ),
+                        ],
                     }),
-                    olds,
-                );
-            }),
-        ],
-        currentDocumentContentMut,
+                ),
+                L.lens(R.sortBy(R.propOr(Infinity, "zIndex")), (newZ, olds) => {
+                    if (newZ.length !== olds.length) {
+                        return olds;
+                    }
+
+                    const sortedNew = R.sortBy(
+                        R.propOr(Infinity, "zIndex"),
+                        newZ,
+                    );
+
+                    return R.map(
+                        (o) => ({
+                            id: o.id,
+                            zIndex: R.findIndex(
+                                R.compose(R.equals(o.id), R.prop("id")),
+                                sortedNew,
+                            ),
+                        }),
+                        olds,
+                    );
+                }),
+            ],
+            currentDocumentContentMut,
+        ),
     );
 
     // TODO FIX Layers
-    const zValues = view(L.partsOf([L.elems, "zIndex"]), zLayers);
+    const zValues = $derived(view(L.partsOf([L.elems, "zIndex"]), zLayers));
     const layerCount = $derived(zValues.value.length);
     let layerCountPrev = $state(0);
 
@@ -916,266 +955,312 @@
     });
 
     const selectionInternal = atom([]);
-    const selection = view(L.normalize(R.uniq), selectionInternal);
+    const selection = $derived(view(L.normalize(R.uniq), selectionInternal));
 
-    const hitAreas = view(
-        ({ scale, doc }) => {
-            return L.get(
-                [
-                    L.partsOf(
-                        L.branch({
-                            nodes: [
-                                L.elems,
-                                L.reread((n, i) => ({
-                                    type: "circle",
-                                    cx: n.x,
-                                    cy: n.y,
-                                    r: 25 * Math.min(1, scale),
-                                    id: "node-" + i,
-                                    allowedTransform: {
-                                        translation: true,
-                                        scale: "multiple",
-                                        rotate: "multiple",
-                                    },
-                                })),
-                            ],
-                            edges: [
-                                L.elems,
-                                L.reread((e, i) => ({
-                                    type: "polyline",
-                                    id: "edge-" + i,
-                                    points: [
-                                        {
-                                            x: doc.nodes[e.source].x,
-                                            y: doc.nodes[e.source].y,
-                                        },
-                                        {
-                                            x: doc.nodes[e.target].x,
-                                            y: doc.nodes[e.target].y,
-                                        },
-                                    ],
-                                    allowedTransform: {
-                                        translation: false,
-                                        scale: false,
-                                        rotate: false,
-                                    },
-                                })),
-                            ],
-                            shapes: [
-                                L.elems,
-                                L.reread((sp, i) => {
-                                    const cos = Math.cos(
-                                        (-sp.placement.angle / 180) * Math.PI,
-                                    );
-                                    const sin = Math.sin(
-                                        (-sp.placement.angle / 180) * Math.PI,
-                                    );
-
-                                    return {
-                                        type: "polygon",
-                                        points: [
-                                            {
-                                                x: sp.placement.start.x,
-                                                y: sp.placement.start.y,
-                                            },
-                                            {
-                                                x:
-                                                    sp.placement.start.x +
-                                                    cos * sp.placement.size.x,
-                                                y:
-                                                    sp.placement.start.y +
-                                                    -sin * sp.placement.size.x,
-                                            },
-                                            {
-                                                x:
-                                                    sp.placement.start.x +
-                                                    cos * sp.placement.size.x +
-                                                    sin * sp.placement.size.y,
-                                                y:
-                                                    sp.placement.start.y +
-                                                    -sin * sp.placement.size.x +
-                                                    cos * sp.placement.size.y,
-                                            },
-                                            {
-                                                x:
-                                                    sp.placement.start.x +
-                                                    sin * sp.placement.size.y,
-                                                y:
-                                                    sp.placement.start.y +
-                                                    cos * sp.placement.size.y,
-                                            },
-                                        ],
-                                        id: "shape-" + i,
+    const hitAreas = $derived(
+        view(
+            ({ scale, doc }) => {
+                return L.get(
+                    [
+                        L.partsOf(
+                            L.branch({
+                                nodes: [
+                                    L.elems,
+                                    L.reread((n, i) => ({
+                                        type: "circle",
+                                        cx: n.x,
+                                        cy: n.y,
+                                        r: 25 * Math.min(1, scale),
+                                        id: "node-" + i,
                                         allowedTransform: {
                                             translation: true,
-                                            scale: false,
-                                            rotate: true,
+                                            scale: "multiple",
+                                            rotate: "multiple",
                                         },
-                                    };
-                                }),
-                            ],
-                            textBoxes: [
-                                L.elems,
-                                L.reread((sp, i) => {
-                                    const cos = Math.cos(
-                                        (-sp.angle / 180) * Math.PI,
-                                    );
-                                    const sin = Math.sin(
-                                        (-sp.angle / 180) * Math.PI,
-                                    );
-
-                                    return {
-                                        type: "polygon",
+                                    })),
+                                ],
+                                edges: [
+                                    L.elems,
+                                    L.reread((e, i) => ({
+                                        type: "polyline",
+                                        id: "edge-" + i,
                                         points: [
                                             {
-                                                x: sp.start.x,
-                                                y: sp.start.y,
+                                                x: doc.nodes[e.source].x,
+                                                y: doc.nodes[e.source].y,
                                             },
                                             {
-                                                x: sp.start.x + cos * sp.size.x,
-                                                y:
-                                                    sp.start.y +
-                                                    -sin * sp.size.x,
-                                            },
-                                            {
-                                                x:
-                                                    sp.start.x +
-                                                    cos * sp.size.x +
-                                                    sin * sp.size.y,
-                                                y:
-                                                    sp.start.y +
-                                                    -sin * sp.size.x +
-                                                    cos * sp.size.y,
-                                            },
-                                            {
-                                                x: sp.start.x + sin * sp.size.y,
-                                                y: sp.start.y + cos * sp.size.y,
+                                                x: doc.nodes[e.target].x,
+                                                y: doc.nodes[e.target].y,
                                             },
                                         ],
-                                        id: "textbox-" + i,
+                                        allowedTransform: {
+                                            translation: false,
+                                            scale: false,
+                                            rotate: false,
+                                        },
+                                    })),
+                                ],
+                                shapes: [
+                                    L.elems,
+                                    L.reread((sp, i) => {
+                                        const cos = Math.cos(
+                                            (-sp.placement.angle / 180) *
+                                                Math.PI,
+                                        );
+                                        const sin = Math.sin(
+                                            (-sp.placement.angle / 180) *
+                                                Math.PI,
+                                        );
+
+                                        return {
+                                            type: "polygon",
+                                            points: [
+                                                {
+                                                    x: sp.placement.start.x,
+                                                    y: sp.placement.start.y,
+                                                },
+                                                {
+                                                    x:
+                                                        sp.placement.start.x +
+                                                        cos *
+                                                            sp.placement.size.x,
+                                                    y:
+                                                        sp.placement.start.y +
+                                                        -sin *
+                                                            sp.placement.size.x,
+                                                },
+                                                {
+                                                    x:
+                                                        sp.placement.start.x +
+                                                        cos *
+                                                            sp.placement.size
+                                                                .x +
+                                                        sin *
+                                                            sp.placement.size.y,
+                                                    y:
+                                                        sp.placement.start.y +
+                                                        -sin *
+                                                            sp.placement.size
+                                                                .x +
+                                                        cos *
+                                                            sp.placement.size.y,
+                                                },
+                                                {
+                                                    x:
+                                                        sp.placement.start.x +
+                                                        sin *
+                                                            sp.placement.size.y,
+                                                    y:
+                                                        sp.placement.start.y +
+                                                        cos *
+                                                            sp.placement.size.y,
+                                                },
+                                            ],
+                                            id: "shape-" + i,
+                                            allowedTransform: {
+                                                translation: true,
+                                                scale: false,
+                                                rotate: true,
+                                            },
+                                        };
+                                    }),
+                                ],
+                                textBoxes: [
+                                    L.elems,
+                                    L.reread((sp, i) => {
+                                        const cos = Math.cos(
+                                            (-sp.angle / 180) * Math.PI,
+                                        );
+                                        const sin = Math.sin(
+                                            (-sp.angle / 180) * Math.PI,
+                                        );
+
+                                        return {
+                                            type: "polygon",
+                                            points: [
+                                                {
+                                                    x: sp.start.x,
+                                                    y: sp.start.y,
+                                                },
+                                                {
+                                                    x:
+                                                        sp.start.x +
+                                                        cos * sp.size.x,
+                                                    y:
+                                                        sp.start.y +
+                                                        -sin * sp.size.x,
+                                                },
+                                                {
+                                                    x:
+                                                        sp.start.x +
+                                                        cos * sp.size.x +
+                                                        sin * sp.size.y,
+                                                    y:
+                                                        sp.start.y +
+                                                        -sin * sp.size.x +
+                                                        cos * sp.size.y,
+                                                },
+                                                {
+                                                    x:
+                                                        sp.start.x +
+                                                        sin * sp.size.y,
+                                                    y:
+                                                        sp.start.y +
+                                                        cos * sp.size.y,
+                                                },
+                                            ],
+                                            id: "textbox-" + i,
+                                            allowedTransform: {
+                                                translation: true,
+                                                scale: true,
+                                                rotate: true,
+                                            },
+                                        };
+                                    }),
+                                ],
+                                drawings: [
+                                    L.elems,
+                                    L.reread((drawing, i) => ({
+                                        type: "polyline",
+                                        id: "drawing-" + i,
+                                        points: drawing.path,
                                         allowedTransform: {
                                             translation: true,
                                             scale: true,
                                             rotate: true,
                                         },
-                                    };
-                                }),
-                            ],
-                            drawings: [
-                                L.elems,
-                                L.reread((drawing, i) => ({
-                                    type: "polyline",
-                                    id: "drawing-" + i,
-                                    points: drawing.path,
-                                    allowedTransform: {
-                                        translation: true,
-                                        scale: true,
-                                        rotate: true,
-                                    },
-                                })),
-                            ],
-                        }),
-                    ),
-                ],
-                doc,
-            );
-        },
-        combine({ scale: cameraScale, doc: currentDocumentContent }),
+                                    })),
+                                ],
+                            }),
+                        ),
+                    ],
+                    doc,
+                );
+            },
+            combine({ scale: cameraScale, doc: currentDocumentContent }),
+        ),
     );
 
-    const selectionExtension = view(
-        ({ hit, sel }) => {
-            let minX = +Infinity;
-            let maxX = -Infinity;
-            let minY = +Infinity;
-            let maxY = -Infinity;
-            let minXPadded = +Infinity;
-            let maxXPadded = -Infinity;
-            let minYPadded = +Infinity;
-            let maxYPadded = -Infinity;
-            let allowedTransform = {
-                translation: true,
-                scale: true,
-                rotate: true,
-            };
-
-            for (let h = 0; h < hit.length; h++) {
-                const ha = hit[h];
-                if (sel.indexOf(ha.id) < 0) {
-                    continue;
-                }
-
-                allowedTransform.translation &&=
-                    ha.allowedTransform.translation === true ||
-                    (ha.allowedTransform.translation === "multiple" &&
-                        sel.length > 1);
-                allowedTransform.scale &&=
-                    ha.allowedTransform.scale === true ||
-                    (ha.allowedTransform.scale === "multiple" &&
-                        sel.length > 1);
-                allowedTransform.rotate &&=
-                    ha.allowedTransform.rotate === true ||
-                    (ha.allowedTransform.rotate === "multiple" &&
-                        sel.length > 1);
-
-                switch (ha.type) {
-                    case "circle":
-                        // TODO
-                        minX = Math.min(minX, ha.cx);
-                        maxX = Math.max(maxX, ha.cx);
-                        minY = Math.min(minY, ha.cy);
-                        maxY = Math.max(maxY, ha.cy);
-                        minXPadded = Math.min(minXPadded, ha.cx - ha.r);
-                        maxXPadded = Math.max(maxXPadded, ha.cx + ha.r);
-                        minYPadded = Math.min(minYPadded, ha.cy - ha.r);
-                        maxYPadded = Math.max(maxYPadded, ha.cy + ha.r);
-                        break;
-                    case "polygon":
-                        for (let p = 0; p < ha.points.length; p++) {
-                            minX = Math.min(minX, ha.points[p].x);
-                            maxX = Math.max(maxX, ha.points[p].x);
-                            minY = Math.min(minY, ha.points[p].y);
-                            maxY = Math.max(maxY, ha.points[p].y);
-                            minXPadded = Math.min(minXPadded, ha.points[p].x);
-                            maxXPadded = Math.max(maxXPadded, ha.points[p].x);
-                            minYPadded = Math.min(minYPadded, ha.points[p].y);
-                            maxYPadded = Math.max(maxYPadded, ha.points[p].y);
-                        }
-                        break;
-                    case "polyline":
-                        for (let p = 0; p < ha.points.length; p++) {
-                            minX = Math.min(minX, ha.points[p].x);
-                            maxX = Math.max(maxX, ha.points[p].x);
-                            minY = Math.min(minY, ha.points[p].y);
-                            maxY = Math.max(maxY, ha.points[p].y);
-                            minXPadded = Math.min(minXPadded, ha.points[p].x);
-                            maxXPadded = Math.max(maxXPadded, ha.points[p].x);
-                            minYPadded = Math.min(minYPadded, ha.points[p].y);
-                            maxYPadded = Math.max(maxYPadded, ha.points[p].y);
-                        }
-                        break;
-                    default:
-                        return false;
-                }
-            }
-
-            if (isFinite(minX)) {
-                return {
-                    minX,
-                    maxX,
-                    minY,
-                    maxY,
-                    minXPadded,
-                    maxXPadded,
-                    minYPadded,
-                    maxYPadded,
-                    allowedTransform,
+    const selectionExtension = $derived(
+        view(
+            ({ hit, sel }) => {
+                let minX = +Infinity;
+                let maxX = -Infinity;
+                let minY = +Infinity;
+                let maxY = -Infinity;
+                let minXPadded = +Infinity;
+                let maxXPadded = -Infinity;
+                let minYPadded = +Infinity;
+                let maxYPadded = -Infinity;
+                let allowedTransform = {
+                    translation: true,
+                    scale: true,
+                    rotate: true,
                 };
-            } else {
-                return null;
-            }
-        },
-        combine({ hit: hitAreas, sel: selection }),
+
+                for (let h = 0; h < hit.length; h++) {
+                    const ha = hit[h];
+                    if (sel.indexOf(ha.id) < 0) {
+                        continue;
+                    }
+
+                    allowedTransform.translation &&=
+                        ha.allowedTransform.translation === true ||
+                        (ha.allowedTransform.translation === "multiple" &&
+                            sel.length > 1);
+                    allowedTransform.scale &&=
+                        ha.allowedTransform.scale === true ||
+                        (ha.allowedTransform.scale === "multiple" &&
+                            sel.length > 1);
+                    allowedTransform.rotate &&=
+                        ha.allowedTransform.rotate === true ||
+                        (ha.allowedTransform.rotate === "multiple" &&
+                            sel.length > 1);
+
+                    switch (ha.type) {
+                        case "circle":
+                            // TODO
+                            minX = Math.min(minX, ha.cx);
+                            maxX = Math.max(maxX, ha.cx);
+                            minY = Math.min(minY, ha.cy);
+                            maxY = Math.max(maxY, ha.cy);
+                            minXPadded = Math.min(minXPadded, ha.cx - ha.r);
+                            maxXPadded = Math.max(maxXPadded, ha.cx + ha.r);
+                            minYPadded = Math.min(minYPadded, ha.cy - ha.r);
+                            maxYPadded = Math.max(maxYPadded, ha.cy + ha.r);
+                            break;
+                        case "polygon":
+                            for (let p = 0; p < ha.points.length; p++) {
+                                minX = Math.min(minX, ha.points[p].x);
+                                maxX = Math.max(maxX, ha.points[p].x);
+                                minY = Math.min(minY, ha.points[p].y);
+                                maxY = Math.max(maxY, ha.points[p].y);
+                                minXPadded = Math.min(
+                                    minXPadded,
+                                    ha.points[p].x,
+                                );
+                                maxXPadded = Math.max(
+                                    maxXPadded,
+                                    ha.points[p].x,
+                                );
+                                minYPadded = Math.min(
+                                    minYPadded,
+                                    ha.points[p].y,
+                                );
+                                maxYPadded = Math.max(
+                                    maxYPadded,
+                                    ha.points[p].y,
+                                );
+                            }
+                            break;
+                        case "polyline":
+                            for (let p = 0; p < ha.points.length; p++) {
+                                minX = Math.min(minX, ha.points[p].x);
+                                maxX = Math.max(maxX, ha.points[p].x);
+                                minY = Math.min(minY, ha.points[p].y);
+                                maxY = Math.max(maxY, ha.points[p].y);
+                                minXPadded = Math.min(
+                                    minXPadded,
+                                    ha.points[p].x,
+                                );
+                                maxXPadded = Math.max(
+                                    maxXPadded,
+                                    ha.points[p].x,
+                                );
+                                minYPadded = Math.min(
+                                    minYPadded,
+                                    ha.points[p].y,
+                                );
+                                maxYPadded = Math.max(
+                                    maxYPadded,
+                                    ha.points[p].y,
+                                );
+                            }
+                            break;
+                        default:
+                            return false;
+                    }
+                }
+
+                if (isFinite(minX)) {
+                    return {
+                        minX,
+                        maxX,
+                        minY,
+                        maxY,
+                        minXPadded,
+                        maxXPadded,
+                        minYPadded,
+                        maxYPadded,
+                        allowedTransform,
+                    };
+                } else {
+                    return null;
+                }
+            },
+            combine({ hit: hitAreas, sel: selection }),
+        ),
     );
 
     const translators = {
@@ -1342,35 +1427,39 @@
         );
     }
 
-    const newDrawing = view(
-        [
-            L.appendTo,
-            L.removable("path"),
-            "path",
-            L.setter((n, o) => (n.length > 1 ? n : o)),
-        ],
-        drawings,
-    );
-    const newSpline = view([L.appendTo, "path"], splines);
-    const newShape = view([L.appendTo], shapes);
-    const newGuide = view([L.appendTo], guides);
-    const newAxis = view(L.identity, axis);
-    const newPlot = view([L.appendTo], plots);
-    const newText = view(L.appendTo, textes);
-    const newTextBox = view(L.appendTo, textBoxes);
-    const newAlert = view([L.appendTo], alerts);
-    const newNode = view([L.appendTo, L.required("x", "y")], nodes);
-    const newEdge = view([L.appendTo, L.required("x", "y")], edges);
-    const newEdgeNode = view(
-        L.setter(({ source, newTarget }, content) => ({
-            ...content,
-            edges: [
-                ...(content.edges ?? []),
-                { source, target: content.nodes.length },
+    const newDrawing = $derived(
+        view(
+            [
+                L.appendTo,
+                L.removable("path"),
+                "path",
+                L.setter((n, o) => (n.length > 1 ? n : o)),
             ],
-            nodes: [...(content.nodes ?? []), newTarget],
-        })),
-        currentDocumentContent,
+            drawings,
+        ),
+    );
+    const newSpline = $derived(view([L.appendTo, "path"], splines));
+    const newShape = $derived(view([L.appendTo], shapes));
+    const newGuide = $derived(view([L.appendTo], guides));
+    const newAxis = $derived(view(L.identity, axis));
+    const newPlot = $derived(view([L.appendTo], plots));
+    const newText = $derived(view(L.appendTo, textes));
+    const newTextBox = $derived(view(L.appendTo, textBoxes));
+    const newAlert = $derived(view([L.appendTo], alerts));
+    const newNode = $derived(view([L.appendTo, L.required("x", "y")], nodes));
+    const newEdge = $derived(view([L.appendTo, L.required("x", "y")], edges));
+    const newEdgeNode = $derived(
+        view(
+            L.setter(({ source, newTarget }, content) => ({
+                ...content,
+                edges: [
+                    ...(content.edges ?? []),
+                    { source, target: content.nodes.length },
+                ],
+                nodes: [...(content.nodes ?? []), newTarget],
+            })),
+            currentDocumentContent,
+        ),
     );
 
     const createDrawing = (val) => {
@@ -1434,68 +1523,14 @@
         });
     }
 
-    const extension = calculateBoundingBox(100, currentDocumentContent, {
-        nodes: L.elems,
-        alerts: L.elems,
-        drawings: [L.partsOf(L.elems, "path"), L.elems],
-        axis: [
-            L.ifElse(
-                R.is(Object),
-                L.pick({
-                    start: "start",
-                    a: ({ start, size, angle }) =>
-                        Geo.rotatePivotDegree(start, angle, {
-                            x: start.x + size.x,
-                            y: start.y + size.y,
-                        }),
-                    b: ({ start, size, angle }) =>
-                        Geo.rotatePivotDegree(start, angle, {
-                            x: start.x,
-                            y: start.y + size.y,
-                        }),
-                    c: ({ start, size, angle }) =>
-                        Geo.rotatePivotDegree(start, angle, {
-                            x: start.x + size.x,
-                            y: start.y,
-                        }),
-                }),
-                R.always({}),
-            ),
-            L.values,
-        ],
-        textes: [L.elems, L.props("x", "y")],
-        textBoxes: [
-            L.elems,
-            L.ifElse(
-                R.is(Object),
-                L.pick({
-                    start: "start",
-                    a: ({ start, size, angle }) =>
-                        Geo.rotatePivotDegree(start, angle, {
-                            x: start.x + size.x,
-                            y: start.y + size.y,
-                        }),
-                    b: ({ start, size, angle }) =>
-                        Geo.rotatePivotDegree(start, angle, {
-                            x: start.x,
-                            y: start.y + size.y,
-                        }),
-                    c: ({ start, size, angle }) =>
-                        Geo.rotatePivotDegree(start, angle, {
-                            x: start.x + size.x,
-                            y: start.y,
-                        }),
-                }),
-                R.always({}),
-            ),
-            L.values,
-        ],
-        shapes: [
-            L.elems,
-            L.ifElse(
-                R.is(Object),
-                [
-                    "placement",
+    const extension = $derived(
+        calculateBoundingBox(100, currentDocumentContent, {
+            nodes: L.elems,
+            alerts: L.elems,
+            drawings: [L.partsOf(L.elems, "path"), L.elems],
+            axis: [
+                L.ifElse(
+                    R.is(Object),
                     L.pick({
                         start: "start",
                         a: ({ start, size, angle }) =>
@@ -1514,53 +1549,109 @@
                                 y: start.y,
                             }),
                     }),
-                ],
-                R.always({}),
-            ),
-            L.values,
-        ],
-        plots: [
-            L.elems,
-            L.ifElse(
-                R.is(Object),
-                L.pick({
-                    start: "start",
-                    a: ({ start, size, angle }) =>
-                        Geo.rotatePivotDegree(start, angle, {
-                            x: start.x + size.x,
-                            y: start.y + size.y,
+                    R.always({}),
+                ),
+                L.values,
+            ],
+            textes: [L.elems, L.props("x", "y")],
+            textBoxes: [
+                L.elems,
+                L.ifElse(
+                    R.is(Object),
+                    L.pick({
+                        start: "start",
+                        a: ({ start, size, angle }) =>
+                            Geo.rotatePivotDegree(start, angle, {
+                                x: start.x + size.x,
+                                y: start.y + size.y,
+                            }),
+                        b: ({ start, size, angle }) =>
+                            Geo.rotatePivotDegree(start, angle, {
+                                x: start.x,
+                                y: start.y + size.y,
+                            }),
+                        c: ({ start, size, angle }) =>
+                            Geo.rotatePivotDegree(start, angle, {
+                                x: start.x + size.x,
+                                y: start.y,
+                            }),
+                    }),
+                    R.always({}),
+                ),
+                L.values,
+            ],
+            shapes: [
+                L.elems,
+                L.ifElse(
+                    R.is(Object),
+                    [
+                        "placement",
+                        L.pick({
+                            start: "start",
+                            a: ({ start, size, angle }) =>
+                                Geo.rotatePivotDegree(start, angle, {
+                                    x: start.x + size.x,
+                                    y: start.y + size.y,
+                                }),
+                            b: ({ start, size, angle }) =>
+                                Geo.rotatePivotDegree(start, angle, {
+                                    x: start.x,
+                                    y: start.y + size.y,
+                                }),
+                            c: ({ start, size, angle }) =>
+                                Geo.rotatePivotDegree(start, angle, {
+                                    x: start.x + size.x,
+                                    y: start.y,
+                                }),
                         }),
-                    b: ({ start, size, angle }) =>
-                        Geo.rotatePivotDegree(start, angle, {
-                            x: start.x,
-                            y: start.y + size.y,
-                        }),
-                    c: ({ start, size, angle }) =>
-                        Geo.rotatePivotDegree(start, angle, {
-                            x: start.x + size.x,
-                            y: start.y,
-                        }),
-                }),
-                R.always({}),
-            ),
-            L.values,
-        ],
-        splines: [
-            L.elems,
-            "path",
-            L.elems,
-            L.ifElse(
-                R.is(Object),
-                L.pick({
-                    point: "point",
-                    front: "front",
-                    back: "back",
-                }),
-                R.always({}),
-            ),
-            L.values,
-        ],
-    });
+                    ],
+                    R.always({}),
+                ),
+                L.values,
+            ],
+            plots: [
+                L.elems,
+                L.ifElse(
+                    R.is(Object),
+                    L.pick({
+                        start: "start",
+                        a: ({ start, size, angle }) =>
+                            Geo.rotatePivotDegree(start, angle, {
+                                x: start.x + size.x,
+                                y: start.y + size.y,
+                            }),
+                        b: ({ start, size, angle }) =>
+                            Geo.rotatePivotDegree(start, angle, {
+                                x: start.x,
+                                y: start.y + size.y,
+                            }),
+                        c: ({ start, size, angle }) =>
+                            Geo.rotatePivotDegree(start, angle, {
+                                x: start.x + size.x,
+                                y: start.y,
+                            }),
+                    }),
+                    R.always({}),
+                ),
+                L.values,
+            ],
+            splines: [
+                L.elems,
+                "path",
+                L.elems,
+                L.ifElse(
+                    R.is(Object),
+                    L.pick({
+                        point: "point",
+                        front: "front",
+                        back: "back",
+                    }),
+                    R.always({}),
+                ),
+                L.values,
+            ],
+        }),
+    );
 
     function rotatedBounds(degree, rect) {
         const rectCenterX = (rect.maxX + rect.minX) / 2;
@@ -1626,37 +1717,41 @@
         };
     }
 
-    const cameraBounds = read(
-        ({ c, e }) => {
-            return rotatedBounds(c.focus.w, e);
-        },
-        combine({ c: camera, e: extension }),
+    const cameraBounds = $derived(
+        read(
+            ({ c, e }) => {
+                return rotatedBounds(c.focus.w, e);
+            },
+            combine({ c: camera, e: extension }),
+        ),
     );
 
-    const zoomFrame = view(cameraZoomFrameLens, camera);
-    const panMovement = view(panMovementLens, camera);
-    const rotateMovement = view(rotateMovementLens, camera);
-    const zoomMovement = view(zoomMovementLens, camera);
+    const zoomFrame = $derived(view(cameraZoomFrameLens, camera));
+    const panMovement = $derived(view(panMovementLens, camera));
+    const rotateMovement = $derived(view(rotateMovementLens, camera));
+    const zoomMovement = $derived(view(zoomMovementLens, camera));
     const rotationState = atom({});
     const panState = atom({});
     const zoomState = atom({});
-    const lockScroll = view(
-        [
-            L.choices(
-                ["rot", "pivot"],
-                ["zoom", "pivotWorld"],
-                ["pan", "position"],
-            ),
-            R.compose(R.not, R.isNil),
-        ],
-        combine({
-            rot: rotationState,
-            zoom: zoomState,
-            pan: panState,
-        }),
+    const lockScroll = $derived(
+        view(
+            [
+                L.choices(
+                    ["rot", "pivot"],
+                    ["zoom", "pivotWorld"],
+                    ["pan", "position"],
+                ),
+                R.compose(R.not, R.isNil),
+            ],
+            combine({
+                rot: rotationState,
+                zoom: zoomState,
+                pan: panState,
+            }),
+        ),
     );
 
-    const tools = {
+    const tools = $derived({
         none: {
             name: "None",
             component: Blocker,
@@ -1880,7 +1975,7 @@
                 state: zoomState,
             },
         },
-    };
+    });
 
     const toolGroups = [
         ["select", "lasso", "affineTansformer"],
@@ -1914,127 +2009,143 @@
         y: n.y,
     }));
 
-    const aspect = view(
-        [
-            "frame",
-            L.props("alignX", "alignY", "aspect"),
-            "aspect",
-            L.defaults("none"),
-        ],
-        camera,
+    const aspect = $derived(
+        view(
+            [
+                "frame",
+                L.props("alignX", "alignY", "aspect"),
+                "aspect",
+                L.defaults("none"),
+            ],
+            camera,
+        ),
     );
-    const planeWidth = view(["plane", "x"], camera);
-    const planeHeight = view(["plane", "y"], camera);
-    const alignX = view(["frame", "alignX", L.normalize(U.capitalize)], camera);
-    const alignY = view(["frame", "alignY", L.normalize(U.capitalize)], camera);
-    const alignCombi = view(aspectRatioAlignLens, combine({ alignX, alignY }));
-    const autosize = view(["plane", "autosize"], camera);
+    const planeWidth = $derived(view(["plane", "x"], camera));
+    const planeHeight = $derived(view(["plane", "y"], camera));
+    const alignX = $derived(
+        view(["frame", "alignX", L.normalize(U.capitalize)], camera),
+    );
+    const alignY = $derived(
+        view(["frame", "alignY", L.normalize(U.capitalize)], camera),
+    );
+    const alignCombi = $derived(
+        view(aspectRatioAlignLens, combine({ alignX, alignY })),
+    );
+    const autosize = $derived(view(["plane", "autosize"], camera));
     const alignments = ["Min", "Mid", "Max"];
 
-    const cameraJson = failableView(
-        L.inverse([
-            L.alternatives(
-                L.dropPrefix(
-                    "// Or try to edit this Json (only edits that keep the structure valid are possible)\n",
-                ),
-                L.identity,
-            ),
-            L.json({ space: "  " }),
-            L.ifElse(
-                U.isPlainObject,
-                L.identity,
-                L.getter(R.always(new Error("fooo"))),
-            ),
-        ]),
-        camera,
-    );
-
-    const canvasJson = failableView(
-        L.inverse([
-            L.alternatives(
-                L.dropPrefix(
-                    "// Or try to edit this Json (only edits that keep the structure valid are possible)\n",
-                ),
-                L.identity,
-            ),
-            L.json({ space: "  " }),
-            L.ifElse(
-                U.isPlainObject,
-                L.identity,
-                L.getter(R.always(new Error("fooo"))),
-            ),
-        ]),
-        canvasDocument,
-    );
-
-    const scrollWindowSize = view(
-        [
-            L.lens(R.prop("frame"), (newSize) => ({
-                frame: newSize,
-                plane: newSize,
-            })),
-        ],
-        combine({
-            plane: view(
-                [
-                    "plane",
-                    L.ifElse(
-                        R.prop("autosize"),
-                        L.identity,
-                        L.lens(R.identity, (_, o) => o),
+    const cameraJson = $derived(
+        failableView(
+            L.inverse([
+                L.alternatives(
+                    L.dropPrefix(
+                        "// Or try to edit this Json (only edits that keep the structure valid are possible)\n",
                     ),
-                    L.props("x", "y"),
-                ],
-                camera,
-            ),
-            frame: view(["frame", "size"], camera),
-        }),
+                    L.identity,
+                ),
+                L.json({ space: "  " }),
+                L.ifElse(
+                    U.isPlainObject,
+                    L.identity,
+                    L.getter(R.always(new Error("fooo"))),
+                ),
+            ]),
+            camera,
+        ),
     );
 
-    const cameraInBounds = view(
-        L.lens(
-            ({ x, y, s, w, b, ls }) => {
-                const rot = Geo.rotatePivotXYDegree(
-                    (b.minX + b.maxX) / 2,
-                    (b.minY + b.maxY) / 2,
-                    b.angle,
-                    { x, y },
-                );
-
-                return {
-                    x: (rot.x - b.minX) / s - w.x / 2,
-                    y: (rot.y - b.minY) / s - w.y / 2,
-                    ls,
-                };
-            },
-            ({ x, y }, { s, w, b, ls }) => {
-                const rot = Geo.rotatePivotXYDegree(
-                    (b.minX + b.maxX) / 2,
-                    (b.minY + b.maxY) / 2,
-                    -b.angle,
-                    {
-                        x: (x + w.x / 2) * s + b.minX,
-                        y: (y + w.y / 2) * s + b.minY,
-                    },
-                );
-
-                return {
-                    x: rot.x,
-                    y: rot.y,
-                    ls,
-                };
-            },
+    const canvasJson = $derived(
+        failableView(
+            L.inverse([
+                L.alternatives(
+                    L.dropPrefix(
+                        "// Or try to edit this Json (only edits that keep the structure valid are possible)\n",
+                    ),
+                    L.identity,
+                ),
+                L.json({ space: "  " }),
+                L.ifElse(
+                    U.isPlainObject,
+                    L.identity,
+                    L.getter(R.always(new Error("fooo"))),
+                ),
+            ]),
+            canvasDocument,
         ),
-        combine(
-            {
-                x: cameraX,
-                y: cameraY,
-                s: cameraScale,
-                w: scrollWindowSize,
-                b: cameraBounds,
-                ls: lockScroll,
-            },
-            { x: true, y: true },
+    );
+
+    const scrollWindowSize = $derived(
+        view(
+            [
+                L.lens(R.prop("frame"), (newSize) => ({
+                    frame: newSize,
+                    plane: newSize,
+                })),
+            ],
+            combine({
+                plane: view(
+                    [
+                        "plane",
+                        L.ifElse(
+                            R.prop("autosize"),
+                            L.identity,
+                            L.lens(R.identity, (_, o) => o),
+                        ),
+                        L.props("x", "y"),
+                    ],
+                    camera,
+                ),
+                frame: view(["frame", "size"], camera),
+            }),
+        ),
+    );
+
+    const cameraInBounds = $derived(
+        view(
+            L.lens(
+                ({ x, y, s, w, b, ls }) => {
+                    const rot = Geo.rotatePivotXYDegree(
+                        (b.minX + b.maxX) / 2,
+                        (b.minY + b.maxY) / 2,
+                        b.angle,
+                        { x, y },
+                    );
+
+                    return {
+                        x: (rot.x - b.minX) / s - w.x / 2,
+                        y: (rot.y - b.minY) / s - w.y / 2,
+                        ls,
+                    };
+                },
+                ({ x, y }, { s, w, b, ls }) => {
+                    const rot = Geo.rotatePivotXYDegree(
+                        (b.minX + b.maxX) / 2,
+                        (b.minY + b.maxY) / 2,
+                        -b.angle,
+                        {
+                            x: (x + w.x / 2) * s + b.minX,
+                            y: (y + w.y / 2) * s + b.minY,
+                        },
+                    );
+
+                    return {
+                        x: rot.x,
+                        y: rot.y,
+                        ls,
+                    };
+                },
+            ),
+            combine(
+                {
+                    x: cameraX,
+                    y: cameraY,
+                    s: cameraScale,
+                    w: scrollWindowSize,
+                    b: cameraBounds,
+                    ls: lockScroll,
+                },
+                { x: true, y: true },
+            ),
         ),
     );
 
@@ -2042,45 +2153,51 @@
         x: (minX + maxX) / 2,
         y: (minY + maxY) / 2,
     }));
-    const boundsCenter = view(centerLens, cameraBounds);
+    const boundsCenter = $derived(view(centerLens, cameraBounds));
 
-    const scrollPosition = view(
-        [
-            L.pick({ x: ["x"], y: ["y"] }),
-            L.setter((newScroll, old) =>
-                old.ls
-                    ? old
-                    : {
-                          x:
-                              (newScroll.atMinX && old.x < newScroll.x) ||
-                              (newScroll.atMaxX && old.x > newScroll.x)
-                                  ? old.x
-                                  : newScroll.x,
-                          y:
-                              (newScroll.atMinY && old.y < newScroll.y) ||
-                              (newScroll.atMaxY && old.y > newScroll.y)
-                                  ? old.y
-                                  : newScroll.y,
-                      },
-            ),
-        ],
-        cameraInBounds,
+    const scrollPosition = $derived(
+        view(
+            [
+                L.pick({ x: ["x"], y: ["y"] }),
+                L.setter((newScroll, old) =>
+                    old.ls
+                        ? old
+                        : {
+                              x:
+                                  (newScroll.atMinX && old.x < newScroll.x) ||
+                                  (newScroll.atMaxX && old.x > newScroll.x)
+                                      ? old.x
+                                      : newScroll.x,
+                              y:
+                                  (newScroll.atMinY && old.y < newScroll.y) ||
+                                  (newScroll.atMaxY && old.y > newScroll.y)
+                                      ? old.y
+                                      : newScroll.y,
+                          },
+                ),
+            ],
+            cameraInBounds,
+        ),
     );
 
-    const scrollContentSize = view(
-        ({ s, w, b }) => ({
-            x: (b.maxX - b.minX) / s,
-            y: (b.maxY - b.minY) / s,
-        }),
-        combine({
-            s: cameraScale,
-            b: cameraBounds,
-        }),
+    const scrollContentSize = $derived(
+        view(
+            ({ s, w, b }) => ({
+                x: (b.maxX - b.minX) / s,
+                y: (b.maxY - b.minY) / s,
+            }),
+            combine({
+                s: cameraScale,
+                b: cameraBounds,
+            }),
+        ),
     );
 
-    const camClient = view(["focus", L.props("x", "y"), worldPageIso], camera);
-    const camClientX = view("x", camClient);
-    const camClientY = view("y", camClient);
+    const camClient = $derived(
+        view(["focus", L.props("x", "y"), worldPageIso], camera),
+    );
+    const camClientX = $derived(view("x", camClient));
+    const camClientY = $derived(view("y", camClient));
 
     $effect(() => {
         document.body.classList.toggle("noScroll", fullPageCanvas.value);
@@ -2551,7 +2668,7 @@
                 <button
                     type="button"
                     class="tool-action"
-                    disabled={!currentToolElement.value.canCancel.value}
+                    disabled={!currentToolElement.value.canCancel()}
                     onpointerdown={(evt) => {
                         if (!evt.isPrimary) {
                             evt.currentTarget.click();

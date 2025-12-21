@@ -6,24 +6,26 @@
     import { read, combine } from "../../svatom.svelte.js";
     const { guides, rotationTransform, frameBoxObject } = $props();
 
-    const worldQuad = read("worldSpace", frameBoxObject);
-    const segmentPaths = read(
-        L.reread(({ gs, quad }) => {
-            return R.compose(
-                R.map(
-                    ({ a, b }) =>
-                        U.formattedNumbers`M${a.x},${a.y}L${b.x},${b.y}`,
-                ),
-                R.reject(R.isNil),
-                R.map(({ distance, angle }) =>
-                    Geo.rayInsideQuad(angle, distance, quad),
-                ),
-            )(gs);
-        }),
-        combine({
-            gs: guides,
-            quad: worldQuad,
-        }),
+    const worldQuad = $derived(read("worldSpace", frameBoxObject));
+    const segmentPaths = $derived(
+        read(
+            L.reread(({ gs, quad }) => {
+                return R.compose(
+                    R.map(
+                        ({ a, b }) =>
+                            U.formattedNumbers`M${a.x},${a.y}L${b.x},${b.y}`,
+                    ),
+                    R.reject(R.isNil),
+                    R.map(({ distance, angle }) =>
+                        Geo.rayInsideQuad(angle, distance, quad),
+                    ),
+                )(gs);
+            }),
+            combine({
+                gs: guides,
+                quad: worldQuad,
+            }),
+        ),
     );
 </script>
 
