@@ -77,8 +77,8 @@
         commands = atom([
             {
                 op: "turnLeft",
-                spaces: "",
-                comment: "#Program starts here",
+                spaces: " ",
+                comment: "# Program starts here",
                 invalid: false,
             },
             { op: "turnRight", spaces: "", comment: "", invalid: false },
@@ -210,7 +210,7 @@
                             R.identity,
                             R.zipWith(
                                 (a, b) => {
-                                    return a.length != b.length;
+                                    return Math.abs(a.length - b.length) == 1;
                                 },
                                 t.split("\n"),
                                 oldText.split("\n"),

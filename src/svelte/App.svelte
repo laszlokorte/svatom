@@ -609,6 +609,7 @@
                 type="range"
                 class="number-picker-slider"
                 bind:value={theNumberDoubled.value}
+                step={2}
                 max="200"
             />
             <input
