@@ -332,7 +332,11 @@
 >
     <div style="display: grid; grid-template-rows: 1fr auto;">
         <textarea
-            style="font-family: monospace; align-self: stretch; resize: none; margin: 1ex; box-sizing: border-box; width: auto;"
+            style="font-family: monospace; align-self: stretch; resize: none; margin: 1ex; box-sizing: border-box; width: auto;
+            white-space: pre;
+              overflow-wrap: normal;
+              overflow-x: auto;
+            "
             use:bindValue={levelText}
         ></textarea>
         <div
