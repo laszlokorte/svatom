@@ -7,71 +7,9 @@
         update,
         combine,
         failableView,
+        bindValue,
     } from "./svatom.svelte.js";
     import Split from "./SplitView/Split.svelte";
-    import PlotCreator from "./Canvas/tools/PlotCreator.svelte";
-    function bindValue(node, someAtom) {
-        let c0 = null;
-        let c1 = null;
-        function oninput(e) {
-            const s0 = node.selectionStart;
-            const s1 = node.selectionEnd;
-            const l0 = e.currentTarget.value.slice(0, s0).split("\n").length;
-            const l1 = e.currentTarget.value.slice(0, s1).split("\n").length;
-
-            const lines0 = e.currentTarget.value.slice(0, s0).split("\n");
-            const lines1 = e.currentTarget.value.slice(0, s1).split("\n");
-            const column0 = lines0[lines0.length - 1].length;
-            const column1 = lines1[lines1.length - 1].length;
-            const before = someAtom.value;
-            someAtom.value = node.value;
-            node.value = someAtom.value;
-            const newVal = someAtom.value;
-            if (node.value != newVal) {
-                node.value = newVal;
-            }
-            const newLines = node.value.split("\n");
-            const newStart = newLines
-                .slice(0, l0 - 1)
-                .reduce((a, c) => a + c.length + 1, column0);
-            const newEnd = newLines
-                .slice(0, l1 - 1)
-                .reduce((a, c) => a + c.length + 1, column1);
-            node.selectionStart = newStart;
-            node.selectionEnd = newEnd;
-        }
-
-        function onbeforeinput(e) {
-            c0 = node.selectionStart;
-            c1 = node.selectionEnd;
-        }
-
-        node.value = someAtom.value;
-
-        $effect.pre(() => {
-            const newVal = someAtom.value;
-            if (node.value != newVal) {
-                node.value = newVal;
-            }
-        });
-
-        // $effect(() => {
-        // 	node.value = someAtom.value;
-        // });
-
-        node.addEventListener("input", oninput);
-        node.addEventListener("change", oninput);
-        try {
-            let x = node.selectionStart;
-            node.addEventListener("beforeinput", onbeforeinput);
-        } catch (e) {}
-
-        return () => {
-            node.removeEventListener("beforeinput", onbeforeinput);
-            node.removeEventListener("input", oninput);
-            node.removeEventListener("change", oninput);
-        };
-    }
 
     const {
         commands = atom([
@@ -81,19 +19,28 @@
                 comment: "# Program starts here",
                 invalid: false,
             },
-            { op: "turnRight", spaces: "", comment: "", invalid: false },
+            { op: "turnRight", spaces: "" },
             {
                 op: "turnAround",
                 spaces: "",
                 comment: "",
                 invalid: false,
             },
-            { op: "forward", spaces: "", comment: "", invalid: false },
-            { op: "forward", spaces: "", comment: "", invalid: false },
-            { op: "drop", spaces: "", comment: "", invalid: false },
-            { op: "forward", spaces: "", comment: "", invalid: false },
-            { op: "drop", spaces: "", comment: "", invalid: false },
-            { op: "pick", spaces: "", comment: "", invalid: false },
+            { op: "forward", spaces: "" },
+            {
+                op: "forward",
+                spaces: " ",
+                comment: "# write comments",
+                invalid: false,
+            },
+            { op: "drop", spaces: "" },
+            { op: "turnAround", spaces: "" },
+            { op: "forward", spaces: "" },
+            { op: "forward", spaces: "" },
+            { op: "forward", spaces: "" },
+            { op: "drop", spaces: "" },
+            { op: "forward", spaces: "" },
+            { op: "pick", spaces: "" },
         ]),
         level = atom({
             size: { x: 10, y: 10 },
@@ -134,13 +81,12 @@
         view(
             [
                 L.iso(
-                    (array) =>
-                        array.length == 0 || !array[array.length - 1].empty
-                            ? [...array, undefined]
-                            : array,
+                    (array) => [...array, undefined],
                     (array) =>
                         array.length == 0 ||
-                        array[array.length - 1].empty == undefined
+                        array[array.length - 1].empty == undefined ||
+                        array[array.length - 1].empty != "" ||
+                        array[array.length - 1].comment
                             ? array
                             : array.slice(0, -1),
                 ),
@@ -157,7 +103,7 @@
     const text = $derived(view(L.inverse(L.split("\n")), lines));
 
     const lineCount = $derived(view("length", lines));
-    const json = $derived(view(L.inverse(L.json()), commands));
+    const json = $derived(view(L.inverse(L.json({ space: "  " })), commands));
     const levelError = atom();
     const levelText = $derived(
         failableView(
@@ -304,18 +250,21 @@
         }
         return cell;
     }
-    function runOp(op, level, player) {
+    function runConrolOp(op, line) {
+        return line + 1;
+    }
+    function runOp(op, level, player, line) {
         const newPlayer = runPlayerOp(op, player);
         if (newPlayer.pos.x >= level.size.x || newPlayer.pos.x < 0) {
-            return { player, level };
+            return { player, level, line };
         }
         if (newPlayer.pos.y >= level.size.y || newPlayer.pos.y < 0) {
-            return { player, level };
+            return { player, level, line };
         }
         if (
             level.cells[newPlayer.pos.x + newPlayer.pos.y * level.size.x] == "x"
         ) {
-            return { player, level };
+            return { player, level, line };
         }
         const newLevel = {
             ...level,
@@ -324,10 +273,12 @@
                     ? runLevelOp(op, c)
                     : c,
             ),
+            line: line,
         };
         return {
             player: newPlayer,
             level: newLevel,
+            line: runConrolOp(op, line),
         };
     }
     function startExecution() {}
@@ -351,13 +302,18 @@
     }
     function executeLine() {
         update(
-            ({ program: { line }, player, commands, level }) =>
-                line < commands.length
-                    ? {
-                          program: { ...program, line: line + 1 },
-                          ...runOp(commands[line], level, player),
-                      }
-                    : { program: { line: line }, player, level },
+            ({ program: { line }, player, commands, level }) => {
+                if (line < commands.length) {
+                    const result = runOp(commands[line], level, player, line);
+                    return {
+                        program: { ...program, line: result.line },
+                        player: result.player,
+                        level: result.level,
+                    };
+                } else {
+                    return { program: { line: line }, player, level };
+                }
+            },
             combine(
                 {
                     program,
@@ -376,11 +332,11 @@
 >
     <div style="display: grid; grid-template-rows: 1fr auto;">
         <textarea
-            style="font-family: monospace; align-self: stretch; resize: none;"
+            style="font-family: monospace; align-self: stretch; resize: none; margin: 1ex; box-sizing: border-box; width: auto;"
             use:bindValue={levelText}
         ></textarea>
         <div
-            style="background-color: #fee; align-items: center;gap: 1em"
+            style="background-color: #fee; align-items: center;gap: 1em;overflow: auto;"
             style:display={levelError.value ? "flex" : "none"}
         >
             <button
@@ -402,7 +358,8 @@
             {levelError.value}
         </div>
     </div>
-    <pre>{json.value}</pre>
+    <pre
+        style="overflow: auto; height: 10em; margin: 1ex; font-family: monospace;">{json.value}</pre>
 </div>
 
 <div class="robot-container">
@@ -506,7 +463,7 @@
                     <svg
                         class="canvas"
                         viewBox={viewBox.value}
-                        preserveAspectRatio="xMidYMid meet"
+                        preserveAspectRatio="xMidYMin meet"
                     >
                         {#each { length: level.value.size.y } as _, y}
                             {#each { length: level.value.size.x } as _, x}
