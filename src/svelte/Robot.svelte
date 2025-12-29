@@ -45,77 +45,168 @@
                 level: "lvl1",
                 commands: [
                     {
+                        op: "checkWallAhead",
+                        spaces: "",
+                    },
+                    {
                         op: "turnLeft",
                         spaces: " ",
                         comment: "# Program starts here",
-                        invalid: false,
                     },
-                    { op: "turnRight", spaces: "" },
+                    {
+                        op: "turnRight",
+                        spaces: "",
+                    },
                     {
                         op: "turnAround",
                         spaces: "",
-                        comment: "",
-                        invalid: false,
                     },
-                    { op: "forward", spaces: "" },
+                    {
+                        op: "forward",
+                        spaces: "",
+                    },
                     {
                         op: "forward",
                         spaces: " ",
                         comment: "# write comments",
-                        invalid: false,
                     },
-                    { op: "drop", spaces: "" },
-                    { op: "turnAround", spaces: "" },
-                    { op: "forward", spaces: "" },
-                    { op: "forward", spaces: "" },
-                    { op: "forward", spaces: "" },
-                    { op: "drop", spaces: "" },
-                    { op: "forward", spaces: "" },
-                    { op: "pick", spaces: "" },
+                    {
+                        op: "drop",
+                        spaces: "",
+                    },
+                    {
+                        op: "turnAround",
+                        spaces: "",
+                    },
+                    {
+                        op: "forward",
+                        spaces: "",
+                    },
+                    {
+                        op: "forward",
+                        spaces: "",
+                    },
+                    {
+                        op: "forward",
+                        spaces: "",
+                    },
+                    {
+                        op: "drop",
+                        spaces: "",
+                    },
+                    {
+                        op: "forward",
+                        spaces: "",
+                    },
+                    {
+                        op: "drop",
+                        spaces: "",
+                    },
+                    {
+                        op: "forward",
+                        spaces: "",
+                    },
+                    {
+                        op: "turnLeft",
+                        spaces: "",
+                    },
+                    {
+                        op: "forward",
+                        spaces: "",
+                    },
+                    {
+                        op: "turnLeft",
+                        spaces: "",
+                    },
+                    {
+                        op: "forward",
+                        spaces: "",
+                    },
+                    {
+                        op: "forward",
+                        spaces: "",
+                    },
+                    {
+                        op: "pick",
+                        spaces: "",
+                    },
+                    {
+                        empty: "",
+                    },
+                    {
+                        empty: "",
+                    },
+                    {
+                        empty: "",
+                    },
+                    {
+                        empty: "",
+                    },
+                    {
+                        empty: "",
+                    },
+                ],
+            },
+            {
+                level: "empty",
+                commands: [
+                    {
+                        op: "turnAround",
+                        spaces: "",
+                    },
+                    {
+                        op: "forward",
+                        spaces: "",
+                    },
+                    {
+                        op: "forward",
+                        spaces: "",
+                    },
+                    {
+                        op: "forward",
+                        spaces: "",
+                    },
+                    {
+                        op: "forward",
+                        spaces: "",
+                    },
+                    {
+                        op: "checkWallAhead",
+                        spaces: "",
+                    },
+                    {
+                        op: "jump",
+                        spaces: "",
+                    },
                 ],
             },
         ]),
         world = atom({
             dirty: false,
+            started: false,
+            running: false,
             error: null,
             level: {
-                size: { x: 0, y: 0 },
-                walls: [],
-                crystals: [],
+                size: { x: 10, y: 10 },
+                start: { x: 5, y: 5 },
+                walls: Array(10 * 10).fill(false),
+                crystals: Array(10 * 10).fill(false),
             },
             player: {
                 pos: { x: 0, y: 0 },
-                dir: { x: 0, y: 0 },
+                dir: { x: 0, y: 1 },
             },
+            choice: null,
             program: {
                 next: 0,
                 commands: [],
             },
         }),
-        level = atom({
-            size: { x: 10, y: 10 },
-            cells: Array(10 * 10)
-                .fill(".")
-                .map((d, i) => (i % 17 == 0 ? "*" : i % 19 == 2 ? "x" : d)),
-        }),
-        player = atom({
-            pos: {
-                x: 2,
-                y: 3,
-            },
-            dir: {
-                x: 1,
-                y: 0,
-            },
-        }),
-        program = atom({
-            line: 0,
-        }),
     } = $props();
     const resolution = 32;
 
-    const levelKey = atom("empty");
-    const commands = $derived(
+    const levelKey = atom("lvl1");
+    const currentCommands = $derived(
         view(
             [
                 L.choose(({ levelKey }) => [
@@ -126,6 +217,7 @@
                         level: levelKey,
                     }),
                     "commands",
+                    L.valueOr([]),
                 ]),
             ],
             combine({ allCommands, levelKey }),
@@ -152,9 +244,10 @@
     const command = L.iso(
         (cmd) =>
             cmd.invalid
-                ? cmd.invalid
-                : cmd.empty ||
-                  `${cmd.op || ""}${cmd.spaces || ""}${cmd.comment || ""}`,
+                ? `${cmd.invalid}${cmd.comment || ""}`
+                : cmd.empty
+                  ? `${cmd.empty}${cmd.comment || ""}`
+                  : `${cmd.op || ""}${cmd.spaces || ""}${cmd.comment || ""}`,
         R.pipe(
             R.match(
                 /((?<op>[^\s#]+)(?<spaces>\s*)|(?<empty>\s*)|(?<invalid>[^#]+))(?<comment>#.*)?$/,
@@ -182,13 +275,69 @@
                     command,
                 ]),
             ],
-            commands,
+            currentCommands,
         ),
     );
     const text = $derived(view(L.inverse(L.split("\n")), lines));
+    const level = $derived(view("level", world));
+    const player = $derived(view("player", world));
+    const choice = $derived(view("choice", world));
+    const program = $derived(view("program", world));
+    const running = $derived(view("running", world));
+    const started = $derived(view("started", world));
+    const currentChoiceYesNo = $derived(
+        view(
+            [
+                "choice",
+                L.lens(
+                    (r) => (r ? "yes" : "no"),
+                    (r) => r === "yes",
+                ),
+            ],
+            world,
+        ),
+    );
+    const executionError = $derived(view("error", world));
+    const executionErrorLine = $derived(view("command", executionError));
+    const executionErrorMessage = $derived(view("message", executionError));
+    const executionErrorPosition = $derived(view("location", executionError));
 
+    function reloadLevel() {
+        const lvl = currentLevel.value;
+        const cmds = currentCommands.value;
+        update((w) => {
+            return {
+                ...w,
+                dirty: false,
+                running: false,
+                started: false,
+                error: null,
+                program: {
+                    next: 0,
+                    commands: cmds,
+                },
+                level: {
+                    size: lvl.size,
+                    crystals: lvl.crystals,
+                    walls: lvl.walls,
+                },
+                player: {
+                    pos: {
+                        x: lvl.start.x,
+                        y: lvl.start.y,
+                    },
+                    dir: { x: 1, y: 0 },
+                },
+                choice: null,
+            };
+        }, world);
+    }
+
+    reloadLevel();
     const lineCount = $derived(view("length", lines));
-    const json = $derived(view(L.inverse(L.json({ space: "  " })), commands));
+    const json = $derived(
+        view(L.inverse(L.json({ space: "  " })), currentCommands),
+    );
     const levelError = atom();
     const currentLevelText = $derived(
         failableView(
@@ -314,6 +463,8 @@
             "checkWallAhead",
             "checkBeeperAhead",
             "checkBeeper",
+            "jump",
+            "halt",
         ].includes(op);
     }
 
@@ -328,74 +479,178 @@
         switch (op.op) {
             case "turnRight":
                 return {
-                    ...player,
-                    dir: { x: -player.dir.y, y: player.dir.x },
+                    player: {
+                        ...player,
+                        dir: { x: -player.dir.y, y: player.dir.x },
+                    },
                 };
             case "turnLeft":
                 return {
-                    ...player,
-                    dir: { x: player.dir.y, y: -player.dir.x },
+                    player: {
+                        ...player,
+                        dir: { x: player.dir.y, y: -player.dir.x },
+                    },
                 };
             case "turnAround":
                 return {
-                    ...player,
-                    dir: { x: -player.dir.x, y: -player.dir.y },
+                    player: {
+                        ...player,
+                        dir: { x: -player.dir.x, y: -player.dir.y },
+                    },
                 };
             case "forward":
                 return {
-                    ...player,
-                    pos: {
-                        x: player.pos.x + player.dir.x,
-                        y: player.pos.y + player.dir.y,
+                    player: {
+                        ...player,
+                        pos: {
+                            x: player.pos.x + player.dir.x,
+                            y: player.pos.y + player.dir.y,
+                        },
                     },
                 };
         }
-        return player;
+        return { player: player };
     }
     function runLevelOp(op, cell) {
         switch (op.op) {
             case "pick":
-                return ".";
+                if (!cell) {
+                    return { error: "There is no crystal to pick" };
+                }
+                return { newCell: false };
             case "drop":
-                return "*";
+                if (cell) {
+                    return { error: "There is is already a crystal" };
+                }
+                return { newCell: true };
         }
-        return cell;
+        return { newCell: cell };
     }
-    function runConrolOp(op, line) {
-        return line + 1;
+
+    function runChoiceOp(op, player, level) {
+        switch (op.op) {
+            case "checkWallAhead": {
+                const frontPos = {
+                    x: player.pos.x + player.dir.x,
+                    y: player.pos.y + player.dir.y,
+                };
+                return (
+                    frontPos.y == -1 ||
+                    frontPos.y == level.size.y ||
+                    frontPos.x == -1 ||
+                    frontPos.x == level.size.x ||
+                    level.walls[frontPos.x + frontPos.y * level.size.x] === true
+                );
+            }
+            case "checkBeeperAhead": {
+                const frontPos = {
+                    x: player.pos.x + player.dir.x,
+                    y: player.pos.y + player.dir.y,
+                };
+                if (
+                    frontPos.y == -1 ||
+                    frontPos.y == level.size.y ||
+                    frontPos.x == -1 ||
+                    frontPos.x == level.size.x
+                ) {
+                    return false;
+                }
+                return;
+                level.crystals[frontPos.x + frontPos.y * level.size.x] === true;
+            }
+            case "checkBeeper":
+                return (
+                    level.crystals[
+                        player.pos.x + player.pos.y * level.size.x
+                    ] === true
+                );
+        }
+        return null;
     }
-    function runOp(op, level, player, line) {
-        const newPlayer = runPlayerOp(op, player);
-        if (newPlayer.pos.x >= level.size.x || newPlayer.pos.x < 0) {
-            return { player, level, line };
+    function runConrolOp(op, line, choice) {
+        switch (op.op) {
+            case "halt":
+                return { line };
+            case "jump":
+                if (choice === true) {
+                    return {
+                        line: 0,
+                    };
+                } else {
+                    return { line: line + 1 };
+                }
         }
-        if (newPlayer.pos.y >= level.size.y || newPlayer.pos.y < 0) {
-            return { player, level, line };
+        if (choice !== null) {
+            return { error: "Must jump after check" };
         }
-        if (
-            level.cells[newPlayer.pos.x + newPlayer.pos.y * level.size.x] == "x"
-        ) {
-            return { player, level, line };
-        }
-        const newLevel = {
-            ...level,
-            cells: level.cells.map((c, i) =>
-                i === newPlayer.pos.x + newPlayer.pos.y * level.size.x
-                    ? runLevelOp(op, c)
-                    : c,
-            ),
-            line: line,
-        };
         return {
-            player: newPlayer,
-            level: newLevel,
-            line: runConrolOp(op, line),
+            line: line + 1,
         };
+    }
+    function runOp(op, level, player, line, choice) {
+        const newPlayerResult = runPlayerOp(op, player);
+        if (newPlayerResult.player) {
+            const newPlayer = newPlayerResult.player;
+
+            if (newPlayer.pos.x >= level.size.x || newPlayer.pos.x < 0) {
+                return { error: "Player hit a wall" };
+            }
+            if (newPlayer.pos.y >= level.size.y || newPlayer.pos.y < 0) {
+                return { error: "Player hit a wall" };
+            }
+            if (level.walls[newPlayer.pos.x + newPlayer.pos.y * level.size.x]) {
+                return { error: "Player hit a wall" };
+            }
+
+            const newLevel = {
+                ...level,
+                crystals: level.crystals.reduce((acc, c, i) => {
+                    if (acc.error) {
+                        return acc;
+                    }
+                    if (
+                        i ===
+                        newPlayer.pos.x + newPlayer.pos.y * level.size.x
+                    ) {
+                        const result = runLevelOp(op, c);
+                        if (result.error) {
+                            return result;
+                        }
+
+                        return [result.newCell, ...acc];
+                    } else {
+                        return [c, ...acc];
+                    }
+                }, []),
+                next: line,
+            };
+            if (newLevel.crystals.error) {
+                return { error: newLevel.crystals.error };
+            }
+
+            const nextControl = runConrolOp(op, line, choice);
+
+            if (nextControl.error) {
+                return { error: nextControl.error };
+            }
+            return {
+                player: newPlayer,
+                choice: runChoiceOp(op, player, level),
+                level: {
+                    ...level,
+                    crystals: newLevel.crystals.reverse(),
+                },
+                next: nextControl.line,
+            };
+        } else {
+            console.log(newPlayerResult);
+            return { error: newPlayerResult.error };
+        }
     }
     function startExecution() {}
     function pauseExecution() {}
     function resetLine() {
-        update(R.always({ line: 0 }), program);
+        update(R.always({ next: 0 }), program);
         update(
             (player = { pos }) => ({
                 ...player,
@@ -413,39 +668,93 @@
     }
     function executeLine() {
         update(
-            ({ program: { line }, player, commands, level }) => {
-                if (line < commands.length) {
-                    const result = runOp(commands[line], level, player, line);
-                    return {
-                        program: { ...program, line: result.line },
-                        player: result.player,
-                        level: result.level,
-                    };
+            ({ program: { next }, player, commands, level, choice }) => {
+                if (next < commands.length) {
+                    const result = runOp(
+                        commands[next],
+                        level,
+                        player,
+                        next,
+                        choice,
+                    );
+                    if (result.error) {
+                        return {
+                            error: {
+                                message: result.error,
+                                command: next,
+                                location: player,
+                            },
+                            program: { next },
+                            player: player,
+                            level: level,
+                            running: false,
+                            started: true,
+                        };
+                    } else {
+                        return {
+                            program: { next: result.next },
+                            player: result.player,
+                            level: result.level,
+                            choice: result.choice,
+                            error: null,
+                            running: true,
+                            started: true,
+                        };
+                    }
                 } else {
-                    return { program: { line: line }, player, level };
+                    return {
+                        program: { next: commands.length },
+                        player,
+                        level,
+                        choice,
+                        error: null,
+                        running: false,
+                        started: true,
+                    };
                 }
             },
             combine(
                 {
                     program,
                     player,
-                    commands,
+                    choice,
+                    commands: currentCommands,
                     level,
+                    error: executionError,
+                    running: running,
+                    started: started,
                 },
-                { program: true, player: true, commands: false, level: true },
+                {
+                    program: true,
+                    player: true,
+                    choice: true,
+                    commands: false,
+                    level: true,
+                    error: true,
+                    running: true,
+                    started: true,
+                },
             ),
         );
     }
 </script>
 
 <label>
-    Level: <select bind:value={levelKey.value}>
+    Level: <select
+        bind:value={levelKey.value}
+        onchange={(evt) => reloadLevel()}
+    >
         {#each allLevels.value as l, li (l.id)}
             <option value={l.id} selected={levelKey.value === l.id}
                 >{l.name}</option
             >
         {/each}
     </select>
+    <button
+        onclick={(evt) => {
+            reloadLevel();
+        }}>Reload</button
+    >
 </label>
 <div
     style="display: grid; grid-template-columns: 1fr 1fr; border: 2px solid gray; border-bottom: none; box-sizing: border-box;"
@@ -454,8 +763,6 @@
         <textarea
             style="font-family: monospace; align-self: stretch; resize: none; margin: 1ex; box-sizing: border-box; width: auto;
             white-space: pre;
-              overflow-wrap: normal;
-              overflow-x: auto;
             "
             use:bindValue={currentLevelText}
         ></textarea>
@@ -496,29 +803,47 @@
         {#snippet children(i)}
             {#if i == 1}
                 <div
-                    style="display: grid; grid-template-rows: auto 1fr; background-color: #333;"
+                    style="display: grid; grid-template-rows: auto 1fr; background-color: #333; max-height: 100%; align-self: stretch; overflow-y: auto;"
                 >
                     <div class="toolbar">
-                        <button type="button" onclick={executeLine}
-                            >Execute ({program.value.line})</button
-                        >
-                        <button type="button" onclick={resetLine}
+                        <button type="button" onclick={reloadLevel}
                             >Reset
                         </button>
-                        <button type="button" onclick={startExecution}
+                        <button
+                            type="button"
+                            onclick={executeLine}
+                            disabled={!currentCommands.value.length ||
+                                executionError.value}
+                            >Execute ({program.value.next})</button
+                        >
+                        <button
+                            type="button"
+                            disabled={!currentCommands.value.length ||
+                                executionError.value}
+                            onclick={startExecution}
                             >Play
                         </button>
-                        <button type="button" onclick={pauseExecution}
+                        <button
+                            type="button"
+                            disabled={!currentCommands.value.length ||
+                                executionError.value}
+                            onclick={pauseExecution}
                             >Pause
                         </button>
                     </div>
-                    <div class="line-numbered">
+                    <div
+                        class={{
+                            "line-numbered": true,
+                            disabled: started.value,
+                        }}
+                    >
                         <div class="line-numbers">
                             {#each { length: lineCount.value } as _, l (l)}
                                 <span
                                     class={{
                                         "line-number": true,
-                                        active: program.value.line == l,
+                                        active: program.value.next == l,
+                                        error: executionErrorLine.value == l,
                                     }}
                                 >
                                     {l}
@@ -532,7 +857,7 @@
                                     "overlay-annotations": true,
                                 }}
                             >
-                                {#each commands.value as l}
+                                {#each currentCommands.value as l}
                                     <span
                                         class={{
                                             annotation: true,
@@ -543,12 +868,15 @@
                                         }}
                                     >
                                         {#if l.empty !== undefined}
-                                            <span class="empty"
-                                                >{l.empty || " "}</span
-                                            >
+                                            <span class="empty">{l.empty}</span
+                                            ><span class="comment"
+                                                >{l.comment}</span
+                                            ><span>{" "}</span>
                                         {:else if l.invalid}<span
                                                 class="invalid"
                                                 >{l.invalid || " "}</span
+                                            ><span class="comment"
+                                                >{l.comment || ""}</span
                                             >
                                         {:else}
                                             <span
@@ -561,7 +889,43 @@
                                                 >{l.spaces || ""}</span
                                             ><span class="comment"
                                                 >{l.comment || ""}</span
+                                            ><span>{" "}</span>
+                                        {/if}
+                                    </span>
+                                {/each}
+                            </div>
+                            <div
+                                style="z-index: 100; pointer-events: none;"
+                                class={{
+                                    "overlay-layer": true,
+                                    "overlay-annotations": true,
+                                    "annoatation-right": true,
+                                }}
+                            >
+                                {#each currentCommands.value as l, li}
+                                    <span
+                                        style="background: none;"
+                                        class={{
+                                            annotation: true,
+                                        }}
+                                    >
+                                        {#if l.empty !== undefined}
+                                            <span>{" "}</span>
+                                        {:else if l.invalid}
+                                            <span class="inlay error"
+                                                >Invalid syntax</span
                                             >
+                                        {:else}<span>{" "}</span>
+                                            {#if !isOpValid(l.op)}
+                                                <span class="inlay error"
+                                                    >{"unknown command"}</span
+                                                >
+                                            {/if}
+                                            {#if executionErrorLine.value === li}
+                                                <span class="inlay error"
+                                                    >{executionErrorMessage.value}</span
+                                                >
+                                            {/if}
                                         {/if}
                                     </span>
                                 {/each}
@@ -574,6 +938,7 @@
                                 autocorrect="off"
                                 autocapitalize="off"
                                 spellcheck="false"
+                                readonly={started.value}
                                 class={{
                                     "overlay-layer": true,
                                     "overlay-input": true,
@@ -591,10 +956,6 @@
                     >
                         {#each { length: level.value.size.y } as _, y}
                             {#each { length: level.value.size.x } as _, x}
-                                {@const cell =
-                                    level.value.cells[
-                                        y * level.value.size.x + x
-                                    ]}
                                 <rect
                                     x={x * resolution}
                                     y={y * resolution}
@@ -609,14 +970,18 @@
                         {/each}
                         {#each { length: level.value.size.y } as _, y}
                             {#each { length: level.value.size.x } as _, x}
-                                {@const cell =
-                                    level.value.cells[
+                                {@const isWall =
+                                    level.value.walls[
                                         y * level.value.size.x + x
                                     ]}
-                                {#if cell === "*"}
+                                {@const isCrystal =
+                                    level.value.crystals[
+                                        y * level.value.size.x + x
+                                    ]}
+                                {#if isCrystal}
                                     {@render diamond(x, y, resolution)}
                                 {/if}
-                                {#if cell === "x"}
+                                {#if isWall}
                                     {@render wall(x, y, resolution)}
                                 {/if}
                             {/each}
@@ -627,7 +992,15 @@
                             player.value.dir.x,
                             player.value.dir.y,
                             resolution,
+                            choice.value,
                         )}
+                        {#if executionErrorPosition.value}
+                            {@render error(
+                                executionErrorPosition.value.pos.x,
+                                executionErrorPosition.value.pos.y,
+                                resolution,
+                            )}
+                        {/if}
                         <rect
                             x={-3}
                             y={-3}
@@ -643,7 +1016,7 @@
             {/if}
         {/snippet}
     </Split>
-    {#snippet robot(x, y, dx, dy, size)}
+    {#snippet robot(x, y, dx, dy, size, choice)}
         <g
             transform="rotate({(Math.atan2(dy, dx) * 180) / Math.PI + 90} {x *
                 size +
@@ -689,6 +1062,10 @@
             ></polyline>
             <circle
                 fill="white"
+                class={{
+                    "choice-yes": choice === true,
+                    "choice-no": choice === false,
+                }}
                 r="2.5"
                 stroke-width="1.5"
                 stroke="#3300ff"
@@ -697,6 +1074,10 @@
             ></circle>
             <circle
                 fill="white"
+                class={{
+                    "choice-yes": choice === true,
+                    "choice-no": choice === false,
+                }}
                 r="2.5"
                 stroke-width="1.5"
                 stroke="#3300ff"
@@ -753,6 +1134,22 @@
             "
         ></polygon>
     {/snippet}
+    {#snippet error(x, y, size)}
+        <polygon
+            stroke-linejoin="round"
+            stroke-linecap="round"
+            stroke="red"
+            stroke-widht="3"
+            fill-opacity="0.8"
+            fill="#aa0000"
+            points="{size * x + size / 2} {size * y}
+            {size * x + size} {size * y + size / 2}
+            {size * x + size / 2} {size * y + size}
+            {size * x} {size * y + size / 2}
+
+            "
+        ></polygon>
+    {/snippet}
 </div>
 
 <style>
@@ -775,7 +1172,8 @@
         grid-template-rows: 1fr;
         justify-content: stretch;
         align-content: stretch;
-        overflow: auto;
+
+        padding: 1ex;
     }
 
     .overlay-layer {
@@ -790,7 +1188,9 @@
         white-space: pre;
     }
     .annotation {
+        display: inline;
         background-color: #fff3;
+        position: relative;
         color: transparent;
     }
 
@@ -825,6 +1225,11 @@
         display: flex;
         flex-direction: column;
         align-items: stretch;
+        position: sticky;
+        left: 0;
+        background-color: inherit;
+        z-index: 100;
+        padding: 1ex;
     }
 
     .line-number {
@@ -838,6 +1243,11 @@
         color: #000;
     }
 
+    .line-number.error {
+        background: palevioletred;
+        color: #000;
+    }
+
     .line-numbered {
         display: grid;
         grid-template-columns: auto 1fr;
@@ -846,12 +1256,16 @@
         font-size: 1.2em;
         background-color: #333;
         color: #fff;
-        padding: 1ex;
         line-height: 1.5;
         border: 4px solid transparent;
+        position: relative;
+        overflow: auto;
     }
-    .line-numbered:has(:focus-visible) {
+    .line-numbered:not(.disabled):has(:focus-visible) {
         border-color: orangered;
+    }
+    .line-numbered.disabled:has(:focus-visible) {
+        border-color: gray;
     }
 
     .robot-container {
@@ -883,5 +1297,30 @@
     }
     .invalid {
         background-color: #500;
+    }
+    .inlay {
+        z-index: 100;
+        color: #ffeeee;
+        background-color: #550000;
+        padding: 0.2ex 1ex;
+        border: none;
+        font-size: 0.8em;
+        font-style: italic;
+        vertical-align: middle;
+        margin-left: auto;
+        margin-right: 0.5ex;
+    }
+    .inlay.error::before {
+        content: "! ";
+    }
+    .annoatation-right {
+        text-align: right;
+    }
+
+    .choice-no {
+        fill: red;
+    }
+    .choice-yes {
+        fill: green;
     }
 </style>
