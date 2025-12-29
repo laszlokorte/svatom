@@ -12,36 +12,86 @@
     import Split from "./SplitView/Split.svelte";
 
     const {
-        commands = atom([
+        allLevels = atom([
             {
-                op: "turnLeft",
-                spaces: " ",
-                comment: "# Program starts here",
-                invalid: false,
+                id: "empty",
+                name: "Empty",
+                level: {
+                    size: { x: 10, y: 10 },
+                    start: { x: 5, y: 5 },
+                    walls: Array(10 * 10).fill(false),
+                    crystals: Array(10 * 10).fill(false),
+                },
             },
-            { op: "turnRight", spaces: "" },
             {
-                op: "turnAround",
-                spaces: "",
-                comment: "",
-                invalid: false,
+                id: "lvl1",
+                name: "Level 1",
+                level: {
+                    size: { x: 10, y: 10 },
+                    start: { x: 3, y: 4 },
+                    walls: Array(10 * 10)
+                        .fill(false)
+                        .map((d, i) =>
+                            i % 17 == 0 ? d : i % 19 == 2 ? true : d,
+                        ),
+                    crystals: Array(10 * 10)
+                        .fill(false)
+                        .map((d, i) => (i % 17 == 0 ? true : d)),
+                },
             },
-            { op: "forward", spaces: "" },
-            {
-                op: "forward",
-                spaces: " ",
-                comment: "# write comments",
-                invalid: false,
-            },
-            { op: "drop", spaces: "" },
-            { op: "turnAround", spaces: "" },
-            { op: "forward", spaces: "" },
-            { op: "forward", spaces: "" },
-            { op: "forward", spaces: "" },
-            { op: "drop", spaces: "" },
-            { op: "forward", spaces: "" },
-            { op: "pick", spaces: "" },
         ]),
+        allCommands = atom([
+            {
+                level: "lvl1",
+                commands: [
+                    {
+                        op: "turnLeft",
+                        spaces: " ",
+                        comment: "# Program starts here",
+                        invalid: false,
+                    },
+                    { op: "turnRight", spaces: "" },
+                    {
+                        op: "turnAround",
+                        spaces: "",
+                        comment: "",
+                        invalid: false,
+                    },
+                    { op: "forward", spaces: "" },
+                    {
+                        op: "forward",
+                        spaces: " ",
+                        comment: "# write comments",
+                        invalid: false,
+                    },
+                    { op: "drop", spaces: "" },
+                    { op: "turnAround", spaces: "" },
+                    { op: "forward", spaces: "" },
+                    { op: "forward", spaces: "" },
+                    { op: "forward", spaces: "" },
+                    { op: "drop", spaces: "" },
+                    { op: "forward", spaces: "" },
+                    { op: "pick", spaces: "" },
+                ],
+            },
+        ]),
+        world = atom({
+            dirty: false,
+            error: null,
+            level: {
+                size: { x: 0, y: 0 },
+                walls: [],
+                crystals: [],
+            },
+            player: {
+                pos: { x: 0, y: 0 },
+                dir: { x: 0, y: 0 },
+            },
+            program: {
+                next: 0,
+                commands: [],
+            },
+        }),
         level = atom({
             size: { x: 10, y: 10 },
             cells: Array(10 * 10)
@@ -64,6 +114,41 @@
     } = $props();
     const resolution = 32;
 
+    const levelKey = atom("empty");
+    const commands = $derived(
+        view(
+            [
+                L.choose(({ levelKey }) => [
+                    "allCommands",
+                    L.valueOr([]),
+                    L.find(R.whereEq({ level: levelKey })),
+                    L.valueOr({
+                        level: levelKey,
+                    }),
+                    "commands",
+                ]),
+            ],
+            combine({ allCommands, levelKey }),
+        ),
+    );
+    const currentLevel = $derived(
+        view(
+            L.choose(({ levelKey }) => [
+                "allLevels",
+                L.valueOr([]),
+                L.whereEq({ id: levelKey }),
+                "level",
+                L.valueOr({
+                    size: { x: 10, y: 10 },
+                    start: { x: 5, y: 5 },
+                    walls: Array(10 * 10).fill(false),
+                    crystals: Array(10 * 10).fill(false),
+                }),
+            ]),
+            combine({ allLevels, levelKey }),
+        ),
+    );
+
     const command = L.iso(
         (cmd) =>
             cmd.invalid
@@ -81,7 +166,7 @@
         view(
             [
                 L.iso(
-                    (array) => [...array, undefined],
+                    (array) => (array ? [...array, undefined] : [undefined]),
                     (array) =>
                         array.length == 0 ||
                         array[array.length - 1].empty == undefined ||
@@ -105,17 +190,27 @@
     const lineCount = $derived(view("length", lines));
     const json = $derived(view(L.inverse(L.json({ space: "  " })), commands));
     const levelError = atom();
-    const levelText = $derived(
+    const currentLevelText = $derived(
         failableView(
             [
                 L.iso(
-                    ({ size, cells }) =>
+                    ({ size, walls, crystals, start }) =>
                         Array(size.y)
                             .fill(size.x)
                             .map((xs, y) =>
                                 Array(xs)
                                     .fill(null)
-                                    .map((_, x) => cells[y * xs + x] ?? ".")
+                                    .map((_, x) => {
+                                        if (start.x === x && start.y === y) {
+                                            return "s";
+                                        } else if (walls[y * xs + x]) {
+                                            return "x";
+                                        } else if (crystals[y * xs + x]) {
+                                            return "*";
+                                        } else {
+                                            return ".";
+                                        }
+                                    })
                                     .join(""),
                             )
                             .join("\n"),
@@ -136,15 +231,31 @@
                             );
                         }
                         const width = maxWidth;
+                        const startIndex = text.indexOf("s");
+                        if (startIndex < 0) {
+                            return new Error("missing start position");
+                        }
                         return {
                             size: { y: lines.length, x: width },
-                            cells: Array(lines.length * width)
-                                .fill(".")
+                            start: {
+                                y: Math.floor(startIndex / (width + 1)),
+                                x: startIndex % (width + 1),
+                            },
+                            walls: Array(lines.length * width)
+                                .fill(false)
                                 .map((def, i) => {
                                     const x = i % width;
                                     const y = Math.floor(i / width);
 
-                                    return lines[y].slice(x, x + 1) || def;
+                                    return lines[y].slice(x, x + 1) === "x";
+                                }),
+                            crystals: Array(lines.length * width)
+                                .fill(false)
+                                .map((def, i) => {
+                                    const x = i % width;
+                                    const y = Math.floor(i / width);
+
+                                    return lines[y].slice(x, x + 1) === "*";
                                 }),
                         };
                     },
@@ -187,7 +298,7 @@
                         .join("\n");
                 }),
             ],
-            level,
+            currentLevel,
             false,
             levelError,
         ),
@@ -327,6 +438,15 @@
     }
 </script>
 
+<label>
+    Level: <select bind:value={levelKey.value}>
+        {#each allLevels.value as l, li (l.id)}
+            <option value={l.id} selected={levelKey.value === l.id}
+                >{l.name}</option
+            >
+        {/each}
+    </select>
+</label>
 <div
     style="display: grid; grid-template-columns: 1fr 1fr; border: 2px solid gray; border-bottom: none; box-sizing: border-box;"
 >
@@ -337,7 +457,7 @@
               overflow-wrap: normal;
               overflow-x: auto;
             "
-            use:bindValue={levelText}
+            use:bindValue={currentLevelText}
         ></textarea>
         <div
             style="background-color: #fee; align-items: center;gap: 1em;overflow: auto;"
@@ -355,7 +475,7 @@
                                 ).slice(0, maxWidth);
                             })
                             .join("\n");
-                    }, levelText);
+                    }, currentLevelText);
                 }}>auto fix</button
             >
 
@@ -698,6 +818,7 @@
         max-height: none;
         background-color: transparent;
         color: inherit;
+        white-space: pre;
     }
 
     .line-numbers {
