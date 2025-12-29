@@ -151,23 +151,12 @@
                 level: "empty",
                 commands: [
                     {
+                        op: "jumpTo",
+                        arg: 2,
+                        spaces: "",
+                    },
+                    {
                         op: "turnAround",
-                        spaces: "",
-                    },
-                    {
-                        op: "forward",
-                        spaces: "",
-                    },
-                    {
-                        op: "forward",
-                        spaces: "",
-                    },
-                    {
-                        op: "forward",
-                        spaces: "",
-                    },
-                    {
-                        op: "forward",
                         spaces: "",
                     },
                     {
@@ -175,7 +164,17 @@
                         spaces: "",
                     },
                     {
-                        op: "jump",
+                        op: "ifYesJumpTo",
+                        arg: 1,
+                        spaces: "",
+                    },
+                    {
+                        op: "forward",
+                        spaces: "",
+                    },
+                    {
+                        op: "jumpTo",
+                        arg: 2,
                         spaces: "",
                     },
                 ],
@@ -247,12 +246,18 @@
                 ? `${cmd.invalid}${cmd.comment || ""}`
                 : cmd.empty
                   ? `${cmd.empty}${cmd.comment || ""}`
-                  : `${cmd.op || ""}${cmd.spaces || ""}${cmd.comment || ""}`,
+                  : `${cmd.op || ""}${cmd.arg !== undefined ? ` ${cmd.arg}` : ""}${cmd.spaces || ""}${cmd.comment || ""}`,
         R.pipe(
             R.match(
-                /((?<op>[^\s#]+)(?<spaces>\s*)|(?<empty>\s*)|(?<invalid>[^#]+))(?<comment>#.*)?$/,
+                /((?:(?<op>[^\s#\d]+)(?: (?<arg>\d+))?)(?<spaces>\s*)|(?<empty>\s*)|(?<invalid>[^#]+))(?<comment>#.*)?$/,
             ),
             R.prop("groups"),
+            (x) => {
+                if (x.arg) {
+                    return { ...x, arg: parseInt(x.arg) };
+                }
+                return x;
+            },
         ),
     );
     const lines = $derived(
@@ -452,20 +457,26 @@
             levelError,
         ),
     );
-    function isOpValid(op) {
-        return [
-            "turnLeft",
-            "turnRight",
-            "turnAround",
-            "forward",
-            "pick",
-            "drop",
-            "checkWallAhead",
-            "checkBeeperAhead",
-            "checkBeeper",
-            "jump",
-            "halt",
-        ].includes(op);
+    function isOpValid(op, arg) {
+        return (
+            [
+                "turnLeft",
+                "turnRight",
+                "turnAround",
+                "forward",
+                "pick",
+                "drop",
+                "checkWallAhead",
+                "checkBeeperAhead",
+                "checkBeeper",
+                "ifYesJumpTo",
+                "ifNotJumpTo",
+                "jumpTo",
+                "halt",
+            ].includes(op) &&
+            ["ifYesJumpTo", "ifNotJumpTo", "jumpTo"].includes(op) ==
+                (undefined !== arg)
+        );
     }
 
     const viewBox = $derived(
@@ -570,24 +581,44 @@
     function runConrolOp(op, line, choice) {
         switch (op.op) {
             case "halt":
-                return { line };
-            case "jump":
+                return { line, halt: true };
+            case "ifYesJumpTo":
                 if (choice === true) {
                     return {
-                        line: 0,
+                        line: op.arg,
                     };
                 } else {
                     return { line: line + 1 };
                 }
+            case "ifNotJumpTo":
+                if (choice === false) {
+                    return {
+                        line: op.arg,
+                    };
+                } else {
+                    return { line: line + 1 };
+                }
+            case "jumpTo":
+                return {
+                    line: op.arg,
+                };
         }
         if (choice !== null) {
-            return { error: "Must jump after check" };
+            return { error: "Must jumpTo after check" };
         }
         return {
             line: line + 1,
         };
     }
     function runOp(op, level, player, line, choice) {
+        if (op.op === undefined) {
+            return {
+                player: player,
+                choice: choice,
+                level: level,
+                next: line + 1,
+            };
+        }
         const newPlayerResult = runPlayerOp(op, player);
         if (newPlayerResult.player) {
             const newPlayer = newPlayerResult.player;
@@ -864,7 +895,7 @@
                                             invalid:
                                                 l.empty !== "" &&
                                                 (!!l.invalid ||
-                                                    !isOpValid(l.op)),
+                                                    !isOpValid(l.op, l.arg)),
                                         }}
                                     >
                                         {#if l.empty !== undefined}
@@ -883,9 +914,16 @@
                                                 class={{
                                                     "annotation-body": true,
                                                     empty: !!l.empty,
-                                                    valid: isOpValid(l.op),
-                                                }}>{l.op || " "}</span
-                                            ><span class="spaces"
+                                                    valid: isOpValid(
+                                                        l.op,
+                                                        l.arg,
+                                                    ),
+                                                }}
+                                                >{l.op || " "}{l.arg !==
+                                                undefined
+                                                    ? " " + l.arg
+                                                    : ""}
+                                            </span><span class="spaces"
                                                 >{l.spaces || ""}</span
                                             ><span class="comment"
                                                 >{l.comment || ""}</span
@@ -916,7 +954,7 @@
                                                 >Invalid syntax</span
                                             >
                                         {:else}<span>{" "}</span>
-                                            {#if !isOpValid(l.op)}
+                                            {#if !isOpValid(l.op, l.arg)}
                                                 <span class="inlay error"
                                                     >{"unknown command"}</span
                                                 >
