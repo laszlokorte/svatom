@@ -24,6 +24,26 @@
                 },
             },
             {
+                id: "bookmarks",
+                name: "Bookmarks",
+                level: {
+                    size: { x: 10, y: 10 },
+                    start: { x: 5, y: 5 },
+                    walls: Array(10 * 10).fill(false),
+                    crystals: Array(10 * 10).fill(false),
+                },
+            },
+            {
+                id: "stack",
+                name: "Stack",
+                level: {
+                    size: { x: 10, y: 10 },
+                    start: { x: 5, y: 5 },
+                    walls: Array(10 * 10).fill(false),
+                    crystals: Array(10 * 10).fill(false),
+                },
+            },
+            {
                 id: "lvl1",
                 name: "Level 1",
                 level: {
@@ -42,12 +62,106 @@
         ]),
         allCommands = atom([
             {
-                level: "lvl1",
+                level: "bookmarks",
                 commands: [
                     {
-                        op: "checkWallAhead",
+                        op: "bookmark",
                         spaces: "",
                     },
+                    {
+                        op: "bookmark",
+                        spaces: "",
+                    },
+                    {
+                        op: "bookmark",
+                        spaces: "",
+                    },
+                    {
+                        op: "bookmark",
+                        spaces: "",
+                    },
+                    {
+                        op: "bookmark",
+                        spaces: "",
+                    },
+                    {
+                        op: "bookmark",
+                        spaces: "",
+                    },
+                    {
+                        op: "bookmark",
+                        spaces: "",
+                    },
+                    {
+                        op: "return",
+                        spaces: "",
+                    },
+                    {
+                        op: "halt",
+                        spaces: "",
+                    },
+                ],
+            },
+            {
+                level: "stack",
+                commands: [
+                    {
+                        op: "bookmarkAndJump",
+                        arg: 10,
+                        spaces: "",
+                    },
+                    {
+                        op: "halt",
+                    },
+                    {
+                        empty: "",
+                    },
+                    {
+                        empty: "",
+                    },
+                    {
+                        empty: "",
+                    },
+                    {
+                        empty: "",
+                    },
+                    {
+                        empty: "",
+                    },
+                    {
+                        empty: "",
+                    },
+                    {
+                        empty: "",
+                    },
+                    {
+                        empty: "",
+                    },
+                    {
+                        op: "forward",
+                        spaces: "",
+                    },
+                    {
+                        op: "forward",
+                        spaces: "",
+                    },
+                    {
+                        op: "forward",
+                        spaces: "",
+                    },
+                    {
+                        op: "forward",
+                        spaces: "",
+                    },
+                    {
+                        op: "return",
+                        spaces: "",
+                    },
+                ],
+            },
+            {
+                level: "lvl1",
+                commands: [
                     {
                         op: "turnLeft",
                         spaces: " ",
@@ -72,6 +186,15 @@
                     },
                     {
                         op: "drop",
+                        spaces: "",
+                    },
+                    {
+                        op: "checkWallAhead",
+                        spaces: "",
+                    },
+                    {
+                        op: "ifNotJumpBy",
+                        arg: 2,
                         spaces: "",
                     },
                     {
@@ -131,7 +254,7 @@
                         spaces: "",
                     },
                     {
-                        empty: "",
+                        op: "halt",
                     },
                     {
                         empty: "",
@@ -169,6 +292,91 @@
                         spaces: "",
                     },
                     {
+                        op: "checkBeeper",
+                        spaces: "",
+                    },
+                    {
+                        op: "ifNotJumpBy",
+                        arg: 15,
+                        spaces: "",
+                    },
+                    {
+                        op: "pick",
+                        spaces: "",
+                    },
+                    {
+                        op: "turnLeft",
+                        spaces: "",
+                    },
+                    {
+                        op: "checkWallAhead",
+                        spaces: "",
+                    },
+                    {
+                        op: "ifNotJumpBy",
+                        arg: 2,
+                        spaces: "",
+                    },
+                    {
+                        op: "halt",
+                        spaces: "",
+                    },
+                    {
+                        op: "forward",
+                        spaces: "",
+                    },
+                    {
+                        op: "checkBeeper",
+                        spaces: "",
+                    },
+                    {
+                        op: "ifYesJumpBy",
+                        arg: -5,
+                        spaces: "",
+                    },
+                    {
+                        op: "drop",
+                        spaces: "",
+                    },
+                    {
+                        op: "turnAround",
+                        spaces: "",
+                    },
+                    {
+                        op: "forward",
+                        spaces: "",
+                    },
+                    {
+                        op: "checkBeeper",
+                        spaces: "",
+                    },
+                    {
+                        op: "ifYesJumpBy",
+                        arg: -2,
+                        spaces: "",
+                    },
+                    {
+                        op: "turnLeft",
+                        spaces: "",
+                    },
+                    {
+                        op: "drop",
+                        spaces: "",
+                    },
+                    {
+                        op: "forward",
+                        spaces: "",
+                    },
+                    {
+                        op: "jumpTo",
+                        arg: 2,
+                        spaces: "",
+                    },
+                    {
+                        op: "drop",
+                        spaces: "",
+                    },
+                    {
                         op: "forward",
                         spaces: "",
                     },
@@ -184,6 +392,7 @@
             dirty: false,
             started: false,
             running: false,
+            halted: false,
             error: null,
             level: {
                 size: { x: 10, y: 10 },
@@ -200,6 +409,7 @@
                 next: 0,
                 commands: [],
             },
+            stack: [],
         }),
     } = $props();
     const resolution = 32;
@@ -217,9 +427,74 @@
                     }),
                     "commands",
                     L.valueOr([]),
+                    L.reread((cmds) =>
+                        cmds.map((x, i) => {
+                            const validOp =
+                                x.empty !== undefined ||
+                                validateOp(x.op, x.arg);
+                            if (validOp.error) {
+                                return { ...x, error: validOp.error };
+                            } else if (
+                                !R.all(
+                                    (jt) =>
+                                        jt === false ||
+                                        (jt >= 0 && jt < cmds.length),
+                                    jumpTargets(x, i),
+                                )
+                            ) {
+                                return {
+                                    ...x,
+                                    error: `Jump target (${jumpTargets(x, i).join(", ")}) outside range`,
+                                };
+                            }
+                            return x;
+                        }),
+                    ),
                 ]),
             ],
             combine({ allCommands, levelKey }),
+        ),
+    );
+    const commandsAreValid = $derived(
+        view(
+            L.reread((commands) => {
+                return R.all(
+                    (cmd) => cmd.empty !== undefined || !cmd.error,
+                    commands,
+                );
+            }),
+            currentCommands,
+        ),
+    );
+    function jumpTargets(c, ci) {
+        switch (c.op) {
+            case "ifYesJumpTo":
+                return [c.arg];
+            case "ifNotJumpTo":
+                return [c.arg];
+            case "jumpTo":
+                return [c.arg];
+            case "ifYesJumpBy":
+                return [ci + c.arg];
+            case "ifNotJumpBy":
+                return [ci + c.arg];
+            case "jumpBy":
+                return [ci + c.arg];
+            case "bookmarkAndJump":
+                return [ci + 1, c.arg];
+            case "bookmark":
+                return [ci + 2];
+        }
+        return [];
+    }
+    const allJumpTargets = $derived(
+        view(
+            L.reread((commands) => {
+                return commands.flatMap((c, ci) => {
+                    return jumpTargets(c, ci);
+                });
+            }),
+            currentCommands,
         ),
     );
     const currentLevel = $derived(
@@ -249,7 +524,7 @@
                   : `${cmd.op || ""}${cmd.arg !== undefined ? ` ${cmd.arg}` : ""}${cmd.spaces || ""}${cmd.comment || ""}`,
         R.pipe(
             R.match(
-                /((?:(?<op>[^\s#\d]+)(?: (?<arg>\d+))?)(?<spaces>\s*)|(?<empty>\s*)|(?<invalid>[^#]+))(?<comment>#.*)?$/,
+                /((?:(?<op>[^\s#\d]+)(?: (?<arg>-?\d+))?)(?<spaces>\s*)|(?<empty>\s*)|(?<invalid>[^#]+))(?<comment>#.*)?$/,
             ),
             R.prop("groups"),
             (x) => {
@@ -287,6 +562,8 @@
     const level = $derived(view("level", world));
     const player = $derived(view("player", world));
     const choice = $derived(view("choice", world));
+    const halted = $derived(view("halted", world));
+    const stack = $derived(view("stack", world));
     const program = $derived(view("program", world));
     const running = $derived(view("running", world));
     const started = $derived(view("started", world));
@@ -334,6 +611,8 @@
                     dir: { x: 1, y: 0 },
                 },
                 choice: null,
+                halted: null,
+                stack: [],
             };
         }, world);
     }
@@ -457,9 +736,9 @@
             levelError,
         ),
     );
-    function isOpValid(op, arg) {
-        return (
-            [
+    function validateOp(op, arg) {
+        if (
+            ![
                 "turnLeft",
                 "turnRight",
                 "turnAround",
@@ -472,11 +751,46 @@
                 "ifYesJumpTo",
                 "ifNotJumpTo",
                 "jumpTo",
+                "ifYesJumpBy",
+                "ifNotJumpBy",
+                "jumpBy",
                 "halt",
+                "bookmark",
+                "return",
+                "bookmarkAndJump",
+            ].includes(op)
+        ) {
+            return { error: "unknown command" };
+        }
+        if (
+            [
+                "ifYesJumpTo",
+                "ifNotJumpTo",
+                "jumpTo",
+                "ifYesJumpBy",
+                "ifNotJumpBy",
+                "jumpBy",
+                "bookmarkAndJump",
             ].includes(op) &&
-            ["ifYesJumpTo", "ifNotJumpTo", "jumpTo"].includes(op) ==
-                (undefined !== arg)
-        );
+            undefined === arg
+        ) {
+            return { error: "missing argument" };
+        }
+        if (
+            ![
+                "ifYesJumpTo",
+                "ifNotJumpTo",
+                "jumpTo",
+                "ifYesJumpBy",
+                "ifNotJumpBy",
+                "jumpBy",
+                "bookmarkAndJump",
+            ].includes(op) &&
+            undefined !== arg
+        ) {
+            return { error: "unexpected argument" };
+        }
+        return true;
     }
 
     const viewBox = $derived(
@@ -566,8 +880,10 @@
                 ) {
                     return false;
                 }
-                return;
-                level.crystals[frontPos.x + frontPos.y * level.size.x] === true;
+                return (
+                    level.crystals[frontPos.x + frontPos.y * level.size.x] ===
+                    true
+                );
             }
             case "checkBeeper":
                 return (
@@ -578,29 +894,82 @@
         }
         return null;
     }
-    function runConrolOp(op, line, choice) {
+    function runConrolOp(op, line, choice, stack) {
         switch (op.op) {
+            case "bookmark":
+                if (stack.length > 12) {
+                    return { error: "To many bookmarks (Stack overflow)" };
+                }
+                return { line: line + 1, stack: [line + 2, ...stack] };
+            case "bookmarkAndJump":
+                if (stack.length > 12) {
+                    return { error: "To many bookmarks (Stack overflow)" };
+                }
+                return { line: op.arg, stack: [line + 1, ...stack] };
+            case "return":
+                if (!stack.length) {
+                    return { error: "No bookmark to return to" };
+                }
+                return { line: stack.pop(), stack: stack.slice(1) };
             case "halt":
                 return { line, halt: true };
             case "ifYesJumpTo":
                 if (choice === true) {
                     return {
                         line: op.arg,
+                        stack,
                     };
+                } else if (choice === false) {
+                    return { line: line + 1, stack };
                 } else {
-                    return { line: line + 1 };
+                    return {
+                        error: "Conditional jump needs condition to be checked first",
+                    };
                 }
             case "ifNotJumpTo":
                 if (choice === false) {
                     return {
                         line: op.arg,
+                        stack,
                     };
+                } else if (choice === true) {
+                    return { line: line + 1, stack };
                 } else {
-                    return { line: line + 1 };
+                    return {
+                        error: "Conditional jump needs condition to be checked first",
+                    };
                 }
             case "jumpTo":
                 return {
                     line: op.arg,
+                    stack,
+                };
+            case "ifYesJumpBy":
+                if (choice === true) {
+                    return {
+                        line: line + op.arg,
+                        stack,
+                    };
+                } else if (choice === false) {
+                    return { line: line + 1, stack };
+                }
+            case "ifNotJumpBy":
+                if (choice === false) {
+                    return {
+                        line: line + op.arg,
+                        stack,
+                    };
+                } else if (choice === true) {
+                    return { line: line + 1, stack };
+                } else {
+                    return {
+                        error: "Conditional jump needs condition to be checked first",
+                    };
+                }
+            case "jumpBy":
+                return {
+                    line: line + op.arg,
+                    stack,
                 };
         }
         if (choice !== null) {
@@ -608,16 +977,23 @@
         }
         return {
             line: line + 1,
+            stack,
         };
     }
-    function runOp(op, level, player, line, choice) {
+    function runOp(op, level, player, line, choice, stack) {
         if (op.op === undefined) {
             return {
                 player: player,
                 choice: choice,
                 level: level,
+                stack,
                 next: line + 1,
+                empty: true,
             };
+        }
+        const validatedOp = validateOp(op.op, op.arg);
+        if (validatedOp.error) {
+            return { error: validatedOp.error };
         }
         const newPlayerResult = runPlayerOp(op, player);
         if (newPlayerResult.player) {
@@ -659,7 +1035,7 @@
                 return { error: newLevel.crystals.error };
             }
 
-            const nextControl = runConrolOp(op, line, choice);
+            const nextControl = runConrolOp(op, line, choice, stack);
 
             if (nextControl.error) {
                 return { error: nextControl.error };
@@ -672,34 +1048,55 @@
                     crystals: newLevel.crystals.reverse(),
                 },
                 next: nextControl.line,
+                stack: nextControl.stack,
+                halt: !!nextControl.halt,
             };
         } else {
-            console.log(newPlayerResult);
             return { error: newPlayerResult.error };
         }
     }
     function startExecution() {}
     function pauseExecution() {}
-    function resetLine() {
-        update(R.always({ next: 0 }), program);
-        update(
-            (player = { pos }) => ({
-                ...player,
-                pos: {
-                    x: 2,
-                    y: 3,
-                },
-                dir: {
-                    x: 1,
-                    y: 0,
-                },
-            }),
-            player,
-        );
-    }
+
     function executeLine() {
         update(
-            ({ program: { next }, player, commands, level, choice }) => {
+            ({
+                program: { next },
+                player,
+                commands,
+                level,
+                choice,
+                error,
+                halted,
+                running,
+                stack,
+            }) => {
+                if (halted) {
+                    return {
+                        program: { next },
+                        player: player,
+                        level: level,
+                        choice: choice,
+                        error: error,
+                        running: running,
+                        halted: halted,
+                        started: started,
+                    };
+                }
+                if (next == commands.length) {
+                    return {
+                        error: {
+                            message: `End of program reached`,
+                            command: next,
+                        },
+                        program: { next },
+                        player: player,
+                        level: level,
+                        stack: stack,
+                        running: false,
+                        started: true,
+                    };
+                }
                 if (next < commands.length) {
                     const result = runOp(
                         commands[next],
@@ -707,6 +1104,7 @@
                         player,
                         next,
                         choice,
+                        stack,
                     );
                     if (result.error) {
                         return {
@@ -718,17 +1116,34 @@
                             program: { next },
                             player: player,
                             level: level,
+                            stack: stack,
                             running: false,
                             started: true,
                         };
                     } else {
+                        if (result.next < 0 || result.next > commands.length) {
+                            return {
+                                error: {
+                                    message: `Can not jump to line ${result.next}`,
+                                    command: next,
+                                },
+                                program: { next },
+                                player: player,
+                                level: level,
+                                stack: stack,
+                                running: false,
+                                started: true,
+                            };
+                        }
                         return {
                             program: { next: result.next },
                             player: result.player,
                             level: result.level,
                             choice: result.choice,
                             error: null,
+                            stack: result.stack,
                             running: true,
+                            halted: result.halt,
                             started: true,
                         };
                     }
@@ -738,6 +1153,7 @@
                         player,
                         level,
                         choice,
+                        stack,
                         error: null,
                         running: false,
                         started: true,
@@ -752,8 +1168,10 @@
                     commands: currentCommands,
                     level,
                     error: executionError,
-                    running: running,
-                    started: started,
+                    running,
+                    started,
+                    halted,
+                    stack,
                 },
                 {
                     program: true,
@@ -764,6 +1182,8 @@
                     error: true,
                     running: true,
                     started: true,
+                    halted: true,
+                    stack: true,
                 },
             ),
         );
@@ -788,11 +1208,13 @@
     >
 </label>
 <div
-    style="display: grid; grid-template-columns: 1fr 1fr; border: 2px solid gray; border-bottom: none; box-sizing: border-box;"
+    style="display: grid; grid-template-columns: 1fr 1fr; border: 2px solid gray; border-bottom: none; box-sizing: border-box;gap: 1ex; padding: 1ex;"
 >
-    <div style="display: grid; grid-template-rows: 1fr auto;">
+    <div
+        style="display: grid; grid-template-rows: 1fr auto; box-sizing: border-box; "
+    >
         <textarea
-            style="font-family: monospace; align-self: stretch; resize: none; margin: 1ex; box-sizing: border-box; width: auto;
+            style="font-family: monospace; align-self: stretch; resize: none;  box-sizing: border-box; width: auto; overflow: auto;
             white-space: pre;
             "
             use:bindValue={currentLevelText}
@@ -820,8 +1242,10 @@
             {levelError.value}
         </div>
     </div>
-    <pre
-        style="overflow: auto; height: 10em; margin: 1ex; font-family: monospace;">{json.value}</pre>
+    <textarea
+        style="overflow: auto; height: 10em; font-family: monospace;"
+        readonly={true}>{json.value}</textarea
+    >
 </div>
 
 <div class="robot-container">
@@ -844,37 +1268,47 @@
                             type="button"
                             onclick={executeLine}
                             disabled={!currentCommands.value.length ||
-                                executionError.value}
+                                executionError.value ||
+                                halted.value ||
+                                !commandsAreValid.value}
                             >Execute ({program.value.next})</button
                         >
                         <button
                             type="button"
                             disabled={!currentCommands.value.length ||
-                                executionError.value}
+                                executionError.value ||
+                                halted.value}
                             onclick={startExecution}
                             >Play
                         </button>
                         <button
                             type="button"
                             disabled={!currentCommands.value.length ||
-                                executionError.value}
+                                executionError.value ||
+                                halted.value}
                             onclick={pauseExecution}
                             >Pause
                         </button>
                     </div>
-                    <div
+                    <label
                         class={{
                             "line-numbered": true,
                             disabled: started.value,
                         }}
                     >
                         <div class="line-numbers">
-                            {#each { length: lineCount.value } as _, l (l)}
+                            {#each { length: lines.value.length } as _, l (l)}
+                                {@const c = currentCommands.value[l] ?? {}}
                                 <span
                                     class={{
                                         "line-number": true,
                                         active: program.value.next == l,
-                                        error: executionErrorLine.value == l,
+                                        error:
+                                            executionErrorLine.value == l ||
+                                            !!c.error,
+                                        halted: halted.value,
+                                        targetted:
+                                            allJumpTargets.value.includes(l),
                                     }}
                                 >
                                     {l}
@@ -884,6 +1318,7 @@
                         <div class="overlay">
                             <div
                                 class={{
+                                    faded: started.value,
                                     "overlay-layer": true,
                                     "overlay-annotations": true,
                                 }}
@@ -894,8 +1329,7 @@
                                             annotation: true,
                                             invalid:
                                                 l.empty !== "" &&
-                                                (!!l.invalid ||
-                                                    !isOpValid(l.op, l.arg)),
+                                                (!!l.invalid || !!l.error),
                                         }}
                                     >
                                         {#if l.empty !== undefined}
@@ -914,10 +1348,7 @@
                                                 class={{
                                                     "annotation-body": true,
                                                     empty: !!l.empty,
-                                                    valid: isOpValid(
-                                                        l.op,
-                                                        l.arg,
-                                                    ),
+                                                    valid: !l.error,
                                                 }}
                                                 >{l.op || " "}{l.arg !==
                                                 undefined
@@ -947,26 +1378,62 @@
                                             annotation: true,
                                         }}
                                     >
+                                        <span
+                                            style="color: transparent; background: none"
+                                        >
+                                            {#if l.empty !== undefined}
+                                                <span>{l.empty}</span><span
+                                                    >{l.comment}</span
+                                                ><span>{" "}</span>
+                                            {:else if l.invalid}<span
+                                                    >{l.invalid || " "}</span
+                                                ><span>{l.comment || ""}</span>
+                                            {:else}
+                                                <span class={{}}
+                                                    >{l.op || " "}{l.arg !==
+                                                    undefined
+                                                        ? " " + l.arg
+                                                        : ""}
+                                                </span><span
+                                                    >{l.spaces || ""}</span
+                                                ><span>{l.comment || ""}</span
+                                                ><span>{" "}</span>
+                                            {/if}</span
+                                        >
                                         {#if l.empty !== undefined}
                                             <span>{" "}</span>
                                         {:else if l.invalid}
+                                            <span>{" - "}</span>
                                             <span class="inlay error"
                                                 >Invalid syntax</span
                                             >
                                         {:else}<span>{" "}</span>
-                                            {#if !isOpValid(l.op, l.arg)}
+                                            {#if !!l.error}
+                                                <span>{" - "}</span>
                                                 <span class="inlay error"
-                                                    >{"unknown command"}</span
-                                                >
-                                            {/if}
-                                            {#if executionErrorLine.value === li}
-                                                <span class="inlay error"
-                                                    >{executionErrorMessage.value}</span
+                                                    >{l.error}</span
                                                 >
                                             {/if}
                                         {/if}
+                                        {#if executionErrorLine.value === li}
+                                            <span class="inlay error"
+                                                >{executionErrorMessage.value}</span
+                                            >
+                                        {/if}
                                     </span>
                                 {/each}
+                                <span
+                                    style="background: none;"
+                                    class={{
+                                        annotation: true,
+                                    }}
+                                >
+                                    {#if executionErrorLine.value === currentCommands.value.length}
+                                        <span class="inlay error"
+                                            >{executionErrorMessage.value}</span
+                                        >
+                                    {/if}
+                                </span>
                             </div>
                             <textarea
                                 cols="0"
@@ -983,73 +1450,103 @@
                                 }}
                             ></textarea>
                         </div>
-                    </div>
+                    </label>
                 </div>
             {:else}
-                <div class="canvas-container">
-                    <svg
-                        class="canvas"
-                        viewBox={viewBox.value}
-                        preserveAspectRatio="xMidYMin meet"
-                    >
-                        {#each { length: level.value.size.y } as _, y}
-                            {#each { length: level.value.size.x } as _, x}
-                                <rect
-                                    x={x * resolution}
-                                    y={y * resolution}
-                                    width={resolution}
-                                    height={resolution}
-                                    fill="#f0f0f0"
-                                    stroke="#ccc"
-                                    shape-rendering="geometricPrecision"
-                                    vector-effect="non-scaling-stroke"
-                                ></rect>
+                <div style="display: flex; flex-direction: column;">
+                    <div class="canvas-container">
+                        <svg
+                            class="canvas"
+                            viewBox={viewBox.value}
+                            preserveAspectRatio="xMidYMin meet"
+                        >
+                            {#each { length: level.value.size.y } as _, y}
+                                {#each { length: level.value.size.x } as _, x}
+                                    <rect
+                                        x={x * resolution}
+                                        y={y * resolution}
+                                        width={resolution}
+                                        height={resolution}
+                                        fill="#f0f0f0"
+                                        stroke="#ccc"
+                                        shape-rendering="geometricPrecision"
+                                        vector-effect="non-scaling-stroke"
+                                    ></rect>
+                                {/each}
                             {/each}
-                        {/each}
-                        {#each { length: level.value.size.y } as _, y}
-                            {#each { length: level.value.size.x } as _, x}
-                                {@const isWall =
-                                    level.value.walls[
-                                        y * level.value.size.x + x
-                                    ]}
-                                {@const isCrystal =
-                                    level.value.crystals[
-                                        y * level.value.size.x + x
-                                    ]}
-                                {#if isCrystal}
-                                    {@render diamond(x, y, resolution)}
-                                {/if}
-                                {#if isWall}
-                                    {@render wall(x, y, resolution)}
-                                {/if}
+                            {#each { length: level.value.size.y } as _, y}
+                                {#each { length: level.value.size.x } as _, x}
+                                    {@const isWall =
+                                        level.value.walls[
+                                            y * level.value.size.x + x
+                                        ]}
+                                    {@const isCrystal =
+                                        level.value.crystals[
+                                            y * level.value.size.x + x
+                                        ]}
+                                    {#if isCrystal}
+                                        {@render diamond(x, y, resolution)}
+                                    {/if}
+                                    {#if isWall}
+                                        {@render wall(x, y, resolution)}
+                                    {/if}
+                                {/each}
                             {/each}
-                        {/each}
-                        {@render robot(
-                            player.value.pos.x,
-                            player.value.pos.y,
-                            player.value.dir.x,
-                            player.value.dir.y,
-                            resolution,
-                            choice.value,
-                        )}
-                        {#if executionErrorPosition.value}
-                            {@render error(
-                                executionErrorPosition.value.pos.x,
-                                executionErrorPosition.value.pos.y,
+                            {@render robot(
+                                player.value.pos.x,
+                                player.value.pos.y,
+                                player.value.dir.x,
+                                player.value.dir.y,
                                 resolution,
+                                choice.value,
                             )}
-                        {/if}
-                        <rect
-                            x={-3}
-                            y={-3}
-                            width={resolution * level.value.size.x + 6}
-                            height={resolution * level.value.size.y + 6}
-                            fill="none"
-                            stroke-width="6"
-                            stroke="#555"
-                            shape-rendering="crispEdges"
-                        ></rect>
-                    </svg>
+                            {#if executionErrorPosition.value}
+                                {@render error(
+                                    executionErrorPosition.value.pos.x,
+                                    executionErrorPosition.value.pos.y,
+                                    resolution,
+                                )}
+                            {/if}
+                            <rect
+                                x={-3}
+                                y={-3}
+                                width={resolution * level.value.size.x + 6}
+                                height={resolution * level.value.size.y + 6}
+                                fill="none"
+                                stroke-width="6"
+                                stroke="#555"
+                                shape-rendering="crispEdges"
+                            ></rect>
+                        </svg>
+                    </div>
+
+                    <div
+                        style="padding: 1ex; flex-basis: 2em; display: flex; align-items: stretch; gap: 1ex; justify-content: space-between;"
+                    >
+                        <h3
+                            style="margin: 0; padding: 0; display: flex; align-items: center; font-family: monospace;"
+                        >
+                            Stack:
+                        </h3>
+                        <ol
+                            style="flex-grow: 1; display: flex; list-style: none; margin: 0; padding: 0; border: 1px solid #ccc; gap: 0.5ex; padding: 0.5ex"
+                        >
+                            {#each stack.value as s}
+                                <li
+                                    style="padding: 1ex; border: 1px solid gray; box-sizing: border-box; flex-shrink: 1; font-family: monospace;"
+                                >
+                                    {s}
+                                </li>
+                            {:else}
+                                <li
+                                    style="padding: 1ex; font-style: italic; border: 1px solid transparent; font-family: monospace;"
+                                >
+                                    Empty
+                                </li>
+                            {/each}
+                            <li></li>
+                        </ol>
+                    </div>
                 </div>
             {/if}
         {/snippet}
@@ -1218,6 +1715,9 @@
         grid-area: 1 / 1 / -1 / -1;
         resize: none;
     }
+    .overlay-layer.faded {
+        opacity: 0.4;
+    }
 
     .overlay-annotations {
         z-index: 10;
@@ -1233,12 +1733,15 @@
     }
 
     .annotation-body:not(.empty) {
-        background-color: red;
-        padding: 1px 0;
+        background-color: #ff000055;
+        padding: 2px 0;
         border-radius: 3px;
+        outline-offset: -1px;
+        outline: 1px solid #aa0000;
     }
     .annotation-body.valid {
-        background-color: green;
+        background-color: #00ff0033;
+        outline: 1px solid #00cc00;
     }
 
     .overlay-input {
@@ -1254,6 +1757,7 @@
         min-height: 0;
         max-width: none;
         max-height: none;
+        line-height: inherit;
         background-color: transparent;
         color: inherit;
         white-space: pre;
@@ -1268,6 +1772,7 @@
         background-color: inherit;
         z-index: 100;
         padding: 1ex;
+        line-height: inherit;
     }
 
     .line-number {
@@ -1281,9 +1786,20 @@
         color: #000;
     }
 
+    .line-number.active.halted {
+        background: deepskyblue;
+        color: #000;
+    }
+
     .line-number.error {
         background: palevioletred;
         color: #000;
+    }
+    .line-number.active.error {
+        outline: 2px solid aquamarine;
+    }
+    .line-number.targetted {
+        text-decoration: underline;
     }
 
     .line-numbered {
@@ -1294,7 +1810,7 @@
         font-size: 1.2em;
         background-color: #333;
         color: #fff;
-        line-height: 1.5;
+        line-height: 1.75;
         border: 4px solid transparent;
         position: relative;
         overflow: auto;
@@ -1340,13 +1856,17 @@
         z-index: 100;
         color: #ffeeee;
         background-color: #550000;
-        padding: 0.2ex 1ex;
+        outline: 1px solid #ffaaaa;
+        border-radius: 3px;
+        padding: 0.3ex 1ex;
         border: none;
         font-size: 0.8em;
         font-style: italic;
         vertical-align: middle;
         margin-left: auto;
-        margin-right: 0.5ex;
+        position: sticky;
+        margin-right: -1ex;
+        right: 2ex;
     }
     .inlay.error::before {
         content: "! ";
