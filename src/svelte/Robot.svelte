@@ -95,6 +95,11 @@
                 level: "inf-line",
                 commands: [
                     {
+                        label: "start",
+                        labelSpace: "",
+                        empty: "",
+                    },
+                    {
                         op: "forward",
                         spaces: "",
                     },
@@ -104,13 +109,15 @@
                     },
                     {
                         op: "ifYesJumpBy",
-                        arg: 3,
+                        arg: "3",
                         spaces: "",
+                        numericArg: 3,
                     },
                     {
                         op: "jumpBy",
-                        arg: -3,
+                        arg: "-3",
                         spaces: "",
+                        numericArg: -3,
                     },
                     {
                         empty: "",
@@ -125,8 +132,9 @@
                     },
                     {
                         op: "ifYesJumpBy",
-                        arg: 5,
+                        arg: "5",
                         spaces: "",
+                        numericArg: 5,
                     },
                     {
                         op: "drop",
@@ -138,8 +146,9 @@
                     },
                     {
                         op: "jumpBy",
-                        arg: -4,
+                        arg: "-4",
                         spaces: "",
+                        numericArg: -4,
                     },
                     {
                         empty: "",
@@ -162,8 +171,9 @@
                     },
                     {
                         op: "ifYesJumpBy",
-                        arg: 3,
+                        arg: "3",
                         spaces: "",
+                        numericArg: 3,
                     },
                     {
                         op: "forward",
@@ -171,8 +181,9 @@
                     },
                     {
                         op: "jumpBy",
-                        arg: -4,
+                        arg: "-4",
                         spaces: "",
+                        numericArg: -4,
                     },
                     {
                         op: "turnAround",
@@ -180,8 +191,9 @@
                     },
                     {
                         op: "jumpTo",
-                        arg: 0,
+                        arg: "@start",
                         spaces: "",
+                        numericArg: 0,
                     },
                     {
                         empty: "",
@@ -201,15 +213,22 @@
                     },
                     {
                         op: "ifYesJumpTo",
-                        arg: 5,
+                        arg: "@foo",
                         spaces: "",
+                        numericArg: 5,
                     },
                     {
                         op: "jumpBy",
-                        arg: -3,
+                        arg: "-3",
                         spaces: "",
+                        numericArg: -3,
                     },
                     {
+                        empty: "",
+                    },
+                    {
+                        label: "foo",
+                        labelSpace: "",
                         empty: "",
                     },
                     {
@@ -222,8 +241,9 @@
                     },
                     {
                         op: "ifYesJumpTo",
-                        arg: 11,
+                        arg: "@bar",
                         spaces: "",
+                        numericArg: 13,
                     },
                     {
                         op: "drop",
@@ -235,10 +255,16 @@
                     },
                     {
                         op: "jumpBy",
-                        arg: -4,
+                        arg: "-4",
                         spaces: "",
+                        numericArg: -4,
                     },
                     {
+                        empty: "",
+                    },
+                    {
+                        label: "bar",
+                        labelSpace: "",
                         empty: "",
                     },
                     {
@@ -259,8 +285,9 @@
                     },
                     {
                         op: "ifYesJumpBy",
-                        arg: 3,
+                        arg: "3",
                         spaces: "",
+                        numericArg: 3,
                     },
                     {
                         op: "forward",
@@ -268,8 +295,9 @@
                     },
                     {
                         op: "jumpBy",
-                        arg: -4,
+                        arg: "-4",
                         spaces: "",
+                        numericArg: -4,
                     },
                     {
                         op: "turnAround",
@@ -403,9 +431,14 @@
                 level: "lvl1",
                 commands: [
                     {
+                        label: "start",
+                        labelSpace: " ",
+                        empty: "",
+                        comment: "# Program starts here",
+                    },
+                    {
                         op: "turnLeft",
                         spaces: " ",
-                        comment: "# Program starts here",
                     },
                     {
                         op: "turnRight",
@@ -495,6 +528,7 @@
                     },
                     {
                         op: "halt",
+                        spaces: "",
                     },
                     {
                         empty: "",
@@ -515,12 +549,26 @@
                 commands: [
                     {
                         op: "jumpTo",
-                        arg: 2,
+                        arg: "@begin",
                         spaces: "",
+                        numericArg: 4,
+                    },
+                    {
+                        label: "turn",
+                        labelSpace: "",
+                        empty: "",
                     },
                     {
                         op: "turnAround",
                         spaces: "",
+                    },
+                    {
+                        empty: "",
+                    },
+                    {
+                        label: "begin",
+                        labelSpace: "",
+                        empty: "",
                     },
                     {
                         op: "checkWallAhead",
@@ -528,8 +576,9 @@
                     },
                     {
                         op: "ifYesJumpTo",
-                        arg: 1,
+                        arg: "@turn",
                         spaces: "",
+                        numericArg: 1,
                     },
                     {
                         op: "checkBeeper",
@@ -537,8 +586,9 @@
                     },
                     {
                         op: "ifNotJumpBy",
-                        arg: 15,
+                        arg: "15",
                         spaces: "",
+                        numericArg: 15,
                     },
                     {
                         op: "pick",
@@ -554,8 +604,9 @@
                     },
                     {
                         op: "ifNotJumpBy",
-                        arg: 2,
+                        arg: "2",
                         spaces: "",
+                        numericArg: 2,
                     },
                     {
                         op: "halt",
@@ -571,8 +622,9 @@
                     },
                     {
                         op: "ifYesJumpBy",
-                        arg: -5,
+                        arg: "-5",
                         spaces: "",
+                        numericArg: -5,
                     },
                     {
                         op: "drop",
@@ -592,8 +644,9 @@
                     },
                     {
                         op: "ifYesJumpBy",
-                        arg: -2,
+                        arg: "-2",
                         spaces: "",
+                        numericArg: -2,
                     },
                     {
                         op: "turnLeft",
@@ -609,8 +662,9 @@
                     },
                     {
                         op: "jumpTo",
-                        arg: 2,
+                        arg: "@begin",
                         spaces: "",
+                        numericArg: 4,
                     },
                     {
                         op: "drop",
@@ -622,8 +676,9 @@
                     },
                     {
                         op: "jumpTo",
-                        arg: 2,
+                        arg: "@begin",
                         spaces: "",
+                        numericArg: 4,
                     },
                 ],
             },
@@ -667,29 +722,78 @@
                     }),
                     "commands",
                     L.valueOr([]),
-                    L.reread((cmds) =>
-                        cmds.map((x, i) => {
-                            const validOp =
-                                x.empty !== undefined ||
-                                validateOp(x.op, x.arg);
-                            if (validOp.error) {
-                                return { ...x, error: validOp.error };
-                            } else if (
-                                !R.all(
-                                    (jt) =>
-                                        jt === false ||
-                                        (jt >= 0 && jt < cmds.length),
-                                    jumpTargets(x, i),
-                                )
-                            ) {
-                                return {
-                                    ...x,
-                                    error: `Jump target (${jumpTargets(x, i).join(", ")}) outside range`,
-                                };
+                    L.reread((cmds) => {
+                        const labelMap = {};
+                        let i = 0;
+                        for (let c of cmds) {
+                            if (c.label) {
+                                if (labelMap[c.label]) {
+                                    labelMap[c.label] = -1;
+                                } else {
+                                    labelMap[c.label] = i;
+                                }
                             }
-                            return x;
-                        }),
-                    ),
+                            i++;
+                        }
+                        return cmds
+                            .map((c) => {
+                                if (c.label && labelMap[c.label] === -1) {
+                                    return { ...c, error: "duplicate label" };
+                                }
+                                if (c.arg) {
+                                    if (c.arg[0] === "@") {
+                                        const label = c.arg.slice(1).trim();
+                                        if (!label) {
+                                            return {
+                                                ...c,
+                                                error: "Label must not be empty",
+                                            };
+                                        }
+                                        if (labelMap[label] >= 0) {
+                                            return {
+                                                ...c,
+                                                numericArg: labelMap[label],
+                                            };
+                                        } else {
+                                            return {
+                                                ...c,
+                                                error: `Unknown label @${label}`,
+                                            };
+                                        }
+                                    } else {
+                                        return {
+                                            ...c,
+                                            numericArg: parseInt(c.arg, 10),
+                                        };
+                                    }
+                                }
+                                return c;
+                            })
+                            .map((x, i) => {
+                                if (x.error) {
+                                    return x;
+                                }
+                                const validOp =
+                                    x.empty !== undefined ||
+                                    validateOp(x.op, x.arg);
+                                if (validOp.error) {
+                                    return { ...x, error: validOp.error };
+                                } else if (
+                                    !R.all(
+                                        (jt) =>
+                                            jt === false ||
+                                            (jt >= 0 && jt < cmds.length),
+                                        jumpTargets(x, i),
+                                    )
+                                ) {
+                                    return {
+                                        ...x,
+                                        error: `Jump target (${jumpTargets(x, i).join(", ")}) outside range`,
+                                    };
+                                }
+                                return x;
+                            });
+                    }),
                 ]),
             ],
             combine({ allCommands, levelKey }),
@@ -709,19 +813,19 @@
     function jumpTargets(c, ci) {
         switch (c.op) {
             case "ifYesJumpTo":
-                return [c.arg];
+                return [c.numericArg];
             case "ifNotJumpTo":
-                return [c.arg];
+                return [c.numericArg];
             case "jumpTo":
-                return [c.arg];
+                return [c.numericArg];
             case "ifYesJumpBy":
-                return [ci + c.arg];
+                return [ci + c.numericArg];
             case "ifNotJumpBy":
-                return [ci + c.arg];
+                return [ci + c.numericArg];
             case "jumpBy":
-                return [ci + c.arg];
+                return [ci + c.numericArg];
             case "bookmarkAndJump":
-                return [ci + 1, c.arg];
+                return [ci + 1, c.numericArg];
             case "bookmark":
                 return [ci + 2];
         }
@@ -757,22 +861,17 @@
 
     const command = L.iso(
         (cmd) =>
-            cmd.invalid
+            (cmd.label ? `${cmd.label}:${cmd.labelSpace || ""}` : "") +
+            (cmd.invalid
                 ? `${cmd.invalid}${cmd.comment || ""}`
                 : cmd.empty
                   ? `${cmd.empty}${cmd.comment || ""}`
-                  : `${cmd.op || ""}${cmd.arg !== undefined ? ` ${cmd.arg}` : ""}${cmd.spaces || ""}${cmd.comment || ""}`,
+                  : `${cmd.op || ""}${cmd.arg !== undefined ? ` ${cmd.arg}` : ""}${cmd.spaces || ""}${cmd.comment || ""}`),
         R.pipe(
             R.match(
-                /((?:(?<op>[a-zA-Z]+)(?: (?<arg>-?\d+))?)(?<spaces>\s*)|(?<empty>\s*)|(?<invalid>[^#]+))(?<comment>#.*)?$/,
+                /(?:(?<label>[a-zA-Z]+):(?<labelSpace>\s*))?((?:(?<op>[a-zA-Z]+)(?: (?<arg>(?:@[a-zA-Z]*|[\+\-]?\d+)))?)(?<spaces>\s*)|(?<empty>\s*)|(?<invalid>[^#]+))(?<comment>#.*)?$/,
             ),
             R.prop("groups"),
-            (x) => {
-                if (x.arg) {
-                    return { ...x, arg: parseInt(x.arg) };
-                }
-                return x;
-            },
         ),
     );
     const lines = $derived(
@@ -823,6 +922,7 @@
     const executionErrorLine = $derived(view("command", executionError));
     const executionErrorMessage = $derived(view("message", executionError));
     const executionErrorPosition = $derived(view("location", executionError));
+    const executionErrorKind = $derived(view("kind", executionError));
 
     function reloadLevel(init) {
         const lvl = currentLevel.value;
@@ -1030,6 +1130,26 @@
         ) {
             return { error: "unexpected argument" };
         }
+
+        const argIsLabel = arg && arg[0] === "@";
+        const argIsNum = arg && arg[0] !== "@";
+        if (
+            [
+                "ifYesJumpTo",
+                "ifNotJumpTo",
+                "jumpTo",
+                "bookmarkAndJump",
+            ].includes(op) &&
+            !argIsLabel
+        ) {
+            return { error: "Expect argument to be a @label" };
+        }
+        if (
+            ["ifYesJumpBy", "ifNotJumpBy", "jumpBy"].includes(op) &&
+            !argIsNum
+        ) {
+            return { error: "Expect argument to be a number" };
+        }
         return true;
     }
 
@@ -1138,25 +1258,31 @@
         switch (op.op) {
             case "bookmark":
                 if (stack.length > 12) {
-                    return { error: "To many bookmarks (Stack overflow)" };
+                    return {
+                        error: "To many bookmarks (Stack overflow)",
+                        kind: "stack ",
+                    };
                 }
                 return { line: line + 1, stack: [line + 2, ...stack] };
             case "bookmarkAndJump":
                 if (stack.length > 12) {
-                    return { error: "To many bookmarks (Stack overflow)" };
+                    return {
+                        error: "To many bookmarks (Stack overflow)",
+                        kind: "stack",
+                    };
                 }
-                return { line: op.arg, stack: [line + 1, ...stack] };
+                return { line: op.numericArg, stack: [line + 1, ...stack] };
             case "return":
                 if (!stack.length) {
-                    return { error: "No bookmark to return to" };
+                    return { error: "No bookmark to return to", kind: "stack" };
                 }
                 return { line: stack[0], stack: stack.slice(1) };
             case "halt":
-                return { line, halt: true };
+                return { line, halt: true, stack };
             case "ifYesJumpTo":
                 if (choice === true) {
                     return {
-                        line: op.arg,
+                        line: op.numericArg,
                         stack,
                     };
                 } else if (choice === false) {
@@ -1164,12 +1290,13 @@
                 } else {
                     return {
                         error: "Conditional jump needs condition to be checked first",
+                        kind: "choice",
                     };
                 }
             case "ifNotJumpTo":
                 if (choice === false) {
                     return {
-                        line: op.arg,
+                        line: op.numericArg,
                         stack,
                     };
                 } else if (choice === true) {
@@ -1177,17 +1304,18 @@
                 } else {
                     return {
                         error: "Conditional jump needs condition to be checked first",
+                        kind: "choice",
                     };
                 }
             case "jumpTo":
                 return {
-                    line: op.arg,
+                    line: op.numericArg,
                     stack,
                 };
             case "ifYesJumpBy":
                 if (choice === true) {
                     return {
-                        line: line + op.arg,
+                        line: line + op.numericArg,
                         stack,
                     };
                 } else if (choice === false) {
@@ -1196,7 +1324,7 @@
             case "ifNotJumpBy":
                 if (choice === false) {
                     return {
-                        line: line + op.arg,
+                        line: line + op.numericArg,
                         stack,
                     };
                 } else if (choice === true) {
@@ -1204,16 +1332,17 @@
                 } else {
                     return {
                         error: "Conditional jump needs condition to be checked first",
+                        kind: "choice",
                     };
                 }
             case "jumpBy":
                 return {
-                    line: line + op.arg,
+                    line: line + op.numericArg,
                     stack,
                 };
         }
         if (choice !== null) {
-            return { error: "Must jumpTo after check" };
+            return { error: "must jump after check", kind: "choice" };
         }
         return {
             line: line + 1,
@@ -1233,20 +1362,20 @@
         }
         const validatedOp = validateOp(op.op, op.arg);
         if (validatedOp.error) {
-            return { error: validatedOp.error };
+            return { error: validatedOp.error, errorKind: "operation" };
         }
         const newPlayerResult = runPlayerOp(op, player);
         if (newPlayerResult.player) {
             const newPlayer = newPlayerResult.player;
 
             if (newPlayer.pos.x >= level.size.x || newPlayer.pos.x < 0) {
-                return { error: "Player hit a wall" };
+                return { error: "Player hit a wall", errorKind: "world" };
             }
             if (newPlayer.pos.y >= level.size.y || newPlayer.pos.y < 0) {
-                return { error: "Player hit a wall" };
+                return { error: "Player hit a wall", errorKind: "world" };
             }
             if (level.walls[newPlayer.pos.x + newPlayer.pos.y * level.size.x]) {
-                return { error: "Player hit a wall" };
+                return { error: "Player hit a wall", errorKind: "world" };
             }
 
             const newLevel = {
@@ -1272,13 +1401,16 @@
                 next: line,
             };
             if (newLevel.crystals.error) {
-                return { error: newLevel.crystals.error };
+                return { error: newLevel.crystals.error, errorKind: "world" };
             }
 
             const nextControl = runConrolOp(op, line, choice, stack);
 
             if (nextControl.error) {
-                return { error: nextControl.error };
+                return {
+                    error: nextControl.error,
+                    errorKind: nextControl.kind,
+                };
             }
             return {
                 player: newPlayer,
@@ -1361,6 +1493,7 @@
                                 message: result.error,
                                 command: next,
                                 location: player,
+                                kind: result.errorKind,
                             },
                             program: { next },
                             player: player,
@@ -1439,23 +1572,26 @@
     }
 </script>
 
-<label>
-    Level: <select
-        bind:value={levelKey.value}
-        onchange={(evt) => reloadLevel(false)}
-    >
-        {#each allLevels.value as l, li (l.id)}
-            <option value={l.id} selected={levelKey.value === l.id}
-                >{l.name}</option
-            >
-        {/each}
-    </select>
+<div class="controls">
+    <label>
+        Level: <select
+            bind:value={levelKey.value}
+            onchange={(evt) => reloadLevel(false)}
+        >
+            {#each allLevels.value as l, li (l.id)}
+                <option value={l.id} selected={levelKey.value === l.id}
+                    >{l.name}</option
+                >
+            {/each}
+        </select>
+    </label>
+
     <button
         onclick={(evt) => {
             reloadLevel(false);
         }}>Reload</button
     >
-</label>
+</div>
 <div
     style="display: grid; grid-template-columns: 1fr 1fr; border: 2px solid gray; border-bottom: none; box-sizing: border-box;gap: 1ex; padding: 1ex;"
 >
@@ -1531,7 +1667,7 @@
                                 onclick={beginExecute}
                                 disabled={!currentCommands.value.length ||
                                     !commandsAreValid.value ||
-                                    running.value}>Execute</button
+                                    running.value}>Run</button
                             >
                         </div>
                         {#if running.value}
@@ -1545,8 +1681,8 @@
                                     disabled={executionError.value ||
                                         halted.value ||
                                         !commandsAreValid.value}
-                                    >Step ({program.value.next})</button
-                                >
+                                    >Step
+                                </button>
                                 <button
                                     type="button"
                                     disabled={!currentCommands.value.length ||
@@ -1607,8 +1743,11 @@
                                                 l.empty !== "" &&
                                                 (!!l.invalid || !!l.error),
                                         }}
-                                    >
-                                        {#if l.empty !== undefined}
+                                        >{#if l.label}<span
+                                                class={{ label: true }}
+                                                >{l.label}:</span
+                                            >{l.labelSpace}
+                                        {/if}{#if l.empty !== undefined}
                                             <span class="empty">{l.empty}</span
                                             ><span class="comment"
                                                 >{l.comment}</span
@@ -1631,6 +1770,7 @@
                                                 ><span
                                                     class={{
                                                         "annotation-body": true,
+                                                        label: true,
                                                         empty: !!l.empty,
                                                         valid: !l.error,
                                                     }}
@@ -1664,43 +1804,38 @@
                                         <span
                                             style="color: transparent; background: none"
                                         >
-                                            {#if l.empty !== undefined}
-                                                <span>{l.empty}</span><span
-                                                    >{l.comment}</span
-                                                ><span>{" "}</span>
-                                            {:else if l.invalid}<span
-                                                    >{l.invalid || " "}</span
-                                                ><span>{l.comment || ""}</span>
-                                            {:else}
-                                                <span class={{}}
+                                            {#if l.label}<span>{l.label}:</span
+                                                >{l.labelSpace}
+                                            {/if}{#if l.empty !== undefined}<span
+                                                    >{l.empty}</span
+                                                ><span>{l.comment}</span
+                                                >{:else if l.invalid}<span
+                                                    >{l.invalid || ""}</span
+                                                ><span>{l.comment || ""}</span
+                                                >{:else}<span class={{}}
                                                     >{l.op || " "}{l.arg !==
                                                     undefined
                                                         ? " " + l.arg
-                                                        : ""}
-                                                </span><span
-                                                    >{l.spaces || ""}</span
-                                                ><span>{l.comment || ""}</span
-                                                ><span>{" "}</span>
+                                                        : ""}</span
+                                                ><span>{l.spaces || ""}</span
+                                                ><span>{l.comment || ""}</span>
                                             {/if}</span
                                         >
-                                        {#if l.empty !== undefined}
-                                            <span>{" "}</span>
-                                        {:else if l.invalid}
-                                            <span>{" - "}</span>
-                                            <span class="inlay error"
+                                        {#if l.invalid}<span>{" - "}</span><span
+                                                class="inlay error"
                                                 >Invalid syntax</span
-                                            >
-                                        {:else}<span>{" "}</span>
-                                            {#if !!l.error}
-                                                <span>{" - "}</span>
-                                                <span class="inlay error"
-                                                    >{l.error}</span
-                                                >
-                                            {/if}
-                                        {/if}
+                                            >{:else if !!l.error}<span
+                                                >{" - "}</span
+                                            ><label class="inlay error"
+                                                ><input
+                                                    type="checkbox"
+                                                />{l.error}</label
+                                            >{/if}
                                         {#if executionErrorLine.value === li}
-                                            <span class="inlay error"
-                                                >{executionErrorMessage.value}</span
+                                            <label class="inlay error">
+                                                <input
+                                                    type="checkbox"
+                                                />{executionErrorMessage.value}</label
                                             >
                                         {/if}
                                     </span>
@@ -1739,30 +1874,20 @@
                 <div style="display: flex; flex-direction: column;">
                     <div class="world-stack">
                         <div
-                            style="margin-bottom: auto; padding: 1ex; flex-basis: 2em; display: flex; align-items: stretch; gap: 1ex; justify-content: space-between;"
+                            class={{
+                                "stack-container": true,
+                                error: executionErrorKind.value === "stack",
+                            }}
                         >
-                            <h3
-                                style="margin: 0; padding: 0; display: flex; align-items: center; font-family: monospace;"
-                            >
-                                Stack:
-                            </h3>
-                            <ol
-                                style="flex-grow: 1; display: flex; list-style: none; margin: 0; padding: 0; border: 1px solid #ccc; gap: 0.5ex; padding: 0.5ex; border-left: 0; justify-content: end;"
-                            >
+                            <h3 class="stack-head">Bookmark<br /> Stack:</h3>
+                            <ol class="stack-body">
                                 {#each stack.value as s}
-                                    <li
-                                        style="padding: 1ex; border: 1px solid gray; box-sizing: border-box; flex-shrink: 1; font-family: monospace;"
-                                    >
+                                    <li class="stack-item">
                                         {s}
                                     </li>
                                 {:else}
-                                    <li
-                                        style="padding: 1ex; font-style: italic; border: 1px solid transparent; font-family: monospace;"
-                                    >
-                                        Empty
-                                    </li>
+                                    <li class="stack-empty">Empty</li>
                                 {/each}
-                                <li></li>
                             </ol>
                         </div>
                         <div class="canvas-container">
@@ -1811,7 +1936,7 @@
                                     resolution,
                                     choice.value,
                                 )}
-                                {#if executionErrorPosition.value}
+                                {#if executionErrorPosition.value && executionErrorKind.value == "world"}
                                     {@render error(
                                         executionErrorPosition.value.pos.x,
                                         executionErrorPosition.value.pos.y,
@@ -1972,6 +2097,21 @@
 </div>
 
 <style>
+    .controls {
+        display: flex;
+        align-items: stretch;
+        font-family: monospace;
+        gap: 1ex;
+    }
+    label:has(select) {
+        display: flex;
+        align-items: center;
+        gap: 1ex;
+    }
+    select {
+        align-self: stretch;
+        padding: 0 1ex;
+    }
     .toolbar {
         display: flex;
         gap: 1ex;
@@ -2036,6 +2176,10 @@
         outline-color: transparent;
         background-color: transparent;
     }
+    .overlay-layer.faded .label {
+        outline-color: transparent;
+        background-color: transparent;
+    }
 
     .overlay-annotations {
         z-index: 10;
@@ -2066,6 +2210,23 @@
     .annotation-body.valid {
         background-color: #00ff0033;
         outline: 1px solid #00cc00;
+    }
+
+    .annotation-body.label {
+        background-color: #aa00ff33;
+        outline: 1px solid #cc00ff;
+    }
+
+    .label {
+        background-color: #ff00aa33;
+        outline: 1px solid #cc00cc;
+        padding: 2px 3px;
+        margin-left: -3px;
+        margin-right: -3px;
+        border-radius: 3px;
+        outline-offset: -1px;
+        z-index: 10;
+        position: relative;
     }
 
     .overlay-input {
@@ -2217,9 +2378,25 @@
         position: sticky;
         margin-right: -1ex;
         right: 2ex;
+        box-sizing: border-box;
+        pointer-events: all;
     }
-    .inlay.error::before {
-        content: "! ";
+    .inlay > input {
+        display: none;
+    }
+    .inlay:has(> input) {
+        cursor: pointer;
+    }
+    .inlay:has(> :checked) {
+        display: inline-block;
+        vertical-align: text-top;
+        margin: 0;
+        height: 1.4em;
+        overflow: hidden;
+        width: 1.4em;
+        padding: 0;
+        border-radius: 100%;
+        color: transparent;
     }
     .annoatation-right {
         text-align: right;
@@ -2230,5 +2407,59 @@
     }
     .choice-yes {
         fill: green;
+    }
+    .stack-container {
+        margin-bottom: auto;
+        padding: 1ex;
+        flex-basis: 2em;
+        display: flex;
+        align-items: stretch;
+        gap: 1ex;
+        justify-content: space-between;
+    }
+    .stack-container.error {
+        color: #a00;
+
+        & .stack-body {
+            border-color: #a00;
+        }
+        & .stack-head {
+            background-color: #a00;
+            color: #fff;
+        }
+    }
+    .stack-head {
+        text-align: right;
+        font-size: 1em;
+        margin: 0;
+        padding: 0 1ex;
+        display: flex;
+        align-items: center;
+        font-family: monospace;
+    }
+    .stack-body {
+        flex-grow: 1;
+        display: flex;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        border: 1px solid #ccc;
+        gap: 0.5ex;
+        padding: 0.5ex;
+        border-left: 0;
+        justify-content: end;
+    }
+    .stack-item {
+        padding: 1ex;
+        border: 1px solid gray;
+        box-sizing: border-box;
+        flex-shrink: 1;
+        font-family: monospace;
+    }
+    .stack-empty {
+        padding: 1ex;
+        font-style: italic;
+        border: 1px solid transparent;
+        font-family: monospace;
     }
 </style>
