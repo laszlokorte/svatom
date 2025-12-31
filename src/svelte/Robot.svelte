@@ -12,6 +12,7 @@
     import Split from "./SplitView/Split.svelte";
 
     const {
+        autoplaySpeed = atom(5),
         allLevels = atom([
             {
                 id: "line",
@@ -111,13 +112,11 @@
                         op: "ifYesJumpBy",
                         arg: "3",
                         spaces: "",
-                        numericArg: 3,
                     },
                     {
                         op: "jumpBy",
                         arg: "-3",
                         spaces: "",
-                        numericArg: -3,
                     },
                     {
                         empty: "",
@@ -134,7 +133,6 @@
                         op: "ifYesJumpBy",
                         arg: "5",
                         spaces: "",
-                        numericArg: 5,
                     },
                     {
                         op: "drop",
@@ -148,7 +146,6 @@
                         op: "jumpBy",
                         arg: "-4",
                         spaces: "",
-                        numericArg: -4,
                     },
                     {
                         empty: "",
@@ -173,7 +170,6 @@
                         op: "ifYesJumpBy",
                         arg: "3",
                         spaces: "",
-                        numericArg: 3,
                     },
                     {
                         op: "forward",
@@ -183,7 +179,6 @@
                         op: "jumpBy",
                         arg: "-4",
                         spaces: "",
-                        numericArg: -4,
                     },
                     {
                         op: "turnAround",
@@ -193,7 +188,6 @@
                         op: "jumpTo",
                         arg: "@start",
                         spaces: "",
-                        numericArg: 0,
                     },
                     {
                         empty: "",
@@ -215,13 +209,11 @@
                         op: "ifYesJumpTo",
                         arg: "@foo",
                         spaces: "",
-                        numericArg: 5,
                     },
                     {
                         op: "jumpBy",
                         arg: "-3",
                         spaces: "",
-                        numericArg: -3,
                     },
                     {
                         empty: "",
@@ -243,7 +235,6 @@
                         op: "ifYesJumpTo",
                         arg: "@bar",
                         spaces: "",
-                        numericArg: 13,
                     },
                     {
                         op: "drop",
@@ -257,7 +248,6 @@
                         op: "jumpBy",
                         arg: "-4",
                         spaces: "",
-                        numericArg: -4,
                     },
                     {
                         empty: "",
@@ -287,7 +277,6 @@
                         op: "ifYesJumpBy",
                         arg: "3",
                         spaces: "",
-                        numericArg: 3,
                     },
                     {
                         op: "forward",
@@ -297,7 +286,6 @@
                         op: "jumpBy",
                         arg: "-4",
                         spaces: "",
-                        numericArg: -4,
                     },
                     {
                         op: "turnAround",
@@ -375,11 +363,95 @@
                 commands: [
                     {
                         op: "bookmarkAndJump",
-                        arg: 10,
+                        arg: "@walkToWall",
+                        spaces: "",
+                    },
+                    {
+                        op: "turnLeft",
+                        spaces: "",
+                    },
+                    {
+                        op: "bookmarkAndJump",
+                        arg: "@walkToWall",
+                        spaces: "",
+                    },
+                    {
+                        op: "drop",
+                        spaces: "",
+                    },
+                    {
+                        op: "turnLeft",
+                        spaces: "",
+                    },
+                    {
+                        op: "bookmarkAndJump",
+                        arg: "@walkToWall",
+                        spaces: "",
+                    },
+                    {
+                        op: "drop",
+                        spaces: "",
+                    },
+                    {
+                        op: "turnLeft",
+                        spaces: "",
+                    },
+                    {
+                        op: "bookmarkAndJump",
+                        arg: "@walkToWall",
+                        spaces: "",
+                    },
+                    {
+                        op: "drop",
+                        spaces: "",
+                    },
+                    {
+                        op: "turnLeft",
+                        spaces: "",
+                    },
+                    {
+                        op: "bookmarkAndJump",
+                        arg: "@walkToWall",
+                        spaces: "",
+                    },
+                    {
+                        op: "drop",
+                        spaces: "",
+                    },
+                    {
+                        op: "turnAround",
+                        spaces: "",
+                    },
+                    {
+                        op: "bookmarkAndJump",
+                        arg: "@walkToWall",
+                        spaces: "",
+                    },
+                    {
+                        op: "turnRight",
+                        spaces: "",
+                    },
+                    {
+                        op: "bookmarkAndJump",
+                        arg: "@walkToWall",
+                        spaces: "",
+                    },
+                    {
+                        op: "turnRight",
+                        spaces: "",
+                    },
+                    {
+                        op: "bookmarkAndJump",
+                        arg: "@walkToWall",
+                        spaces: "",
+                    },
+                    {
+                        op: "turnRight",
                         spaces: "",
                     },
                     {
                         op: "halt",
+                        spaces: "",
                     },
                     {
                         empty: "",
@@ -388,25 +460,17 @@
                         empty: "",
                     },
                     {
+                        label: "walkToWall",
+                        labelSpace: "",
                         empty: "",
                     },
                     {
-                        empty: "",
+                        op: "checkWallAhead",
+                        spaces: "",
                     },
                     {
-                        empty: "",
-                    },
-                    {
-                        empty: "",
-                    },
-                    {
-                        empty: "",
-                    },
-                    {
-                        empty: "",
-                    },
-                    {
-                        op: "forward",
+                        op: "ifYesJumpBy",
+                        arg: "3",
                         spaces: "",
                     },
                     {
@@ -414,11 +478,8 @@
                         spaces: "",
                     },
                     {
-                        op: "forward",
-                        spaces: "",
-                    },
-                    {
-                        op: "forward",
+                        op: "jumpTo",
+                        arg: "@walkToWall",
                         spaces: "",
                     },
                     {
@@ -432,112 +493,93 @@
                 commands: [
                     {
                         label: "start",
-                        labelSpace: " ",
+                        labelSpace: "",
                         empty: "",
-                        comment: "# Program starts here",
-                    },
-                    {
-                        op: "turnLeft",
-                        spaces: " ",
-                    },
-                    {
-                        op: "turnRight",
-                        spaces: "",
-                    },
-                    {
-                        op: "turnAround",
-                        spaces: "",
-                    },
-                    {
-                        op: "forward",
-                        spaces: "",
-                    },
-                    {
-                        op: "forward",
-                        spaces: " ",
-                        comment: "# write comments",
-                    },
-                    {
-                        op: "drop",
-                        spaces: "",
                     },
                     {
                         op: "checkWallAhead",
                         spaces: "",
                     },
                     {
-                        op: "ifNotJumpBy",
-                        arg: 2,
+                        op: "ifYesJumpBy",
+                        arg: "3",
                         spaces: "",
-                    },
-                    {
-                        op: "turnAround",
-                        spaces: "",
+                        numericArg: 3,
                     },
                     {
                         op: "forward",
                         spaces: "",
                     },
                     {
-                        op: "forward",
+                        op: "jumpTo",
+                        arg: "@start",
                         spaces: "",
+                        numericArg: 0,
                     },
                     {
-                        op: "forward",
-                        spaces: "",
+                        empty: "",
                     },
                     {
-                        op: "drop",
-                        spaces: "",
-                    },
-                    {
-                        op: "forward",
-                        spaces: "",
-                    },
-                    {
-                        op: "drop",
-                        spaces: "",
-                    },
-                    {
-                        op: "forward",
-                        spaces: "",
+                        label: "turn",
+                        labelSpace: "",
+                        empty: "",
                     },
                     {
                         op: "turnLeft",
                         spaces: "",
                     },
                     {
+                        label: "step",
+                        labelSpace: "",
+                        empty: "",
+                    },
+                    {
+                        op: "checkWallAhead",
+                        spaces: "",
+                    },
+                    {
+                        op: "ifYesJumpTo",
+                        arg: "@turn",
+                        spaces: "",
+                        numericArg: 6,
+                    },
+                    {
                         op: "forward",
                         spaces: "",
                     },
                     {
-                        op: "turnLeft",
+                        op: "checkWallLeft",
                         spaces: "",
                     },
                     {
-                        op: "forward",
+                        op: "ifYesJumpBy",
+                        arg: "2",
+                        spaces: "",
+                        numericArg: 2,
+                    },
+                    {
+                        op: "turnRight",
                         spaces: "",
                     },
                     {
-                        op: "forward",
+                        op: "checkBeeper",
                         spaces: "",
+                    },
+                    {
+                        op: "ifNotJumpTo",
+                        arg: "@step",
+                        spaces: "",
+                        numericArg: 8,
                     },
                     {
                         op: "pick",
                         spaces: "",
                     },
                     {
-                        op: "halt",
+                        op: "jumpTo",
+                        arg: "@step",
                         spaces: "",
-                    },
-                    {
-                        empty: "",
-                    },
-                    {
-                        empty: "",
-                    },
-                    {
-                        empty: "",
+                        numericArg: 8,
                     },
                     {
                         empty: "",
@@ -551,7 +593,6 @@
                         op: "jumpTo",
                         arg: "@begin",
                         spaces: "",
-                        numericArg: 4,
                     },
                     {
                         label: "turn",
@@ -578,7 +619,6 @@
                         op: "ifYesJumpTo",
                         arg: "@turn",
                         spaces: "",
-                        numericArg: 1,
                     },
                     {
                         op: "checkBeeper",
@@ -588,7 +628,6 @@
                         op: "ifNotJumpBy",
                         arg: "15",
                         spaces: "",
-                        numericArg: 15,
                     },
                     {
                         op: "pick",
@@ -606,7 +645,6 @@
                         op: "ifNotJumpBy",
                         arg: "2",
                         spaces: "",
-                        numericArg: 2,
                     },
                     {
                         op: "halt",
@@ -624,7 +662,6 @@
                         op: "ifYesJumpBy",
                         arg: "-5",
                         spaces: "",
-                        numericArg: -5,
                     },
                     {
                         op: "drop",
@@ -646,7 +683,6 @@
                         op: "ifYesJumpBy",
                         arg: "-2",
                         spaces: "",
-                        numericArg: -2,
                     },
                     {
                         op: "turnLeft",
@@ -664,7 +700,6 @@
                         op: "jumpTo",
                         arg: "@begin",
                         spaces: "",
-                        numericArg: 4,
                     },
                     {
                         op: "drop",
@@ -678,7 +713,6 @@
                         op: "jumpTo",
                         arg: "@begin",
                         spaces: "",
-                        numericArg: 4,
                     },
                 ],
             },
@@ -770,9 +804,6 @@
                                 return c;
                             })
                             .map((x, i) => {
-                                if (x.error) {
-                                    return x;
-                                }
                                 const validOp =
                                     x.empty !== undefined ||
                                     validateOp(x.op, x.arg);
@@ -791,6 +822,9 @@
                                         error: `Jump target (${jumpTargets(x, i).join(", ")}) outside range`,
                                     };
                                 }
+                                if (x.error) {
+                                    return x;
+                                }
                                 return x;
                             });
                     }),
@@ -799,11 +833,11 @@
             combine({ allCommands, levelKey }),
         ),
     );
-    const commandsAreValid = $derived(
+    const commandErrorCount = $derived(
         view(
             L.reread((commands) => {
-                return R.all(
-                    (cmd) => cmd.empty !== undefined || !cmd.error,
+                return R.count(
+                    (cmd) => cmd.empty === undefined && cmd.error,
                     commands,
                 );
             }),
@@ -906,6 +940,31 @@
     const program = $derived(view("program", world));
     const running = $derived(view("running", world));
     const started = $derived(view("started", world));
+    const autoplay = $derived(view("autoplay", world));
+    const autoplayDelay = $derived(
+        view(
+            [
+                L.iso(
+                    (x) => 1000 / x,
+                    (x) => 1000 / x,
+                ),
+            ],
+            autoplaySpeed,
+        ),
+    );
+
+    $effect(() => {
+        if (autoplay.value && running.value) {
+            const frame = () => {
+                executeLine();
+                raf = window.setTimeout(frame, autoplayDelay.value);
+            };
+            let raf = window.setTimeout(frame, autoplayDelay.value);
+
+            return () => window.clearTimeout(raf);
+        }
+    });
+
     const currentChoiceYesNo = $derived(
         view(
             [
@@ -933,6 +992,7 @@
                 dirty: false,
                 running: init,
                 started: false,
+                autoplay: false,
                 error: null,
                 program: {
                     next: init ? 0 : -1,
@@ -1086,6 +1146,8 @@
                 "pick",
                 "drop",
                 "checkWallAhead",
+                "checkWallLeft",
+                "checkWallRight",
                 "checkBeeperAhead",
                 "checkBeeper",
                 "ifYesJumpTo",
@@ -1225,6 +1287,32 @@
                     frontPos.x == -1 ||
                     frontPos.x == level.size.x ||
                     level.walls[frontPos.x + frontPos.y * level.size.x] === true
+                );
+            }
+            case "checkWallRight": {
+                const sidePos = {
+                    x: player.pos.x - player.dir.y,
+                    y: player.pos.y + player.dir.x,
+                };
+                return (
+                    sidePos.y == -1 ||
+                    sidePos.y == level.size.y ||
+                    sidePos.x == -1 ||
+                    sidePos.x == level.size.x ||
+                    level.walls[sidePos.x + sidePos.y * level.size.x] === true
+                );
+            }
+            case "checkWallLeft": {
+                const sidePos = {
+                    x: player.pos.x - player.dir.y,
+                    y: player.pos.y + player.dir.x,
+                };
+                return (
+                    sidePos.y == -1 ||
+                    sidePos.y == level.size.y ||
+                    sidePos.x == -1 ||
+                    sidePos.x == level.size.x ||
+                    level.walls[sidePos.x + sidePos.y * level.size.x] === true
                 );
             }
             case "checkBeeperAhead": {
@@ -1427,8 +1515,12 @@
             return { error: newPlayerResult.error };
         }
     }
-    function startExecution() {}
-    function pauseExecution() {}
+    function startExecution() {
+        autoplay.value = true;
+    }
+    function pauseExecution() {
+        autoplay.value = false;
+    }
 
     function beginEdit() {
         reloadLevel(false);
@@ -1451,6 +1543,7 @@
                 halted,
                 running,
                 stack,
+                autoplay,
             }) => {
                 if (halted) {
                     return {
@@ -1462,6 +1555,7 @@
                         running: running,
                         halted: halted,
                         started: started,
+                        autoplay: false,
                     };
                 }
                 if (next == commands.length) {
@@ -1476,6 +1570,7 @@
                         stack: stack,
                         running: false,
                         started: true,
+                        autoplay: false,
                     };
                 }
                 if (next < commands.length) {
@@ -1501,6 +1596,7 @@
                             stack: stack,
                             running: running,
                             started: true,
+                            autoplay: false,
                         };
                     } else {
                         if (result.next < 0 || result.next > commands.length) {
@@ -1515,6 +1611,7 @@
                                 stack: stack,
                                 running: false,
                                 started: true,
+                                autoplay: false,
                             };
                         }
                         return {
@@ -1527,6 +1624,7 @@
                             running: true,
                             halted: result.halt,
                             started: true,
+                            autoplay: autoplay && !result.halt,
                         };
                     }
                 } else {
@@ -1539,6 +1637,7 @@
                         error: null,
                         running: false,
                         started: true,
+                        autoplay: false,
                     };
                 }
             },
@@ -1554,6 +1653,7 @@
                     started,
                     halted,
                     stack,
+                    autoplay,
                 },
                 {
                     program: true,
@@ -1566,6 +1666,7 @@
                     started: true,
                     halted: true,
                     stack: true,
+                    autoplay: false,
                 },
             ),
         );
@@ -1591,6 +1692,16 @@
             reloadLevel(false);
         }}>Reload</button
     >
+    <label>
+        Speed:
+        <input
+            type="range"
+            bind:value={autoplaySpeed.value}
+            min="1"
+            max="50"
+            step="1"
+        />
+    </label>
 </div>
 <div
     style="display: grid; grid-template-columns: 1fr 1fr; border: 2px solid gray; border-bottom: none; box-sizing: border-box;gap: 1ex; padding: 1ex;"
@@ -1661,44 +1772,60 @@
                                 type="button"
                                 class={{
                                     "toggle-button": true,
-                                    error: !commandsAreValid.value,
+                                    error: commandErrorCount.value > 0,
                                     active: running.value,
                                 }}
                                 onclick={beginExecute}
                                 disabled={!currentCommands.value.length ||
-                                    !commandsAreValid.value ||
+                                    commandErrorCount.value > 0 ||
                                     running.value}>Run</button
                             >
                         </div>
                         {#if running.value}
                             <div class="button-row">
-                                <button type="button" onclick={resetExecution}
+                                <button
+                                    class="flow-button"
+                                    type="button"
+                                    onclick={resetExecution}
                                     >Reset
                                 </button>
                                 <button
+                                    class="flow-button"
                                     type="button"
                                     onclick={executeLine}
                                     disabled={executionError.value ||
                                         halted.value ||
-                                        !commandsAreValid.value}
+                                        commandErrorCount.value > 0 ||
+                                        autoplay.value}
                                     >Step
                                 </button>
                                 <button
+                                    class="flow-button"
                                     type="button"
                                     disabled={!currentCommands.value.length ||
                                         executionError.value ||
-                                        halted.value}
+                                        halted.value ||
+                                        autoplay.value}
                                     onclick={startExecution}
                                     >Play
                                 </button>
                                 <button
+                                    class="flow-button"
                                     type="button"
                                     disabled={!currentCommands.value.length ||
                                         executionError.value ||
-                                        halted.value}
+                                        halted.value ||
+                                        !autoplay.value}
                                     onclick={pauseExecution}
                                     >Pause
                                 </button>
+                            </div>
+                        {:else if commandErrorCount.value > 0}
+                            <div class="error-summary">
+                                {commandErrorCount.value}
+                                {commandErrorCount.value > 1
+                                    ? "Errors"
+                                    : "Error"}
                             </div>
                         {/if}
                     </div>
@@ -2103,7 +2230,7 @@
         font-family: monospace;
         gap: 1ex;
     }
-    label:has(select) {
+    .controls label:has(select, input) {
         display: flex;
         align-items: center;
         gap: 1ex;
@@ -2119,6 +2246,7 @@
         background-color: #333;
         border-bottom: 2px solid #fff;
         font-family: monospace;
+        overflow: hidden;
     }
     button {
         font: inherit;
@@ -2128,32 +2256,41 @@
     }
 
     .button-row {
+        border-left: 1px solid #222;
         display: flex;
         gap: 0;
-        gap: 2px;
+        gap: 5px;
+        padding: 3px 5px;
     }
     .toggle-buttons {
         display: flex;
         gap: 0;
         border: 1px solid #fff5;
+        border-radius: 7px;
     }
     .toggle-button {
         border: none;
         background-color: transparent;
         padding: 1ex 2ex;
-        background-color: #fff1;
-        color: #fffc;
+        color: #fff;
+        margin: 1px;
+        border-radius: 5px;
     }
     .toggle-button.active {
-        font-weight: bold;
         color: #fff;
-        background-color: #111;
+        font-weight: normal;
+        background-color: #084;
+        border: 1px solid #0a6;
+        color: #cfe;
+        font-weight: bold;
+        border-color: #fff5;
     }
     .toggle-button.error {
-        background-color: #330000;
-        color: #ffaaaa;
-        font-style: italic;
-        font-weight: bold;
+        color: #ff9999aa;
+        text-decoration: line-through;
+    }
+    .flow-button {
+        border-radius: 5px;
     }
     .overlay {
         display: grid;
@@ -2173,12 +2310,10 @@
         resize: none;
     }
     .overlay-layer.faded .annotation-body.valid {
-        outline-color: transparent;
-        background-color: transparent;
+        opacity: 0.3;
     }
     .overlay-layer.faded .label {
-        outline-color: transparent;
-        background-color: transparent;
+        opacity: 0.3;
     }
 
     .overlay-annotations {
@@ -2461,5 +2596,13 @@
         font-style: italic;
         border: 1px solid transparent;
         font-family: monospace;
+    }
+
+    .error-summary {
+        align-self: stretch;
+        display: flex;
+        align-items: center;
+        color: #ffbbbb;
+        font-weight: bold;
     }
 </style>
