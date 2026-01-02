@@ -809,6 +809,8 @@
                                     validateOp(x.op, x.arg);
                                 if (validOp.error) {
                                     return { ...x, error: validOp.error };
+                                } else if (x.error) {
+                                    return x;
                                 } else if (
                                     !R.all(
                                         (jt) =>
@@ -821,9 +823,6 @@
                                         ...x,
                                         error: `Jump target (${jumpTargets(x, i).join(", ")}) outside range`,
                                     };
-                                }
-                                if (x.error) {
-                                    return x;
                                 }
                                 return x;
                             });
@@ -1891,6 +1890,7 @@
                                                     "annotation-body": true,
                                                     empty: !!l.empty,
                                                     valid: !l.error,
+                                                    invalid: l.error,
                                                 }}>{l.op || " "}</span
                                             >{#if l.arg !== undefined}
                                                 <span class="spaces">{" "}</span
@@ -1900,9 +1900,17 @@
                                                         label: true,
                                                         empty: !!l.empty,
                                                         valid: !l.error,
+                                                        invalid: l.error,
                                                     }}
-                                                    style=""
-                                                    >{l.arg}
+                                                    >{l.arg}<span
+                                                        class={{
+                                                            "annotation-extra": true,
+                                                            hidden:
+                                                                l.arg ==
+                                                                l.numericArg,
+                                                        }}
+                                                        >&nbsp;(#{l.numericArg})
+                                                    </span>
                                                 </span>
                                             {/if}<span class="spaces"
                                                 >{l.spaces || ""}</span
@@ -1990,6 +1998,7 @@
                                 spellcheck="false"
                                 readonly={running.value}
                                 class={{
+                                    hidden: running.value,
                                     "overlay-layer": true,
                                     "overlay-input": true,
                                 }}
@@ -2309,11 +2318,27 @@
         grid-area: 1 / 1 / -1 / -1;
         resize: none;
     }
-    .overlay-layer.faded .annotation-body.valid {
-        opacity: 0.3;
+    .overlay-layer.faded .annotation-body {
+        background-color: #ff000055;
+        border-color: transparent;
     }
-    .overlay-layer.faded .label {
-        opacity: 0.3;
+    .overlay-layer.faded .annotation-body.valid {
+        background-color: #0844;
+        outline: 1px solid #0a68;
+    }
+    .overlay-layer.faded .valid.label {
+        background-color: #aa00ff44;
+        outline: 1px solid #cc00ff88;
+    }
+    .overlay-layer.faded .annotation {
+        color: inherit;
+    }
+    .annotation-extra {
+        display: none;
+    }
+
+    .overlay-layer.faded .annotation-extra {
+        display: inline;
     }
 
     .overlay-annotations {
@@ -2332,19 +2357,23 @@
     }
 
     .annotation-body:not(.empty) {
-        background-color: #ff000055;
+        background-color: none;
         padding: 2px 3px;
         margin-left: -3px;
         margin-right: -3px;
         border-radius: 3px;
         outline-offset: -1px;
-        outline: 1px solid #aa0000;
         z-index: 10;
         position: relative;
     }
     .annotation-body.valid {
         background-color: #00ff0033;
         outline: 1px solid #00cc00;
+    }
+
+    .annotation-body.invalid {
+        background-color: #ff000033;
+        outline: 1px solid #cc0000;
     }
 
     .annotation-body.label {
@@ -2523,7 +2552,7 @@
         cursor: pointer;
     }
     .inlay:has(> :checked) {
-        display: inline-block;
+        display: inline-flex;
         vertical-align: text-top;
         margin: 0;
         height: 1.4em;
@@ -2532,6 +2561,25 @@
         padding: 0;
         border-radius: 100%;
         color: transparent;
+        text-align: center;
+        justify-content: start;
+        align-items: center;
+        text-align: center;
+        flex-direction: column;
+        line-height: 1.6em;
+        outline: none;
+    }
+    .inlay::before {
+        content: "❌";
+        font-weight: bold;
+        color: #faa;
+        font-style: normal;
+        letter-spacing: 1ex;
+        vertical-align: baseline;
+    }
+    .inlay:has(> :checked)::before {
+        font-size: 1.4em;
+        letter-spacing: 0;
     }
     .annoatation-right {
         text-align: right;
@@ -2604,5 +2652,8 @@
         align-items: center;
         color: #ffbbbb;
         font-weight: bold;
+    }
+    .hidden {
+        display: none;
     }
 </style>
