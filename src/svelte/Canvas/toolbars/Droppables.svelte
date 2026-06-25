@@ -1,10 +1,15 @@
 <script>
     import * as L from "partial.lenses";
-    import * as R from "ramda";
-    import { string, view, read } from "../../svatom.svelte";
+
+    import { view } from "../../svatom.svelte.js";
     import { polyfillDragDrop } from "../lib/drag-drop-poly.svelte.js";
 
+    import renewShapes from "@petristation/renew-icon-set/shapes";
+    import { buildPath, serializePath } from "@petristation/renew-icon-set";
+
     const { properties } = $props();
+
+    const currentShapeId = $derived(view("shapeId", properties));
 
     const fillColorLens = ["fillColor", L.valueOr("#00aaff")];
 
@@ -21,6 +26,16 @@
             }),
             mimeType: "x-custom/shape",
             preview: shape,
+            alignX: 0.5,
+            alignY: 0.5,
+        },
+        {
+            dynamicContent: (props) => ({
+                shapeId: props.shapeId ?? 0,
+                box: "-50 -50 100 100",
+            }),
+            mimeType: "x-custom/box-shape",
+            preview: boxShape,
             alignX: 0.5,
             alignY: 0.5,
         },
@@ -144,6 +159,47 @@
     </svg>
 {/snippet}
 
+{#snippet boxShape(content)}
+    <svg
+        preserveAspectRatio="xMidYMid meet"
+        viewBox={"0 0 100 100"}
+        fill="white"
+        style="width: 100%; height: 100%; overflow: hidden;"
+    >
+        <g fill="white">
+            {#each renewShapes[content.shapeId].paths as path}
+                <path
+                    d={buildPath(
+                        {
+                            x: 0,
+                            y: 0,
+                            width: 100,
+                            height: 100,
+                        },
+                        path,
+                        Object.fromEntries(
+                            (renewShapes[content.shapeId].args ?? []).map(
+                                (a) => [
+                                    a.name,
+                                    content.argValues?.[a.name] ?? {
+                                        x: -0.1,
+                                        y: -0.1,
+                                    },
+                                ],
+                            ),
+                        ),
+                    )}
+                    fill={path.fill_color}
+                    stroke={path.stroke_color}
+                    vector-effect="non-scaling-stroke"
+                    stroke-width="0.5"
+                    fill-rule="evenodd"
+                />
+            {/each}</g
+        >
+    </svg>
+{/snippet}
+
 {#snippet shape(content)}
     <svg
         preserveAspectRatio="xMidYMid meet"
@@ -185,6 +241,12 @@
 
 <fieldset>
     <legend>Droppables</legend>
+
+    <select bind:value={currentShapeId.value}>
+        {#each renewShapes as shape, si}
+            <option value={si}>{shape.name}</option>
+        {/each}
+    </select>
 
     <div
         class="template-bar"
@@ -239,6 +301,9 @@
     </div>
 
     <style>
+        select {
+            max-width: 10em;
+        }
         .template-bar {
             display: flex;
             gap: 0.5em;

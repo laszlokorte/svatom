@@ -12,6 +12,7 @@
         cameraOrientation,
         createNode,
         createShape,
+        createBoxShape,
         dragging = atom(0),
     } = $props();
 
@@ -74,6 +75,14 @@
                 item.getAsString((s) => {
                     dropShape(JSON.parse(s), position);
                 });
+            } else if (
+                useWorkaround !== true &&
+                item.type === "x-custom/box-shape"
+            ) {
+                useWorkaround = false;
+                item.getAsString((s) => {
+                    dropBoxShape(JSON.parse(s), position);
+                });
             } else if (item.type === "text/plain") {
                 if (useWorkaround !== false) {
                     useWorkaround = true;
@@ -93,6 +102,10 @@
                                 break;
                             case "x-custom/shape":
                                 dropShape(data, position);
+                                break;
+
+                            case "x-custom/box-shape":
+                                dropBoxShape(data, position);
                                 break;
                         }
                     });
@@ -127,6 +140,28 @@
             content: {
                 box: n.box,
                 paths: n.paths,
+            },
+        });
+    };
+
+    const dropBoxShape = (n, position) => {
+        const box = n.box.split(" ");
+        const w = (box[2] * cameraScale.value) / 2;
+        const h = (box[3] * cameraScale.value) / 2;
+        const a = -cameraOrientation.value;
+        const cos = Math.cos((a / 180) * Math.PI);
+        const sin = Math.sin((a / 180) * Math.PI);
+        createBoxShape({
+            placement: {
+                start: {
+                    x: position.x - (cos * w - sin * h) / 2,
+                    y: position.y - (sin * w + cos * h) / 2,
+                },
+                size: { x: w, y: h },
+                angle: a,
+            },
+            content: {
+                shapeId: n.shapeId,
             },
         });
     };

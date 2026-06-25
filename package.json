@@ -17,6 +17,7 @@
     "vite-plugin-pwa": "^1.0.0"
   },
   "dependencies": {
+    "@petristation/renew-icon-set": "^1.0.4",
     "@petristation/renewjs": "^2.0.3",
     "@svatom/basic": "^1.2.0",
     "@svatom/threedee": "^1.0.5",

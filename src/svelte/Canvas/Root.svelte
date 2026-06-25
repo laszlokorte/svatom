@@ -1,5 +1,4 @@
 <script>
-    import { tick } from "svelte";
     import * as L from "partial.lenses";
     import * as H from "partial.lenses.history";
     import * as R from "ramda";
@@ -9,7 +8,8 @@
     import ClickPicker from "./tools/ClickPicker.svelte";
     import AffineTansformer from "./tools/AffineTansformer.svelte";
     import * as CamNavigation from "./camera/navigation";
-    import { cameraAsViewbox } from "./camera/functions";
+    import renewShapes from "@petristation/renew-icon-set/shapes";
+    import { buildPath } from "@petristation/renew-icon-set";
     import {
         frameBoxLens,
         panMovementLens,
@@ -25,11 +25,8 @@
         update,
         failableView,
         bindValue,
-        bindScroll,
-        bindSize,
         traverse,
         animateWith,
-        adjustSize,
         isFullscreen,
     } from "../svatom.svelte.js";
     import { constructLenses } from "./camera/live.js";
@@ -68,6 +65,7 @@
     import RubberBand from "./tools/RubberBand.svelte";
     import NodesDef from "./tools/NodesDef.svelte";
     import Blocker from "./tools/Blocker.svelte";
+    import Shaper from "./tools/Shaper.svelte";
     //import NodesUse from "./tools/NodesUse.svelte";
     import EdgesDef from "./tools/EdgesDef.svelte";
     import DrawingsDef from "./tools/DrawingsDef.svelte";
@@ -790,6 +788,10 @@
     const textBoxes = $derived(
         view(["textBoxes", L.defaults([])], currentDocumentContent),
     );
+
+    const shapeBoxes = $derived(
+        view(["shapeBoxes", L.defaults([])], currentDocumentContent),
+    );
     const guides = $derived(
         view(["guides", L.defaults([])], currentDocumentContent),
     );
@@ -1440,6 +1442,8 @@
     );
     const newSpline = $derived(view([L.appendTo, "path"], splines));
     const newShape = $derived(view([L.appendTo], shapes));
+    const newShapeBoxes = $derived(view([L.appendTo], shapeBoxes));
+
     const newGuide = $derived(view([L.appendTo], guides));
     const newAxis = $derived(view(L.identity, axis));
     const newPlot = $derived(view([L.appendTo], plots));
@@ -1467,6 +1471,16 @@
     };
     const createSpline = (val) => {
         newSpline.value = val;
+    };
+    const createBoxShape = (val) => {
+        newShapeBoxes.value = {
+            x: val.placement.start.x,
+            y: val.placement.start.y,
+            width: val.placement.size.x,
+            height: val.placement.size.y,
+            angle: val.placement.angle,
+            shape: val.content.shapeId,
+        };
     };
     const createShape = (val) => {
         newShape.value = val;
@@ -1759,6 +1773,16 @@
                 frameBoxPath,
             },
         },
+        shaper: {
+            name: "Shaper",
+            component: Shaper,
+            parameters: {
+                shapeBoxes,
+                clientToCanvas,
+                cameraScale,
+                rotationTransform,
+            },
+        },
         select: {
             name: "Select",
             component: RubberBand,
@@ -1978,6 +2002,7 @@
     });
 
     const toolGroups = [
+        ["shaper"],
         ["select", "lasso", "affineTansformer"],
         ["magnifier", "pan", "rotate", "zoom"],
         ["pen", "polygon", "spline"],
@@ -2698,6 +2723,7 @@
             {createText}
             {createNode}
             {createShape}
+            {createBoxShape}
         >
             <Scroller
                 allowOverscroll={false}
@@ -2849,6 +2875,43 @@
 										xlink:href="https://renew-editor.laszlokorte.de/db_schema.svg"
 									/> -->
                                     <LayeredUse {zLayers} {rotationTransform} />
+                                    {#each shapeBoxes.value as b}
+                                        <g
+                                            fill="white"
+                                            transform="rotate({b.angle} {b.x} {b.y})"
+                                        >
+                                            {#each renewShapes[b.shape].paths as path}
+                                                <path
+                                                    d={buildPath(
+                                                        {
+                                                            x: b.x,
+                                                            y: b.y,
+                                                            width: b.width,
+                                                            height: b.height,
+                                                        },
+                                                        path,
+                                                        Object.fromEntries(
+                                                            (
+                                                                renewShapes[
+                                                                    b.shape
+                                                                ].args ?? []
+                                                            ).map((a) => [
+                                                                a.name,
+                                                                b.argValues?.[
+                                                                    a.name
+                                                                ] ?? a.default,
+                                                            ]),
+                                                        ),
+                                                    )}
+                                                    fill={path.fill_color}
+                                                    stroke={path.stroke_color}
+                                                    vector-effect="non-scaling-stroke"
+                                                    stroke-width="0.5"
+                                                    fill-rule="evenodd"
+                                                />
+                                            {/each}</g
+                                        >
+                                    {/each}
                                 </g>
 
                                 <Origin {rotationTransform} {cameraScale} />
