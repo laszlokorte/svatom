@@ -8,7 +8,7 @@
     import ClickPicker from "./tools/ClickPicker.svelte";
     import AffineTansformer from "./tools/AffineTansformer.svelte";
     import * as CamNavigation from "./camera/navigation";
-    import renewShapes from "@petristation/renew-icon-set/shapes";
+    import renewShapes from "./shapes";
     import { buildPath } from "@petristation/renew-icon-set";
     import {
         frameBoxLens,

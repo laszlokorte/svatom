@@ -4,12 +4,14 @@
     import { view } from "../../svatom.svelte.js";
     import { polyfillDragDrop } from "../lib/drag-drop-poly.svelte.js";
 
-    import renewShapes from "@petristation/renew-icon-set/shapes";
-    import { buildPath, serializePath } from "@petristation/renew-icon-set";
+    import renewShapes from "../shapes.js";
+    import { buildPath } from "@petristation/renew-icon-set";
 
     const { properties } = $props();
 
-    const currentShapeId = $derived(view("shapeId", properties));
+    const currentShapeId = $derived(
+        view(["shapeId", L.valueOr("rect")], properties),
+    );
 
     const fillColorLens = ["fillColor", L.valueOr("#00aaff")];
 
@@ -31,7 +33,7 @@
         },
         {
             dynamicContent: (props) => ({
-                shapeId: props.shapeId ?? 0,
+                shapeId: props.shapeId ?? "rect",
                 box: "-50 -50 100 100",
             }),
             mimeType: "x-custom/box-shape",
@@ -181,10 +183,7 @@
                             (renewShapes[content.shapeId].args ?? []).map(
                                 (a) => [
                                     a.name,
-                                    content.argValues?.[a.name] ?? {
-                                        x: -0.1,
-                                        y: -0.1,
-                                    },
+                                    content.argValues?.[a.name] ?? a.default,
                                 ],
                             ),
                         ),
@@ -243,8 +242,8 @@
     <legend>Droppables</legend>
 
     <select bind:value={currentShapeId.value}>
-        {#each renewShapes as shape, si}
-            <option value={si}>{shape.name}</option>
+        {#each Object.keys(renewShapes) as name}
+            <option value={name}>{name}</option>
         {/each}
     </select>
 
