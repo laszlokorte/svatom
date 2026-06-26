@@ -253,16 +253,29 @@
                     activeGrab.value.y -
                     offset.value.y -
                     activeScalePivot.value.y;
-                const fx = U.lerp(
+                let fx = U.lerp(
                     dxOld ? dxNew / dxOld : 0,
                     1,
                     activeScalePivot.value.rx,
                 );
-                const fy = U.lerp(
+                let fy = U.lerp(
                     dyOld ? dyNew / dyOld : 0,
                     1,
                     activeScalePivot.value.ry,
                 );
+                if (
+                    evt.shiftKey ||
+                    selectionExtensionValue.allowedTransform.proportional
+                ) {
+                    const sx = Math.sign(fx) || 1;
+                    const sy = Math.sign(fy) || 1;
+
+                    const s = Math.sqrt(Math.abs(fx * fy));
+                    //const s = Math.min(Math.abs(fx), Math.abs(fy));
+
+                    fx = sx * s;
+                    fy = sy * s;
+                }
                 scaleSelected(
                     { x: fx, y: fy },
                     activeScalePivot.value,

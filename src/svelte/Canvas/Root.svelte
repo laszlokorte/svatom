@@ -1071,7 +1071,7 @@
                                             id: "shape-" + i,
                                             allowedTransform: {
                                                 translation: true,
-                                                scale: true,
+                                                scale: "proportional",
                                                 rotate: true,
                                             },
                                         };
@@ -1116,7 +1116,7 @@
                                             id: "shapebox-" + i,
                                             allowedTransform: {
                                                 translation: true,
-                                                scale: true,
+                                                scale: "proportional",
                                                 rotate: true,
                                             },
                                         };
@@ -1293,6 +1293,7 @@
                     translation: true,
                     scale: true,
                     rotate: true,
+                    proportional: false,
                 };
 
                 for (let h = 0; h < hit.length; h++) {
@@ -1306,6 +1307,7 @@
                         (ha.allowedTransform.translation === "multiple" &&
                             sel.length > 1);
                     allowedTransform.scale &&=
+                        ha.allowedTransform.scale === "proportional" ||
                         ha.allowedTransform.scale === true ||
                         (ha.allowedTransform.scale === "multiple" &&
                             sel.length > 1);
@@ -1313,6 +1315,8 @@
                         ha.allowedTransform.rotate === true ||
                         (ha.allowedTransform.rotate === "multiple" &&
                             sel.length > 1);
+                    allowedTransform.proportional ||=
+                        ha.allowedTransform.scale === "proportional";
 
                     switch (ha.type) {
                         case "circle":
@@ -1526,57 +1530,49 @@
 
         shapes: (factor, pivot, shapes, sel) =>
             shapes.map((s, i) => {
-                const f =
-                    Math.abs(factor.x - 1) > Math.abs(factor.y - 1)
-                        ? factor.x
-                        : factor.y;
                 return sel.indexOf(`shape-${i}`) < 0
                     ? s
                     : L.modify(
                           ["placement", "start"],
                           ({ x, y }) => ({
-                              x: (x - pivot.x) * f + pivot.x,
-                              y: (y - pivot.y) * f + pivot.y,
+                              x: (x - pivot.x) * factor.x + pivot.x,
+                              y: (y - pivot.y) * factor.y + pivot.y,
                           }),
                           L.modify(
                               ["placement", "size"],
                               ({ x, y }) => ({
-                                  x: x * f || 0.001,
-                                  y: y * f || 0.001,
+                                  x: x * factor.x || 0.001,
+                                  y: y * factor.y || 0.001,
                               }),
-                              s,
+                              L.modify(
+                                  ["placement", "angle"],
+                                  (angle) =>
+                                      angle *
+                                      Math.sign(factor.x) *
+                                      Math.sign(factor.y),
+                                  s,
+                              ),
                           ),
                       );
             }),
 
         shapeBoxes: (factor, pivot, shapes, sel) =>
             shapes.map((s, i) => {
-                const fx =
-                    Math.abs(Math.abs(factor.x) - 1) >
-                    Math.abs(Math.abs(factor.y) - 1)
-                        ? Math.sign(factor.x) * Math.abs(factor.x)
-                        : Math.sign(factor.x) * Math.abs(factor.y);
-                const fy =
-                    Math.abs(Math.abs(factor.x) - 1) >
-                    Math.abs(Math.abs(factor.y) - 1)
-                        ? Math.sign(factor.x) * Math.abs(factor.x)
-                        : Math.sign(factor.x) * Math.abs(factor.y);
                 return sel.indexOf(`shapebox-${i}`) < 0
                     ? s
                     : L.modify(
-                          [L.props("x", "y")],
-                          ({ x, y }) => ({
-                              x: (x - pivot.x) * fx + pivot.x,
-                              y: (y - pivot.y) * fy + pivot.y,
+                          [L.props("x", "y", "width", "height", "angle")],
+                          ({ x, y, width, height, angle }) => ({
+                              x: (x - pivot.x) * factor.x + pivot.x,
+                              y: (y - pivot.y) * factor.y + pivot.y,
+                              width: width * factor.x,
+                              height: height * factor.y,
+                              angle:
+                                  angle *
+                                  Math.sign(factor.x) *
+                                  Math.sign(factor.y),
                           }),
-                          L.modify(
-                              [L.pick({ x: "width", y: "height" })],
-                              ({ x, y }) => ({
-                                  x: x * fx,
-                                  y: y * fy,
-                              }),
-                              s,
-                          ),
+                          s,
                       );
             }),
     };
