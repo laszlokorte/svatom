@@ -157,10 +157,15 @@
             preventNextClick = true;
         }
         if (scaleAccum.value && activeScalePivot.value) {
+            const fx = scaleAccum.value.x;
+            const fy = scaleAccum.value.y;
+            const s =
+                fx == 1 ? fy : fy == 1 ? fx : Math.sqrt(Math.abs(fx * fy));
             scaleSelected(
                 {
                     x: 1 / scaleAccum.value.x,
                     y: 1 / scaleAccum.value.y,
+                    s: 1 / s,
                 },
                 activeScalePivot.value,
             );
