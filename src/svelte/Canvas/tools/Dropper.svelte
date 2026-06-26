@@ -88,26 +88,28 @@
                     useWorkaround = true;
 
                     item.getAsString((s) => {
-                        const n = JSON.parse(s);
+                        try {
+                            const n = JSON.parse(s);
 
-                        const mime = n.mime;
-                        const data = n.data;
+                            const mime = n.mime;
+                            const data = n.data;
 
-                        switch (mime) {
-                            case "x-custom/text":
-                                dropText(data, position);
-                                break;
-                            case "x-custom/node":
-                                dropNode(data, position);
-                                break;
-                            case "x-custom/shape":
-                                dropShape(data, position);
-                                break;
+                            switch (mime) {
+                                case "x-custom/text":
+                                    dropText(data, position);
+                                    break;
+                                case "x-custom/node":
+                                    dropNode(data, position);
+                                    break;
+                                case "x-custom/shape":
+                                    dropShape(data, position);
+                                    break;
 
-                            case "x-custom/box-shape":
-                                dropBoxShape(data, position);
-                                break;
-                        }
+                                case "x-custom/box-shape":
+                                    dropBoxShape(data, position);
+                                    break;
+                            }
+                        } catch (e) {}
                     });
                 }
             } else if (useWorkaround !== true && item.kind === "string") {

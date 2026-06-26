@@ -164,7 +164,7 @@
 {#snippet boxShape(content)}
     <svg
         preserveAspectRatio="xMidYMid meet"
-        viewBox={"0 0 100 100"}
+        viewBox={"-5 -5 110 110"}
         fill="white"
         style="width: 100%; height: 100%; overflow: hidden;"
     >

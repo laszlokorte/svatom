@@ -8,6 +8,7 @@
         string,
         read,
         autofocusIf,
+        bindBoundingBox,
     } from "../../svatom.svelte.js";
 
     const {
@@ -16,6 +17,8 @@
         cameraOrientation,
         frameBoxPath,
         clientToCanvas,
+        measureKey,
+        measures,
         textes = atom([]),
     } = $props();
 </script>
@@ -56,6 +59,22 @@
         </g>
     {/each}
 </defs>
+{#if measureKey && measures}
+    <g pointer-events="none" opacity="0">
+        {#each textes.value as t, i (i)}
+            {@const m = view([i, measureKey, L.required({})], measures)}
+            {#key [t.content, i]}
+                <text
+                    use:bindBoundingBox={m}
+                    stroke="none"
+                    fill="black"
+                    font-size="{t.fontSize}em"
+                    text-anchor="middle">{t.content}</text
+                >
+            {/key}
+        {/each}
+    </g>
+{/if}
 
 <style>
     text {

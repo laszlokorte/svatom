@@ -770,7 +770,7 @@
 
     const currentTabId = $derived(view("current", allTabs));
 
-    const tool = atom("none");
+    const tool = atom("select");
     const currentDocumentContent = $derived(view(["content"], canvasDocument));
     const currentDocumentContentMut = $derived(
         view(["content"], canvasDocumentMut),
@@ -812,6 +812,7 @@
         view(["alerts", L.defaults([])], currentDocumentContent),
     );
     const rubberBand = atom(undefined);
+    const textMeasures = atom({});
 
     const zLayers = $derived(
         view(
@@ -866,6 +867,7 @@
                             L.lens(
                                 (s, i) => ({
                                     id: "textline-" + i,
+                                    measure: true,
                                     zIndex: s.zIndex,
                                 }),
                                 (newVal, old) => ({
@@ -961,7 +963,7 @@
 
     const hitAreas = $derived(
         view(
-            ({ scale, doc }) => {
+            ({ scale, doc, rot, mes }) => {
                 return L.get(
                     [
                         L.partsOf(
@@ -1121,6 +1123,77 @@
                                         };
                                     }),
                                 ],
+                                textes: [
+                                    L.elems,
+                                    L.reread((sp, i) => {
+                                        const size = {
+                                            x: mes[i]?.measure?.width ?? 0,
+                                            y: mes[i]?.measure?.height ?? 0,
+                                        };
+                                        const cos = Math.cos(
+                                            (-rot / 180) * Math.PI,
+                                        );
+                                        const sin = Math.sin(
+                                            (-rot / 180) * Math.PI,
+                                        );
+
+                                        return {
+                                            type: "polygon",
+                                            points: [
+                                                {
+                                                    x: sp.x,
+                                                    y: sp.y,
+                                                },
+
+                                                {
+                                                    x:
+                                                        sp.x +
+                                                        (cos * size.x) / 2,
+                                                    y:
+                                                        sp.y +
+                                                        (sin * size.x) / 2,
+                                                },
+
+                                                {
+                                                    x:
+                                                        sp.x +
+                                                        (cos * size.x) / 2 +
+                                                        sin * size.y,
+                                                    y:
+                                                        sp.y +
+                                                        (sin * size.x) / 2 +
+                                                        -cos * size.y,
+                                                },
+
+                                                {
+                                                    x:
+                                                        sp.x +
+                                                        -(cos * size.x) / 2 +
+                                                        sin * size.y,
+                                                    y:
+                                                        sp.y +
+                                                        -(sin * size.x) / 2 +
+                                                        -cos * size.y,
+                                                },
+
+                                                {
+                                                    x:
+                                                        sp.x +
+                                                        -(cos * size.x) / 2,
+                                                    y:
+                                                        sp.y +
+                                                        -(sin * size.x) / 2,
+                                                },
+                                            ],
+                                            id: "text-" + i,
+                                            allowedTransform: {
+                                                translation: true,
+                                                scale: true,
+                                                rotate: false,
+                                            },
+                                        };
+                                    }),
+                                ],
                                 drawings: [
                                     L.elems,
                                     L.reread((drawing, i) => ({
@@ -1140,7 +1213,12 @@
                     doc,
                 );
             },
-            combine({ scale: cameraScale, doc: currentDocumentContent }),
+            combine({
+                scale: cameraScale,
+                doc: currentDocumentContent,
+                rot: cameraOrientation,
+                mes: textMeasures,
+            }),
         ),
     );
 
@@ -1276,6 +1354,30 @@
                           y: n.y + dy,
                       },
             ),
+
+        textes: ({ dx, dy }, textes, sel) =>
+            textes.map((n, i) =>
+                sel.indexOf(`text-${i}`) < 0
+                    ? n
+                    : {
+                          ...n,
+                          x: n.x + dx,
+                          y: n.y + dy,
+                      },
+            ),
+
+        textBoxes: ({ dx, dy }, textes, sel) =>
+            textes.map((n, i) =>
+                sel.indexOf(`textbox-${i}`) < 0
+                    ? n
+                    : {
+                          ...n,
+                          start: {
+                              x: n.start.x + dx,
+                              y: n.start.y + dy,
+                          },
+                      },
+            ),
         drawings: ({ dx, dy }, drawings, sel) =>
             drawings.map((d, i) =>
                 sel.indexOf(`drawing-${i}`) < 0
@@ -1339,6 +1441,31 @@
                           })),
                       },
             ),
+
+        textBoxes: (factor, pivot, textes, sel) =>
+            textes.map((n, i) =>
+                console.log(n) || sel.indexOf(`textbox-${i}`) < 0
+                    ? n
+                    : {
+                          ...n,
+                          size: Geo.scalePivotXY(
+                              0,
+                              0,
+                              Geo.rotatePivotDegree(
+                                  { x: 0, y: 0 },
+                                  n.angle,
+                                  factor,
+                              ),
+                              n.size,
+                          ),
+                          start: Geo.scalePivotXY(
+                              pivot.x,
+                              pivot.y,
+                              factor,
+                              n.start,
+                          ),
+                      },
+            ),
         shapes: (factor, pivot, shapes, sel) =>
             shapes.map((s, i) => {
                 return sel.indexOf(`shape-${i}`) < 0
@@ -1390,6 +1517,18 @@
                           }),
                       },
             ),
+
+        textBoxes: (angle, pivot, textes, sel) =>
+            textes.map((n, i) =>
+                sel.indexOf(`textbox-${i}`) < 0
+                    ? n
+                    : {
+                          ...n,
+                          start: Geo.rotatePivotDegree(pivot, angle, n.start),
+
+                          angle: n.angle + angle,
+                      },
+            ),
         drawings: (angle, pivot, drawings, sel) =>
             drawings.map((d, i) =>
                 sel.indexOf(`drawing-${i}`) < 0
@@ -1418,7 +1557,7 @@
         update(
             (doc) => {
                 return R.mapObjIndexed((entries, key) => {
-                    if (scalers[key]) {
+                    if (rotators[key]) {
                         return rotators[key](angle, pivot, entries, sel);
                     } else {
                         return entries;
@@ -2239,6 +2378,7 @@
     }
 
     const ToolComponent = $derived(tools[tool.value].component);
+    const firstText = $derived(view([0, "content"], textes));
 </script>
 
 <div class="container">
@@ -2709,6 +2849,8 @@
 
     <Properties properties={defaultProperties} />
 
+    <input type="text" bind:value={firstText.value} />
+
     <div
         class={[
             "prevent-selection",
@@ -2828,6 +2970,8 @@
                                 />
 
                                 <TextLinesDef
+                                    measures={textMeasures}
+                                    measureKey={"measure"}
                                     {textes}
                                     {clientToCanvas}
                                     {frameBoxPath}
