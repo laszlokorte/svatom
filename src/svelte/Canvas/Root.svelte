@@ -174,6 +174,39 @@
                                 content: "Hello World",
                             },
                         ],
+                        shapeBoxes: [
+                            {
+                                x: -157.55697093816394,
+                                y: -177.3938840697198,
+                                width: 71.08793227423764,
+                                height: 71.08793227423764,
+                                angle: -50,
+                                shape: "rect-round",
+                                argValues: {
+                                    radius: {
+                                        x: 0.75,
+                                        y: 0.25,
+                                    },
+                                },
+                            },
+                        ],
+                        textBoxes: [
+                            {
+                                start: {
+                                    x: 282.8671315158598,
+                                    y: -86.11295386029542,
+                                },
+                                size: {
+                                    x: 154,
+                                    y: 152,
+                                },
+                                content:
+                                    "Lorem Ipsum\n\nFoo Bar\n\nParantatatam",
+                                angle: -20,
+                                fontSize: 1,
+                                zIndex: 7,
+                            },
+                        ],
                         drawings: [
                             {
                                 path: [
@@ -1122,6 +1155,49 @@
                                         };
                                     }),
                                 ],
+
+                                axis: [
+                                    L.reread((sp, i) => {
+                                        const cos = Math.cos(
+                                            (-sp.angle / 180) * Math.PI,
+                                        );
+                                        const sin = Math.sin(
+                                            (-sp.angle / 180) * Math.PI,
+                                        );
+
+                                        return {
+                                            type: "polyline",
+                                            points: [
+                                                {
+                                                    x:
+                                                        sp.start.x +
+                                                        cos * sp.size.x,
+                                                    y:
+                                                        sp.start.y +
+                                                        -sin * sp.size.x,
+                                                },
+                                                {
+                                                    x: sp.start.x,
+                                                    y: sp.start.y,
+                                                },
+                                                {
+                                                    x:
+                                                        sp.start.x +
+                                                        sin * sp.size.y,
+                                                    y:
+                                                        sp.start.y +
+                                                        cos * sp.size.y,
+                                                },
+                                            ],
+                                            id: "axis",
+                                            allowedTransform: {
+                                                translation: true,
+                                                scale: "proportional",
+                                                rotate: true,
+                                            },
+                                        };
+                                    }),
+                                ],
                                 textBoxes: [
                                     L.elems,
                                     L.reread((sp, i) => {
@@ -1169,7 +1245,7 @@
                                             id: "textbox-" + i,
                                             allowedTransform: {
                                                 translation: true,
-                                                scale: false,
+                                                scale: "proportional",
                                                 rotate: true,
                                             },
                                         };
@@ -1465,6 +1541,15 @@
                       ),
             ),
 
+        axis: ({ dx, dy }, s, sel) =>
+            sel.indexOf(`axis`) < 0
+                ? s
+                : L.modify(
+                      ["start"],
+                      ({ x, y }) => ({ x: x + dx, y: y + dy }),
+                      s,
+                  ),
+
         shapeBoxes: ({ dx, dy }, shapes, sel) =>
             shapes.map((s, i) =>
                 sel.indexOf(`shapebox-${i}`) < 0
@@ -1510,7 +1595,7 @@
                     ? n
                     : {
                           ...n,
-                          fontSize: (n.fontSize * (factor.x + factor.y)) / 2,
+                          fontSize: n.fontSize * factor.s,
                           x: (n.x - pivot.x) * factor.x + pivot.x,
                           y: (n.y - pivot.y) * factor.y + pivot.y,
                       },
@@ -1555,6 +1640,64 @@
                           ),
                       );
             }),
+
+        textBoxes: (factor, pivot, shapes, sel) =>
+            shapes.map((s, i) => {
+                return sel.indexOf(`textbox-${i}`) < 0
+                    ? s
+                    : L.modify(
+                          ["start"],
+                          ({ x, y }) => ({
+                              x: (x - pivot.x) * factor.x + pivot.x,
+                              y: (y - pivot.y) * factor.y + pivot.y,
+                          }),
+                          L.modify(
+                              ["size"],
+                              ({ x, y }) => ({
+                                  x: x * factor.x || 0.001,
+                                  y: y * factor.y || 0.001,
+                              }),
+                              L.modify(
+                                  ["angle"],
+                                  (angle) =>
+                                      angle *
+                                      Math.sign(factor.x) *
+                                      Math.sign(factor.y),
+                                  L.modify(
+                                      ["fontSize"],
+                                      (size) => size * Math.abs(factor.s),
+                                      s,
+                                  ),
+                              ),
+                          ),
+                      );
+            }),
+
+        axis: (factor, pivot, s, sel) =>
+            sel.indexOf(`axis`) < 0
+                ? s
+                : L.modify(
+                      ["start"],
+                      ({ x, y }) => ({
+                          x: (x - pivot.x) * factor.x + pivot.x,
+                          y: (y - pivot.y) * factor.y + pivot.y,
+                      }),
+                      L.modify(
+                          ["size"],
+                          ({ x, y }) => ({
+                              x: x * factor.x || 0.001,
+                              y: y * factor.y || 0.001,
+                          }),
+                          L.modify(
+                              ["angle"],
+                              (angle) =>
+                                  angle *
+                                  Math.sign(factor.x) *
+                                  Math.sign(factor.y),
+                              s,
+                          ),
+                      ),
+                  ),
 
         shapeBoxes: (factor, pivot, shapes, sel) =>
             shapes.map((s, i) => {
@@ -1642,6 +1785,15 @@
                           ),
                       },
             ),
+
+        axis: (angle, pivot, s, sel) =>
+            sel.indexOf(`axis`) < 0
+                ? s
+                : L.modify(
+                      ["start"],
+                      (p) => Geo.rotatePivotDegree(pivot, angle, p),
+                      L.modify(["angle"], (a) => a + angle, s),
+                  ),
         shapes: (angle, pivot, shapes, sel) =>
             shapes.map((s, i) => {
                 return sel.indexOf(`shape-${i}`) < 0
@@ -2491,7 +2643,6 @@
     }
 
     const ToolComponent = $derived(tools[tool.value].component);
-    const firstText = $derived(view([0, "content"], textes));
 </script>
 
 <div class="container">
@@ -2961,8 +3112,6 @@
     </fieldset>
 
     <Properties properties={defaultProperties} />
-
-    <input type="text" bind:value={firstText.value} />
 
     <div
         class={[

@@ -263,6 +263,9 @@
                     1,
                     activeScalePivot.value.ry,
                 );
+
+                const s =
+                    fx == 1 ? fy : fy == 1 ? fx : Math.sqrt(Math.abs(fx * fy));
                 if (
                     evt.shiftKey ||
                     selectionExtensionValue.allowedTransform.proportional
@@ -270,14 +273,13 @@
                     const sx = Math.sign(fx) || 1;
                     const sy = Math.sign(fy) || 1;
 
-                    const s = Math.sqrt(Math.abs(fx * fy));
                     //const s = Math.min(Math.abs(fx), Math.abs(fy));
 
                     fx = sx * s;
                     fy = sy * s;
                 }
                 scaleSelected(
-                    { x: fx, y: fy },
+                    { x: fx, y: fy, s },
                     activeScalePivot.value,
                     moved.value,
                 );
