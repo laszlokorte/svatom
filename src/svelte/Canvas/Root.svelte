@@ -166,6 +166,13 @@
                                 fontSize: 0.8922579558824082,
                                 content: "Hello World",
                             },
+
+                            {
+                                x: 50.35297908638951,
+                                y: 70.289311950847,
+                                fontSize: 0.8922579558824082,
+                                content: "Hello World",
+                            },
                         ],
                         drawings: [
                             {
@@ -1064,7 +1071,52 @@
                                             id: "shape-" + i,
                                             allowedTransform: {
                                                 translation: true,
-                                                scale: false,
+                                                scale: true,
+                                                rotate: true,
+                                            },
+                                        };
+                                    }),
+                                ],
+                                shapeBoxes: [
+                                    L.elems,
+                                    L.reread((sp, i) => {
+                                        const cos = Math.cos(
+                                            (-sp.angle / 180) * Math.PI,
+                                        );
+                                        const sin = Math.sin(
+                                            (-sp.angle / 180) * Math.PI,
+                                        );
+
+                                        return {
+                                            type: "polygon",
+                                            points: [
+                                                {
+                                                    x: sp.x,
+                                                    y: sp.y,
+                                                },
+                                                {
+                                                    x: sp.x + cos * sp.width,
+                                                    y: sp.y + -sin * sp.width,
+                                                },
+                                                {
+                                                    x:
+                                                        sp.x +
+                                                        cos * sp.width +
+                                                        sin * sp.height,
+                                                    y:
+                                                        sp.y +
+                                                        -sin * sp.width +
+                                                        cos * sp.height,
+                                                },
+                                                {
+                                                    x: sp.x + sin * sp.height,
+                                                    y: sp.y + cos * sp.height,
+                                                },
+                                            ],
+                                            id: "shapebox-" + i,
+                                            allowedTransform: {
+                                                translation: true,
+                                                scale: true,
                                                 rotate: true,
                                             },
                                         };
@@ -1117,7 +1169,7 @@
                                             id: "textbox-" + i,
                                             allowedTransform: {
                                                 translation: true,
-                                                scale: true,
+                                                scale: false,
                                                 rotate: true,
                                             },
                                         };
@@ -1146,6 +1198,7 @@
                                                 },
 
                                                 {
+                                                    skip: true,
                                                     x:
                                                         sp.x +
                                                         (cos * size.x) / 2,
@@ -1155,6 +1208,7 @@
                                                 },
 
                                                 {
+                                                    skip: true,
                                                     x:
                                                         sp.x +
                                                         (cos * size.x) / 2 +
@@ -1166,6 +1220,7 @@
                                                 },
 
                                                 {
+                                                    skip: true,
                                                     x:
                                                         sp.x +
                                                         -(cos * size.x) / 2 +
@@ -1177,6 +1232,7 @@
                                                 },
 
                                                 {
+                                                    skip: true,
                                                     x:
                                                         sp.x +
                                                         -(cos * size.x) / 2,
@@ -1188,8 +1244,8 @@
                                             id: "text-" + i,
                                             allowedTransform: {
                                                 translation: true,
-                                                scale: true,
-                                                rotate: false,
+                                                scale: "multiple",
+                                                rotate: "multiple",
                                             },
                                         };
                                     }),
@@ -1272,10 +1328,12 @@
                             break;
                         case "polygon":
                             for (let p = 0; p < ha.points.length; p++) {
-                                minX = Math.min(minX, ha.points[p].x);
-                                maxX = Math.max(maxX, ha.points[p].x);
-                                minY = Math.min(minY, ha.points[p].y);
-                                maxY = Math.max(maxY, ha.points[p].y);
+                                if (!ha.points[p].skip) {
+                                    minX = Math.min(minX, ha.points[p].x);
+                                    maxX = Math.max(maxX, ha.points[p].x);
+                                    minY = Math.min(minY, ha.points[p].y);
+                                    maxY = Math.max(maxY, ha.points[p].y);
+                                }
                                 minXPadded = Math.min(
                                     minXPadded,
                                     ha.points[p].x,
@@ -1296,10 +1354,12 @@
                             break;
                         case "polyline":
                             for (let p = 0; p < ha.points.length; p++) {
-                                minX = Math.min(minX, ha.points[p].x);
-                                maxX = Math.max(maxX, ha.points[p].x);
-                                minY = Math.min(minY, ha.points[p].y);
-                                maxY = Math.max(maxY, ha.points[p].y);
+                                if (!ha.points[p].skip) {
+                                    minX = Math.min(minX, ha.points[p].x);
+                                    maxX = Math.max(maxX, ha.points[p].x);
+                                    minY = Math.min(minY, ha.points[p].y);
+                                    maxY = Math.max(maxY, ha.points[p].y);
+                                }
                                 minXPadded = Math.min(
                                     minXPadded,
                                     ha.points[p].x,
@@ -1400,6 +1460,17 @@
                           s,
                       ),
             ),
+
+        shapeBoxes: ({ dx, dy }, shapes, sel) =>
+            shapes.map((s, i) =>
+                sel.indexOf(`shapebox-${i}`) < 0
+                    ? s
+                    : L.modify(
+                          [L.props("x", "y")],
+                          ({ x, y }) => ({ x: x + dx, y: y + dy }),
+                          s,
+                      ),
+            ),
     };
 
     function translateSelected(delta, transient = false) {
@@ -1429,6 +1500,17 @@
                           y: (n.y - pivot.y) * factor.y + pivot.y,
                       },
             ),
+        textes: (factor, pivot, nodes, sel) =>
+            nodes.map((n, i) =>
+                sel.indexOf(`text-${i}`) < 0
+                    ? n
+                    : {
+                          ...n,
+                          fontSize: (n.fontSize * (factor.x + factor.y)) / 2,
+                          x: (n.x - pivot.x) * factor.x + pivot.x,
+                          y: (n.y - pivot.y) * factor.y + pivot.y,
+                      },
+            ),
         drawings: (factor, pivot, drawings, sel) =>
             drawings.map((d, i) =>
                 sel.indexOf(`drawing-${i}`) < 0
@@ -1442,45 +1524,56 @@
                       },
             ),
 
-        textBoxes: (factor, pivot, textes, sel) =>
-            textes.map((n, i) =>
-                console.log(n) || sel.indexOf(`textbox-${i}`) < 0
-                    ? n
-                    : {
-                          ...n,
-                          size: Geo.scalePivotXY(
-                              0,
-                              0,
-                              Geo.rotatePivotDegree(
-                                  { x: 0, y: 0 },
-                                  n.angle,
-                                  factor,
-                              ),
-                              n.size,
-                          ),
-                          start: Geo.scalePivotXY(
-                              pivot.x,
-                              pivot.y,
-                              factor,
-                              n.start,
-                          ),
-                      },
-            ),
         shapes: (factor, pivot, shapes, sel) =>
             shapes.map((s, i) => {
+                const f =
+                    Math.abs(factor.x - 1) > Math.abs(factor.y - 1)
+                        ? factor.x
+                        : factor.y;
                 return sel.indexOf(`shape-${i}`) < 0
                     ? s
                     : L.modify(
                           ["placement", "start"],
                           ({ x, y }) => ({
-                              x: (x - pivot.x) * factor.x + pivot.x,
-                              y: (y - pivot.y) * factor.y + pivot.y,
+                              x: (x - pivot.x) * f + pivot.x,
+                              y: (y - pivot.y) * f + pivot.y,
                           }),
                           L.modify(
                               ["placement", "size"],
                               ({ x, y }) => ({
-                                  x: x * factor.x || 0.001,
-                                  y: y * factor.y || 0.001,
+                                  x: x * f || 0.001,
+                                  y: y * f || 0.001,
+                              }),
+                              s,
+                          ),
+                      );
+            }),
+
+        shapeBoxes: (factor, pivot, shapes, sel) =>
+            shapes.map((s, i) => {
+                const fx =
+                    Math.abs(Math.abs(factor.x) - 1) >
+                    Math.abs(Math.abs(factor.y) - 1)
+                        ? Math.sign(factor.x) * Math.abs(factor.x)
+                        : Math.sign(factor.x) * Math.abs(factor.y);
+                const fy =
+                    Math.abs(Math.abs(factor.x) - 1) >
+                    Math.abs(Math.abs(factor.y) - 1)
+                        ? Math.sign(factor.x) * Math.abs(factor.x)
+                        : Math.sign(factor.x) * Math.abs(factor.y);
+                return sel.indexOf(`shapebox-${i}`) < 0
+                    ? s
+                    : L.modify(
+                          [L.props("x", "y")],
+                          ({ x, y }) => ({
+                              x: (x - pivot.x) * fx + pivot.x,
+                              y: (y - pivot.y) * fy + pivot.y,
+                          }),
+                          L.modify(
+                              [L.pick({ x: "width", y: "height" })],
+                              ({ x, y }) => ({
+                                  x: x * fx,
+                                  y: y * fy,
                               }),
                               s,
                           ),
@@ -1508,6 +1601,19 @@
         nodes: (angle, pivot, nodes, sel) =>
             nodes.map((n, i) =>
                 sel.indexOf(`node-${i}`) < 0
+                    ? n
+                    : {
+                          ...n,
+                          ...Geo.rotatePivotDegree(pivot, angle, {
+                              x: n.x,
+                              y: n.y,
+                          }),
+                      },
+            ),
+
+        textes: (angle, pivot, nodes, sel) =>
+            nodes.map((n, i) =>
+                sel.indexOf(`text-${i}`) < 0
                     ? n
                     : {
                           ...n,
@@ -1548,6 +1654,17 @@
                           ["placement", "start"],
                           (p) => Geo.rotatePivotDegree(pivot, angle, p),
                           L.modify(["placement", "angle"], (a) => a + angle, s),
+                      );
+            }),
+
+        shapeBoxes: (angle, pivot, shapes, sel) =>
+            shapes.map((s, i) => {
+                return sel.indexOf(`shapebox-${i}`) < 0
+                    ? s
+                    : L.modify(
+                          [L.props("x", "y")],
+                          (p) => Geo.rotatePivotDegree(pivot, angle, p),
+                          L.modify(["angle"], (a) => a + angle, s),
                       );
             }),
     };
@@ -2141,8 +2258,8 @@
     });
 
     const toolGroups = [
-        ["shaper"],
         ["select", "lasso", "affineTansformer"],
+        ["shaper"],
         ["magnifier", "pan", "rotate", "zoom"],
         ["pen", "polygon", "spline"],
         ["createNode", "createEdge"],
