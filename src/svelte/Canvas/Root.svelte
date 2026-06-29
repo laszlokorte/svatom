@@ -1197,6 +1197,16 @@
                                             },
                                         };
                                     }),
+                                    L.valueOr({
+                                        type: "polyline",
+                                        points: [],
+                                        id: "axis",
+                                        allowedTransform: {
+                                            translation: false,
+                                            scale: false,
+                                            rotate: false,
+                                        },
+                                    }),
                                 ],
                                 textBoxes: [
                                     L.elems,

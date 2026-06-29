@@ -58,7 +58,6 @@
     onclick={(evt) => {
         const pos = clientToCanvas(evt.clientX, evt.clientY);
         const hitIndex = R.findIndex((ha) => {
-            console.log(ha);
             switch (ha.type) {
                 case "circle":
                     return (
