@@ -3411,6 +3411,7 @@
                                                     L.removable("content"),
                                                     "content",
                                                 ],
+                                                fontSize: "fontSize",
                                                 position: L.props("x", "y"),
                                             }),
                                         ],

@@ -30,6 +30,22 @@
             }
         };
     }
+    function pointInPolygon(px, py, polygon) {
+        let inside = false;
+
+        for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+            const { x: xi, y: yi } = polygon[i];
+            const { x: xj, y: yj } = polygon[j];
+
+            const intersect =
+                yi > py !== yj > py &&
+                px < ((xj - xi) * (py - yi)) / (yj - yi) + xi;
+
+            if (intersect) inside = !inside;
+        }
+
+        return inside;
+    }
 </script>
 
 <g
@@ -42,6 +58,7 @@
     onclick={(evt) => {
         const pos = clientToCanvas(evt.clientX, evt.clientY);
         const hitIndex = R.findIndex((ha) => {
+            console.log(ha);
             switch (ha.type) {
                 case "circle":
                     return (
@@ -59,6 +76,8 @@
                             },
                             pos,
                         );
+                    } else {
+                        return pointInPolygon(pos.x, pos.y, ha.points);
                     }
                 case "polyline":
                     return R.any(

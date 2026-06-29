@@ -67,6 +67,8 @@
             {#key [t.content, i]}
                 <text
                     use:bindBoundingBox={m}
+                    aria-hidden="true"
+                    visibility="hidden"
                     stroke="none"
                     fill="black"
                     font-size="{t.fontSize}em"

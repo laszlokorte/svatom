@@ -2,7 +2,14 @@
     import * as L from "partial.lenses";
     import * as R from "ramda";
     import * as U from "../../utils";
-    import { atom, view, autofocusIf } from "../../svatom.svelte.js";
+    import {
+        atom,
+        view,
+        read,
+        autofocusIf,
+        bindBoundingBox,
+        combine,
+    } from "../../svatom.svelte.js";
 
     const {
         rotationTransform,
@@ -16,6 +23,26 @@
 
     const position = $derived(
         view([L.removable("position"), "position"], typer),
+    );
+    const measure = atom();
+    const measureWidth = read(
+        ["width", L.valueOr(200), L.add(50), R.max(100)],
+        measure,
+    );
+    const measureHeight = read(
+        ["height", L.valueOr(30), L.add(20), R.max(50)],
+        measure,
+    );
+    const measuredSize = $derived(
+        read(
+            ({ w, h, p }) => ({
+                width: w,
+                height: h,
+                x: p.x - w / 2,
+                y: p.y,
+            }),
+            combine({ w: measureWidth, h: measureHeight, p: position }),
+        ),
     );
     const text = $derived(view(["text", L.valueOr("")], typer));
     const fontSize = $derived(view(["fontSize", L.valueOr(1)], typer));
@@ -147,10 +174,7 @@
                     .value.x}, {-position.value.y})"
             >
                 <foreignObject
-                    width="200"
-                    height="50"
-                    x={position.value.x - 100}
-                    y={position.value.y}
+                    {...measuredSize.value}
                     style:transform="translate(0,-25px) translate(0,-.25em)"
                     style:overflow="visible"
                 >
@@ -185,10 +209,7 @@
                 <rect
                     shape-rendering="crispEdges"
                     text-rendering="geometricPrecision"
-                    width="200"
-                    height="50"
-                    x={position.value.x - 100}
-                    y={position.value.y}
+                    {...measuredSize.value}
                     style:overflow="visible"
                     style:transform="translate(0,-25px) translate(0,-.25em)"
                     stroke="#00aaff"
@@ -198,6 +219,18 @@
                     vector-effect="non-scaling-stroke"
                 ></rect>
             </g>
+            {#key [text.value, fontSize.value]}
+                <text
+                    aria-hidden="true"
+                    visibility="hidden"
+                    pointer-events="none"
+                    opacity="0"
+                    use:bindBoundingBox={measure}
+                    stroke="none"
+                    fill="black"
+                    text-anchor="middle">{text.value}</text
+                >
+            {/key}
         </g>
     {/if}
 </g>
