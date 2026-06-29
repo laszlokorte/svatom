@@ -46,6 +46,35 @@
 
         return inside;
     }
+
+    const splitToPath = (p) => {
+        if (p.length >= 2) {
+            return (
+                `M${p[0].point.x} ${p[0].point.y}` +
+                R.join(
+                    " ",
+                    R.map(
+                        ([from, to]) => {
+                            if (!from.front && !to.back) {
+                                return `L ${to.point.x} ${to.point.y}`;
+                            } else if (from.front && !to.back) {
+                                return `Q ${from.front.x} ${from.front.y} ${to.point.x} ${to.point.y}`;
+                            } else if (!from.front && to.back) {
+                                return `Q ${to.back.x} ${to.back.y} ${to.point.x} ${to.point.y}`;
+                            } else {
+                                return `C  ${from.front.x} ${from.front.y}  ${to.back.x} ${to.back.y} ${to.point.x} ${to.point.y}`;
+                            }
+                        },
+                        R.aperture(2, p),
+                    ),
+                )
+            );
+        } else if (p.length == 1) {
+            return "";
+        } else {
+            return "";
+        }
+    };
 </script>
 
 <g
@@ -87,6 +116,19 @@
                             );
                         },
                         R.aperture(2, ha.points),
+                    );
+                case "spline":
+                    return R.any(
+                        ([from, to]) => {
+                            return (
+                                Geo.pointToLineDistance(pos, { from, to }) <
+                                cameraScale.value * (10 + pointerSize / 2)
+                            );
+                        },
+                        R.aperture(
+                            2,
+                            ha.path.map((p) => p.point),
+                        ),
                     );
                 default:
                     return false;
@@ -157,6 +199,17 @@
                         { active: selectionValue.indexOf(ha.id) > -1 },
                     ]}
                     points={ha.points.map(({ x, y }) => `${x} ${y}`).join(" ")}
+                    data-area-id={ha.id}
+                />
+            {:else if ha.type === "spline"}
+                <path
+                    fill="none"
+                    stroke="none"
+                    class={[
+                        "hit-path",
+                        { active: selectionValue.indexOf(ha.id) > -1 },
+                    ]}
+                    d={splitToPath(ha.path)}
                     data-area-id={ha.id}
                 />
             {/if}

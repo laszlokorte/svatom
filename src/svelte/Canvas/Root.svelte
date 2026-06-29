@@ -429,6 +429,54 @@
                                 ],
                             },
                         ],
+                        splines: [
+                            {
+                                path: [
+                                    {
+                                        point: {
+                                            x: 69.40204053990803,
+                                            y: -231.87740484375706,
+                                        },
+                                        front: {
+                                            x: 52.61893543884656,
+                                            y: -286.1190318859993,
+                                        },
+                                        back: {
+                                            x: 86.1851456409695,
+                                            y: -177.63577780151485,
+                                        },
+                                    },
+                                    {
+                                        point: {
+                                            x: 43.88845614575503,
+                                            y: -225.54958786449697,
+                                        },
+                                        front: {
+                                            x: 92.96747066274271,
+                                            y: -238.67951473857278,
+                                        },
+                                        back: {
+                                            x: -5.190558371232655,
+                                            y: -212.41966099042116,
+                                        },
+                                    },
+                                    {
+                                        point: {
+                                            x: 33.43879667938998,
+                                            y: -208.72950472645175,
+                                        },
+                                        front: {
+                                            x: -5.812764600108238,
+                                            y: -235.26822500649058,
+                                        },
+                                        back: {
+                                            x: 72.6903579588882,
+                                            y: -182.19078444641292,
+                                        },
+                                    },
+                                ],
+                            },
+                        ],
                     },
                 }),
                 camera: { x: 100, y: -50, z: 0, w: 20 },
@@ -1349,6 +1397,20 @@
                                         },
                                     })),
                                 ],
+
+                                splines: [
+                                    L.elems,
+                                    L.reread((drawing, i) => ({
+                                        type: "spline",
+                                        id: "spline-" + i,
+                                        path: drawing.path,
+                                        allowedTransform: {
+                                            translation: true,
+                                            scale: true,
+                                            rotate: true,
+                                        },
+                                    })),
+                                ],
                             }),
                         ),
                     ],
@@ -1468,6 +1530,38 @@
                                 );
                             }
                             break;
+
+                        case "spline":
+                            for (let p = 0; p < ha.path.length; p++) {
+                                for (let pp of ["front", "back"]) {
+                                    if (!ha.path[p][pp]) {
+                                        continue;
+                                    }
+                                    if (!ha.path[p][pp].skip) {
+                                        minX = Math.min(minX, ha.path[p][pp].x);
+                                        maxX = Math.max(maxX, ha.path[p][pp].x);
+                                        minY = Math.min(minY, ha.path[p][pp].y);
+                                        maxY = Math.max(maxY, ha.path[p][pp].y);
+                                    }
+                                    minXPadded = Math.min(
+                                        minXPadded,
+                                        ha.path[p][pp].x,
+                                    );
+                                    maxXPadded = Math.max(
+                                        maxXPadded,
+                                        ha.path[p][pp].x,
+                                    );
+                                    minYPadded = Math.min(
+                                        minYPadded,
+                                        ha.path[p][pp].y,
+                                    );
+                                    maxYPadded = Math.max(
+                                        maxYPadded,
+                                        ha.path[p][pp].y,
+                                    );
+                                }
+                            }
+                            break;
                         default:
                             return false;
                     }
@@ -1569,6 +1663,22 @@
                           ({ x, y }) => ({ x: x + dx, y: y + dy }),
                           s,
                       ),
+            ),
+        splines: ({ dx, dy }, splines, sel) =>
+            splines.map((n, i) =>
+                sel.indexOf(`spline-${i}`) < 0
+                    ? n
+                    : {
+                          ...n,
+                          path: n.path.map((p) =>
+                              Object.fromEntries(
+                                  Object.entries(p).map(([k, pos]) => [
+                                      k,
+                                      { ...pos, x: pos.x + dx, y: pos.y + dy },
+                                  ]),
+                              ),
+                          ),
+                      },
             ),
     };
 
@@ -1728,6 +1838,30 @@
                           s,
                       );
             }),
+        splines: (factor, pivot, splines, sel) =>
+            splines.map((n, i) =>
+                sel.indexOf(`spline-${i}`) < 0
+                    ? n
+                    : {
+                          ...n,
+                          path: n.path.map((p) =>
+                              Object.fromEntries(
+                                  Object.entries(p).map(([k, pos]) => [
+                                      k,
+                                      {
+                                          ...pos,
+                                          x:
+                                              factor.x * (pos.x - pivot.x) +
+                                              pivot.x,
+                                          y:
+                                              factor.y * (pos.y - pivot.y) +
+                                              pivot.y,
+                                      },
+                                  ]),
+                              ),
+                          ),
+                      },
+            ),
     };
 
     function scaleSelected(factor, pivot, transient = false) {
@@ -1825,6 +1959,30 @@
                           L.modify(["angle"], (a) => a + angle, s),
                       );
             }),
+
+        splines: (angle, pivot, splines, sel) =>
+            splines.map((n, i) =>
+                sel.indexOf(`spline-${i}`) < 0
+                    ? n
+                    : {
+                          ...n,
+                          path: n.path.map((p) =>
+                              Object.fromEntries(
+                                  Object.entries(p).map(([k, pos]) => [
+                                      k,
+                                      {
+                                          ...pos,
+                                          ...Geo.rotatePivotDegree(
+                                              pivot,
+                                              angle,
+                                              pos,
+                                          ),
+                                      },
+                                  ]),
+                              ),
+                          ),
+                      },
+            ),
     };
 
     function rotateSelected(angle, pivot, transient = false) {

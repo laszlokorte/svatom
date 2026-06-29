@@ -190,7 +190,7 @@
         tabindex="-1"
         role="button"
         onpointerdown={(evt) => {
-            if (!evt.isPrimary || !U.isLeftButton(evt, true)) {
+            if (!evt.isPrimary || !U.isLeftButton(evt)) {
                 return;
             }
             const handle = evt.target.getAttribute("data-handle");
@@ -356,17 +356,6 @@
             }
         }}
     >
-        <path
-            onpointerdown={(evt) => {
-                evt.stopPropagation();
-            }}
-            tabindex="-1"
-            role="button"
-            d={frameBoxPath.value}
-            fill="none"
-            pointer-events="all"
-        />
-
         <g transform={rotationTransform.value}>
             <g
                 transform="rotate({rotationAccum.value} {U.lerp(
