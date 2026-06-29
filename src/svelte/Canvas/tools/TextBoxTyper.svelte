@@ -32,9 +32,9 @@
         cameraOrientation,
         cameraScale,
         createTextBox,
+        textBox = atom(undefined),
     } = $props();
 
-    const textBox = atom(undefined);
     const text = $derived(view(["text"], textBox));
     const isDragging = $derived(view(["dragging", L.valueOr(false)], textBox));
 
@@ -153,7 +153,7 @@
                 return;
             }
 
-            if (text.value) {
+            if (text.value && createTextBox) {
                 createTextBox({
                     start: {
                         x: textBoxStart.value.x,
@@ -265,7 +265,7 @@
                         xmlns="http://www.w3.org/1999/xhtml"
                         onsubmit={(evt) => {
                             evt.preventDefault();
-                            if (text.value) {
+                            if (text.value && createTextBox) {
                                 createTextBox({
                                     start: {
                                         x: textBoxStart.value.x,
@@ -304,8 +304,7 @@
                                 ) {
                                     evt.currentTarget.blur();
                                 }
-                            }}
-                        ></textarea>
+                            }}></textarea>
                     </form>
                 </foreignObject>
             </g>

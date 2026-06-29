@@ -13,7 +13,6 @@
         createText,
         typer = atom({}),
     } = $props();
-    console.log(typer.value);
 
     const position = $derived(
         view([L.removable("position"), "position"], typer),
@@ -61,6 +60,7 @@
         tabindex="-1"
         onkeydown={(evt) => {
             if (evt.key === "Escape" || evt.key === "Esc") {
+                createText(undefined);
                 position.value = undefined;
             }
         }}
@@ -175,6 +175,7 @@
                             bind:value={text.value}
                             onkeydown={(evt) => {
                                 if (evt.key === "Escape" || evt.key === "Esc") {
+                                    createText(undefined);
                                     position.value = undefined;
                                 }
                             }}

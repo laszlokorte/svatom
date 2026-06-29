@@ -160,8 +160,9 @@
         if (scaleAccum.value && activeScalePivot.value) {
             const fx = scaleAccum.value.x;
             const fy = scaleAccum.value.y;
-            const s =
-                fx == 1 ? fy : fy == 1 ? fx : Math.sqrt(Math.abs(fx * fy));
+            const s = Math.abs(
+                fx == 1 ? fy : fy == 1 ? fx : Math.sqrt(Math.abs(fx * fy)),
+            );
             scaleSelected(
                 {
                     x: 1 / scaleAccum.value.x,
@@ -270,8 +271,9 @@
                     activeScalePivot.value.ry,
                 );
 
-                const s =
-                    fx == 1 ? fy : fy == 1 ? fx : Math.sqrt(Math.abs(fx * fy));
+                const s = Math.abs(
+                    fx == 1 ? fy : fy == 1 ? fx : Math.sqrt(Math.abs(fx * fy)),
+                );
                 if (
                     evt.shiftKey ||
                     selectionExtensionValue.allowedTransform.proportional

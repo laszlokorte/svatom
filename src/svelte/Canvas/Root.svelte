@@ -2183,11 +2183,14 @@
     );
 
     const textEditFocus = atom();
+    const textBoxEditFocus = atom();
     const transformEdit = () => {
         if (selectedText.value !== undefined) {
             textEditFocus.value = ["textes", selectedText.value];
+            selection.value = [];
         } else if (selectedTextBox.value !== undefined) {
-            textEditFocus.value = ["textBoxes", selectedTextBox.value];
+            textBoxEditFocus.value = ["textBoxes", selectedTextBox.value];
+            selection.value = [];
         }
     };
     const editableText = $derived(
@@ -2201,6 +2204,20 @@
                     ),
             ]),
             combine({ f: textEditFocus, d: currentDocumentContent }),
+        ),
+    );
+
+    const editableTextBox = $derived(
+        view(
+            L.choose(({ f }) => [
+                "d",
+                f ??
+                    L.lens(
+                        () => undefined,
+                        (_, r) => r,
+                    ),
+            ]),
+            combine({ f: textBoxEditFocus, d: currentDocumentContent }),
         ),
     );
 
@@ -3380,11 +3397,14 @@
                             {#if editableText.value}
                                 <TextLineTyper
                                     createText={(v) => {
-                                        editableText.value = v;
+                                        if (v) {
+                                            editableText.value = v;
+                                        }
                                         textEditFocus.value = null;
                                     }}
                                     typer={view(
                                         [
+                                            L.define(editableText.value),
                                             L.defaults({}),
                                             L.pick({
                                                 text: [
@@ -3395,6 +3415,39 @@
                                             }),
                                         ],
                                         editableText,
+                                    )}
+                                    {clientToCanvas}
+                                    {frameBoxPath}
+                                    {rotationTransform}
+                                    {cameraScale}
+                                    {cameraOrientation}
+                                />
+                            {/if}
+
+                            {#if editableTextBox.value}
+                                <TextBoxTyper
+                                    createTextBox={(v) => {
+                                        if (v) {
+                                            editableTextBox.value = v;
+                                        }
+                                        textBoxEditFocus.value = null;
+                                    }}
+                                    textBox={view(
+                                        [
+                                            L.define(editableTextBox.value),
+                                            L.defaults({}),
+                                            L.pick({
+                                                text: [
+                                                    L.removable("content"),
+                                                    "content",
+                                                ],
+                                                start: "start",
+                                                size: "size",
+                                                angle: "angle",
+                                                fontSize: "fontSize",
+                                            }),
+                                        ],
+                                        editableTextBox,
                                     )}
                                     {clientToCanvas}
                                     {frameBoxPath}
