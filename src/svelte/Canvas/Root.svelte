@@ -6,7 +6,7 @@
     import * as U from "../utils";
     import Navigator from "./camera/Navigator.svelte";
     import ClickPicker from "./tools/ClickPicker.svelte";
-    import AffineTansformer from "./tools/AffineTansformer.svelte";
+    import AffineTransformer from "./tools/AffineTransformer.svelte";
     import * as CamNavigation from "./camera/navigation";
     import renewShapes from "./shapes";
     import { buildPath } from "@petristation/renew-icon-set";
@@ -2169,6 +2169,41 @@
         ),
     );
 
+    const selectedText = $derived(
+        view(
+            [L.singleton, L.dropPrefix("text-"), L.normalize(parseInt)],
+            selection,
+        ),
+    );
+    const selectedTextBox = $derived(
+        view(
+            [L.singleton, L.dropPrefix("textbox-"), L.normalize(parseInt)],
+            selection,
+        ),
+    );
+
+    const textEditFocus = atom();
+    const transformEdit = () => {
+        if (selectedText.value !== undefined) {
+            textEditFocus.value = ["textes", selectedText.value];
+        } else if (selectedTextBox.value !== undefined) {
+            textEditFocus.value = ["textBoxes", selectedTextBox.value];
+        }
+    };
+    const editableText = $derived(
+        view(
+            L.choose(({ f }) => [
+                "d",
+                f ??
+                    L.lens(
+                        () => undefined,
+                        (_, r) => r,
+                    ),
+            ]),
+            combine({ f: textEditFocus, d: currentDocumentContent }),
+        ),
+    );
+
     const tools = $derived({
         none: {
             name: "None",
@@ -2259,9 +2294,9 @@
                 rotationTransform,
             },
         },
-        affineTansformer: {
+        affineTransformer: {
             name: "Transform",
-            component: AffineTansformer,
+            component: AffineTransformer,
             parameters: {
                 cameraScale,
                 selectionExtension,
@@ -2271,6 +2306,7 @@
                 scaleSelected,
                 rotateSelected,
                 frameBoxPath,
+                ondblclick: transformEdit,
             },
         },
         pen: {
@@ -2406,7 +2442,7 @@
     });
 
     const toolGroups = [
-        ["select", "lasso", "affineTansformer"],
+        ["select", "lasso", "affineTransformer"],
         ["shaper"],
         ["magnifier", "pan", "rotate", "zoom"],
         ["pen", "polygon", "spline"],
@@ -3329,7 +3365,7 @@
                             ></ToolComponent>
 
                             {#if currentToolElement.value?.allowAffineTransform}
-                                <AffineTansformer
+                                <AffineTransformer
                                     {cameraScale}
                                     {selectionExtension}
                                     {rotationTransform}
@@ -3338,6 +3374,33 @@
                                     {scaleSelected}
                                     {rotateSelected}
                                     {frameBoxPath}
+                                    ondblclick={transformEdit}
+                                />
+                            {/if}
+                            {#if editableText.value}
+                                <TextLineTyper
+                                    createText={(v) => {
+                                        editableText.value = v;
+                                        textEditFocus.value = null;
+                                    }}
+                                    typer={view(
+                                        [
+                                            L.defaults({}),
+                                            L.pick({
+                                                text: [
+                                                    L.removable("content"),
+                                                    "content",
+                                                ],
+                                                position: L.props("x", "y"),
+                                            }),
+                                        ],
+                                        editableText,
+                                    )}
+                                    {clientToCanvas}
+                                    {frameBoxPath}
+                                    {rotationTransform}
+                                    {cameraScale}
+                                    {cameraOrientation}
                                 />
                             {/if}
 

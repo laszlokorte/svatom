@@ -26,6 +26,7 @@
 <defs>
     {#each textes.value as t, i (i)}
         <g
+            xml:space="preserve"
             id="textline-{i}"
             transform="rotate({-cameraOrientation.value}, {t.x}, {t.y})"
         >
@@ -60,7 +61,7 @@
     {/each}
 </defs>
 {#if measureKey && measures}
-    <g pointer-events="none" opacity="0">
+    <g pointer-events="none" opacity="0" xml:space="preserve">
         {#each textes.value as t, i (i)}
             {@const m = view([i, measureKey, L.required({})], measures)}
             {#key [t.content, i]}

@@ -2,14 +2,7 @@
     import * as L from "partial.lenses";
     import * as R from "ramda";
     import * as U from "../../utils";
-    import {
-        atom,
-        view,
-        string,
-        read,
-        autofocusIf,
-        combine,
-    } from "../../svatom.svelte.js";
+    import { atom, view, autofocusIf } from "../../svatom.svelte.js";
 
     const {
         rotationTransform,
@@ -18,9 +11,9 @@
         frameBoxPath,
         clientToCanvas,
         createText,
+        typer = atom({}),
     } = $props();
-
-    const typer = atom({});
+    console.log(typer.value);
 
     const position = $derived(
         view([L.removable("position"), "position"], typer),

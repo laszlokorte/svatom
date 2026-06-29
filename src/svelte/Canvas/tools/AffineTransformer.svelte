@@ -14,6 +14,7 @@
         translateSelected,
         scaleSelected,
         frameBoxPath,
+        ondblclick,
         rotateSelected,
     } = $props();
 
@@ -343,6 +344,7 @@
             evt.preventDefault();
             isGrabbing.value = false;
         }}
+        {ondblclick}
         onkeydown={(evt) => {
             if (evt.key === "Escape" || evt.key === "Esc") {
                 if (isGrabbing.value) {
