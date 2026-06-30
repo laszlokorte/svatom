@@ -10,7 +10,6 @@
         combine,
         failableView,
         bindValue,
-        autofocusIf,
         activeTouchMove,
     } from "./svatom.svelte.js";
     import ThreeDeeModel from "./ThreeDeeModel.svelte";

@@ -635,9 +635,9 @@
                         machine.send({ type: "POP" });
                     }}
                     pointer-events="all"
-                    use:onPointerClick={(evt) => {
+                    {@attach onPointerClick((evt) => {
                         machine.send({ type: "POP" });
-                    }}
+                    })}
                 >
                     {#if currentDraftValue.pathNeck.front || currentDraftValue.pathNeck.back}
                         <circle
@@ -680,9 +680,9 @@
                         machine.send({ type: "FINISH_OPEN" });
                     }}
                     pointer-events="all"
-                    use:onPointerClick={(evt) => {
+                    {@attach onPointerClick((evt) => {
                         machine.send({ type: "FINISH_OPEN" });
-                    }}
+                    })}
                 >
                     {#if currentDraftValue.pathHead.front || currentDraftValue.pathHead.back}
                         <circle
@@ -725,9 +725,9 @@
                         machine.send({ type: "FINISH_CLOSE" });
                     }}
                     pointer-events="all"
-                    use:onPointerClick={(evt) => {
+                    {@attach onPointerClick((evt) => {
                         machine.send({ type: "FINISH_CLOSE" });
-                    }}
+                    })}
                 >
                     {#if currentDraftValue.pathRoot.front || currentDraftValue.pathRoot.back}
                         <circle
@@ -767,9 +767,9 @@
                     tabindex="-1"
                     class="no-highlight"
                     role="button"
-                    use:onPointerClick={(evt) => {
+                    {@attach onPointerClick((evt) => {
                         machine.send({ type: "TOGGLE_ATTACHMENT" });
-                    }}
+                    })}
                     onkeydown={(evt) => {
                         evt.stopPropagation();
                         evt.preventDefault();

@@ -2004,13 +2004,13 @@
 
     const newControls = {
       nodes: {
-        entities: ['nodes', (c) => c.map((_, i) => i)],
+        entities: ['nodes', (c) => (c??[]).map((_, i) => i)],
         props: {
           center: L.props("x","y")
         },
       },
       textes: {
-        entities: ['textes', (c) => c.map((_, i) => i) ],
+        entities: ['textes', (c) => (c??[]).map((_, i) => i) ],
         props: {
           center: L.props("x","y")
         }
@@ -2034,7 +2034,7 @@
 
            textBoxes: {
 
-           entities: ['textBoxes', (c) => c.map((_, i) => i) ],
+           entities: ['textBoxes', (c) => (c??[]).map((_, i) => i) ],
               props: {
                 xaxis: [[L.props("start", "size", "angle"), L.lens(({start, size, angle}) => ({
                                                                                                                      x: start.x + Math.cos(-angle * Math.PI / 180) * size.x + Math.sin(-angle * Math.PI / 180) * 0,
@@ -2046,7 +2046,22 @@
                                                                                                                    }), ({x,y}, {start, size,angle}) => ({angle, start, size: {x: size.x, y: (Math.cos(angle * Math.PI / 180) * (y- start.y) - Math.sin(angle * Math.PI / 180) * (x - start.x)) }}))]],
                 origin:[ ["start",L.props("x","y"),]],
               }
-            }
+           },
+            shapes: {
+
+                     entities: ['shapes', (c) => (c??[]).map((_, i) => i) ],
+                        props: {
+                          xaxis: [["placement", L.props("start", "size", "angle"), L.lens(({start, size, angle}) => ({
+                                                                                                                               x: start.x + Math.cos(-angle * Math.PI / 180) * size.x + Math.sin(-angle * Math.PI / 180) * 0,
+                                                                                                                               y: start.y + Math.cos(-angle * Math.PI / 180) * 0 - Math.sin(-angle * Math.PI / 180) * size.x
+                                                                                                                             }), ({x,y}, {start, size,angle}) => ({angle, start, size: {x: (Math.cos(angle * Math.PI / 180) * (x- start.x) + Math.sin(angle * Math.PI / 180) * (y - start.y)) , y: size.y}}))]],
+                          yaxis: [["placement", L.props("start", "size", "angle"), L.lens(({start, size, angle}) => ({
+                                                                                                                               x: start.x + Math.cos(-angle * Math.PI / 180) * 0 + Math.sin(-angle * Math.PI / 180) * size.y,
+                                                                                                                               y: start.y + Math.cos(-angle * Math.PI / 180) * size.y - Math.sin(-angle * Math.PI / 180) * 0
+                                                                                                                             }), ({x,y}, {start, size,angle}) => ({angle, start, size: {x: size.x, y: (Math.cos(angle * Math.PI / 180) * (y- start.y) - Math.sin(angle * Math.PI / 180) * (x - start.x)) }}))]],
+                          origin:[ ["placement", "start",L.props("x","y"),]],
+                        }
+                      }
     }
 
     const newDrawing = $derived(

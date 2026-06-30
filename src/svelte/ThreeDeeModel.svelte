@@ -11,7 +11,6 @@
         update,
         failableView,
         bindValue,
-        autofocusIf,
     } from "./svatom.svelte.js";
     import exampleMesh from "@svatom/threedee/exampleMesh";
 

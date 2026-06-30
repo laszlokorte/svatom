@@ -681,7 +681,7 @@
     Edit some cells in the table above and see how they appear in the json
     object below:
 </p>
-<textarea use:bindValue={cellValuesJson.stableAtom}></textarea>
+<textarea {@attach bindValue(cellValuesJson.stableAtom)}></textarea>
 
 <style>
     .grid-corner {
