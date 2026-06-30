@@ -10,7 +10,7 @@
     const { properties } = $props();
 
     const currentShapeId = $derived(
-        view(["shapeId", L.valueOr("rect")], properties),
+        view(["shapeId", L.valueOr("rect-round")], properties),
     );
 
     const fillColorLens = ["fillColor", L.valueOr("#00aaff")];
