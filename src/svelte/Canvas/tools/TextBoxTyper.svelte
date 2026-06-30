@@ -285,9 +285,10 @@
                     >
                         <textarea
                             style:font-size="{textBoxFontSize.value}em"
-                            use:autofocusIf={textBoxStart.value.x *
-                                textBoxStart.value.x +
-                                textBoxStart.value.y * textBoxStart.value.y}
+                            {@attach autofocusIf(
+                                textBoxStart.value.x * textBoxStart.value.x +
+                                    textBoxStart.value.y * textBoxStart.value.y,
+                            )}
                             type="text"
                             bind:value={text.value}
                             use:readTextreaScrollSize={view(

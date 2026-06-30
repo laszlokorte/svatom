@@ -176,7 +176,7 @@
         { "overscroll-enabled": allowOverscroll },
         { "overscroll-disabled": !allowOverscroll },
     ]}
-    use:bindScroll={adjustedScrollPosition}
+    {@attach bindScroll(adjustedScrollPosition)}
     style:--scroll-total-x={paddedContentSizeValue.x}
     style:--scroll-total-y={paddedContentSizeValue.y}
     style:--scroll-x={scrollPositionValue.x}
@@ -217,7 +217,7 @@
             </div>
         {/if}
     </div>
-    <div class="scroller-measure" use:bindSize={scrollWindowSize}></div>
+    <div class="scroller-measure" {@attach bindSize(scrollWindowSize)}></div>
 </div>
 
 <style>

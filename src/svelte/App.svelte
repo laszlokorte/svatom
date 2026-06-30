@@ -405,8 +405,7 @@
     <div class="beside">
         <textarea
             class={[{ "has-error": langAndTransJson.hasError }]}
-            bind:value={langAndTransJson.value}
-        ></textarea>
+            bind:value={langAndTransJson.value}></textarea>
         <pre>{langAndTransJson.stableValue}</pre>
         <textarea use:bindValue={langAndTransJson.stableAtom}></textarea>
     </div>
@@ -560,8 +559,7 @@
     <div class="beside">
         <textarea
             class={{ "has-error": peopleJson.hasError }}
-            bind:value={peopleJson.value}
-        ></textarea>
+            bind:value={peopleJson.value}></textarea>
         <pre style={fontSize.value}>{peopleJson.stableValue}</pre>
 
         <textarea use:bindValue={peopleJson.stableAtom}></textarea>
@@ -680,20 +678,17 @@
             use:bindScroll={textScroller}
             use:bindScrollMax={textScrollerMax}
             use:bindValue={ascii}
-            class="asciiart scrollable"
-        ></textarea>
+            class="asciiart scrollable"></textarea>
         <textarea
             use:bindScroll={textScroller}
             use:bindScrollMax={textScrollerMax}
             use:bindValue={ascii}
-            class="asciiart scrollable"
-        ></textarea>
+            class="asciiart scrollable"></textarea>
         <textarea
             use:bindScroll={textScroller}
             use:bindScrollMax={textScrollerMax}
             use:bindValue={ascii}
-            class="asciiart scrollable"
-        ></textarea>
+            class="asciiart scrollable"></textarea>
 
         <pre
             class="scrollable asciiart"

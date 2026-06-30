@@ -509,10 +509,12 @@
                                 type="text"
                                 placeholder={"-"}
                                 bind:value={val.value}
-                                use:autofocusIf={isFocused(
-                                    focus,
-                                    columnPinnedIndices.value[x],
-                                    rowPinnedIndices.value[y],
+                                {@attach autofocusIf(
+                                    isFocused(
+                                        focus,
+                                        columnPinnedIndices.value[x],
+                                        rowPinnedIndices.value[y],
+                                    ),
                                 )}
                                 data-cell-x={columnPinnedIndices.value[x]}
                                 data-cell-y={rowPinnedIndices.value[y]}
@@ -543,10 +545,12 @@
                                 type="text"
                                 placeholder={"-"}
                                 bind:value={val.value}
-                                use:autofocusIf={isFocused(
-                                    focus,
-                                    columnNotPinnedIndices.value[x],
-                                    rowPinnedIndices.value[y],
+                                {@attach autofocusIf(
+                                    isFocused(
+                                        focus,
+                                        columnNotPinnedIndices.value[x],
+                                        rowPinnedIndices.value[y],
+                                    ),
                                 )}
                                 data-cell-x={columnNotPinnedIndices.value[x]}
                                 data-cell-y={rowPinnedIndices.value[y]}
@@ -616,10 +620,12 @@
                                 type="text"
                                 placeholder={"-"}
                                 bind:value={val.value}
-                                use:autofocusIf={isFocused(
-                                    focus,
-                                    columnPinnedIndices.value[x],
-                                    rowNotPinnedIndices.value[y],
+                                {@attach autofocusIf(
+                                    isFocused(
+                                        focus,
+                                        columnPinnedIndices.value[x],
+                                        rowNotPinnedIndices.value[y],
+                                    ),
                                 )}
                                 data-cell-x={columnPinnedIndices.value[x]}
                                 data-cell-y={rowNotPinnedIndices.value[y]}
@@ -650,10 +656,12 @@
                                 type="text"
                                 placeholder={"-"}
                                 bind:value={val.value}
-                                use:autofocusIf={isFocused(
-                                    focus,
-                                    columnNotPinnedIndices.value[x],
-                                    rowNotPinnedIndices.value[y],
+                                {@attach autofocusIf(
+                                    isFocused(
+                                        focus,
+                                        columnNotPinnedIndices.value[x],
+                                        rowNotPinnedIndices.value[y],
+                                    ),
                                 )}
                                 data-cell-x={columnNotPinnedIndices.value[x]}
                                 data-cell-y={rowNotPinnedIndices.value[y]}

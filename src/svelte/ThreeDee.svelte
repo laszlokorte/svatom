@@ -396,9 +396,9 @@
             selected.value = undefined;
         }
     }}
-    use:activeTouchMove={(evt) => {
+    {@attach activeTouchMove((evt) => {
         evt.preventDefault();
-    }}
+    })}
     onpointerdown={(evt) => {
         if (evt.isPrimary) {
             evt.preventDefault();

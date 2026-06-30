@@ -194,7 +194,7 @@
                         }}
                     >
                         <input
-                            use:autofocusIf={!isDragging.value}
+                            {@attach autofocusIf(!isDragging.value)}
                             type="text"
                             bind:value={text.value}
                             onkeydown={(evt) => {
