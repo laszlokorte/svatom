@@ -1158,8 +1158,7 @@
                 },
             ]}
             placeholder="// Drop a renew file here"
-            bind:value={renewSerialized.value}
-        ></textarea>
+            bind:value={renewSerialized.value}></textarea>
         <textarea bind:value={renewJson.value}></textarea>
 
         <div
@@ -2145,7 +2144,7 @@
 						],
 						sizeCache,
 					)}
-					<use href="#{id}" use:bindBoundingBox={measuredSize} />
+					<use href="#{id}" {@attach bindBoundingBox(measuredSize)} />
 				{/each} -->
 
             <Navigator {camera} {frameBoxPath} errorHandler={() => {}}>
@@ -2176,7 +2175,7 @@
                                 href="#{id}"
                                 shape-rendering="geometricPrecision"
                                 text-rendering="optimizeSpeed"
-                                use:bindBoundingBox={measuredSize}
+                                {@attach bindBoundingBox(measuredSize)}
                             />
                         {/each}
                     {/key}

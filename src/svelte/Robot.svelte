@@ -1712,8 +1712,7 @@
             style="font-family: monospace; align-self: stretch; resize: none;  box-sizing: border-box; width: auto; overflow: auto;
             white-space: pre;
             "
-            use:bindValue={currentLevelText}
-        ></textarea>
+            {@attach bindValue(currentLevelText)}></textarea>
         <div
             style="background-color: #fee; align-items: center;gap: 1em;overflow: auto;"
             style:display={levelError.value ? "flex" : "none"}
@@ -1991,7 +1990,7 @@
                             <textarea
                                 cols="0"
                                 rows="0"
-                                use:bindValue={text}
+                                {@attach bindValue(text)}
                                 autocomplete="off"
                                 autocorrect="off"
                                 autocapitalize="off"
@@ -2001,8 +2000,7 @@
                                     hidden: running.value,
                                     "overlay-layer": true,
                                     "overlay-input": true,
-                                }}
-                            ></textarea>
+                                }}></textarea>
                         </div>
                     </label>
                 </div>

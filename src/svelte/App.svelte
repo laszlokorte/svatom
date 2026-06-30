@@ -339,7 +339,7 @@
             <input
                 type="range"
                 class="number-picker-slider"
-                use:bindValue={clampedSize}
+                {@attach bindValue(clampedSize)}
                 min="5"
                 max="50"
             />
@@ -407,7 +407,7 @@
             class={[{ "has-error": langAndTransJson.hasError }]}
             bind:value={langAndTransJson.value}></textarea>
         <pre>{langAndTransJson.stableValue}</pre>
-        <textarea use:bindValue={langAndTransJson.stableAtom}></textarea>
+        <textarea {@attach bindValue(langAndTransJson).stableAtom}></textarea>
     </div>
     <div class="error-message" hidden={!langAndTransJson.hasError}>
         <button type="button" onclick={langAndTransJson.reset}>Reset</button>
@@ -562,7 +562,7 @@
             bind:value={peopleJson.value}></textarea>
         <pre style={fontSize.value}>{peopleJson.stableValue}</pre>
 
-        <textarea use:bindValue={peopleJson.stableAtom}></textarea>
+        <textarea {@attach bindValue(peopleJson).stableAtom}></textarea>
     </div>
 
     <div class="error-message" hidden={!peopleJson.hasError}>
@@ -584,13 +584,13 @@
             <input
                 type="range"
                 class="number-picker-slider"
-                use:bindValue={theNumberClamped}
+                {@attach bindValue(theNumberClamped)}
                 max="100"
             />
             <input
                 class="number-picker-numberfield"
                 type="text"
-                use:bindValue={theNumberClamped}
+                {@attach bindValue(theNumberClamped)}
                 max="100"
             />
             <output class="number-picker-value"
@@ -638,7 +638,7 @@
         <input
             type="range"
             class="number-picker-slider"
-            use:bindValue={textScrollerX}
+            {@attach bindValue(textScrollerX)}
             min="0"
             max={textScrollerMax.value.x}
             disabled={textScrollerMax.value.x < 1}
@@ -646,7 +646,7 @@
         /><input
             type="number"
             class="number-picker-numberfield"
-            use:bindValue={textScrollerX}
+            {@attach bindValue(textScrollerX)}
             min="0"
             max={textScrollerMax.value.x}
             disabled={textScrollerMax.value.x < 1}
@@ -658,7 +658,7 @@
         <input
             type="range"
             class="number-picker-slider"
-            use:bindValue={textScrollerY}
+            {@attach bindValue(textScrollerY)}
             min="0"
             max={textScrollerMax.value.y}
             disabled={textScrollerMax.value.y < 1}
@@ -666,7 +666,7 @@
         /><input
             type="number"
             class="number-picker-numberfield"
-            use:bindValue={textScrollerY}
+            {@attach bindValue(textScrollerY)}
             min="0"
             max={textScrollerMax.value.y}
             disabled={textScrollerMax.value.y < 1}
@@ -675,33 +675,33 @@
     </label>
     <div class="beside">
         <textarea
-            use:bindScroll={textScroller}
-            use:bindScrollMax={textScrollerMax}
-            use:bindValue={ascii}
+            {@attach bindScroll(textScroller)}
+            {@attach bindScrollMax(textScrollerMax)}
+            {@attach bindValue(ascii)}
             class="asciiart scrollable"></textarea>
         <textarea
-            use:bindScroll={textScroller}
-            use:bindScrollMax={textScrollerMax}
-            use:bindValue={ascii}
+            {@attach bindScroll(textScroller)}
+            {@attach bindScrollMax(textScrollerMax)}
+            {@attach bindValue(ascii)}
             class="asciiart scrollable"></textarea>
         <textarea
-            use:bindScroll={textScroller}
-            use:bindScrollMax={textScrollerMax}
-            use:bindValue={ascii}
+            {@attach bindScroll(textScroller)}
+            {@attach bindScrollMax(textScrollerMax)}
+            {@attach bindValue(ascii)}
             class="asciiart scrollable"></textarea>
 
         <pre
             class="scrollable asciiart"
-            use:bindScroll={textScroller}
-            use:bindScrollMax={textScrollerMax}>{ascii.value}</pre>
+            {@attach bindScroll(textScroller)}
+            {@attach bindScrollMax(textScrollerMax)}>{ascii.value}</pre>
         <pre
             class="scrollable asciiart"
-            use:bindScroll={textScroller}
-            use:bindScrollMax={textScrollerMax}>{ascii.value}</pre>
+            {@attach bindScroll(textScroller)}
+            {@attach bindScrollMax(textScrollerMax)}>{ascii.value}</pre>
         <pre
             class="scrollable asciiart"
-            use:bindScroll={textScroller}
-            use:bindScrollMax={textScrollerMax}>{ascii.value}</pre>
+            {@attach bindScroll(textScroller)}
+            {@attach bindScrollMax(textScrollerMax)}>{ascii.value}</pre>
     </div>
 
     <h3>Summed Slider</h3>

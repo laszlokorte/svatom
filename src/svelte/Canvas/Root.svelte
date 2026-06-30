@@ -2005,9 +2005,9 @@
     const controls = {
 
       nodes:
-        (textes) => ({center: textes.map((_,ti) => [ti,  L.props("x","y")])}),
+        (nodes) => ({center: (nodes??[]).map((_,ti) => [ti,  L.props("x","y")])}),
       textes:
-        (textes) => ({center: textes.map((_,ti) => [ti,  L.props("x","y")])})
+        (textes) => ({center: (textes??[]).map((_,ti) => [ti,  L.props("x","y")])})
                             ,
 
                           axis: (a) => a ? {  xaxis: [[L.props("start", "size", "angle"), L.lens(({start, size, angle}) => ({
@@ -2023,14 +2023,14 @@
                            ,
 
                             textBoxes: boxes => ({
-                              start: boxes.map((_,bi) => [bi, "start"] ),
-                              xaxis: boxes.map((_,bi) => [bi,
+                              start: (boxes??[]).map((_,bi) => [bi, "start"] ),
+                              xaxis: (boxes??[]).map((_,bi) => [bi,
                               [L.props("start", "size", "angle"), L.lens(({start, size, angle}) => ({
                                                                                                                         x: start.x + Math.cos(-angle * Math.PI / 180) * size.x + Math.sin(-angle * Math.PI / 180) * 0,
                                                                                                                         y: start.y + Math.cos(-angle * Math.PI / 180) * 0 - Math.sin(-angle * Math.PI / 180) * size.x
                                                                                                                       }), ({x,y}, {start, size,angle}) => ({angle, start, size: {x: (Math.cos(angle * Math.PI / 180) * (x- start.x) + Math.sin(angle * Math.PI / 180) * (y - start.y)) , y: size.y}}))]]),
 
-                            yaxis: boxes.map((_,bi) => [bi,
+                            yaxis: (boxes??[]).map((_,bi) => [bi,
                                                           [L.props("start", "size", "angle"), L.lens(({start, size, angle}) => ({
                                                                                                                                                     x: start.x + Math.cos(-angle * Math.PI / 180) * 0 + Math.sin(-angle * Math.PI / 180) * size.y,
                                                                                                                                                     y: start.y + Math.cos(-angle * Math.PI / 180) * size.y - Math.sin(-angle * Math.PI / 180) * 0
@@ -3625,7 +3625,7 @@
                                 <g transform={rotationTransform.value}>
                                     {#each Object.entries(controls) as [k, v]}
 
-                                    {#each Object.values(v(currentDocumentContent.value[k])) as ll, _}
+                                    {#each Object.values(v(currentDocumentContent.value?.[k])) as ll, _}
 
                                         {#each Object.values(ll) as l}
                                         {const cpi = view([k, l], currentDocumentContent)}
@@ -3824,12 +3824,12 @@
         <div class="beside">
             <div>
                 <h3>Camera Parameter</h3>
-                <textarea use:bindValue={cameraJson.stableAtom}></textarea>
+                <textarea {@attach bindValue(cameraJson.stableAtom)}></textarea>
             </div>
 
             <div>
                 <h3>Drawing</h3>
-                <textarea use:bindValue={canvasJson.stableAtom}></textarea>
+                <textarea {@attach bindValue(canvasJson.stableAtom)}></textarea>
             </div>
         </div>
     </div>

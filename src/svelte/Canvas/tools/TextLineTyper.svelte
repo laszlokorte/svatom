@@ -225,7 +225,7 @@
                     visibility="hidden"
                     pointer-events="none"
                     opacity="0"
-                    use:bindBoundingBox={measure}
+                    {@attach bindBoundingBox(measure)}
                     stroke="none"
                     fill="black"
                     text-anchor="middle">{text.value}</text

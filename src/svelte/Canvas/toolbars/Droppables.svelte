@@ -249,10 +249,10 @@
 
     <div
         class="template-bar"
-        use:polyfillDragDrop={{
+        {@attach polyfillDragDrop({
             dropArea: document,
             options: { dragThresholdPixels: 0 },
-        }}
+        })}
     >
         {#each droppables as d}
             {@const content = d.dynamicContent

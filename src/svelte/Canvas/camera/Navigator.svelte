@@ -56,11 +56,11 @@
 
 <g
     bind:this={thisElement.value}
-    use:bindEvents={{
+    {@attach bindEvents({
         camera,
         worldClientIso: liveLenses.worldClientIso,
         errorHandler,
-    }}
+    })}
 >
     <path
         d={frameBoxPath.value}

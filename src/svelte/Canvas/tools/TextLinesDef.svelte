@@ -7,7 +7,6 @@
         view,
         string,
         read,
-        autofocusIf,
         bindBoundingBox,
     } from "../../svatom.svelte.js";
 
@@ -66,7 +65,7 @@
             {@const m = view([i, measureKey, L.required({})], measures)}
             {#key [t.content, i]}
                 <text
-                    use:bindBoundingBox={m}
+                    {@attach bindBoundingBox(m)}
                     aria-hidden="true"
                     visibility="hidden"
                     stroke="none"

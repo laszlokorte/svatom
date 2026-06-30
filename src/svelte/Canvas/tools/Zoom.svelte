@@ -254,7 +254,7 @@
         }
         isActive.value = false;
     }}
-    use:disableEventIf={{ eventType: "wheel", cond: isActive }}
+    {@attach disableEventIf({ eventType: "wheel", cond: isActive })}
 />
 
 <g transform={rotationTransform.value} pointer-events="none">
