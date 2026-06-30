@@ -122,21 +122,21 @@
         replacePeriod: 1000,
         initialTime: () => Date.now() - 10000,
     };
-    animateWith(
-        read(
-            L.reread((el) =>
-                el ? { el, ctx: el.getContext("2d") } : undefined,
+     animateWith(
+            read(
+                L.reread((el) =>
+                    el ? { el, ctx: el.getContext("2d") } : undefined,
+                ),
+                bitmapCanvas,
             ),
-            bitmapCanvas,
-        ),
-        ({ el, ctx }) => {
-            ctx.clearRect(0, 0, el.width, el.height);
+            ({ el, ctx }) => {
+                ctx.clearRect(0, 0, el.width, el.height);
 
-            ctx.fillStyle = "black";
-            ctx.font = "20px arial";
-            //ctx.fillText("Hello World", 100, 100);
-        },
-    );
+                ctx.fillStyle = "black";
+                ctx.font = "20px arial";
+                //ctx.fillText("Hello World", 100, 100);
+            },
+        );
 
     const allTabs = atom({
         current: 0,
@@ -2002,43 +2002,52 @@
         );
     }
 
-    const controls = {
+    const newControls = {
+      nodes: {
+        entities: ['nodes', (c) => c.map((_, i) => i)],
+        props: {
+          center: L.props("x","y")
+        },
+      },
+      textes: {
+        entities: ['textes', (c) => c.map((_, i) => i) ],
+        props: {
+          center: L.props("x","y")
+        }
+      },
 
-      nodes:
-        (nodes) => ({center: (nodes??[]).map((_,ti) => [ti,  L.props("x","y")])}),
-      textes:
-        (textes) => ({center: (textes??[]).map((_,ti) => [ti,  L.props("x","y")])})
-                            ,
+      axis: {
+        entities: [(d) => d.axis ? [[]]: []],
+        props: {
+          xaxis: [[L.props("start", "size", "angle"), L.lens(({start, size, angle}) => ({
+                                                                                                               x: start.x + Math.cos(-angle * Math.PI / 180) * size.x + Math.sin(-angle * Math.PI / 180) * 0,
+                                                                                                               y: start.y + Math.cos(-angle * Math.PI / 180) * 0 - Math.sin(-angle * Math.PI / 180) * size.x
+                                                                                                             }), ({x,y}, {start, size,angle}) => ({angle, start, size: {x: (Math.cos(angle * Math.PI / 180) * (x- start.x) + Math.sin(angle * Math.PI / 180) * (y - start.y)) , y: size.y}}))]],
+          yaxis: [[L.props("start", "size", "angle"), L.lens(({start, size, angle}) => ({
+                                                                                                               x: start.x + Math.cos(-angle * Math.PI / 180) * 0 + Math.sin(-angle * Math.PI / 180) * size.y,
+                                                                                                               y: start.y + Math.cos(-angle * Math.PI / 180) * size.y - Math.sin(-angle * Math.PI / 180) * 0
+                                                                                                             }), ({x,y}, {start, size,angle}) => ({angle, start, size: {x: size.x, y: (Math.cos(angle * Math.PI / 180) * (y- start.y) - Math.sin(angle * Math.PI / 180) * (x - start.x)) }}))]],
+          origin:[ ["start",L.props("x","y"),]],
+        }
+      },
 
-                          axis: (a) => a ? {  xaxis: [[L.props("start", "size", "angle"), L.lens(({start, size, angle}) => ({
-                                                                                                     x: start.x + Math.cos(-angle * Math.PI / 180) * size.x + Math.sin(-angle * Math.PI / 180) * 0,
-                                                                                                     y: start.y + Math.cos(-angle * Math.PI / 180) * 0 - Math.sin(-angle * Math.PI / 180) * size.x
-                                                                                                   }), ({x,y}, {start, size,angle}) => ({angle, start, size: {x: (Math.cos(angle * Math.PI / 180) * (x- start.x) + Math.sin(angle * Math.PI / 180) * (y - start.y)) , y: size.y}}))]],
-                                                                                                   yaxis: [[L.props("start", "size", "angle"), L.lens(({start, size, angle}) => ({
-                                                                                                     x: start.x + Math.cos(-angle * Math.PI / 180) * 0 + Math.sin(-angle * Math.PI / 180) * size.y,
-                                                                                                     y: start.y + Math.cos(-angle * Math.PI / 180) * size.y - Math.sin(-angle * Math.PI / 180) * 0
-                                                                                                   }), ({x,y}, {start, size,angle}) => ({angle, start, size: {x: size.x, y: (Math.cos(angle * Math.PI / 180) * (y- start.y) - Math.sin(angle * Math.PI / 180) * (x - start.x)) }}))]],
-                                                                                                     origin:[ ["start",L.props("x","y"),]],
-                                                                           } : {}
-                           ,
 
-                            textBoxes: boxes => ({
-                              start: (boxes??[]).map((_,bi) => [bi, "start"] ),
-                              xaxis: (boxes??[]).map((_,bi) => [bi,
-                              [L.props("start", "size", "angle"), L.lens(({start, size, angle}) => ({
-                                                                                                                        x: start.x + Math.cos(-angle * Math.PI / 180) * size.x + Math.sin(-angle * Math.PI / 180) * 0,
-                                                                                                                        y: start.y + Math.cos(-angle * Math.PI / 180) * 0 - Math.sin(-angle * Math.PI / 180) * size.x
-                                                                                                                      }), ({x,y}, {start, size,angle}) => ({angle, start, size: {x: (Math.cos(angle * Math.PI / 180) * (x- start.x) + Math.sin(angle * Math.PI / 180) * (y - start.y)) , y: size.y}}))]]),
+           textBoxes: {
 
-                            yaxis: (boxes??[]).map((_,bi) => [bi,
-                                                          [L.props("start", "size", "angle"), L.lens(({start, size, angle}) => ({
-                                                                                                                                                    x: start.x + Math.cos(-angle * Math.PI / 180) * 0 + Math.sin(-angle * Math.PI / 180) * size.y,
-                                                                                                                                                    y: start.y + Math.cos(-angle * Math.PI / 180) * size.y - Math.sin(-angle * Math.PI / 180) * 0
-                                                                                                                                                  }), ({x,y}, {start, size,angle}) => ({angle, start, size: {y: (Math.cos(angle * Math.PI / 180) * (y- start.y) - Math.sin(angle * Math.PI / 180) * (x - start.x)) , x: size.x}}))]])
-                            })
-
+           entities: ['textBoxes', (c) => c.map((_, i) => i) ],
+              props: {
+                xaxis: [[L.props("start", "size", "angle"), L.lens(({start, size, angle}) => ({
+                                                                                                                     x: start.x + Math.cos(-angle * Math.PI / 180) * size.x + Math.sin(-angle * Math.PI / 180) * 0,
+                                                                                                                     y: start.y + Math.cos(-angle * Math.PI / 180) * 0 - Math.sin(-angle * Math.PI / 180) * size.x
+                                                                                                                   }), ({x,y}, {start, size,angle}) => ({angle, start, size: {x: (Math.cos(angle * Math.PI / 180) * (x- start.x) + Math.sin(angle * Math.PI / 180) * (y - start.y)) , y: size.y}}))]],
+                yaxis: [[L.props("start", "size", "angle"), L.lens(({start, size, angle}) => ({
+                                                                                                                     x: start.x + Math.cos(-angle * Math.PI / 180) * 0 + Math.sin(-angle * Math.PI / 180) * size.y,
+                                                                                                                     y: start.y + Math.cos(-angle * Math.PI / 180) * size.y - Math.sin(-angle * Math.PI / 180) * 0
+                                                                                                                   }), ({x,y}, {start, size,angle}) => ({angle, start, size: {x: size.x, y: (Math.cos(angle * Math.PI / 180) * (y- start.y) - Math.sin(angle * Math.PI / 180) * (x - start.x)) }}))]],
+                origin:[ ["start",L.props("x","y"),]],
+              }
+            }
     }
-
 
     const newDrawing = $derived(
         view(
@@ -3623,12 +3632,13 @@
                                 ></ToolComponent>
 
                                 <g transform={rotationTransform.value}>
-                                    {#each Object.entries(controls) as [k, v]}
+                                    {#each Object.entries(newControls) as [c, ctrl]}
+                                        {@const list = view(ctrl.entities, currentDocumentContent)}
 
-                                    {#each Object.values(v(currentDocumentContent.value?.[k])) as ll, _}
+                                    {#each list.value as l}
 
-                                        {#each Object.values(ll) as l}
-                                        {const cpi = view([k, l], currentDocumentContent)}
+                                        {#each Object.values(ctrl.props) as p}
+                                        {const cpi = view([c,  l, p], currentDocumentContent)}
                                         <circle
                                             role="button"
                                             tabindex="-1"

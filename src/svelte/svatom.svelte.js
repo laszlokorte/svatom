@@ -43,7 +43,7 @@ export function bindScroll(arg) {
   return (node) => svt.bindScroll(node, arg);
 }
 export function bindScrollMax(arg) {
-  return (node) => svt.bindScrollMax(node, arg);
+  return (node) => _bindScrollMax(node, arg);
 }
 export function bindValue(arg) {
   return (node) => svt.bindValue(node, arg);
@@ -59,4 +59,78 @@ export function polyfillDragDrop(arg) {
 }
 export function readTextreaScrollSize(arg) {
   return (node) => svt.readTextreaScrollSize(node, arg);
+}
+export function animateWith(someAtom, fn) {
+  let raf = null;
+
+  $effect(() => {
+    const currentVal = someAtom.value;
+    const restore = (event) => {
+      fn(currentVal);
+    };
+    if (currentVal) {
+      currentVal.el.addEventListener("contextrestored", restore);
+      function tick() {
+        if (raf === null) {
+          return;
+        }
+        const currentVal = someAtom.value;
+        if (currentVal) {
+          fn(currentVal);
+          raf = requestAnimationFrame(tick);
+        }
+      }
+
+      tick();
+
+      return () => {
+        currentVal.el.removeEventListener("contextrestored", restore);
+      };
+    } else if (raf) {
+      cancelAnimationFrame(raf);
+      raf = null;
+    }
+  });
+}
+
+export function _bindScrollMax(node, someAtom) {
+  // TODO specialize code for different kind of elements
+  const resizeObserver = new ResizeObserver(() => {
+    someAtom.value = {
+      x: node.scrollWidth - node.clientWidth,
+      y: node.scrollHeight - node.clientHeight,
+    };
+  });
+
+  const mutObserver = new MutationObserver(() => {
+    someAtom.value = {
+      x: node.scrollWidth - node.clientWidth,
+      y: node.scrollHeight - node.clientHeight,
+    };
+  });
+
+  const onInput = (evt) => {
+    if (evt.currentTarget !== node) {
+      return;
+    }
+    someAtom.value = {
+      x: node.scrollWidth - node.clientWidth,
+      y: node.scrollHeight - node.clientHeight,
+    };
+  };
+
+  resizeObserver.observe(node);
+  mutObserver.observe(node, {
+    attributes: true,
+    childList: false,
+    subtree: true,
+    characterData: true,
+  });
+  node.addEventListener("input", onInput);
+
+  return () => {
+    node.removeEventListener("input", onInput);
+    mutObserver.disconnect(node);
+    resizeObserver.disconnect(node);
+  };
 }

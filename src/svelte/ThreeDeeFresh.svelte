@@ -16,7 +16,6 @@
         update,
         failableView,
         bindValue,
-        autofocusIf,
         setValue,
     } from "./svatom.svelte.js";
     import { parserAutoDetect } from "@petristation/renewjs";
