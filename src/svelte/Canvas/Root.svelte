@@ -2017,7 +2017,7 @@
       },
 
       axis: {
-        entities: [(d) => d.axis ? [[]]: []],
+        entities: [(d) => d?.axis ? [[]]: []],
         props: {
           xaxis: [[L.props("start", "size", "angle"), L.lens(({start, size, angle}) => ({
                                                                                                                x: start.x + Math.cos(-angle * Math.PI / 180) * size.x + Math.sin(-angle * Math.PI / 180) * 0,

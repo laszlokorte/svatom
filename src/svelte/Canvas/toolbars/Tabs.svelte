@@ -2,20 +2,7 @@
     import * as L from "partial.lenses";
     import * as H from "partial.lenses.history"; // TODO: remove history here
     import * as R from "ramda";
-    import {
-        atom,
-        view,
-        read,
-        combine,
-        update,
-        failableView,
-        bindValue,
-        bindScroll,
-        bindSize,
-        traverse,
-        animateWith,
-        adjustSize,
-    } from "../../svatom.svelte.js";
+    import { view } from "../../svatom.svelte.js";
     const { newTab, tabIds, closeTab, currentTabId, allTabs } = $props();
 
     const HISTORY_SETTINGS = {

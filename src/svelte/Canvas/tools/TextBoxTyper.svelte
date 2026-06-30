@@ -291,9 +291,8 @@
                             )}
                             type="text"
                             bind:value={text.value}
-                            use:readTextreaScrollSize={view(
-                                keepOrientationlens,
-                                textBoxSize,
+                            {@attach readTextreaScrollSize(
+                                view(keepOrientationlens, textBoxSize),
                             )}
                             onkeydown={(evt) => {
                                 if (evt.key === "Escape" || evt.key === "Esc") {

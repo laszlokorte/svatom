@@ -12,7 +12,6 @@
         bindValue,
         bindScroll,
         bindSize,
-        autofocusIf,
         string,
     } from "../../svatom.svelte.js";
 
