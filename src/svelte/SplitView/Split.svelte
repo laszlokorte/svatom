@@ -77,6 +77,8 @@
         )}
         {#if i > 0}
             <div
+                tabindex="-1"
+                role="button"
                 class={[
                     "split-divider",
                     direction === "column" && "dir-column",

@@ -4,6 +4,7 @@ export * from "@svatom/basic/svatom.svelte.js";
 import * as svt from "@svatom/basic/svatom.svelte.js";
 
 import { fsm as fsmInternal } from "@svatom/basic/fsm.svelte.js";
+import { tick } from "svelte";
 
 export const fsm = (machineDef) => fsmInternal(machineDef, createActor);
 
@@ -33,12 +34,33 @@ export function autofocusIf(yes) {
   };
 }
 
-export function bindBoundingBox(arg) {
-  return (node) => svt.bindBoundingBox(node, arg);
+export function bindBoundingBox(someAtom) {
+  return (node) => {
+    let oldV;
+    $effect.pre(() => {
+      tick().then(() => {
+        const bbox = node.getBBox();
+        if (bbox.width || bbox.height) {
+          oldV = {
+            x: bbox.x,
+            y: bbox.y,
+            width: bbox.width,
+            height: bbox.height,
+          };
+          someAtom.value = oldV;
+        } else {
+          oldV = undefined;
+          someAtom.value = undefined;
+        }
+      });
+    });
+
+    return () => {
+      someAtom.value = undefined;
+    };
+  };
 }
-export function bindEvents(arg) {
-  return (node) => svt.bindEvents(node, arg);
-}
+
 export function bindScroll(arg) {
   return (node) => svt.bindScroll(node, arg);
 }
@@ -53,9 +75,6 @@ export function disableEventIf(arg) {
 }
 export function onPointerClick(arg) {
   return (node) => svt.onPointerClick(node, arg);
-}
-export function polyfillDragDrop(arg) {
-  return (node) => svt.polyfillDragDrop(node, arg);
 }
 export function readTextreaScrollSize(arg) {
   return (node) => svt.readTextreaScrollSize(node, arg);
