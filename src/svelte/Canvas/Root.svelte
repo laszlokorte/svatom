@@ -7,6 +7,7 @@
     import Navigator from "./camera/Navigator.svelte";
     import ClickPicker from "./tools/ClickPicker.svelte";
     import AffineTransformer from "./tools/AffineTransformer.svelte";
+    import FreeTransformer from "./tools/FreeTransformer.svelte";
     import * as CamNavigation from "./camera/navigation";
     import renewShapes from "./shapes";
     import { buildPath } from "@petristation/renew-icon-set";
@@ -28,7 +29,7 @@
         traverse,
         animateWith,
         isFullscreen,
-        adjustSize
+        adjustSize,
     } from "../svatom.svelte.js";
     import { constructLenses } from "./camera/live.js";
 
@@ -122,21 +123,21 @@
         replacePeriod: 1000,
         initialTime: () => Date.now() - 10000,
     };
-     animateWith(
-            read(
-                L.reread((el) =>
-                    el ? { el, ctx: el.getContext("2d") } : undefined,
-                ),
-                bitmapCanvas,
+    animateWith(
+        read(
+            L.reread((el) =>
+                el ? { el, ctx: el.getContext("2d") } : undefined,
             ),
-            ({ el, ctx }) => {
-                ctx.clearRect(0, 0, el.width, el.height);
+            bitmapCanvas,
+        ),
+        ({ el, ctx }) => {
+            ctx.clearRect(0, 0, el.width, el.height);
 
-                ctx.fillStyle = "black";
-                ctx.font = "20px arial";
-                //ctx.fillText("Hello World", 100, 100);
-            },
-        );
+            ctx.fillStyle = "black";
+            ctx.font = "20px arial";
+            //ctx.fillText("Hello World", 100, 100);
+        },
+    );
 
     const allTabs = atom({
         current: 0,
@@ -2003,66 +2004,221 @@
     }
 
     const newControls = {
-      nodes: {
-        entities: ['nodes', (c) => (c??[]).map((_, i) => i)],
-        props: {
-          center: L.props("x","y")
+        nodes: {
+            entities: ["nodes", (c) => (c ?? []).map((_, i) => i)],
+            props: {
+                center: L.props("x", "y"),
+            },
         },
-      },
-      textes: {
-        entities: ['textes', (c) => (c??[]).map((_, i) => i) ],
-        props: {
-          center: L.props("x","y")
-        }
-      },
+        textes: {
+            entities: ["textes", (c) => (c ?? []).map((_, i) => i)],
+            props: {
+                center: L.props("x", "y"),
+            },
+        },
 
-      axis: {
-        entities: [(d) => d?.axis ? [[]]: []],
-        props: {
-          xaxis: [[L.props("start", "size", "angle"), L.lens(({start, size, angle}) => ({
-                                                                                                               x: start.x + Math.cos(-angle * Math.PI / 180) * size.x + Math.sin(-angle * Math.PI / 180) * 0,
-                                                                                                               y: start.y + Math.cos(-angle * Math.PI / 180) * 0 - Math.sin(-angle * Math.PI / 180) * size.x
-                                                                                                             }), ({x,y}, {start, size,angle}) => ({angle, start, size: {x: (Math.cos(angle * Math.PI / 180) * (x- start.x) + Math.sin(angle * Math.PI / 180) * (y - start.y)) , y: size.y}}))]],
-          yaxis: [[L.props("start", "size", "angle"), L.lens(({start, size, angle}) => ({
-                                                                                                               x: start.x + Math.cos(-angle * Math.PI / 180) * 0 + Math.sin(-angle * Math.PI / 180) * size.y,
-                                                                                                               y: start.y + Math.cos(-angle * Math.PI / 180) * size.y - Math.sin(-angle * Math.PI / 180) * 0
-                                                                                                             }), ({x,y}, {start, size,angle}) => ({angle, start, size: {x: size.x, y: (Math.cos(angle * Math.PI / 180) * (y- start.y) - Math.sin(angle * Math.PI / 180) * (x - start.x)) }}))]],
-          origin:[ ["start",L.props("x","y"),]],
-        }
-      },
+        axis: {
+            entities: [(d) => (d?.axis ? [[]] : [])],
+            props: {
+                xaxis: [
+                    [
+                        L.props("start", "size", "angle"),
+                        L.lens(
+                            ({ start, size, angle }) => ({
+                                x:
+                                    start.x +
+                                    Math.cos((-angle * Math.PI) / 180) *
+                                        size.x +
+                                    Math.sin((-angle * Math.PI) / 180) * 0,
+                                y:
+                                    start.y +
+                                    Math.cos((-angle * Math.PI) / 180) * 0 -
+                                    Math.sin((-angle * Math.PI) / 180) * size.x,
+                            }),
+                            ({ x, y }, { start, size, angle }) => ({
+                                angle,
+                                start,
+                                size: {
+                                    x:
+                                        Math.cos((angle * Math.PI) / 180) *
+                                            (x - start.x) +
+                                        Math.sin((angle * Math.PI) / 180) *
+                                            (y - start.y),
+                                    y: size.y,
+                                },
+                            }),
+                        ),
+                    ],
+                ],
+                yaxis: [
+                    [
+                        L.props("start", "size", "angle"),
+                        L.lens(
+                            ({ start, size, angle }) => ({
+                                x:
+                                    start.x +
+                                    Math.cos((-angle * Math.PI) / 180) * 0 +
+                                    Math.sin((-angle * Math.PI) / 180) * size.y,
+                                y:
+                                    start.y +
+                                    Math.cos((-angle * Math.PI) / 180) *
+                                        size.y -
+                                    Math.sin((-angle * Math.PI) / 180) * 0,
+                            }),
+                            ({ x, y }, { start, size, angle }) => ({
+                                angle,
+                                start,
+                                size: {
+                                    x: size.x,
+                                    y:
+                                        Math.cos((angle * Math.PI) / 180) *
+                                            (y - start.y) -
+                                        Math.sin((angle * Math.PI) / 180) *
+                                            (x - start.x),
+                                },
+                            }),
+                        ),
+                    ],
+                ],
+                origin: [["start", L.props("x", "y")]],
+            },
+        },
 
-
-           textBoxes: {
-
-           entities: ['textBoxes', (c) => (c??[]).map((_, i) => i) ],
-              props: {
-                xaxis: [[L.props("start", "size", "angle"), L.lens(({start, size, angle}) => ({
-                                                                                                                     x: start.x + Math.cos(-angle * Math.PI / 180) * size.x + Math.sin(-angle * Math.PI / 180) * 0,
-                                                                                                                     y: start.y + Math.cos(-angle * Math.PI / 180) * 0 - Math.sin(-angle * Math.PI / 180) * size.x
-                                                                                                                   }), ({x,y}, {start, size,angle}) => ({angle, start, size: {x: (Math.cos(angle * Math.PI / 180) * (x- start.x) + Math.sin(angle * Math.PI / 180) * (y - start.y)) , y: size.y}}))]],
-                yaxis: [[L.props("start", "size", "angle"), L.lens(({start, size, angle}) => ({
-                                                                                                                     x: start.x + Math.cos(-angle * Math.PI / 180) * 0 + Math.sin(-angle * Math.PI / 180) * size.y,
-                                                                                                                     y: start.y + Math.cos(-angle * Math.PI / 180) * size.y - Math.sin(-angle * Math.PI / 180) * 0
-                                                                                                                   }), ({x,y}, {start, size,angle}) => ({angle, start, size: {x: size.x, y: (Math.cos(angle * Math.PI / 180) * (y- start.y) - Math.sin(angle * Math.PI / 180) * (x - start.x)) }}))]],
-                origin:[ ["start",L.props("x","y"),]],
-              }
-           },
-            shapes: {
-
-                     entities: ['shapes', (c) => (c??[]).map((_, i) => i) ],
-                        props: {
-                          xaxis: [["placement", L.props("start", "size", "angle"), L.lens(({start, size, angle}) => ({
-                                                                                                                               x: start.x + Math.cos(-angle * Math.PI / 180) * size.x + Math.sin(-angle * Math.PI / 180) * 0,
-                                                                                                                               y: start.y + Math.cos(-angle * Math.PI / 180) * 0 - Math.sin(-angle * Math.PI / 180) * size.x
-                                                                                                                             }), ({x,y}, {start, size,angle}) => ({angle, start, size: {x: (Math.cos(angle * Math.PI / 180) * (x- start.x) + Math.sin(angle * Math.PI / 180) * (y - start.y)) , y: size.y}}))]],
-                          yaxis: [["placement", L.props("start", "size", "angle"), L.lens(({start, size, angle}) => ({
-                                                                                                                               x: start.x + Math.cos(-angle * Math.PI / 180) * 0 + Math.sin(-angle * Math.PI / 180) * size.y,
-                                                                                                                               y: start.y + Math.cos(-angle * Math.PI / 180) * size.y - Math.sin(-angle * Math.PI / 180) * 0
-                                                                                                                             }), ({x,y}, {start, size,angle}) => ({angle, start, size: {x: size.x, y: (Math.cos(angle * Math.PI / 180) * (y- start.y) - Math.sin(angle * Math.PI / 180) * (x - start.x)) }}))]],
-                          origin:[ ["placement", "start",L.props("x","y"),]],
-                        }
-                      }
-    }
+        textBoxes: {
+            entities: ["textBoxes", (c) => (c ?? []).map((_, i) => i)],
+            props: {
+                xaxis: [
+                    [
+                        L.props("start", "size", "angle"),
+                        L.lens(
+                            ({ start, size, angle }) => ({
+                                x:
+                                    start.x +
+                                    Math.cos((-angle * Math.PI) / 180) *
+                                        size.x +
+                                    Math.sin((-angle * Math.PI) / 180) * 0,
+                                y:
+                                    start.y +
+                                    Math.cos((-angle * Math.PI) / 180) * 0 -
+                                    Math.sin((-angle * Math.PI) / 180) * size.x,
+                            }),
+                            ({ x, y }, { start, size, angle }) => ({
+                                angle,
+                                start,
+                                size: {
+                                    x:
+                                        Math.cos((angle * Math.PI) / 180) *
+                                            (x - start.x) +
+                                        Math.sin((angle * Math.PI) / 180) *
+                                            (y - start.y),
+                                    y: size.y,
+                                },
+                            }),
+                        ),
+                    ],
+                ],
+                yaxis: [
+                    [
+                        L.props("start", "size", "angle"),
+                        L.lens(
+                            ({ start, size, angle }) => ({
+                                x:
+                                    start.x +
+                                    Math.cos((-angle * Math.PI) / 180) * 0 +
+                                    Math.sin((-angle * Math.PI) / 180) * size.y,
+                                y:
+                                    start.y +
+                                    Math.cos((-angle * Math.PI) / 180) *
+                                        size.y -
+                                    Math.sin((-angle * Math.PI) / 180) * 0,
+                            }),
+                            ({ x, y }, { start, size, angle }) => ({
+                                angle,
+                                start,
+                                size: {
+                                    x: size.x,
+                                    y:
+                                        Math.cos((angle * Math.PI) / 180) *
+                                            (y - start.y) -
+                                        Math.sin((angle * Math.PI) / 180) *
+                                            (x - start.x),
+                                },
+                            }),
+                        ),
+                    ],
+                ],
+                origin: [["start", L.props("x", "y")]],
+            },
+        },
+        shapes: {
+            entities: ["shapes", (c) => (c ?? []).map((_, i) => i)],
+            props: {
+                xaxis: [
+                    [
+                        "placement",
+                        L.props("start", "size", "angle"),
+                        L.lens(
+                            ({ start, size, angle }) => ({
+                                x:
+                                    start.x +
+                                    Math.cos((-angle * Math.PI) / 180) *
+                                        size.x +
+                                    Math.sin((-angle * Math.PI) / 180) * 0,
+                                y:
+                                    start.y +
+                                    Math.cos((-angle * Math.PI) / 180) * 0 -
+                                    Math.sin((-angle * Math.PI) / 180) * size.x,
+                            }),
+                            ({ x, y }, { start, size, angle }) => ({
+                                angle,
+                                start,
+                                size: {
+                                    x:
+                                        Math.cos((angle * Math.PI) / 180) *
+                                            (x - start.x) +
+                                        Math.sin((angle * Math.PI) / 180) *
+                                            (y - start.y),
+                                    y: size.y,
+                                },
+                            }),
+                        ),
+                    ],
+                ],
+                yaxis: [
+                    [
+                        "placement",
+                        L.props("start", "size", "angle"),
+                        L.lens(
+                            ({ start, size, angle }) => ({
+                                x:
+                                    start.x +
+                                    Math.cos((-angle * Math.PI) / 180) * 0 +
+                                    Math.sin((-angle * Math.PI) / 180) * size.y,
+                                y:
+                                    start.y +
+                                    Math.cos((-angle * Math.PI) / 180) *
+                                        size.y -
+                                    Math.sin((-angle * Math.PI) / 180) * 0,
+                            }),
+                            ({ x, y }, { start, size, angle }) => ({
+                                angle,
+                                start,
+                                size: {
+                                    x: size.x,
+                                    y:
+                                        Math.cos((angle * Math.PI) / 180) *
+                                            (y - start.y) -
+                                        Math.sin((angle * Math.PI) / 180) *
+                                            (x - start.x),
+                                },
+                            }),
+                        ),
+                    ],
+                ],
+                origin: [["placement", "start", L.props("x", "y")]],
+            },
+        },
+    };
 
     const newDrawing = $derived(
         view(
@@ -2574,6 +2730,23 @@
                 ondblclick: transformEdit,
             },
         },
+        freeTransformer: {
+            name: "Morph",
+            component: FreeTransformer,
+            parameters: {
+                cameraScale,
+                selectionExtension,
+                rotationTransform,
+                clientToCanvas,
+                translateSelected,
+                scaleSelected,
+                rotateSelected,
+                frameBoxPath,
+                controls: newControls,
+                documentContent: currentDocumentContent,
+                ondblclick: transformEdit,
+            },
+        },
         pen: {
             name: "Pen",
             component: Pen,
@@ -2707,7 +2880,7 @@
     });
 
     const toolGroups = [
-        ["select", "lasso", "affineTransformer"],
+        ["select", "lasso", "affineTransformer", "freeTransformer"],
         ["magnifier", "pan", "rotate", "zoom"],
         ["pen", "polygon", "spline"],
         ["createNode", "createEdge"],
@@ -3646,55 +3819,6 @@
                                     {...tools[tool.value].parameters}
                                 ></ToolComponent>
 
-                                <g transform={rotationTransform.value}>
-                                    {#each Object.entries(newControls) as [c, ctrl]}
-                                        {@const list = view(ctrl.entities, currentDocumentContent)}
-
-                                    {#each list.value as l}
-
-                                        {#each Object.values(ctrl.props) as p}
-                                        {const cpi = view([c,  l, p], currentDocumentContent)}
-                                        <circle
-                                            role="button"
-                                            tabindex="-1"
-                                            onpointerdown={(evt) => {
-                                                if (evt.isPrimary) {
-                                                  evt.stopPropagation()
-                                                  evt.preventDefault()
-                                                    evt.currentTarget.setPointerCapture(
-                                                        evt.pointerId,
-                                                    );
-                                                }
-                                            }}
-                                            onclick={(evt) => {
-                                              evt.preventDefault()
-                                            }}
-                                            onkeydown={(evt) => {
-
-                                            }}
-                                            onpointermove={(evt) => {
-                                                if (
-                                                    evt.currentTarget.hasPointerCapture(
-                                                        evt.pointerId,
-                                                    )
-                                                ) {
-                                                  evt.stopPropagation()
-                                                  evt.preventDefault()
-                                                  const p = clientToCanvas(evt.clientX, evt.clientY)
-                                                  cpi.value =p
-                                                }
-                                            }}
-                                            cx={cpi.value.x}
-                                            cy={cpi.value.y}
-                                            r="10"
-                                            fill="gold"
-                                        ></circle>
-                                    {/each}
-                                    {/each}
-                                    {/each}
-                                    </g
-                                >
-
                                 {#if currentToolElement.value?.allowAffineTransform}
                                     <AffineTransformer
                                         {cameraScale}
@@ -3799,14 +3923,16 @@
                         </Navigator>
                     </svg>
 
-		<canvas
-			bind:this={bitmapCanvas.value}
-			class="canvas bitmap-canvas"
-			{@attach adjustSize(read(
-				R.map(R.multiply(window.devicePixelRatio)),
-				scrollWindowSize,
-			))}
-		></canvas>
+                    <canvas
+                        bind:this={bitmapCanvas.value}
+                        class="canvas bitmap-canvas"
+                        {@attach adjustSize(
+                            read(
+                                R.map(R.multiply(window.devicePixelRatio)),
+                                scrollWindowSize,
+                            ),
+                        )}
+                    ></canvas>
 
                     <div class="scroller-hud">
                         <input
@@ -3939,13 +4065,13 @@
     }
 
     .bitmap-canvas {
-		display: block;
-		width: 100%;
-		height: 100%;
-		pointer-events: none;
-		background: none;
-		border: none;
-	}
+        display: block;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        background: none;
+        border: none;
+    }
 
     textarea {
         min-height: 30em;

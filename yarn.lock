@@ -1155,10 +1155,10 @@
   resolved "https://registry.yarnpkg.com/@rollup/rollup-win32-x64-msvc/-/rollup-win32-x64-msvc-4.62.2.tgz#3671ce3f9b928d5c01f879792d5c0b60ae14d4ad"
   integrity sha512-BfzEnDJOt9T8M989/lA37EcJgat01wLRnoi5dQf3QzOH7jzpqTAzdDbVfRljVr5r+jzKqpbHeyOfAaXxAd0PAA==
 
-"@svatom/basic@^1.2.0":
-  version "1.3.0"
-  resolved "https://registry.yarnpkg.com/@svatom/basic/-/basic-1.3.0.tgz#968916cadefa2732544c80dff08495d6526eb4fe"
-  integrity sha512-0Za9ohbmRjAlpAVtv+ilZxpcMHISXr9qYGLJ3Il4t3wmqcXfh9s2cp6pNEeY0ZQ0rQoyeigpGYeObPoRfUvmJQ==
+"@svatom/basic@^2.0.1":
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/@svatom/basic/-/basic-2.0.1.tgz#7bc1da0dfa04a1840ded023d8d4b473db92a52cd"
+  integrity sha512-wBcF1lwOD2KtOq/TnjkMngEEti0tkcpViVScPa/t1HcUkUAW+jRe8Y85OQLTlF1Kayo5EzLPcRmorDH0b8RZNA==
 
 "@svatom/threedee@^1.0.5":
   version "1.0.6"

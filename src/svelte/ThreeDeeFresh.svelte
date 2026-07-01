@@ -2363,11 +2363,19 @@
             }, worldTransform),
         );
 
-        regl.frame(() => {
-            reglCanvas.width =
-                reglCanvas.clientWidth * window.devicePixelRatio * 2;
-            reglCanvas.height =
-                reglCanvas.clientHeight * window.devicePixelRatio * 2;
+        const tick = regl.frame(() => {
+            const width = Math.round(
+                reglCanvas.clientWidth * window.devicePixelRatio * 2,
+            );
+            const height = Math.round(
+                reglCanvas.clientHeight * window.devicePixelRatio * 2,
+            );
+
+            if (reglCanvas.width !== width || reglCanvas.height !== height) {
+                reglCanvas.width = width;
+                reglCanvas.height = height;
+                regl.poll();
+            }
 
             regl.clear({
                 color: [0.99, 0.99, 0.99, 1],
@@ -2460,6 +2468,7 @@
         });
 
         return () => {
+            tick.cancel();
             regl.destroy();
             canvasRoot.removeChild(reglCanvas);
         };

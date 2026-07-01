@@ -298,42 +298,42 @@
             </div>
         {/each}
     </div>
-
-    <style>
-        select {
-            max-width: 10em;
-        }
-        .template-bar {
-            display: flex;
-            gap: 0.5em;
-            padding: 0.3em;
-            flex-wrap: wrap;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
-            -webkit-user-drag: none !important;
-        }
-
-        .drag-template {
-            touch-action: none;
-            -webkit-user-drag: element !important;
-            width: 3em;
-            height: 3em;
-            cursor: grab;
-            display: grid;
-            place-items: stretch;
-            place-content: stretch;
-            border: 1px solid transparent;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .drag-template > svg {
-            display: block;
-            -webkit-tap-highlight-color: transparent;
-            pointer-events: none;
-        }
-
-        .drag-template[aria-grabbed="true"] {
-            cursor: grabbing;
-        }
-    </style>
 </fieldset>
+
+<style>
+    select {
+        max-width: 10em;
+    }
+    .template-bar {
+        display: flex;
+        gap: 0.5em;
+        padding: 0.3em;
+        flex-wrap: wrap;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        -webkit-user-drag: none !important;
+    }
+
+    .drag-template {
+        touch-action: none;
+        -webkit-user-drag: element !important;
+        width: 3em;
+        height: 3em;
+        cursor: grab;
+        display: grid;
+        place-items: stretch;
+        place-content: stretch;
+        border: 1px solid transparent;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .drag-template > svg {
+        display: block;
+        -webkit-tap-highlight-color: transparent;
+        pointer-events: none;
+    }
+
+    .drag-template[aria-grabbed="true"] {
+        cursor: grabbing;
+    }
+</style>

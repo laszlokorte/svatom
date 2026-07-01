@@ -1162,7 +1162,7 @@
         <textarea bind:value={renewJson.value}></textarea>
 
         <div
-            style="display: grid; flex-direction: column; align-items: stretch; align-content: stretch;flex-grow: 1; grid-template-rows: auto 1fr;"
+            style="display: grid; flex-direction: column; align-items: stretch; align-content: stretch;flex-grow: 1; grid-template-rows: auto 1fr; gap: 0.5ex"
         >
             <input
                 type="text"
