@@ -26,11 +26,11 @@
     );
     const measure = atom();
     const measureWidth = read(
-        ["width", L.valueOr(200), L.add(50), R.max(100)],
+        ["width", L.valueOr(0), L.add(50), R.max(100)],
         measure,
     );
     const measureHeight = read(
-        ["height", L.valueOr(30), L.add(20), R.max(50)],
+        ["height", L.valueOr(0), L.add(20), R.max(50)],
         measure,
     );
     const measuredSize = $derived(
@@ -196,6 +196,7 @@
                         <input
                             {@attach autofocusIf(!isDragging.value)}
                             type="text"
+                            placeholder="type..."
                             bind:value={text.value}
                             onkeydown={(evt) => {
                                 if (evt.key === "Escape" || evt.key === "Esc") {

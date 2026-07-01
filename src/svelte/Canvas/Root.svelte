@@ -9,8 +9,6 @@
     import AffineTransformer from "./tools/AffineTransformer.svelte";
     import FreeTransformer from "./tools/FreeTransformer.svelte";
     import * as CamNavigation from "./camera/navigation";
-    import renewShapes from "./shapes";
-    import { buildPath } from "@petristation/renew-icon-set";
     import {
         frameBoxLens,
         panMovementLens,
@@ -66,6 +64,7 @@
 
     import RubberBand from "./tools/RubberBand.svelte";
     import NodesDef from "./tools/NodesDef.svelte";
+    import ShapeBoxDef from "./tools/ShapeBoxDef.svelte";
     import Blocker from "./tools/Blocker.svelte";
     import Shaper from "./tools/Shaper.svelte";
     //import NodesUse from "./tools/NodesUse.svelte";
@@ -943,6 +942,21 @@
                             L.lens(
                                 (s, i) => ({
                                     id: "node-" + i,
+                                    zIndex: s.zIndex,
+                                }),
+                                (newVal, old) => ({
+                                    ...old,
+                                    zIndex: newVal.zIndex,
+                                }),
+                            ),
+                        ],
+
+                        shapeBoxes: [
+                            L.defaults([]),
+                            L.elems,
+                            L.lens(
+                                (s, i) => ({
+                                    id: "shapebox-" + i,
                                     zIndex: s.zIndex,
                                 }),
                                 (newVal, old) => ({
@@ -3695,6 +3709,7 @@
                                         {cameraScale}
                                     />
                                     <NodesDef {nodes} {cameraScale} />
+                                    <ShapeBoxDef {shapeBoxes} {cameraScale} />
 
                                     <DrawingsDef
                                         {drawings}
@@ -3770,147 +3785,122 @@
                                             {zLayers}
                                             {rotationTransform}
                                         />
-                                        {#each shapeBoxes.value as b}
-                                            <g
-                                                fill="white"
-                                                transform="rotate({b.angle} {b.x} {b.y})"
-                                            >
-                                                {#each renewShapes[b.shape].paths as path}
-                                                    <path
-                                                        d={buildPath(
-                                                            {
-                                                                x: b.x,
-                                                                y: b.y,
-                                                                width: b.width,
-                                                                height: b.height,
-                                                            },
-                                                            path,
-                                                            Object.fromEntries(
-                                                                (
-                                                                    renewShapes[
-                                                                        b.shape
-                                                                    ].args ?? []
-                                                                ).map((a) => [
-                                                                    a.name,
-                                                                    b
-                                                                        .argValues?.[
-                                                                        a.name
-                                                                    ] ??
-                                                                        a.default,
-                                                                ]),
-                                                            ),
-                                                        )}
-                                                        fill={path.fill_color}
-                                                        stroke={path.stroke_color}
-                                                        vector-effect="non-scaling-stroke"
-                                                        stroke-width="0.5"
-                                                        fill-rule="evenodd"
-                                                    />
-                                                {/each}</g
-                                            >
-                                        {/each}
+
+                                        <Origin
+                                            {rotationTransform}
+                                            {cameraScale}
+                                        />
                                     </g>
 
-                                    <Origin {rotationTransform} {cameraScale} />
-                                </g>
+                                    <ToolComponent
+                                        bind:this={currentToolElement.value}
+                                        {...tools[tool.value].parameters}
+                                    ></ToolComponent>
 
-                                <ToolComponent
-                                    bind:this={currentToolElement.value}
-                                    {...tools[tool.value].parameters}
-                                ></ToolComponent>
+                                    {#if currentToolElement.value?.allowAffineTransform}
+                                        <AffineTransformer
+                                            {cameraScale}
+                                            {selectionExtension}
+                                            {rotationTransform}
+                                            {clientToCanvas}
+                                            {translateSelected}
+                                            {scaleSelected}
+                                            {rotateSelected}
+                                            {frameBoxPath}
+                                            ondblclick={transformEdit}
+                                        />
+                                    {/if}
+                                    {#if editableText.value}
+                                        <TextLineTyper
+                                            createText={(v) => {
+                                                if (v) {
+                                                    editableText.value = v;
+                                                }
+                                                textEditFocus.value = null;
+                                            }}
+                                            typer={view(
+                                                [
+                                                    L.define(
+                                                        editableText.value,
+                                                    ),
+                                                    L.defaults({}),
+                                                    L.pick({
+                                                        text: [
+                                                            L.removable(
+                                                                "content",
+                                                            ),
+                                                            "content",
+                                                        ],
+                                                        fontSize: "fontSize",
+                                                        position: L.props(
+                                                            "x",
+                                                            "y",
+                                                        ),
+                                                    }),
+                                                ],
+                                                editableText,
+                                            )}
+                                            {clientToCanvas}
+                                            {frameBoxPath}
+                                            {rotationTransform}
+                                            {cameraScale}
+                                            {cameraOrientation}
+                                        />
+                                    {/if}
 
-                                {#if currentToolElement.value?.allowAffineTransform}
-                                    <AffineTransformer
-                                        {cameraScale}
-                                        {selectionExtension}
-                                        {rotationTransform}
-                                        {clientToCanvas}
-                                        {translateSelected}
-                                        {scaleSelected}
-                                        {rotateSelected}
+                                    {#if editableTextBox.value}
+                                        <TextBoxTyper
+                                            createTextBox={(v) => {
+                                                if (v) {
+                                                    editableTextBox.value = v;
+                                                }
+                                                textBoxEditFocus.value = null;
+                                            }}
+                                            textBox={view(
+                                                [
+                                                    L.define(
+                                                        editableTextBox.value,
+                                                    ),
+                                                    L.defaults({}),
+                                                    L.pick({
+                                                        text: [
+                                                            L.removable(
+                                                                "content",
+                                                            ),
+                                                            "content",
+                                                        ],
+                                                        start: "start",
+                                                        size: "size",
+                                                        angle: "angle",
+                                                        fontSize: "fontSize",
+                                                    }),
+                                                ],
+                                                editableTextBox,
+                                            )}
+                                            {clientToCanvas}
+                                            {frameBoxPath}
+                                            {rotationTransform}
+                                            {cameraScale}
+                                            {cameraOrientation}
+                                        />
+                                    {/if}
+                                    <Ruler
                                         {frameBoxPath}
-                                        ondblclick={transformEdit}
+                                        {frameBoxObject}
+                                        {rotationTransform}
+                                        {cameraScale}
                                     />
-                                {/if}
-                                {#if editableText.value}
-                                    <TextLineTyper
-                                        createText={(v) => {
-                                            if (v) {
-                                                editableText.value = v;
-                                            }
-                                            textEditFocus.value = null;
-                                        }}
-                                        typer={view(
-                                            [
-                                                L.define(editableText.value),
-                                                L.defaults({}),
-                                                L.pick({
-                                                    text: [
-                                                        L.removable("content"),
-                                                        "content",
-                                                    ],
-                                                    fontSize: "fontSize",
-                                                    position: L.props("x", "y"),
-                                                }),
-                                            ],
-                                            editableText,
-                                        )}
-                                        {clientToCanvas}
-                                        {frameBoxPath}
+
+                                    <ShowAlert
+                                        {alerts}
+                                        {frameBoxObject}
                                         {rotationTransform}
-                                        {cameraScale}
                                         {cameraOrientation}
-                                    />
-                                {/if}
-
-                                {#if editableTextBox.value}
-                                    <TextBoxTyper
-                                        createTextBox={(v) => {
-                                            if (v) {
-                                                editableTextBox.value = v;
-                                            }
-                                            textBoxEditFocus.value = null;
-                                        }}
-                                        textBox={view(
-                                            [
-                                                L.define(editableTextBox.value),
-                                                L.defaults({}),
-                                                L.pick({
-                                                    text: [
-                                                        L.removable("content"),
-                                                        "content",
-                                                    ],
-                                                    start: "start",
-                                                    size: "size",
-                                                    angle: "angle",
-                                                    fontSize: "fontSize",
-                                                }),
-                                            ],
-                                            editableTextBox,
-                                        )}
-                                        {clientToCanvas}
-                                        {frameBoxPath}
-                                        {rotationTransform}
                                         {cameraScale}
-                                        {cameraOrientation}
+                                        {cameraFocus}
                                     />
-                                {/if}
-                                <Ruler
-                                    {frameBoxPath}
-                                    {frameBoxObject}
-                                    {rotationTransform}
-                                    {cameraScale}
-                                />
-
-                                <ShowAlert
-                                    {alerts}
-                                    {frameBoxObject}
-                                    {rotationTransform}
-                                    {cameraOrientation}
-                                    {cameraScale}
-                                    {cameraFocus}
-                                />
-                            </ClickPicker>
+                                </g></ClickPicker
+                            >
 
                             {#if editableShapeBox.value}
                                 <Shaper

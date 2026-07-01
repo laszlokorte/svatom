@@ -94,7 +94,7 @@
                                 (pos.y * b.height) / 2 +
                                 arg.origin.y * b.height}
                             stroke="none"
-                            r={cameraScale.value * 25}
+                            r={cameraScale.value * 20}
                             fill="transparent"
                             cursor="move"
                         />
@@ -108,7 +108,7 @@
                                 (pos.y * b.height) / 2 +
                                 arg.origin.y * b.height}
                             stroke="gold"
-                            r={cameraScale.value * 10}
+                            r={cameraScale.value * 5}
                             vector-effect="non-scaling-stroke"
                             fill="yellow"
                             cursor="move"
