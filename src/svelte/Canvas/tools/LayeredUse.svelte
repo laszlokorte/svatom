@@ -7,6 +7,8 @@
     const { rotationTransform, zLayers } = $props();
 </script>
 
-{#each zLayers.value as l (l.id)}
-    <use href="#{l.id}" />
-{/each}
+<g pointer-events="none" transform={rotationTransform.value}>
+    {#each zLayers.value as l (l.id)}
+        <use href="#{l.id}" />
+    {/each}
+</g>

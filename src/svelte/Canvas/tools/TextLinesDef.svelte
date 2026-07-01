@@ -61,8 +61,8 @@
 </defs>
 {#if measureKey && measures}
     <g pointer-events="none" opacity="0" xml:space="preserve">
-        {#each textes.value as t, i (i)}
-            {@const m = view([i, measureKey, L.required({})], measures)}
+        {#each textes.value as t, i}
+            {@const m = view([i, measureKey], measures)}
             {#key [t.content, i]}
                 <text
                     {@attach bindBoundingBox(m)}

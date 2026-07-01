@@ -1156,9 +1156,9 @@
   integrity sha512-BfzEnDJOt9T8M989/lA37EcJgat01wLRnoi5dQf3QzOH7jzpqTAzdDbVfRljVr5r+jzKqpbHeyOfAaXxAd0PAA==
 
 "@svatom/basic@^2.0.1":
-  version "2.0.2"
-  resolved "https://registry.yarnpkg.com/@svatom/basic/-/basic-2.0.2.tgz#a237ccc32297b53ac71c69c0486beee8ea3a0033"
-  integrity sha512-zUItg07GHiypnY5jDo7e9TE1l/7HDAfa7/rMZs+iN0wQCNpT8oR6ubbVyzFArDeD36zm0czB61u12L8+H0ihWA==
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/@svatom/basic/-/basic-2.0.3.tgz#a19dd783816da800daad217086e9c6335f3f3e4d"
+  integrity sha512-3ZgpXNSDvEx8o7Ou5UivRuDPWt2Vb3NASS483r+gsH8EHupF38cXkXidrdZWKegdo70YxiPlWN81tMCGTWMtBQ==
 
 "@svatom/threedee@^1.0.5":
   version "1.0.6"
