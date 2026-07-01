@@ -333,7 +333,7 @@
         pointer-events: none;
     }
 
-    .drag-template[aria-grabbed="true"] {
+    .drag-template:global([aria-grabbed="true"]) {
         cursor: grabbing;
     }
 </style>
