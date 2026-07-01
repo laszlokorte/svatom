@@ -1,8 +1,6 @@
 <script>
-    import * as L from "partial.lenses";
     import * as R from "ramda";
     import * as U from "../../utils";
-    import * as G from "@svatom/basic/generators";
     import * as Geo from "../../geometry";
     import { atom, view, read, combine } from "../../svatom.svelte.js";
 

@@ -6,15 +6,7 @@
         atom,
         view,
         read,
-        combine,
-        combineWithRest,
-        failableView,
-        bindValue,
-        bindScroll,
-        bindSize,
         autofocusIf,
-        string,
-        /*auto update text size according to text content*/
         readTextreaScrollSize,
     } from "../../svatom.svelte.js";
 

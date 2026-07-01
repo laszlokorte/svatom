@@ -2,15 +2,7 @@
     import * as L from "partial.lenses";
     import * as R from "ramda";
     import * as U from "../../utils";
-    import * as C from "@svatom/basic/combinators";
-    import {
-        atom,
-        view,
-        read,
-        combine,
-        fsm,
-        onPointerClick,
-    } from "../../svatom.svelte.js";
+    import { read, fsm, onPointerClick } from "../../svatom.svelte.js";
     import { createMachine, assign, emit } from "xstate";
 
     const {
@@ -20,9 +12,6 @@
         rotationTransform,
         createSpline = null,
     } = $props();
-
-    const snapRadius = 8;
-    const snapRadiusVisual = 8;
 
     const machineDef = createMachine({
         context: {

@@ -2,18 +2,11 @@
     import { tick, untrack } from "svelte";
 
     import * as L from "partial.lenses";
-    import * as R from "ramda";
-    import * as U from "../../utils";
     import * as Geo from "../../geometry";
     import { atom, view, during, read } from "../../svatom.svelte.js";
     import { bindEvents } from "./events";
     import { constructLenses } from "./live";
-    import {
-        frameBoxLens,
-        panMovementLens,
-        rotateMovementLens,
-        zoomMovementLens,
-    } from "./lenses";
+    import { frameBoxLens, panMovementLens } from "./lenses";
 
     const { camera, cameraTow, frameBoxPath, children, errorHandler } =
         $props();

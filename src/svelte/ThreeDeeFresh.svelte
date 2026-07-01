@@ -2,22 +2,12 @@
     import * as L from "partial.lenses";
     import * as G from "@svatom/basic/generators";
     import * as R from "ramda";
-    import * as U from "./utils";
     import * as M from "@svatom/threedee/matrix";
     import * as S from "@svatom/threedee/shader";
     import createREGL from "regl";
     import { parseColor } from "./colors";
 
-    import {
-        atom,
-        view,
-        read,
-        combine,
-        update,
-        failableView,
-        bindValue,
-        setValue,
-    } from "./svatom.svelte.js";
+    import { atom, view, read, combine, setValue } from "./svatom.svelte.js";
     import { parserAutoDetect } from "@petristation/renewjs";
     import exampleMesh, { cubeB } from "@svatom/threedee/exampleMesh";
     import { parse as parseObj, toGeo } from "@svatom/threedee/obj";

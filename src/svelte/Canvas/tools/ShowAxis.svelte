@@ -1,23 +1,9 @@
 <script>
     import * as L from "partial.lenses";
-    import * as R from "ramda";
     import * as U from "../../utils";
     import { atom, view, read, combine } from "../../svatom.svelte.js";
 
-    const numberSvgFormat = new Intl.NumberFormat("en-US", {
-        minimumFractionDigits: 5,
-        maximumFractionDigits: 5,
-        useGrouping: false,
-    });
-
-    const {
-        axis = atom(undefined),
-        frameBoxPath,
-        clientToCanvas,
-        rotationTransform,
-        cameraOrientation,
-        cameraScale,
-    } = $props();
+    const { axis = atom(undefined), rotationTransform, cameraScale } = $props();
 
     const axisStart = $derived(
         view([L.removable("start"), "start", L.removable("x", "y")], axis),

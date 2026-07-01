@@ -1,21 +1,8 @@
 <script>
-    import * as L from "partial.lenses";
-    import * as R from "ramda";
-    import * as U from "../../utils";
-    import {
-        atom,
-        view,
-        string,
-        read,
-        bindBoundingBox,
-    } from "../../svatom.svelte.js";
+    import { atom, view, bindBoundingBox } from "../../svatom.svelte.js";
 
     const {
-        rotationTransform,
-        cameraScale,
         cameraOrientation,
-        frameBoxPath,
-        clientToCanvas,
         measureKey,
         measures,
         textes = atom([]),

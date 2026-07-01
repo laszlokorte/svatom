@@ -1,12 +1,6 @@
 import * as L from "partial.lenses";
 
-import {
-  atom,
-  view,
-  read,
-  combine,
-  combineWithRest,
-} from "../../svatom.svelte.js";
+import { view } from "../../svatom.svelte.js";
 
 import { pivotZoomLens, pivotRotationLens, panScreenLens } from "./navigation";
 

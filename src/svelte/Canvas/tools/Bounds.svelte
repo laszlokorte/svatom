@@ -1,5 +1,4 @@
 <script>
-    import * as L from "partial.lenses";
     import * as R from "ramda";
     import { string, read } from "../../svatom.svelte.js";
 

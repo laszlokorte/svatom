@@ -1,9 +1,7 @@
 <script>
     import * as L from "partial.lenses";
-
     import { view } from "../../svatom.svelte.js";
     import { polyfillDragDrop } from "../lib/drag-drop-poly.svelte.js";
-
     import renewShapes from "../shapes.js";
     import { buildPath } from "@petristation/renew-icon-set";
 

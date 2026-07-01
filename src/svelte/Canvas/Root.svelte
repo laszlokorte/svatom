@@ -9,8 +9,6 @@
     import AffineTransformer from "./tools/AffineTransformer.svelte";
     import FreeTransformer from "./tools/FreeTransformer.svelte";
     import * as CamNavigation from "./camera/navigation";
-    import renewShapes from "./shapes";
-    import { buildPath } from "@petristation/renew-icon-set";
     import {
         frameBoxLens,
         panMovementLens,
@@ -902,9 +900,7 @@
     const alerts = $derived(
         view(["alerts", L.defaults([])], currentDocumentContent),
     );
-    const rubberBand = atom(undefined);
     const textMeasures = atom({});
-    $inspect(textMeasures.value);
 
     const zLayers = $derived(
         view(

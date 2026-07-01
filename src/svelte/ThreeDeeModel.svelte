@@ -1,17 +1,7 @@
 <script>
     import * as L from "partial.lenses";
-    import * as G from "@svatom/basic/generators";
     import * as R from "ramda";
-    import * as U from "./utils";
-    import {
-        atom,
-        view,
-        read,
-        combine,
-        update,
-        failableView,
-        bindValue,
-    } from "./svatom.svelte.js";
+    import { atom, view, combine } from "./svatom.svelte.js";
     import exampleMesh from "@svatom/threedee/exampleMesh";
 
     const numf = new Intl.NumberFormat("en-US", {

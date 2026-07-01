@@ -1,7 +1,7 @@
 <script>
     import * as L from "partial.lenses";
     import * as R from "ramda";
-    import { atom, view, read, update } from "../svatom.svelte.js";
+    import { atom, view, update } from "../svatom.svelte.js";
 
     const {
         content = atom([

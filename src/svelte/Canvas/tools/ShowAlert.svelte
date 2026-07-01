@@ -1,15 +1,12 @@
 <script>
     import * as L from "partial.lenses";
     import * as R from "ramda";
-    import * as U from "../../utils";
     import * as Geo from "../../geometry";
     import * as G from "@svatom/basic/generators";
-    import { atom, view, read, combine } from "../../svatom.svelte.js";
+    import { atom, view, combine } from "../../svatom.svelte.js";
 
     const {
-        clientToCanvas,
         frameBoxObject,
-        rotationTransform,
         cameraOrientation,
         cameraScale,
         alerts = atom([]),

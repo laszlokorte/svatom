@@ -2,7 +2,7 @@
     import * as L from "partial.lenses";
     import * as R from "ramda";
     import * as U from "../../utils";
-    import { atom, view, combine, read } from "../../svatom.svelte.js";
+    import { atom, view, combine } from "../../svatom.svelte.js";
     const {
         nodes,
         rotationTransform,

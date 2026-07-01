@@ -1,9 +1,5 @@
 <script>
-    import * as L from "partial.lenses";
-    import * as R from "ramda";
-    import * as U from "../../utils";
-    import * as C from "@svatom/basic/combinators";
-    import { atom, view, read } from "../../svatom.svelte.js";
+    import { atom } from "../../svatom.svelte.js";
     const {
         children,
         createText,

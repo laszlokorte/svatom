@@ -7,7 +7,6 @@
     const {
         frameBoxPath,
         clientToCanvas,
-        rotationTransform,
         cameraRotationLens,
         cameraOrientation,
         zoomDelta,

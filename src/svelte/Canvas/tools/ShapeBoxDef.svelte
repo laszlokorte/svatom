@@ -1,9 +1,4 @@
 <script>
-    import * as L from "partial.lenses";
-    import * as R from "ramda";
-    import * as U from "../../utils";
-    import { atom, view, read, combine } from "../../svatom.svelte.js";
-
     import renewShapes from "../shapes";
     import { buildPath } from "@petristation/renew-icon-set";
 

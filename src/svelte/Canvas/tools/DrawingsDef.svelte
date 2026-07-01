@@ -1,8 +1,8 @@
 <script>
     import * as R from "ramda";
 
-    import { atom, view, read } from "../../svatom.svelte.js";
-    const { drawings, rotationTransform } = $props();
+    import { view } from "../../svatom.svelte.js";
+    const { drawings } = $props();
 
     const paths = $derived(
         view(

@@ -1,19 +1,6 @@
 <script>
     import * as L from "partial.lenses";
-    import * as R from "ramda";
-    import * as U from "../../utils";
-    import {
-        atom,
-        view,
-        read,
-        combine,
-        combineWithRest,
-        failableView,
-        bindValue,
-        bindScroll,
-        bindSize,
-        string,
-    } from "../../svatom.svelte.js";
+    import { atom, view } from "../../svatom.svelte.js";
 
     const { properties = atom({}) } = $props();
 

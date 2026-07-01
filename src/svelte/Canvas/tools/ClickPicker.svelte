@@ -1,7 +1,6 @@
 <script>
-    import * as L from "partial.lenses";
     import * as R from "ramda";
-    import { update, disableEventIf } from "../../svatom.svelte.js";
+    import { update } from "../../svatom.svelte.js";
     import * as Geo from "../../geometry.js";
 
     const {

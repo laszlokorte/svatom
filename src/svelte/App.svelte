@@ -11,7 +11,6 @@
         bindValue,
         bindScroll,
         bindScrollMax,
-        bindSize,
         string,
     } from "./svatom.svelte.js";
     import Nested from "./Nested.svelte";
@@ -25,7 +24,7 @@
     import ThreeDeeFresh from "./ThreeDeeFresh.svelte";
     import RenewImport from "./Renew/Import.svelte";
     import asciiLogo from "../data/asciiLogo.txt?raw";
-    import { clamp, lerp } from "./utils.js";
+    import { lerp } from "./utils.js";
     import favicon from "/favicon.svg";
 
     const numberFormat = new Intl.NumberFormat("en-US", {

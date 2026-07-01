@@ -1,7 +1,6 @@
 <script>
-    import * as L from "partial.lenses";
     import * as R from "ramda";
-    import { atom, view, read, update, combine } from "../../svatom.svelte.js";
+    import { atom, update } from "../../svatom.svelte.js";
     const {
         current = atom({}),
         entries = atom([]),

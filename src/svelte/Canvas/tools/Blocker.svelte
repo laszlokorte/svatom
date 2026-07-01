@@ -1,20 +1,4 @@
 <script>
-    import * as L from "partial.lenses";
-    import * as R from "ramda";
-    import * as U from "../../utils";
-    import {
-        atom,
-        view,
-        read,
-        combine,
-        combineWithRest,
-        failableView,
-        bindValue,
-        bindScroll,
-        bindSize,
-        autofocusIf,
-        string,
-    } from "../../svatom.svelte.js";
     const {
         frameBoxPath,
         clientToCanvas,

@@ -1,7 +1,7 @@
 <script>
     import * as L from "partial.lenses";
     import * as R from "ramda";
-    import { untrack, tick } from "svelte";
+    import { tick } from "svelte";
     import * as Geo from "../geometry";
     import Navigator from "../Canvas/camera/Navigator.svelte";
 

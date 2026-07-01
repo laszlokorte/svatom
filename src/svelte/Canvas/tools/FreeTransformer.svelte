@@ -2,6 +2,7 @@
     import {
         view,
     } from "../../svatom.svelte.js";
+
     const {rotationTransform, controls: newControls, documentContent, clientToCanvas} = $props()
 </script>
 <g class="interactive" transform={rotationTransform.value}>

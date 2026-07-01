@@ -1,13 +1,6 @@
 import * as R from "ramda";
 import * as L from "partial.lenses";
 import * as U from "../../utils.js";
-import {
-  atom,
-  view,
-  read,
-  combine,
-  combineWithRest,
-} from "../../svatom.svelte.js";
 
 const normRot = R.compose(
   R.add(-180),

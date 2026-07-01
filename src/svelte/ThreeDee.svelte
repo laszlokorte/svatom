@@ -1,17 +1,7 @@
 <script>
     import * as L from "partial.lenses";
-    import * as G from "@svatom/basic/generators";
     import * as R from "ramda";
-    import * as U from "./utils";
-    import {
-        atom,
-        view,
-        read,
-        combine,
-        failableView,
-        bindValue,
-        activeTouchMove,
-    } from "./svatom.svelte.js";
+    import { atom, view, activeTouchMove } from "./svatom.svelte.js";
     import ThreeDeeModel from "./ThreeDeeModel.svelte";
     import { cubeA } from "@svatom/threedee/exampleMesh";
 
@@ -19,17 +9,6 @@
         maximumFractionDigits: 2,
         minimumFractionDigits: 2,
     });
-
-    const indices = L.lens(
-        (a) => {
-            return Array(a.length)
-                .fill(0)
-                .map((_, i) => i);
-        },
-        (is, o) => {
-            return is.map((i) => o[i]);
-        },
-    );
 
     const viewTransform = (np, fp, w, h) =>
         L.reread(({ x, y, z }) => {
