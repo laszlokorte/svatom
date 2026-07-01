@@ -16,7 +16,11 @@
 
 <g transform={rotationTransform.value}>
     {#if deco}
-        <g fill="white" transform="rotate({b.angle} {b.x} {b.y})">
+        <g
+            class="interactive"
+            fill="white"
+            transform="rotate({b.angle} {b.x} {b.y})"
+        >
             {#if deco.args}
                 {#each deco.args as arg}
                     {@const pos = forceArg(
@@ -90,7 +94,7 @@
                                 (pos.y * b.height) / 2 +
                                 arg.origin.y * b.height}
                             stroke="none"
-                            r={cameraScale.value * 10}
+                            r={cameraScale.value * 25}
                             fill="transparent"
                             cursor="move"
                         />
@@ -104,7 +108,7 @@
                                 (pos.y * b.height) / 2 +
                                 arg.origin.y * b.height}
                             stroke="gold"
-                            r={cameraScale.value * 5}
+                            r={cameraScale.value * 10}
                             vector-effect="non-scaling-stroke"
                             fill="yellow"
                             cursor="move"
@@ -120,18 +124,37 @@
 </g>
 
 <style>
-    .arg-handle:hover > .indicator {
-        fill: yellow;
-        transform: scale(1.5);
-        transform-origin: 50% 50%;
-        transform-box: fill-box;
+    .interactive {
+        -webkit-tap-highlight-color: transparent;
     }
+    @media (hover: hover) {
+        .arg-handle:hover > .indicator {
+            fill: yellow;
+            transform: scale(1.5);
+            transform-origin: 50% 50%;
+            transform-box: fill-box;
+            -webkit-touch-callout: none;
+            -webkit-user-callout: none;
+            -webkit-user-select: none;
+            -webkit-user-drag: none;
+            -webkit-user-modify: none;
+            -webkit-highlight: none;
+            user-select: none;
+        }
 
-    .arg-handle:active > .indicator {
-        fill: gold;
-        stroke: none;
-        transform: scale(1);
-        transform-origin: 50% 50%;
-        transform-box: fill-box;
+        .arg-handle:active > .indicator {
+            fill: gold;
+            stroke: none;
+            transform: scale(1);
+            transform-origin: 50% 50%;
+            transform-box: fill-box;
+            -webkit-touch-callout: none;
+            -webkit-user-callout: none;
+            -webkit-user-select: none;
+            -webkit-user-drag: none;
+            -webkit-user-modify: none;
+            -webkit-highlight: none;
+            user-select: none;
+        }
     }
 </style>

@@ -17,125 +17,112 @@
 
     const gridBuilder =
         (offset) =>
-        ({ cellSize, rect, scale, screen: { minX, minY, width, height } }) => {
+        ({ cellSize, scale }) => {
             if (cellSize < 5) {
-                return "";
+                return { x: 0, y: 0 };
             }
-
-            const size = Math.hypot(width, height);
 
             const logRoundedScale = Math.pow(
                 2,
                 Math.round(Math.log(scale) / Math.log(2) - offset),
             );
 
-            const camCenterX = (rect.a.x + rect.c.x) / 2;
-            const camCenterY = (rect.a.y + rect.d.y) / 2;
             const scaledDistance = cellSize * logRoundedScale;
 
-            const range = Math.floor(size / scaledDistance);
-            const baseDistanceX =
-                Math.floor(camCenterX / scaledDistance) * scaledDistance;
-            const baseDistanceY =
-                Math.floor(camCenterY / scaledDistance) * scaledDistance;
-
-            // const rays = G.reject(
-            // 	R.isNil,
-            // 	G.concat(
-            // 		G.map(
-            // 			(dist) => Geo.rayInsideQuad(Math.PI, dist, rect),
-            // 			G.map(
-            // 				(i) => -baseDistanceY + i * scaledDistance,
-            // 				G.range(-range, range, 1, true),
-            // 			),
-            // 		),
-            // 		G.map(
-            // 			(dist) => Geo.rayInsideQuad(Math.PI / 2, dist, rect),
-            // 			G.map(
-            // 				(i) => -baseDistanceX + i * scaledDistance,
-            // 				G.range(-range, range, 1, true),
-            // 			),
-            // 		),
-            // 	),
-            // );
-
-            // const path = G.reduce(
-            // 	(acc, { a, b }) =>
-            // 		U.formattedNumbers`${acc}M${a.x},${a.y}L${b.x},${b.y}`,
-            // 	"",
-            // 	rays,
-            // );
-
-            let path = "";
-
-            for (let i = -range; i < range; i++) {
-                {
-                    const dist = -baseDistanceY + i * scaledDistance;
-                    const raySegment = Geo.rayInsideQuad(Math.PI, dist, rect);
-
-                    if (raySegment) {
-                        path += U.formattedNumbers`M${raySegment.a.x},${raySegment.a.y}L${raySegment.b.x},${raySegment.b.y}`;
-                    }
-                }
-                {
-                    const dist = -baseDistanceX + i * scaledDistance;
-                    const raySegment = Geo.rayInsideQuad(
-                        Math.PI / 2,
-                        dist,
-                        rect,
-                    );
-
-                    if (raySegment) {
-                        path += U.formattedNumbers`M${raySegment.a.x},${raySegment.a.y}L${raySegment.b.x},${raySegment.b.y}`;
-                    }
-                }
-            }
-
-            return path;
+            return { x: scaledDistance, y: scaledDistance };
         };
-
-    const gridPathGeneral = $derived(
+    const gridSizeGeneral = $derived(
         view(
             [
                 L.pick({
-                    rect: ["frameBoxObject", "worldSpace"],
-                    screen: ["frameBoxObject", "screenSpaceAligned"],
                     scale: "cameraScale",
                     cellSize: "gridDistance",
                 }),
             ],
-            combine({ gridDistance, frameBoxObject, cameraScale }),
+            combine({ gridDistance, cameraScale }),
         ),
     );
 
-    const gridPathPrimary = $derived(
-        view(L.reread(gridBuilder(0)), gridPathGeneral),
+    const gridSizePrimary = $derived(
+        view(L.reread(gridBuilder(0)), gridSizeGeneral),
     );
-    const gridPathSecondary = $derived(
-        view(L.reread(gridBuilder(1)), gridPathGeneral),
-    );
+
+    const sizePrimary = $derived(gridSizePrimary.value);
+    let id = `grid-${Math.random().toString(36).slice(2)}`;
 </script>
 
-<g transform={rotationTransform.value} pointer-events="none">
+<defs>
+    <pattern
+        id="{id}-sec"
+        width={sizePrimary.x}
+        height={sizePrimary.y}
+        patternTransform={rotationTransform.value}
+        patternUnits="userSpaceOnUse"
+    >
+        <g vector-effect="non-scaling-stroke">
+            <path
+                d="M {sizePrimary.x} 0 L 0 0 0 {sizePrimary.y}"
+                fill="none"
+                vector-effect="non-scaling-stroke"
+                stroke="none"
+                class="grid-lines-primary"
+                stroke-width="1"
+            />
+            <path
+                d="M 0 0 L {sizePrimary.x} 0 M 0 0 L 0 {sizePrimary.y}"
+                fill="none"
+                vector-effect="non-scaling-stroke"
+                stroke="none"
+                class="grid-lines-primary"
+                stroke-width="1"
+            />
+        </g>
+    </pattern>
+    <pattern
+        id="{id}-prim"
+        width={sizePrimary.x}
+        height={sizePrimary.y}
+        patternTransform="{rotationTransform.value} translate({sizePrimary.x /
+            2} {sizePrimary.y / 2}) "
+        patternUnits="userSpaceOnUse"
+    >
+        <g vector-effect="non-scaling-stroke">
+            <path
+                d="M {sizePrimary.x} 0 L 0 0 0 {sizePrimary.y}"
+                fill="none"
+                vector-effect="non-scaling-stroke"
+                stroke="none"
+                class="grid-lines-secondary"
+                stroke-width="1"
+            />
+            <path
+                d="M 0 0 L {sizePrimary.x} 0 M 0 0 L 0 {sizePrimary.y}"
+                fill="none"
+                vector-effect="non-scaling-stroke"
+                stroke="none"
+                class="grid-lines-secondary"
+                stroke-width="1"
+            />
+        </g>
+    </pattern>
+</defs>
+
+{#if sizePrimary.x && sizePrimary.y}
     <path
-        class="grid-lines-secondary"
-        d={gridPathSecondary.value}
-        stroke="#eee"
-        stroke-width="1px"
-        fill="none"
-        vector-effect="non-scaling-stroke"
-        shape-rendering="optimizeSpeed"
+        stroke-width="0"
+        fill="url(#{id}-prim)"
+        stroke="none"
+        pointer-events="none"
+        d={frameBoxPath.value}
     />
     <path
-        class="grid-lines-primary"
-        d={gridPathPrimary.value}
-        stroke="#eee"
-        stroke-width="1px"
-        fill="none"
-        vector-effect="non-scaling-stroke"
-        shape-rendering="optimizeSpeed"
+        stroke-width="0"
+        fill="url(#{id}-sec)"
+        stroke="none"
+        pointer-events="none"
+        d={frameBoxPath.value}
     />
-</g>
+{/if}
 
 <style>
     .grid-lines-secondary {

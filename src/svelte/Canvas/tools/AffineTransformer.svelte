@@ -557,6 +557,7 @@
         -webkit-user-modify: none;
         -webkit-highlight: none;
         user-select: none;
+        -webkit-tap-highlight-color: transparent;
     }
 
     .handle {
@@ -596,5 +597,9 @@
     g.active > .handle {
         stroke-width: 3px;
         fill: RoyalBlue;
+    }
+
+    .handle {
+        -webkit-tap-highlight-color: transparent;
     }
 </style>
