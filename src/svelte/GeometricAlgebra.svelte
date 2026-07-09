@@ -7,81 +7,309 @@
     import createREGL from "regl";
     import { parseColor } from "./colors";
 
-    import { atom, view, read, combine, setValue } from "./svatom.svelte.js";
-    import { parserAutoDetect } from "@petristation/renewjs";
-    import { cubeB } from "@svatom/threedee/exampleMesh";
-    import { parse as parseObj, toGeo } from "@svatom/threedee/obj";
-    import * as objData from "../data/obj";
-    import * as renew from "../data/renew";
-    import { renewToGeo } from "./renewObj.js";
+    import { atom, view, read, combine, bindValue } from "./svatom.svelte.js";
 
-    import { marchingCubesToGeo } from "@svatom/threedee/marchingCubes";
+    const makeGeo = (vector) => ({
+        vertices: [
+            { x: -10, y: 0, z: 0 },
+            { x: 30, y: 0, z: 0 },
 
-    const objs = {
-        initial: {
-            label: "Initial",
-            geo: cubeB,
-        },
-        cube: { label: "Cube", data: objData.cube, scale: 20 },
-        monkey: {
-            label: "Suzanne",
-            data: objData.monkey,
-            scale: 20,
-            scaleX: -1,
-            scaleY: -1,
-        },
-        torus: { label: "Torus", data: objData.torus, scale: 5 },
-        renew1: { label: "Renew #1", renew: renew.exampleRenew, scale: 5 },
-        renew2: {
-            label: "Renew #2",
-            renew: renew.exampleDoubleArrow,
-            scale: 5,
-        },
-        renew3: { label: "Renew #3", renew: renew.exampleEightPhil, scale: 5 },
-        renew4: { label: "Renew #4", renew: renew.exampleCloseDoor, scale: 5 },
-        marching: {
-            label: "Marching Cubes",
-            geo: marchingCubesToGeo(
-                (x, y, z) =>
-                    (3 * x * x) / 100 +
-                    (4 * y * y) / 100 +
-                    (1.5 * z * z) / 100 -
-                    Math.cos((z * Math.PI) / 10) * 45 -
-                    Math.cos((x * Math.PI) / 12) * 20 -
-                    Math.cos((y * Math.PI) / 14) * 40,
-                -10,
-                -10,
-                -10,
-                10,
-                10,
-                10,
-                8,
-            ),
-            scale: 40,
-        },
-        gauss: {
-            label: "Gauss",
-            geo: marchingCubesToGeo(
-                (x, y, z) =>
-                    -y * 2 -
-                    2 * Math.PI * Math.exp(-(x * x + z * z) / 8 / Math.PI),
-                -12,
-                -12,
-                -12,
-                12,
-                12,
-                12,
-                24,
-            ),
-            scale: 40,
-        },
-    };
+            { x: 0, y: 3, z: 0 },
+            { x: 0, y: -30, z: 0 },
 
-    const renewExamples = fetch("https://renew.laszlokorte.de/")
-        .then((x) => x.json())
-        .catch((e) => {
-            files: [];
-        });
+            { x: 0, y: 0, z: -5 },
+            { x: 0, y: 0, z: 30 },
+
+            { x: 0, y: 0, z: 0 },
+            { x: vector.x, y: -vector.y, z: vector.z },
+
+            { x: 0, y: -vector.y, z: vector.z },
+            { x: vector.x, y: 0, z: vector.z },
+            { x: vector.x, y: -vector.y, z: 0 },
+
+            { x: 0, y: 0, z: vector.z },
+            { x: vector.x, y: 0, z: 0 },
+            { x: 0, y: -vector.y, z: 0 },
+        ],
+        edges: [
+            {
+                vertices: [0, 1],
+                faces: [],
+                attrs: {
+                    class: "axis",
+                    color: "red",
+                    flip: false,
+                    "marker-end": "url(#axis-arrow)",
+                },
+            },
+
+            {
+                vertices: [2, 3],
+                faces: [],
+                attrs: {
+                    class: "axis",
+                    color: "#00aa00",
+                    flip: false,
+                    "marker-end": "url(#axis-arrow)",
+                },
+            },
+
+            {
+                vertices: [4, 5],
+                faces: [],
+                attrs: {
+                    class: "axis",
+                    color: "blue",
+                    flip: false,
+
+                    "marker-end": "url(#axis-arrow)",
+                },
+            },
+
+            {
+                vertices: [6, 7],
+                faces: [],
+                attrs: {
+                    class: "vector",
+                    color: "#333",
+                    flip: false,
+                    "stroke-width": 4,
+                    "marker-end": "url(#vector-arrow)",
+                },
+            },
+
+            {
+                vertices: [11, 8],
+                faces: [],
+                attrs: {
+                    class: "vector-component",
+                    color: "#3332",
+                    flip: false,
+                },
+            },
+
+            {
+                vertices: [13, 8],
+                faces: [],
+                attrs: {
+                    class: "vector-component",
+                    color: "#3332",
+                    flip: false,
+                },
+            },
+
+            {
+                vertices: [13, 10],
+                faces: [],
+                attrs: {
+                    class: "vector-component",
+                    color: "#3332",
+                    flip: false,
+                },
+            },
+
+            {
+                vertices: [12, 10],
+                faces: [],
+                attrs: {
+                    class: "vector-component",
+                    color: "#3332",
+                    flip: false,
+                },
+            },
+
+            {
+                vertices: [11, 9],
+                faces: [],
+                attrs: {
+                    class: "vector-component",
+                    color: "#3332",
+                    flip: false,
+                },
+            },
+
+            {
+                vertices: [12, 9],
+                faces: [],
+                attrs: {
+                    class: "vector-component",
+                    color: "#3332",
+                    flip: false,
+                },
+            },
+
+            {
+                vertices: [6, 11],
+                faces: [],
+                attrs: {
+                    class: "vector-axis-component",
+                    "stroke-width": 3,
+                    color: "#00f",
+                    opacity: 0.4,
+                    flip: false,
+                    "marker-end": "url(#axis-arrow)",
+                },
+            },
+
+            {
+                vertices: [6, 12],
+                faces: [],
+                attrs: {
+                    class: "vector-axis-component",
+                    "stroke-width": 3,
+                    color: "#f00",
+                    opacity: 0.4,
+                    flip: false,
+                    "marker-end": "url(#axis-arrow)",
+                },
+            },
+            {
+                vertices: [6, 13],
+                faces: [],
+                attrs: {
+                    class: "vector-axis-component",
+                    "stroke-width": 3,
+                    color: "#0a0",
+                    opacity: 0.4,
+                    flip: false,
+                    "marker-end": "url(#axis-arrow)",
+                },
+            },
+
+            {
+                vertices: [8, 7],
+                faces: [],
+                attrs: {
+                    class: "vector-component",
+                    color: "#3332",
+                    "stroke-dasharray": "10 10",
+                    flip: false,
+                },
+            },
+
+            {
+                vertices: [9, 7],
+                faces: [],
+                attrs: {
+                    class: "vector-component",
+                    color: "#3332",
+                    "stroke-dasharray": "10 10",
+                    flip: false,
+                },
+            },
+
+            {
+                vertices: [10, 7],
+                faces: [],
+                attrs: {
+                    class: "vector-component",
+                    color: "#3332",
+                    "stroke-dasharray": "10 10",
+                    flip: false,
+                },
+            },
+
+            {
+                vertices: [6, 8],
+                faces: [],
+                attrs: {
+                    class: "vector",
+                    color: "#000",
+                    opacity: 0.3,
+                    flip: false,
+                    "stroke-dasharray": "3 3",
+                    "marker-end": "url(#vector-arrow)",
+                },
+            },
+
+            {
+                vertices: [6, 9],
+                faces: [],
+                attrs: {
+                    class: "vector",
+                    color: "#000",
+                    opacity: 0.3,
+                    flip: false,
+                    "stroke-dasharray": "3 3",
+                    "marker-end": "url(#vector-arrow)",
+                },
+            },
+
+            {
+                vertices: [6, 10],
+                faces: [],
+                attrs: {
+                    class: "vector",
+                    color: "#000",
+                    opacity: 0.3,
+                    flip: false,
+                    "stroke-dasharray": "3 3",
+                    "marker-end": "url(#vector-arrow)",
+                },
+            },
+        ],
+        faces: [],
+        masks: [],
+        labels: [
+            {
+                vertex: 1,
+                text: ["e1"],
+                attrs: {
+                    class: "axis-label",
+                    "pointer-events": "none",
+                    stroke: "white",
+                    "text-anchor": "middle",
+                    "stroke-width": "5px",
+                    "font-size": "1.4em",
+                    fill: "red",
+                    transform: "translate(0, -40)",
+                },
+            },
+            {
+                vertex: 3,
+                text: ["e2"],
+                attrs: {
+                    class: "axis-label",
+                    "pointer-events": "none",
+                    stroke: "white",
+                    "text-anchor": "middle",
+                    "stroke-width": "5px",
+                    "font-size": "1.4em",
+                    fill: "#00aa00",
+                    transform: "translate(0, -20)",
+                },
+            },
+            {
+                vertex: 5,
+                text: ["e3"],
+                attrs: {
+                    class: "axis-label",
+                    "pointer-events": "none",
+                    stroke: "white",
+                    "text-anchor": "middle",
+                    "stroke-width": "5px",
+                    "font-size": "1.4em",
+                    fill: "blue",
+                    transform: "translate(0, -40)",
+                },
+            },
+
+            {
+                vertex: 7,
+                text: ["v"],
+                attrs: {
+                    class: "vector-label",
+                    "pointer-events": "none",
+                    stroke: "white",
+                    "text-anchor": "middle",
+                    "stroke-width": "5px",
+                    "font-size": "1.4em",
+                    fill: "black",
+                    transform: "translate(0, -30)",
+                },
+            },
+        ],
+    });
 
     const numf = new Intl.NumberFormat("en-US", {
         maximumFractionDigits: 2,
@@ -91,14 +319,13 @@
     const expect = (p, f) => (x) => (x === undefined ? x : f(x));
 
     const {
-        geo = atom(cubeB),
         camera = atom({
             clip: {
                 near: 2,
                 far: 400,
             },
             aspectRatio: 1,
-            fov: Math.PI / 2 / 6,
+            fov: Math.PI / 2 / 10,
             orthogonality: 0,
             eye: {
                 tx: 0,
@@ -113,7 +340,7 @@
             },
             offset: {
                 x: 0,
-                y: -10,
+                y: 0,
                 z: 130,
             },
         }),
@@ -577,7 +804,8 @@
     const normLength = L.normalize((o) => {
         return L.modify(L.values, R.divide(R.__, L.sum(L.values, o) || 1), o);
     });
-    const worldGeo = atom(objs.marching.geo);
+    const mainVector = atom({ x: 8, y: 7, z: 5 });
+    const worldGeo = view(makeGeo, mainVector);
     const sunLightDir = atom({
         pos: { x: 0, y: 0, z: -100 },
         dir: { x: -1, y: 0.8, z: 0.5 },
@@ -1399,7 +1627,7 @@
     const cameraFoVWheel = $derived(
         view(
             [
-                L.normalize(R.clamp(0.001, 180)),
+                L.normalize(R.clamp(10, 90)),
                 L.setter((a, b) => b * Math.exp(a / 1000)),
             ],
             cameraFoVDeg,
@@ -1656,8 +1884,8 @@
     const hideAll = $derived(view(allProps(true), backfaceCull));
 
     const debugLabels = atom({
-        svg: false,
-        canvas: true,
+        svg: true,
+        canvas: false,
         edge: false,
         face: false,
         vertex: false,
@@ -1698,7 +1926,7 @@
     const textPerspective = $derived(view("perspective", textRendering));
 
     const geoJson = $derived(
-        view(L.inverse(L.json({ space: "  " })), worldGeo),
+        view(L.inverse(L.json({ space: "  " })), mainVector),
     );
 
     const clipEdge = clipFace4D(edgeClipper);
@@ -1938,15 +2166,8 @@
     }
 
     const arrowGeometries = {
-        "CH.ifa.draw.figures.ArrowTip": S.arrowGeometry(4),
-        "de.renew.gui.CircleDecoration": S.circleCapGeometry(5, 10),
-        "de.renew.gui.AssocArrowTip": lineArrowGeometry(4), // TODO
-        "de.renew.diagram.AssocArrowTip": lineArrowGeometry(4), // TODO
-        "de.renew.gui.IsaArrowTip": flatArrowGeometry(5), // TODO
-        "de.renew.gui.fs.IsaArrowTip": flatArrowGeometry(5), // TODO
-        "de.renew.gui.fs.AssocArrowTip": lineArrowGeometry(4), // TODO
-        "de.renew.diagram.SynchronousMessageArrowTip": S.arrowGeometry(5), // TODO
-        "de.renew.gui.DoubleArrowTip": doubleArrowGeometry(5), // TODO
+        "axis-arrow": S.arrowGeometry(4),
+        "vector-arrow": S.arrowGeometry(4),
     };
     const roundLineGeo = S.roundCapJoinGeometry(10);
 
@@ -2469,725 +2690,70 @@
     );
 </script>
 
-<div
-    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(20em, 1fr)); gap: 1em; padding: 1em 0"
->
-    <div>
-        <fieldset>
-            <legend>Plane Triangle</legend>
-            <label class="number-picker"
-                ><span class="number-picker-label">Offset X:</span>
-                <input
-                    type="range"
-                    class="number-picker-slider"
-                    {...rangeX.value}
-                    bind:value={offsetX.value}
-                /><output class="number-picker-value ro"
-                    >({numf.format(offsetX.value)})</output
-                >
-            </label>
-            <label class="number-picker"
-                ><span class="number-picker-label">Offset Y:</span>
-                <input
-                    type="range"
-                    class="number-picker-slider"
-                    {...rangeY.value}
-                    bind:value={offsetY.value}
-                /><output class="number-picker-value ro"
-                    >({numf.format(offsetY.value)})</output
-                >
-            </label>
-            <label class="number-picker"
-                ><span class="number-picker-label">Rotation:</span>
-                <input
-                    type="range"
-                    class="number-picker-slider"
-                    min="-360"
-                    max="360"
-                    bind:value={rotationAngle.value}
-                /><output class="number-picker-value ro"
-                    >({numf.format(rotationAngle.value)})</output
-                >
-            </label>
+<fieldset>
+    <legend>Debug</legend>
+    {#each ["vertex"] as dbg}
+        {@const v = view(dbg, debugLabels)}
 
-            <label class="number-picker"
-                ><span class="number-picker-label">Scale X:</span>
-                <input
-                    type="range"
-                    class="number-picker-slider"
-                    min="-4"
-                    max="4"
-                    step="0.01"
-                    bind:value={scaleX.value}
-                /><output class="number-picker-value ro"
-                    >({numf.format(scaleX.value)})</output
-                >
-            </label>
+        <label>
+            <input bind:checked={v.value} type="checkbox" />
+            {dbg}
+        </label>
+    {/each}
+</fieldset>
 
-            <label class="number-picker"
-                ><span class="number-picker-label">Scale Y:</span>
-                <input
-                    type="range"
-                    class="number-picker-slider"
-                    min="-4"
-                    max="4"
-                    step="0.01"
-                    bind:value={scaleY.value}
-                /><output class="number-picker-value ro"
-                    >({numf.format(scaleY.value)})</output
-                >
-            </label>
-        </fieldset>
-
-        <fieldset>
-            <legend>Object</legend>
-
-            <div
-                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(10em, 1fr)); gap: 1em; "
-            >
-                <div>
-                    <label class="number-picker"
-                        ><span class="number-picker-label">Position X:</span>
-                        <input
-                            type="range"
-                            class="number-picker-slider"
-                            min="-150"
-                            max="150"
-                            step="0.001"
-                            bind:value={worldTransformPosX.value}
-                        /><output class="number-picker-value ro"
-                            >({numf.format(worldTransformPosX.value)})</output
-                        >
-                    </label>
-                    <label class="number-picker"
-                        ><span class="number-picker-label">Position Y:</span>
-                        <input
-                            type="range"
-                            class="number-picker-slider"
-                            min="-150"
-                            max="150"
-                            step="0.001"
-                            bind:value={worldTransformPosY.value}
-                        /><output class="number-picker-value ro"
-                            >({numf.format(worldTransformPosY.value)})</output
-                        >
-                    </label>
-                    <label class="number-picker"
-                        ><span class="number-picker-label">Position Z:</span>
-                        <input
-                            type="range"
-                            class="number-picker-slider"
-                            min="-150"
-                            max="150"
-                            step="0.001"
-                            bind:value={worldTransformPosZ.value}
-                        /><output class="number-picker-value ro"
-                            >({numf.format(worldTransformPosZ.value)})</output
-                        >
-                    </label>
-                </div>
-                <div>
-                    <label class="number-picker"
-                        ><span class="number-picker-label">Rotation X:</span>
-                        <input
-                            type="range"
-                            class="number-picker-slider"
-                            min="-180"
-                            max="180"
-                            step="1"
-                            bind:value={worldTransformRotX.value}
-                        /><output class="number-picker-value ro"
-                            >({numf.format(worldTransformRotX.value)})</output
-                        >
-                    </label>
-                    <label class="number-picker"
-                        ><span class="number-picker-label">Rotation Y:</span>
-                        <input
-                            type="range"
-                            class="number-picker-slider"
-                            min="-180"
-                            max="180"
-                            step="1"
-                            bind:value={worldTransformRotY.value}
-                        /><output class="number-picker-value ro"
-                            >({numf.format(worldTransformRotY.value)})</output
-                        >
-                    </label>
-                    <label class="number-picker"
-                        ><span class="number-picker-label">Rotation Z:</span>
-                        <input
-                            type="range"
-                            class="number-picker-slider"
-                            min="-180"
-                            max="180"
-                            step="1"
-                            bind:value={worldTransformRotZ.value}
-                        /><output class="number-picker-value ro"
-                            >({numf.format(worldTransformRotZ.value)})</output
-                        >
-                    </label>
-                </div>
-                <div>
-                    <label class="number-picker"
-                        ><span class="number-picker-label">Scale X:</span>
-                        <input
-                            type="range"
-                            class="number-picker-slider"
-                            min="-5"
-                            max="5"
-                            step="0.1"
-                            bind:value={worldTransformScaleX.value}
-                        /><output class="number-picker-value ro"
-                            >({numf.format(worldTransformScaleX.value)})</output
-                        >
-                    </label>
-                    <label class="number-picker"
-                        ><span class="number-picker-label">Scale Y:</span>
-                        <input
-                            type="range"
-                            class="number-picker-slider"
-                            min="-5"
-                            max="5"
-                            step="0.1"
-                            bind:value={worldTransformScaleY.value}
-                        /><output class="number-picker-value ro"
-                            >({numf.format(worldTransformScaleY.value)})</output
-                        >
-                    </label>
-                    <label class="number-picker"
-                        ><span class="number-picker-label">Scale Z:</span>
-                        <input
-                            type="range"
-                            class="number-picker-slider"
-                            min="-5"
-                            max="5"
-                            step="0.1"
-                            bind:value={worldTransformScaleZ.value}
-                        /><output class="number-picker-value ro"
-                            >({numf.format(worldTransformScaleZ.value)})</output
-                        >
-                    </label>
-                </div>
-                <div>
-                    <label>
-                        Color:
-                        <input type="color" bind:value={meshColor.value} />
-                    </label>
-                </div>
-            </div>
-        </fieldset>
-        <fieldset>
-            <legend>Debug Labels</legend>
-
-            <div class="checkbox-list">
-                <label class="checkbox-list-item"
-                    ><input type="checkbox" bind:checked={showSvg.value} />
-                    <span class="checkbox-list-item-label">SVG</span></label
-                >
-                <label class="checkbox-list-item"
-                    ><input type="checkbox" bind:checked={showCanvas.value} />
-                    <span class="checkbox-list-item-label">Canvas</span></label
-                >
-                <label class="checkbox-list-item"
-                    ><input type="checkbox" bind:checked={labelFace.value} />
-                    <span class="checkbox-list-item-label">Face</span></label
-                >
-                <label class="checkbox-list-item"
-                    ><input type="checkbox" bind:checked={labelVertex.value} />
-                    <span class="checkbox-list-item-label">Vertex</span></label
-                >
-                <label class="checkbox-list-item"
-                    ><input type="checkbox" bind:checked={labelEdge.value} />
-                    <span class="checkbox-list-item-label">Edge</span></label
-                >
-                <label class="checkbox-list-item"
-                    ><input type="checkbox" bind:checked={showNDCCube.value} />
-                    <span class="checkbox-list-item-label">NDC Cube</span
-                    ></label
-                >
-                <label class="checkbox-list-item"
-                    ><input
-                        type="checkbox"
-                        bind:checked={screenTriangle.value}
-                    />
-                    <span class="checkbox-list-item-label"
-                        >Clipped Triangle</span
-                    ></label
-                >
-                <label class="checkbox-list-item"
-                    ><input type="checkbox" bind:checked={alphaBlend.value} />
-                    <span class="checkbox-list-item-label">Alpha Blend</span
-                    ></label
-                >
-            </div>
-        </fieldset>
-
-        <fieldset>
-            <legend>Text Rendering</legend>
-
-            <div class="checkbox-list">
-                <label class="checkbox-list-item"
-                    ><input
-                        type="checkbox"
-                        bind:checked={textFormatted.value}
-                    />
-                    <span class="checkbox-list-item-label">Formatted Text</span
-                    ></label
-                >
-                <label class="checkbox-list-item"
-                    ><input
-                        type="checkbox"
-                        bind:checked={textPerspective.value}
-                    />
-                    <span class="checkbox-list-item-label"
-                        >Perspective Text</span
-                    ></label
-                >
-            </div>
-        </fieldset>
-
-        <fieldset>
-            <legend>Drawing Style</legend>
-            <label class="number-picker"
-                ><span class="number-picker-label">Stroke Fg:</span>
-                <input
-                    type="range"
-                    class="number-picker-slider"
-                    min="0"
-                    max="10"
-                    step="0.1"
-                    bind:value={strokeWidthFg.value}
-                /><output class="number-picker-value ro"
-                    >({numf.format(strokeWidthFg.value)})</output
-                >
-            </label>
-
-            <label class="number-picker"
-                ><span class="number-picker-label">Stroke Bg:</span>
-                <input
-                    type="range"
-                    class="number-picker-slider"
-                    min="0"
-                    max="10"
-                    step="0.1"
-                    bind:value={strokeWidthBg.value}
-                /><output class="number-picker-value ro"
-                    >({numf.format(strokeWidthBg.value)})</output
-                >
-            </label>
-            <label class="number-picker"
-                ><span class="number-picker-label">Vertex Size:</span>
-                <input
-                    type="range"
-                    class="number-picker-slider"
-                    min="0"
-                    max="20"
-                    step="0.1"
-                    bind:value={circleRad.value}
-                /><output class="number-picker-value ro"
-                    >({numf.format(circleRad.value)})</output
-                >
-            </label>
-            <label class="number-picker"
-                ><span class="number-picker-label">Font Size:</span>
-                <input
-                    type="range"
-                    class="number-picker-slider"
-                    min="0"
-                    max="20"
-                    step="0.1"
-                    bind:value={fontSize.value}
-                /><output class="number-picker-value ro"
-                    >({numf.format(fontSize.value)})</output
-                >
-            </label>
-            <label class="number-picker"
-                ><span class="number-picker-label">Dash Frequency:</span>
-                <input
-                    type="range"
-                    class="number-picker-slider"
-                    min="0"
-                    max="10"
-                    step="0.1"
-                    bind:value={dashFrequency.value}
-                /><output class="number-picker-value ro"
-                    >({numf.format(dashFrequency.value)})</output
-                >
-            </label>
-            <label class="number-picker"
-                ><span class="number-picker-label">Dash Ratio:</span>
-                <input
-                    type="range"
-                    class="number-picker-slider"
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    bind:value={dashRatio.value}
-                /><output class="number-picker-value ro"
-                    >({numf.format(dashRatio.value)})</output
-                >
-            </label>
-        </fieldset>
-    </div>
-
-    <div>
-        <fieldset>
-            <legend>View</legend>
-
-            <label class="number-picker"
-                ><span class="number-picker-label">Inset:</span>
-                <input
-                    type="range"
-                    class="number-picker-slider"
-                    min="-10"
-                    max="50"
-                    step="1"
-                    bind:value={inset.value}
-                /><output class="number-picker-value ro"
-                    >({numf.format(inset.value)})</output
-                >
-            </label>
-        </fieldset>
-        <fieldset>
-            <legend>Camera</legend>
-
-            <label class="number-picker"
-                ><span class="number-picker-label">Field of View:</span>
-                <input
-                    type="range"
-                    class="number-picker-slider"
-                    min="1"
-                    max="120"
-                    step="1"
-                    bind:value={cameraFoVDeg.value}
-                /><output class="number-picker-value ro"
-                    >({numf.format(cameraFoVDeg.value)})</output
-                >
-            </label>
-
-            <label class="number-picker"
-                ><span class="number-picker-label">Aspect Ratio:</span>
-                <input
-                    type="range"
-                    class="number-picker-slider"
-                    min="0.1"
-                    max="10"
-                    step="0.1"
-                    bind:value={cameraAspectRatio.value}
-                /><output class="number-picker-value ro"
-                    >({numf.format(cameraAspectRatio.value)})</output
-                >
-            </label>
-
-            <label class="number-picker"
-                ><span class="number-picker-label">Orthogonality:</span>
-                <input
-                    type="range"
-                    class="number-picker-slider"
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    bind:value={cameraOrtho.value}
-                /><output class="number-picker-value ro"
-                    >({numf.format(cameraOrtho.value)})</output
-                >
-            </label>
-
-            <fieldset>
-                <legend>Eye</legend>
-
-                <div
-                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(10em, 1fr)); gap: 1em; "
-                >
-                    <div>
-                        <label class="number-picker"
-                            ><span class="number-picker-label">Position X:</span
-                            >
-                            <input
-                                type="range"
-                                class="number-picker-slider"
-                                min="-100"
-                                max="100"
-                                step="0.001"
-                                bind:value={cameraEyePosX.value}
-                            /><output class="number-picker-value ro"
-                                >({numf.format(cameraEyePosX.value)})</output
-                            >
-                        </label>
-                        <label class="number-picker"
-                            ><span class="number-picker-label">Position Y:</span
-                            >
-                            <input
-                                type="range"
-                                class="number-picker-slider"
-                                min="-100"
-                                max="100"
-                                step="0.001"
-                                bind:value={cameraEyePosY.value}
-                            /><output class="number-picker-value ro"
-                                >({numf.format(cameraEyePosY.value)})</output
-                            >
-                        </label>
-                        <label class="number-picker"
-                            ><span class="number-picker-label">Position Z:</span
-                            >
-                            <input
-                                type="range"
-                                class="number-picker-slider"
-                                min="-100"
-                                max="100"
-                                step="0.001"
-                                bind:value={cameraEyePosZ.value}
-                            /><output class="number-picker-value ro"
-                                >({numf.format(cameraEyePosZ.value)})</output
-                            >
-                        </label>
-                    </div>
-                    <div>
-                        <label class="number-picker"
-                            ><span class="number-picker-label">Rotation X:</span
-                            >
-                            <input
-                                type="range"
-                                class="number-picker-slider"
-                                min="-180"
-                                max="180"
-                                step="1"
-                                bind:value={cameraEyeRotX.value}
-                            /><output class="number-picker-value ro"
-                                >({numf.format(cameraEyeRotX.value)})</output
-                            >
-                        </label>
-                        <label class="number-picker"
-                            ><span class="number-picker-label">Rotation Y:</span
-                            >
-                            <input
-                                type="range"
-                                class="number-picker-slider"
-                                min="-180"
-                                max="180"
-                                step="1"
-                                bind:value={cameraEyeRotY.value}
-                            /><output class="number-picker-value ro"
-                                >({numf.format(cameraEyeRotY.value)})</output
-                            >
-                        </label>
-                        <label class="number-picker"
-                            ><span class="number-picker-label">Rotation Z:</span
-                            >
-                            <input
-                                type="range"
-                                class="number-picker-slider"
-                                min="-180"
-                                max="180"
-                                step="1"
-                                bind:value={cameraEyeRotZ.value}
-                            /><output class="number-picker-value ro"
-                                >({numf.format(cameraEyeRotZ.value)})</output
-                            >
-                        </label>
-                    </div>
-                    <div>
-                        <label class="number-picker"
-                            ><span class="number-picker-label">Offset X:</span>
-                            <input
-                                type="range"
-                                class="number-picker-slider"
-                                min="-100"
-                                max="100"
-                                step="0.001"
-                                bind:value={cameraOffsetX.value}
-                            /><output class="number-picker-value ro"
-                                >({numf.format(cameraOffsetX.value)})</output
-                            >
-                        </label>
-                        <label class="number-picker"
-                            ><span class="number-picker-label">Offset Y:</span>
-                            <input
-                                type="range"
-                                class="number-picker-slider"
-                                min="-100"
-                                max="100"
-                                step="0.001"
-                                bind:value={cameraOffsetY.value}
-                            /><output class="number-picker-value ro"
-                                >({numf.format(cameraOffsetY.value)})</output
-                            >
-                        </label>
-                        <label class="number-picker"
-                            ><span class="number-picker-label">Offset Z:</span>
-                            <input
-                                type="range"
-                                class="number-picker-slider"
-                                min="-100"
-                                max="100"
-                                step="0.001"
-                                bind:value={cameraOffsetZ.value}
-                            /><output class="number-picker-value ro"
-                                >({numf.format(cameraOffsetZ.value)})</output
-                            >
-                        </label>
-                    </div>
-                </div>
-            </fieldset>
-
-            <fieldset>
-                <legend>Clip</legend>
-                <label class="number-picker"
-                    ><span class="number-picker-label">Near:</span>
-                    <input
-                        type="range"
-                        class="number-picker-slider"
-                        min="1"
-                        max="400"
-                        step="1"
-                        bind:value={cameraClipNear.value}
-                    /><output class="number-picker-value ro"
-                        >({numf.format(cameraClipNear.value)})</output
-                    >
-                </label>
-                <label class="number-picker"
-                    ><span class="number-picker-label">Far:</span>
-                    <input
-                        type="range"
-                        class="number-picker-slider"
-                        min="1"
-                        max="400"
-                        step="1"
-                        bind:value={cameraClipFar.value}
-                    /><output class="number-picker-value ro"
-                        >({numf.format(cameraClipFar.value)})</output
-                    >
-                </label>
-            </fieldset>
-            <fieldset>
-                <legend>Backface</legend>
-
-                <div class="checkbox-list">
-                    <label class="checkbox-list-item"
-                        ><input type="checkbox" bind:checked={hideCW.value} />
-                        <span class="checkbox-list-item-label"
-                            >Hide Clockwise Faces</span
-                        ></label
-                    >
-                    <label class="checkbox-list-item"
-                        ><input type="checkbox" bind:checked={hideCCW.value} />
-                        <span class="checkbox-list-item-label"
-                            >Hide Counter-Clockwise Faces</span
-                        ></label
-                    >
-                    <button onclick={setValue(hideNone)} value="true">
-                        Show All</button
-                    >
-                    <button onclick={setValue(hideAll)} value="true">
-                        Hide All</button
-                    >
-                </div>
-            </fieldset>
-        </fieldset>
-
-        <fieldset>
-            <legend>Load Example model</legend>
-
-            <div>
-                <select
-                    size="10"
-                    style="width: 100%;"
-                    onchange={(evt) => {
-                        const obj = objs[evt.currentTarget.value];
-                        if (obj.geo) {
-                            worldGeo.value = obj.geo;
-                        } else if (obj.data) {
-                            worldGeo.value = obj.geo = toGeo(
-                                parseObj(obj.data),
-                                obj.scale ?? 1,
-                                obj.reverse ?? true,
-                                obj.scaleX ?? 1,
-                                obj.scaleY ?? 1,
-                                obj.scaleZ ?? 1,
-                            );
-                        } else if (obj.renew) {
-                            worldGeo.value = obj.geo = renewToGeo(
-                                parserAutoDetect(obj.renew, false),
-                                50,
-                                20,
-                            );
-                        }
-                    }}
-                >
-                    {#each Object.entries(objs) as [k, v] (k)}
-                        <option value={k}>{v.label}</option>
-                    {/each}
-                </select>
-            </div>
-        </fieldset>
-
-        <fieldset>
-            <legend>Load Renew Document</legend>
-
-            {#await renewExamples then { files }}
-                <label>
-                    Select file:
-                    <select
-                        onchange={(e) => {
-                            const fileName =
-                                e.currentTarget.selectedOptions[0].textContent;
-                            if (e.currentTarget.value) {
-                                fetch(e.currentTarget.value)
-                                    .then((x) => x.json())
-                                    .then((x) => {
-                                        worldGeo.value = renewToGeo(
-                                            parserAutoDetect(x.content, false),
-                                            50,
-                                            20,
-                                        );
-                                    })
-                                    .catch((e) => {
-                                        worldGeo.value = {
-                                            vertices: [{ x: 0, y: 0, z: 0 }],
-                                            edges: [],
-                                            faces: [],
-                                            masks: [],
-                                            labels: [
-                                                {
-                                                    vertex: 0,
-                                                    text: [
-                                                        "Error parsing",
-                                                        fileName,
-                                                    ],
-                                                    attrs: {
-                                                        class: "cube-label",
-                                                        "pointer-events":
-                                                            "none",
-                                                        stroke: "white",
-                                                        "text-anchor": "middle",
-                                                        "stroke-width": "5px",
-                                                        "font-size": "3.4em",
-                                                        fill: "red",
-                                                        transform: "",
-                                                    },
-                                                },
-                                            ],
-                                        };
-                                    });
+<fieldset>
+    <legend>Vector</legend>
+    {#each ["x", "y", "z"] as axis}
+        <label
+            >{axis}-Axis
+            <input
+                type="range"
+                min="-25"
+                max="25"
+                step="0.1"
+                {@attach bindValue(view(axis, mainVector))}
+            />
+        </label>
+    {/each}
+    <label
+        >Length
+        <input
+            type="range"
+            min="-25"
+            max="25"
+            step="0.1"
+            {@attach bindValue(
+                view(
+                    L.lens(
+                        ({ x, y, z }) =>
+                            (Math.sign(x) || 1) *
+                            (Math.sign(z) || 1) *
+                            (Math.sign(y) || 1) *
+                            Math.hypot(x, Math.hypot(y, z)),
+                        (l, { x, y, z }) => {
+                            const oldLen = Math.hypot(x, Math.hypot(y, z)) || 1;
+                            const s =
+                                Math.sign(x || 1) *
+                                Math.sign(z || 1) *
+                                Math.sign(y || 1);
+                            if (Math.abs(l) < 0.01) {
+                                return { x, y, z };
                             }
-                        }}
-                    >
-                        <option value="">More examples</option>
-                        {#each files as { name, href }}
-                            <option value={href}>{name}</option>
-                        {/each}
-                    </select>
-                </label>
-            {:catch}
-                <em style="color: #aaa"
-                    >Or Drop Renew Files from your own PC into the text field</em
-                >
-            {/await}
-        </fieldset>
-    </div>
-</div>
 
+                            return {
+                                x: (x / oldLen) * l * s,
+                                y: (y / oldLen) * l * s,
+                                z: (z / oldLen) * l * s,
+                            };
+                        },
+                    ),
+                    mainVector,
+                ),
+            )}
+        />
+    </label>
+</fieldset>
 <div class="resize">
     {#if showCanvas.value}
         <div class="viewportContainer" {@attach renderGL}></div>
@@ -3417,123 +2983,31 @@
         </g>
         <defs>
             <marker
-                id="CH.ifa.draw.figures.ArrowTip"
+                id="axis-arrow"
                 viewBox="0 0 10 10"
                 refX="9"
                 refY="5"
                 markerWidth="6"
                 markerHeight="6"
+                fill="context-stroke"
                 orient="auto-start-reverse"
             >
-                <path d="M 0 0 L 10 5 L 0 10 z" />
+                <path d="M 10 5 l -10 5 l 3 -5 l -3 -5 z" />
             </marker>
 
             <marker
-                id="de.renew.gui.CircleDecoration"
+                id="vector-arrow"
                 viewBox="0 0 10 10"
-                refX="9"
+                refX="8"
                 refY="5"
                 markerWidth="6"
                 markerHeight="6"
+                fill="context-stroke"
                 orient="auto-start-reverse"
             >
-                <circle cx="5" cy="5" r="5" />
+                <path d="M 10 5 l -10 5 l 3 -5 l -3 -5 z" />
             </marker>
-
-            <marker
-                id="de.renew.gui.AssocArrowTip"
-                viewBox="0 0 10 10"
-                refX="9"
-                refY="5"
-                markerWidth="6"
-                markerHeight="6"
-                orient="auto-start-reverse"
-            >
-                <!--TODO-->
-            </marker>
-            <marker
-                id="de.renew.diagram.AssocArrowTip"
-                viewBox="0 0 10 10"
-                refX="9"
-                refY="5"
-                markerWidth="6"
-                markerHeight="6"
-                orient="auto-start-reverse"
-            >
-                <!--TODO-->
-            </marker>
-            <marker
-                id="de.renew.gui.IsaArrowTip"
-                viewBox="0 0 10 10"
-                refX="9"
-                refY="5"
-                markerWidth="6"
-                markerHeight="6"
-                orient="auto-start-reverse"
-            >
-                <!--TODO-->
-            </marker>
-            <marker
-                id="de.renew.gui.fs.IsaArrowTip"
-                viewBox="0 0 10 10"
-                refX="9"
-                refY="5"
-                markerWidth="6"
-                markerHeight="6"
-                orient="auto-start-reverse"
-            >
-                <!--TODO-->
-            </marker>
-            <marker
-                id="de.renew.gui.fs.AssocArrowTip"
-                viewBox="0 0 10 10"
-                refX="9"
-                refY="5"
-                markerWidth="6"
-                markerHeight="6"
-                orient="auto-start-reverse"
-            >
-                <!--TODO-->
-            </marker>
-            <marker
-                id="de.renew.diagram.SynchronousMessageArrowTip"
-                viewBox="0 0 10 10"
-                refX="9"
-                refY="5"
-                markerWidth="6"
-                markerHeight="6"
-                orient="auto-start-reverse"
-            >
-                <!--TODO-->
-            </marker>
-            <marker
-                id="de.renew.gui.DoubleArrowTip"
-                viewBox="-5 0 15 10"
-                refX="9"
-                refY="5"
-                markerWidth="10"
-                markerHeight="6"
-                orient="auto-start-reverse"
-            >
-                <path d="M 0 0 L 10 5 L 0 10 z" />
-                <path d="M -5 0 L 5 5 L -5 10 z" />
-            </marker>
-
-            {#each ndcGeoMaskPathsFast.value as p, i (i)}
-                <clipPath id="mask-{i}">
-                    <polygon
-                        class={p.attrs.class}
-                        data-clockwise={p.clockwise !== (p.attrs.flip ?? false)}
-                        points={p.path}
-                    />
-                </clipPath>
-            {/each}
         </defs>
-
-        {#if worldGeo.value.masks.length}
-            <circle cx="0" cy="0" r="60" clip-path="url(#mask-0)" fill="blue"
-            ></circle>
-        {/if}
     </svg>
 </div>
 <textarea bind:value={geoJson.value}></textarea>
@@ -3564,6 +3038,10 @@
 
     .viewport.vector {
         z-index: 10;
+    }
+
+    .axis {
+        stroke-width: 2;
     }
 
     .resize {
