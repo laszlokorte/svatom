@@ -11,6 +11,7 @@
 
     const makeGeo = (vector) => {
         const e123root = Math.cbrt(vector.e123);
+        const e123rootAbs = Math.abs(e123root);
         const e12root = Math.sqrt(Math.abs(vector.e12)) * Math.sign(vector.e12);
         const e13root = Math.sqrt(Math.abs(vector.e13)) * Math.sign(vector.e13);
         const e23root = Math.sqrt(Math.abs(vector.e23)) * Math.sign(vector.e23);
@@ -21,82 +22,180 @@
         const cubePadding = 0.1;
         const cubePaddingCompl = 1 - cubePadding;
 
+        const biOffset =
+            Math.sqrt(Math.hypot(vector.e12, vector.e23, vector.e13)) / 2;
+
+        const minDistance = Math.max(10, e123rootAbs, e13rootAbs);
+        const originBasis = { x: 0, y: 5, z: 0 };
+        const grade0basis = { x: minDistance, y: 0, z: minDistance };
+        const grade1basis = { x: -minDistance, y: 0, z: minDistance };
+        const grade2basis = { x: minDistance, y: 0, z: -minDistance };
+        const grade3basis = {
+            x: e123rootAbs / 2 - minDistance,
+            y: -e123rootAbs / 2,
+            z: e123rootAbs / 2 - minDistance,
+        };
+
         return {
             vertices: [
-                { x: 0, y: 0, z: 0 },
-                { x: 4, y: 0, z: 0 },
+                {
+                    x: originBasis.x + 0,
+                    y: originBasis.y + 0,
+                    z: originBasis.z + 0,
+                },
+                {
+                    x: originBasis.x + 4,
+                    y: originBasis.y + 0,
+                    z: originBasis.z + 0,
+                },
 
-                { x: 0, y: 0, z: 0 },
-                { x: 0, y: -4, z: 0 },
+                {
+                    x: originBasis.x + 0,
+                    y: originBasis.y + 0,
+                    z: originBasis.z + 0,
+                },
+                {
+                    x: originBasis.x + 0,
+                    y: originBasis.y + -4,
+                    z: originBasis.z + 0,
+                },
 
-                { x: 0, y: 0, z: 0 },
-                { x: 0, y: 0, z: 4 },
+                {
+                    x: originBasis.x + 0,
+                    y: originBasis.y + 0,
+                    z: originBasis.z + 0,
+                },
+                {
+                    x: originBasis.x + 0,
+                    y: originBasis.y + 0,
+                    z: originBasis.z + 4,
+                },
 
-                { x: 0, y: 0, z: 0 },
-                { x: vector.e1, y: -vector.e2, z: vector.e3 },
+                {
+                    x: originBasis.x + 0,
+                    y: originBasis.y + 0,
+                    z: originBasis.z + 0,
+                },
+                {
+                    x: grade1basis.x + vector.e1,
+                    y: grade1basis.y + -vector.e2,
+                    z: grade1basis.z + vector.e3,
+                },
 
-                { x: 0, y: -vector.e2, z: vector.e3 },
-                { x: vector.e1, y: 0, z: vector.e3 },
-                { x: vector.e1, y: -vector.e2, z: 0 },
+                {
+                    x: grade1basis.x + 0,
+                    y: grade1basis.y + -vector.e2,
+                    z: grade1basis.z + vector.e3,
+                },
+                {
+                    x: grade1basis.x + vector.e1,
+                    y: grade1basis.y + 0,
+                    z: grade1basis.z + vector.e3,
+                },
+                {
+                    x: grade1basis.x + vector.e1,
+                    y: grade1basis.y + -vector.e2,
+                    z: grade1basis.z + 0,
+                },
 
-                { x: 0, y: 0, z: vector.e3 },
-                { x: vector.e1, y: 0, z: 0 },
-                { x: 0, y: -vector.e2, z: 0 },
+                {
+                    x: grade1basis.x + 0,
+                    y: grade1basis.y + 0,
+                    z: grade1basis.z + vector.e3,
+                },
+                {
+                    x: grade1basis.x + vector.e1,
+                    y: grade1basis.y + 0,
+                    z: grade1basis.z + 0,
+                },
+                {
+                    x: grade1basis.x + 0,
+                    y: grade1basis.y + -vector.e2,
+                    z: grade1basis.z + 0,
+                },
 
                 // 14
-                { x: 4, y: 0, z: 0 },
-                { x: 0, y: -4, z: 0 },
-                { x: 0, y: 0, z: 4 },
+                {
+                    x: originBasis.x + 4,
+                    y: originBasis.y + 0,
+                    z: originBasis.z + 0,
+                },
+                {
+                    x: originBasis.x + 0,
+                    y: originBasis.y + -4,
+                    z: originBasis.z + 0,
+                },
+                {
+                    x: originBasis.x + 0,
+                    y: originBasis.y + 0,
+                    z: originBasis.z + 4,
+                },
 
-                { x: 4, y: -4, z: 0 },
-                { x: 0, y: -4, z: 4 },
-                { x: 4, y: 0, z: 4 },
+                {
+                    x: originBasis.x + 4,
+                    y: originBasis.y + -4,
+                    z: originBasis.z + 0,
+                },
+                {
+                    x: originBasis.x + 0,
+                    y: originBasis.y + -4,
+                    z: originBasis.z + 4,
+                },
+                {
+                    x: originBasis.x + 4,
+                    y: originBasis.y + 0,
+                    z: originBasis.z + 4,
+                },
 
                 // 20
                 {
-                    x: 0,
-                    y: -(e23rootAbs + e23root) / 2,
-                    z: (e23rootAbs - e23root) / 2,
+                    x: grade2basis.x + 0,
+                    y: grade2basis.y + -(e23rootAbs + e23root) / 2,
+                    z: grade2basis.z + (e23rootAbs - e23root) / 2,
                 },
                 {
-                    x: 0,
-                    y: -(e23rootAbs - e23root) / 2,
-                    z: (e23rootAbs + e23root) / 2,
+                    x: grade2basis.x + 0,
+                    y: grade2basis.y + -(e23rootAbs - e23root) / 2,
+                    z: grade2basis.z + (e23rootAbs + e23root) / 2,
                 },
-                { x: 0, y: -e23rootAbs, z: e23rootAbs },
+                {
+                    x: grade2basis.x + 0,
+                    y: grade2basis.y + -e23rootAbs,
+                    z: grade2basis.z + e23rootAbs,
+                },
 
                 // 23
                 {
-                    x: (e13rootAbs - e13root) / 2,
-                    y: 0,
-                    z: (e13rootAbs + e13root) / 2,
+                    x: grade2basis.x + (e13rootAbs - e13root) / 2,
+                    y: grade2basis.y + 0,
+                    z: grade2basis.z + (e13rootAbs + e13root) / 2,
                 },
                 {
-                    x: (e13rootAbs + e13root) / 2,
-                    y: 0,
-                    z: (e13rootAbs - e13root) / 2,
+                    x: grade2basis.x + (e13rootAbs + e13root) / 2,
+                    y: grade2basis.y + 0,
+                    z: grade2basis.z + (e13rootAbs - e13root) / 2,
                 },
                 {
-                    x: e13rootAbs,
-                    y: 0,
-                    z: e13rootAbs,
+                    x: grade2basis.x + e13rootAbs,
+                    y: grade2basis.y + 0,
+                    z: grade2basis.z + e13rootAbs,
                 },
 
                 // 26
                 {
-                    x: (e12rootAbs + e12rootAbs) / 2,
-                    y: -(e12rootAbs - e12rootAbs) / 2,
-                    z: 0,
+                    x: grade2basis.x + (e12rootAbs + e12root) / 2,
+                    y: grade2basis.y + -(e12rootAbs - e12root) / 2,
+                    z: grade2basis.z + 0,
                 },
                 {
-                    x: (e12rootAbs - e12rootAbs) / 2,
-                    y: -(e12rootAbs + e12rootAbs) / 2,
-                    z: 0,
+                    x: grade2basis.x + (e12rootAbs - e12root) / 2,
+                    y: grade2basis.y + -(e12rootAbs + e12root) / 2,
+                    z: grade2basis.z + 0,
                 },
                 {
-                    x: e12rootAbs,
-                    y: -e12rootAbs,
-                    z: 0,
+                    x: grade2basis.x + e12rootAbs,
+                    y: grade2basis.y + -e12rootAbs,
+                    z: grade2basis.z + 0,
                 },
 
                 // 29
@@ -168,190 +267,282 @@
 
                     return [
                         {
-                            x: -v.x / 2 - u.x / 2 + offset,
-                            y: -v.y / 2 - u.y / 2 - offset,
-                            z: -v.z / 2 - u.z / 2 + offset,
+                            x: grade2basis.x + -v.x / 2 - u.x / 2 + offset,
+                            y: grade2basis.y + -v.y / 2 - u.y / 2 - offset,
+                            z: grade2basis.z + -v.z / 2 - u.z / 2 + offset,
                         },
                         {
-                            x: u.x / 2 - v.x / 2 + offset,
-                            y: u.y / 2 - v.y / 2 - offset,
-                            z: u.z / 2 - v.z / 2 + offset,
+                            x: grade2basis.x + u.x / 2 - v.x / 2 + offset,
+                            y: grade2basis.y + u.y / 2 - v.y / 2 - offset,
+                            z: grade2basis.z + u.z / 2 - v.z / 2 + offset,
                         },
                         {
-                            x: v.x / 2 - u.x / 2 + offset,
-                            y: v.y / 2 - u.y / 2 - offset,
-                            z: v.z / 2 - u.z / 2 + offset,
+                            x: grade2basis.x + v.x / 2 - u.x / 2 + offset,
+                            y: grade2basis.y + v.y / 2 - u.y / 2 - offset,
+                            z: grade2basis.z + v.z / 2 - u.z / 2 + offset,
                         },
                         {
-                            x: u.x / 2 + v.x / 2 + offset,
-                            y: u.y / 2 + v.y / 2 - offset,
-                            z: u.z / 2 + v.z / 2 + offset,
+                            x: grade2basis.x + u.x / 2 + v.x / 2 + offset,
+                            y: grade2basis.y + u.y / 2 + v.y / 2 - offset,
+                            z: grade2basis.z + u.z / 2 + v.z / 2 + offset,
                         },
                     ];
                 })(),
 
-                { x: 0, y: -2, z: 2 },
-                { x: 2, y: 0, z: 2 },
-                { x: 2, y: -2, z: 0 },
-
-                { x: e123root / 2, y: e123root / 2, z: -e123root / 2 },
-                { x: -e123root / 2, y: -e123root / 2, z: -e123root / 2 },
-                { x: -e123root / 2, y: e123root / 2, z: e123root / 2 },
-
-                { x: e123root / 2, y: -e123root / 2, z: -e123root / 2 },
-                { x: -e123root / 2, y: -e123root / 2, z: e123root / 2 },
-                { x: e123root / 2, y: e123root / 2, z: e123root / 2 },
-
-                { x: e123root / 2, y: -e123root / 2, z: e123root / 2 },
-
                 {
-                    x: -e123root / 2,
-                    y: (e123root / 2) * cubePaddingCompl,
-                    z: -(cubePaddingCompl * e123root) / 2,
+                    x: originBasis.x + 0,
+                    y: originBasis.y + -2,
+                    z: originBasis.z + 2,
                 },
                 {
-                    x: -e123root / 2,
-                    y: (-e123root / 2) * cubePaddingCompl,
-                    z: (e123root / 2) * cubePaddingCompl,
+                    x: originBasis.x + 2,
+                    y: originBasis.y + 0,
+                    z: originBasis.z + 2,
                 },
                 {
-                    x: -e123root / 2,
-                    y: (-e123root / 2) * cubePaddingCompl,
-                    z: -(e123root / 2) * cubePaddingCompl,
-                },
-                {
-                    x: -e123root / 2,
-                    y: (e123root / 2) * cubePaddingCompl,
-                    z: (e123root / 2) * cubePaddingCompl,
+                    x: originBasis.x + 2,
+                    y: originBasis.y + -2,
+                    z: originBasis.z + 0,
                 },
 
                 {
-                    x: e123root / 2,
-                    y: (e123root / 2) * cubePaddingCompl,
-                    z: (-cubePaddingCompl * e123root) / 2,
+                    x: grade3basis.x + e123root / 2,
+                    y: grade3basis.y + e123root / 2,
+                    z: grade3basis.z + -e123root / 2,
                 },
                 {
-                    x: e123root / 2,
-                    y: (-e123root / 2) * cubePaddingCompl,
-                    z: (e123root / 2) * cubePaddingCompl,
+                    x: grade3basis.x + -e123root / 2,
+                    y: grade3basis.y + -e123root / 2,
+                    z: grade3basis.z + -e123root / 2,
                 },
                 {
-                    x: e123root / 2,
-                    y: (-e123root / 2) * cubePaddingCompl,
-                    z: (-e123root / 2) * cubePaddingCompl,
-                },
-                {
-                    x: e123root / 2,
-                    y: (e123root / 2) * cubePaddingCompl,
-                    z: (e123root / 2) * cubePaddingCompl,
+                    x: grade3basis.x + -e123root / 2,
+                    y: grade3basis.y + e123root / 2,
+                    z: grade3basis.z + e123root / 2,
                 },
 
                 {
-                    x: -(e123root / 2) * cubePaddingCompl,
-                    y: e123root / 2,
-                    z: (-cubePaddingCompl * e123root) / 2,
+                    x: grade3basis.x + e123root / 2,
+                    y: grade3basis.y + -e123root / 2,
+                    z: grade3basis.z + -e123root / 2,
                 },
                 {
-                    x: (e123root / 2) * cubePaddingCompl,
-                    y: e123root / 2,
-                    z: (e123root / 2) * cubePaddingCompl,
+                    x: grade3basis.x + -e123root / 2,
+                    y: grade3basis.y + -e123root / 2,
+                    z: grade3basis.z + e123root / 2,
                 },
                 {
-                    x: (e123root / 2) * cubePaddingCompl,
-                    y: e123root / 2,
-                    z: (e123root / 2) * -cubePaddingCompl,
-                },
-                {
-                    x: (e123root / 2) * -cubePaddingCompl,
-                    y: e123root / 2,
-                    z: (e123root / 2) * cubePaddingCompl,
+                    x: grade3basis.x + e123root / 2,
+                    y: grade3basis.y + e123root / 2,
+                    z: grade3basis.z + e123root / 2,
                 },
 
                 {
-                    x: (-e123root / 2) * cubePaddingCompl,
-                    y: -e123root / 2,
-                    z: (-cubePaddingCompl * e123root) / 2,
-                },
-                {
-                    x: (e123root / 2) * cubePaddingCompl,
-                    y: -e123root / 2,
-                    z: (e123root / 2) * cubePaddingCompl,
-                },
-                {
-                    x: (e123root / 2) * cubePaddingCompl,
-                    y: -e123root / 2,
-                    z: (e123root / 2) * -cubePaddingCompl,
-                },
-                {
-                    x: (e123root / 2) * -cubePaddingCompl,
-                    y: -e123root / 2,
-                    z: (e123root / 2) * cubePaddingCompl,
+                    x: grade3basis.x + e123root / 2,
+                    y: grade3basis.y + -e123root / 2,
+                    z: grade3basis.z + e123root / 2,
                 },
 
                 {
-                    x: (-cubePaddingCompl * e123root) / 2,
-                    y: (-e123root / 2) * -cubePaddingCompl,
-                    z: -e123root / 2,
+                    x: grade3basis.x + -e123root / 2,
+                    y: grade3basis.y + (e123root / 2) * cubePaddingCompl,
+                    z: grade3basis.z + -(cubePaddingCompl * e123root) / 2,
                 },
                 {
-                    x: (e123root / 2) * cubePaddingCompl,
-                    y: (-e123root / 2) * cubePaddingCompl,
-                    z: -e123root / 2,
+                    x: grade3basis.x + -e123root / 2,
+                    y: grade3basis.y + (-e123root / 2) * cubePaddingCompl,
+                    z: grade3basis.z + (e123root / 2) * cubePaddingCompl,
                 },
                 {
-                    x: (e123root / 2) * -cubePaddingCompl,
-                    y: (-e123root / 2) * cubePaddingCompl,
-                    z: -e123root / 2,
+                    x: grade3basis.x + -e123root / 2,
+                    y: grade3basis.y + (-e123root / 2) * cubePaddingCompl,
+                    z: grade3basis.z + -(e123root / 2) * cubePaddingCompl,
                 },
                 {
-                    x: (e123root / 2) * cubePaddingCompl,
-                    y: (-e123root / 2) * -cubePaddingCompl,
-                    z: -e123root / 2,
-                },
-                {
-                    x: (-cubePaddingCompl * e123root) / 2,
-                    y: (-e123root / 2) * -cubePaddingCompl,
-                    z: e123root / 2,
-                },
-                {
-                    x: (e123root / 2) * cubePaddingCompl,
-                    y: (-e123root / 2) * cubePaddingCompl,
-                    z: e123root / 2,
-                },
-                {
-                    x: (e123root / 2) * -cubePaddingCompl,
-                    y: (-e123root / 2) * cubePaddingCompl,
-                    z: e123root / 2,
-                },
-                {
-                    x: (e123root / 2) * cubePaddingCompl,
-                    y: (-e123root / 2) * -cubePaddingCompl,
-                    z: e123root / 2,
+                    x: grade3basis.x + -e123root / 2,
+                    y: grade3basis.y + (e123root / 2) * cubePaddingCompl,
+                    z: grade3basis.z + (e123root / 2) * cubePaddingCompl,
                 },
 
-                { x: -e123root / 2, y: 0, z: 0 },
                 {
-                    x: e123root / 2,
+                    x: grade3basis.x + e123root / 2,
+                    y: grade3basis.y + (e123root / 2) * cubePaddingCompl,
+                    z: grade3basis.z + (-cubePaddingCompl * e123root) / 2,
+                },
+                {
+                    x: grade3basis.x + e123root / 2,
+                    y: grade3basis.y + (-e123root / 2) * cubePaddingCompl,
+                    z: grade3basis.z + (e123root / 2) * cubePaddingCompl,
+                },
+                {
+                    x: grade3basis.x + e123root / 2,
+                    y: grade3basis.y + (-e123root / 2) * cubePaddingCompl,
+                    z: grade3basis.z + (-e123root / 2) * cubePaddingCompl,
+                },
+                {
+                    x: grade3basis.x + e123root / 2,
+                    y: grade3basis.y + (e123root / 2) * cubePaddingCompl,
+                    z: grade3basis.z + (e123root / 2) * cubePaddingCompl,
+                },
+
+                {
+                    x: grade3basis.x + -(e123root / 2) * cubePaddingCompl,
+                    y: grade3basis.y + e123root / 2,
+                    z: grade3basis.z + (-cubePaddingCompl * e123root) / 2,
+                },
+                {
+                    x: grade3basis.x + (e123root / 2) * cubePaddingCompl,
+                    y: grade3basis.y + e123root / 2,
+                    z: grade3basis.z + (e123root / 2) * cubePaddingCompl,
+                },
+                {
+                    x: grade3basis.x + (e123root / 2) * cubePaddingCompl,
+                    y: grade3basis.y + e123root / 2,
+                    z: grade3basis.z + (e123root / 2) * -cubePaddingCompl,
+                },
+                {
+                    x: grade3basis.x + (e123root / 2) * -cubePaddingCompl,
+                    y: grade3basis.y + e123root / 2,
+                    z: grade3basis.z + (e123root / 2) * cubePaddingCompl,
+                },
+
+                {
+                    x: grade3basis.x + (-e123root / 2) * cubePaddingCompl,
+                    y: grade3basis.y + -e123root / 2,
+                    z: grade3basis.z + (-cubePaddingCompl * e123root) / 2,
+                },
+                {
+                    x: grade3basis.x + (e123root / 2) * cubePaddingCompl,
+                    y: grade3basis.y + -e123root / 2,
+                    z: grade3basis.z + (e123root / 2) * cubePaddingCompl,
+                },
+                {
+                    x: grade3basis.x + (e123root / 2) * cubePaddingCompl,
+                    y: grade3basis.y + -e123root / 2,
+                    z: grade3basis.z + (e123root / 2) * -cubePaddingCompl,
+                },
+                {
+                    x: grade3basis.x + (e123root / 2) * -cubePaddingCompl,
+                    y: grade3basis.y + -e123root / 2,
+                    z: grade3basis.z + (e123root / 2) * cubePaddingCompl,
+                },
+
+                {
+                    x: grade3basis.x + (-cubePaddingCompl * e123root) / 2,
+                    y: grade3basis.y + (-e123root / 2) * -cubePaddingCompl,
+                    z: grade3basis.z + -e123root / 2,
+                },
+                {
+                    x: grade3basis.x + (e123root / 2) * cubePaddingCompl,
+                    y: grade3basis.y + (-e123root / 2) * cubePaddingCompl,
+                    z: grade3basis.z + -e123root / 2,
+                },
+                {
+                    x: grade3basis.x + (e123root / 2) * -cubePaddingCompl,
+                    y: grade3basis.y + (-e123root / 2) * cubePaddingCompl,
+                    z: grade3basis.z + -e123root / 2,
+                },
+                {
+                    x: grade3basis.x + (e123root / 2) * cubePaddingCompl,
+                    y: grade3basis.y + (-e123root / 2) * -cubePaddingCompl,
+                    z: grade3basis.z + -e123root / 2,
+                },
+                {
+                    x: grade3basis.x + (-cubePaddingCompl * e123root) / 2,
+                    y: grade3basis.y + (-e123root / 2) * -cubePaddingCompl,
+                    z: grade3basis.z + e123root / 2,
+                },
+                {
+                    x: grade3basis.x + (e123root / 2) * cubePaddingCompl,
+                    y: grade3basis.y + (-e123root / 2) * cubePaddingCompl,
+                    z: grade3basis.z + e123root / 2,
+                },
+                {
+                    x: grade3basis.x + (e123root / 2) * -cubePaddingCompl,
+                    y: grade3basis.y + (-e123root / 2) * cubePaddingCompl,
+                    z: grade3basis.z + e123root / 2,
+                },
+                {
+                    x: grade3basis.x + (e123root / 2) * cubePaddingCompl,
+                    y: grade3basis.y + (-e123root / 2) * -cubePaddingCompl,
+                    z: grade3basis.z + e123root / 2,
+                },
+
+                {
+                    x: grade3basis.x + -e123root / 2,
+                    y: grade3basis.y + 0,
+                    z: grade3basis.z + 0,
+                },
+                {
+                    x: grade3basis.x + e123root / 2,
+                    y: grade3basis.y + 0,
+                    z: grade3basis.z + 0,
+                },
+
+                {
+                    x: grade3basis.x + 0,
+                    y: grade3basis.y + e123root / 2,
+                    z: grade3basis.z + 0,
+                },
+                {
+                    x: grade3basis.x + 0,
+                    y: grade3basis.y + -e123root / 2,
+                    z: grade3basis.z + 0,
+                },
+
+                {
+                    x: grade3basis.x + 0,
+                    y: grade3basis.y + 0,
+                    z: grade3basis.z + -e123root / 2,
+                },
+                {
+                    x: grade3basis.x + 0,
+                    y: grade3basis.y + 0,
+                    z: grade3basis.z + e123root / 2,
+                },
+
+                {
+                    x: grade3basis.x + -e123root / 2,
+                    y: grade3basis.y + e123root / 2,
+                    z: grade3basis.z + -e123root / 2,
+                },
+                {
+                    x: 0,
                     y: 0,
                     z: 0,
                 },
+                grade0basis,
+                grade1basis,
+                grade2basis,
 
-                { x: 0, y: e123root / 2, z: 0 },
                 {
-                    x: 0,
-                    y: -e123root / 2,
-                    z: 0,
+                    x: grade2basis.x + 0,
+                    y: grade2basis.y + -e23rootAbs / 2,
+                    z: grade2basis.z + e23rootAbs / 2,
                 },
 
-                { x: 0, y: 0, z: -e123root / 2 },
                 {
-                    x: 0,
-                    y: 0,
-                    z: e123root / 2,
+                    x: grade2basis.x + e13rootAbs / 2,
+                    y: grade2basis.y,
+                    z: grade2basis.z + e13rootAbs / 2,
                 },
 
-                { x: -e123root / 2, y: e123root / 2, z: -e123root / 2 },
-                { x: 0, y: 0, z: 0 },
+                {
+                    x: grade2basis.x + e12rootAbs / 2,
+                    y: grade2basis.y + -e12rootAbs / 2,
+                    z: grade2basis.z,
+                },
+
+                {
+                    x: grade2basis.x + biOffset * 1.5,
+                    y: grade2basis.y - biOffset * 1.5,
+                    z: grade2basis.z + biOffset * 1.5,
+                },
+                {
+                    x: grade3basis.x,
+                    y: grade3basis.y,
+                    z: grade3basis.z,
+                },
             ],
             edges: [
                 {
@@ -389,7 +580,7 @@
                 },
 
                 {
-                    vertices: [6, 7],
+                    vertices: [76, 7],
                     faces: [],
                     attrs: {
                         class: "vector",
@@ -461,7 +652,7 @@
                 },
 
                 {
-                    vertices: [6, 11],
+                    vertices: [76, 11],
                     faces: [],
                     attrs: {
                         class: "vector-axis-component",
@@ -474,7 +665,7 @@
                 },
 
                 {
-                    vertices: [6, 12],
+                    vertices: [76, 12],
                     faces: [],
                     attrs: {
                         class: "vector-axis-component",
@@ -486,7 +677,7 @@
                     },
                 },
                 {
-                    vertices: [6, 13],
+                    vertices: [76, 13],
                     faces: [],
                     attrs: {
                         class: "vector-axis-component",
@@ -532,7 +723,7 @@
                 },
 
                 {
-                    vertices: [6, 8],
+                    vertices: [76, 8],
                     faces: [],
                     attrs: {
                         class: "vector-component-planar",
@@ -615,7 +806,7 @@
                 },
 
                 {
-                    vertices: [6, 20],
+                    vertices: [77, 20],
                     faces: [],
                     attrs: {
                         class: "bivector-orientation",
@@ -647,7 +838,7 @@
                 },
 
                 {
-                    vertices: [21, 6],
+                    vertices: [21, 77],
                     faces: [],
                     attrs: {
                         class: "bivector-orientation",
@@ -658,7 +849,7 @@
                 },
 
                 {
-                    vertices: [23, 6],
+                    vertices: [23, 77],
                     faces: [],
                     attrs: {
                         class: "bivector-orientation",
@@ -690,7 +881,7 @@
                 },
 
                 {
-                    vertices: [6, 24],
+                    vertices: [77, 24],
                     faces: [],
                     attrs: {
                         class: "bivector-orientation",
@@ -701,7 +892,7 @@
                 },
 
                 {
-                    vertices: [26, 6],
+                    vertices: [26, 77],
                     faces: [],
                     attrs: {
                         class: "bivector-orientation",
@@ -733,7 +924,7 @@
                 },
 
                 {
-                    vertices: [27, 6],
+                    vertices: [27, 77],
                     faces: [],
                     attrs: {
                         class: "bivector-orientation",
@@ -1184,7 +1375,7 @@
                 },
 
                 {
-                    vertices: [0, 0],
+                    vertices: [75, 75],
                     faces: [],
                     attrs: {
                         fill: vector.scalar >= 0 ? "black" : "white",
@@ -1195,7 +1386,7 @@
                 },
 
                 {
-                    vertices: [0, 0],
+                    vertices: [75, 75],
                     faces: [],
                     attrs: {
                         fill: vector.scalar < 0 ? "black" : "white",
@@ -1223,17 +1414,17 @@
 
                 //
                 {
-                    vertices: [6, 20, 22, 21],
+                    vertices: [77, 20, 22, 21],
                     attrs: { color: "red", opacity: 0.5 },
                 },
 
                 {
-                    vertices: [6, 23, 25, 24],
+                    vertices: [77, 23, 25, 24],
                     attrs: { color: "green", opacity: 0.5 },
                 },
 
                 {
-                    vertices: [6, 26, 28, 27],
+                    vertices: [77, 26, 28, 27],
                     attrs: { color: "blue", opacity: 0.5 },
                 },
 
@@ -1349,13 +1540,144 @@
 
                 {
                     vertex: 7,
-                    text: ["v"],
+                    text: ["v[e1+e2+e3]"],
                     attrs: {
                         class: "vector-label",
                         "pointer-events": "none",
                         stroke: "white",
                         "text-anchor": "middle",
                         "stroke-width": "5px",
+                        "font-size": "1.4em",
+                        fill: "black",
+                        transform: "translate(0, -30)",
+                    },
+                },
+                {
+                    vertex: 11,
+                    text: ["v[e3]"],
+                    attrs: {
+                        class: "vector-label",
+                        "pointer-events": "none",
+                        //  stroke: "white",
+                        "text-anchor": "middle",
+                        "stroke-width": "5px",
+                        "font-size": "1.4em",
+                        fill: "blue",
+                        transform: "translate(0, -30)",
+                    },
+                },
+                {
+                    vertex: 12,
+                    text: ["v[e1]"],
+                    attrs: {
+                        class: "vector-label",
+                        "pointer-events": "none",
+                        //      stroke: "white",
+                        "text-anchor": "middle",
+                        "stroke-width": "5px",
+                        "font-size": "1.4em",
+                        fill: "red",
+                        transform: "translate(0, -30)",
+                    },
+                },
+                {
+                    vertex: 13,
+                    text: ["v[e2]"],
+                    attrs: {
+                        class: "vector-label",
+                        "pointer-events": "none",
+                        //     stroke: "white",
+                        "text-anchor": "middle",
+                        "stroke-width": "5px",
+                        "font-size": "1.4em",
+                        fill: "green",
+                        transform: "translate(0, -30)",
+                    },
+                },
+
+                {
+                    vertex: 75,
+                    text: ["v[scalar]"],
+                    attrs: {
+                        class: "vector-label",
+                        "pointer-events": "none",
+                        stroke: "white",
+                        "text-anchor": "middle",
+                        "stroke-width": "3px",
+                        "font-size": "1.4em",
+                        fill: "black",
+                        transform: "translate(0, -30)",
+                    },
+                },
+
+                {
+                    vertex: 78,
+                    text: ["v[e23]"],
+                    attrs: {
+                        class: "vector-label",
+                        "pointer-events": "none",
+                        //      stroke: "white",
+                        "text-anchor": "middle",
+                        "stroke-width": "3px",
+                        "font-size": "1.4em",
+                        fill: "red",
+                        transform: "translate(0, -30)",
+                    },
+                },
+
+                {
+                    vertex: 79,
+                    text: ["v[e13]"],
+                    attrs: {
+                        class: "vector-label",
+                        "pointer-events": "none",
+                        //     stroke: "white",
+                        "text-anchor": "middle",
+                        "stroke-width": "3px",
+                        "font-size": "1.4em",
+                        fill: "green",
+                        transform: "translate(0, -30)",
+                    },
+                },
+
+                {
+                    vertex: 80,
+                    text: ["v[e12]"],
+                    attrs: {
+                        class: "vector-label",
+                        "pointer-events": "none",
+                        //      stroke: "white",
+                        "text-anchor": "middle",
+                        "stroke-width": "3px",
+                        "font-size": "1.4em",
+                        fill: "blue",
+                        transform: "translate(0, -30)",
+                    },
+                },
+
+                {
+                    vertex: 81,
+                    text: ["v[e12+e13+e23]"],
+                    attrs: {
+                        class: "vector-label",
+                        "pointer-events": "none",
+                        stroke: "white",
+                        "text-anchor": "middle",
+                        "stroke-width": "3px",
+                        "font-size": "1.4em",
+                        fill: "black",
+                        transform: "translate(0, -30)",
+                    },
+                },
+                {
+                    vertex: 82,
+                    text: ["v[e123]"],
+                    attrs: {
+                        class: "vector-label",
+                        "pointer-events": "none",
+                        stroke: "white",
+                        "text-anchor": "middle",
+                        "stroke-width": "3px",
                         "font-size": "1.4em",
                         fill: "black",
                         transform: "translate(0, -30)",
@@ -1500,8 +1822,8 @@
                 far: 400,
             },
             aspectRatio: 1,
-            fov: Math.PI / 2 / 10,
-            orthogonality: 0,
+            fov: Math.PI / 2 / 5,
+            orthogonality: 1,
             eye: {
                 tx: 0,
                 ty: 0,
@@ -1980,14 +2302,14 @@
         return L.modify(L.values, R.divide(R.__, L.sum(L.values, o) || 1), o);
     });
     const mainVector = atom({
-        scalar: 0,
-        e1: 0,
-        e2: 0,
-        e3: 0,
-        e12: 0,
-        e13: 0,
-        e23: 0,
-        e123: 0,
+        scalar: 1.2,
+        e1: 6.7,
+        e2: 6.9,
+        e3: 9.1,
+        e12: 93.2,
+        e13: 109.5,
+        e23: 145.5,
+        e123: 545,
     });
     const worldGeo = view(makeGeo, mainVector);
     const sunLightDir = atom({
@@ -2811,7 +3133,7 @@
     const cameraFoVWheel = $derived(
         view(
             [
-                L.normalize(R.clamp(2, 160)),
+                L.normalize(R.clamp(1, 90)),
                 L.setter((a, b) => b * Math.exp(a / 1000)),
             ],
             cameraFoVDeg,
@@ -3875,39 +4197,39 @@
 </script>
 
 <fieldset>
-    <legend>Debug</legend>
-    {#each ["vertex"] as dbg}
-        {@const v = view(dbg, debugLabels)}
-
-        <label>
-            <input bind:checked={v.value} type="checkbox" />
-            {dbg}
-        </label>
-    {/each}
-</fieldset>
-
-<fieldset>
     <legend>Vector</legend>
-    {#each Object.entries( { scalar: 10, e1: 25, e2: 25, e3: 25, e12: 200, e13: 200, e23: 200, e123: 5000 } ) as [axis, range]}
-        <label
-            >{axis}-Axis
-            <input
-                type="range"
-                min={-range}
-                max={range}
-                step="0.1"
-                {@attach bindValue(
-                    view([axis, L.normalize(parseFloat)], mainVector),
-                )}
-            />
-        </label>
-    {/each}
+
+    <div
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(20em, 1fr)); gap: 1em"
+    >
+        {#each [{ scalar: 10 }, { e1: 25, e2: 25, e3: 25 }, { e12: 200, e13: 200, e23: 200 }, { e123: 5000 }] as group}
+            <div>
+                {#each Object.entries(group) as [axis, range]}
+                    <label
+                        >{axis}-Axis
+                        <input
+                            type="range"
+                            min={-range}
+                            max={range}
+                            step="0.1"
+                            {@attach bindValue(
+                                view(
+                                    [axis, L.normalize(parseFloat)],
+                                    mainVector,
+                                ),
+                            )}
+                        />
+                    </label>
+                {/each}
+            </div>
+        {/each}
+    </div>
     <label
         >Length
         <input
             type="range"
-            min="-25"
-            max="25"
+            min="-100"
+            max="100"
             step="0.1"
             {@attach bindValue(
                 view(
@@ -3945,9 +4267,9 @@
         >Area
         <input
             type="range"
-            min="-100"
-            max="100"
-            step="0.1"
+            min="-500"
+            max="500"
+            step="1"
             {@attach bindValue(
                 view(
                     L.lens(
@@ -4262,6 +4584,10 @@
         touch-action: none;
         overscroll-behavior: contain;
         grid-area: 1/1/-1/-1;
+    }
+    text {
+        stroke-linejoin: round;
+        stroke-linecap: round;
     }
 
     .blade3-border {
