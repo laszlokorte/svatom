@@ -155,13 +155,25 @@
                     u.y *= -1;
 
                     return [
-                        { x: 0, y: 0, z: 0 },
-                        u,
-                        v,
                         {
-                            x: u.x + v.x,
-                            y: u.y + v.y,
-                            z: u.z + v.z,
+                            x: -v.x / 2 - u.x / 2,
+                            y: -v.y / 2 - u.y / 2,
+                            z: -v.z / 2 - u.z / 2,
+                        },
+                        {
+                            x: u.x / 2 - v.x / 2,
+                            y: u.y / 2 - v.y / 2,
+                            z: u.z / 2 - v.z / 2,
+                        },
+                        {
+                            x: v.x / 2 - u.x / 2,
+                            y: v.y / 2 - u.y / 2,
+                            z: v.z / 2 - u.z / 2,
+                        },
+                        {
+                            x: u.x / 2 + v.x / 2,
+                            y: u.y / 2 + v.y / 2,
+                            z: u.z / 2 + v.z / 2,
                         },
                     ];
                 })(),
@@ -170,137 +182,164 @@
                 { x: 2, y: 0, z: 2 },
                 { x: 2, y: -2, z: 0 },
 
-                { x: e123root, y: 0, z: 0 },
-                { x: 0, y: -e123root, z: 0 },
-                { x: 0, y: 0, z: e123root },
+                { x: e123root / 2, y: e123root / 2, z: -e123root / 2 },
+                { x: -e123root / 2, y: -e123root / 2, z: -e123root / 2 },
+                { x: -e123root / 2, y: e123root / 2, z: e123root / 2 },
 
-                { x: e123root, y: -e123root, z: 0 },
-                { x: 0, y: -e123root, z: e123root },
-                { x: e123root, y: 0, z: e123root },
+                { x: e123root / 2, y: -e123root / 2, z: -e123root / 2 },
+                { x: -e123root / 2, y: -e123root / 2, z: e123root / 2 },
+                { x: e123root / 2, y: e123root / 2, z: e123root / 2 },
 
-                { x: e123root, y: -e123root, z: e123root },
-
-                { x: 0, y: -e123root * cubePadding, z: cubePadding * e123root },
-                {
-                    x: 0,
-                    y: -e123root * cubePaddingCompl,
-                    z: e123root * cubePaddingCompl,
-                },
-                {
-                    x: 0,
-                    y: -e123root * cubePaddingCompl,
-                    z: e123root * cubePadding,
-                },
-                {
-                    x: 0,
-                    y: -e123root * cubePadding,
-                    z: e123root * cubePaddingCompl,
-                },
+                { x: e123root / 2, y: -e123root / 2, z: e123root / 2 },
 
                 {
-                    x: e123root,
-                    y: -e123root * cubePadding,
-                    z: cubePadding * e123root,
+                    x: -e123root / 2,
+                    y: (e123root / 2) * cubePaddingCompl,
+                    z: -(cubePaddingCompl * e123root) / 2,
                 },
                 {
-                    x: e123root,
-                    y: -e123root * cubePaddingCompl,
-                    z: e123root * cubePaddingCompl,
+                    x: -e123root / 2,
+                    y: (-e123root / 2) * cubePaddingCompl,
+                    z: (e123root / 2) * cubePaddingCompl,
                 },
                 {
-                    x: e123root,
-                    y: -e123root * cubePaddingCompl,
-                    z: e123root * cubePadding,
+                    x: -e123root / 2,
+                    y: (-e123root / 2) * cubePaddingCompl,
+                    z: -(e123root / 2) * cubePaddingCompl,
                 },
                 {
-                    x: e123root,
-                    y: -e123root * cubePadding,
-                    z: e123root * cubePaddingCompl,
+                    x: -e123root / 2,
+                    y: (e123root / 2) * cubePaddingCompl,
+                    z: (e123root / 2) * cubePaddingCompl,
                 },
 
-                { x: e123root * cubePadding, y: 0, z: cubePadding * e123root },
                 {
-                    x: e123root * cubePaddingCompl,
+                    x: e123root / 2,
+                    y: (e123root / 2) * cubePaddingCompl,
+                    z: (-cubePaddingCompl * e123root) / 2,
+                },
+                {
+                    x: e123root / 2,
+                    y: (-e123root / 2) * cubePaddingCompl,
+                    z: (e123root / 2) * cubePaddingCompl,
+                },
+                {
+                    x: e123root / 2,
+                    y: (-e123root / 2) * cubePaddingCompl,
+                    z: (-e123root / 2) * cubePaddingCompl,
+                },
+                {
+                    x: e123root / 2,
+                    y: (e123root / 2) * cubePaddingCompl,
+                    z: (e123root / 2) * cubePaddingCompl,
+                },
+
+                {
+                    x: -(e123root / 2) * cubePaddingCompl,
+                    y: e123root / 2,
+                    z: (-cubePaddingCompl * e123root) / 2,
+                },
+                {
+                    x: (e123root / 2) * cubePaddingCompl,
+                    y: e123root / 2,
+                    z: (e123root / 2) * cubePaddingCompl,
+                },
+                {
+                    x: (e123root / 2) * cubePaddingCompl,
+                    y: e123root / 2,
+                    z: (e123root / 2) * -cubePaddingCompl,
+                },
+                {
+                    x: (e123root / 2) * -cubePaddingCompl,
+                    y: e123root / 2,
+                    z: (e123root / 2) * cubePaddingCompl,
+                },
+
+                {
+                    x: (-e123root / 2) * cubePaddingCompl,
+                    y: -e123root / 2,
+                    z: (-cubePaddingCompl * e123root) / 2,
+                },
+                {
+                    x: (e123root / 2) * cubePaddingCompl,
+                    y: -e123root / 2,
+                    z: (e123root / 2) * cubePaddingCompl,
+                },
+                {
+                    x: (e123root / 2) * cubePaddingCompl,
+                    y: -e123root / 2,
+                    z: (e123root / 2) * -cubePaddingCompl,
+                },
+                {
+                    x: (e123root / 2) * -cubePaddingCompl,
+                    y: -e123root / 2,
+                    z: (e123root / 2) * cubePaddingCompl,
+                },
+
+                {
+                    x: (-cubePaddingCompl * e123root) / 2,
+                    y: (-e123root / 2) * -cubePaddingCompl,
+                    z: -e123root / 2,
+                },
+                {
+                    x: (e123root / 2) * cubePaddingCompl,
+                    y: (-e123root / 2) * cubePaddingCompl,
+                    z: -e123root / 2,
+                },
+                {
+                    x: (e123root / 2) * -cubePaddingCompl,
+                    y: (-e123root / 2) * cubePaddingCompl,
+                    z: -e123root / 2,
+                },
+                {
+                    x: (e123root / 2) * cubePaddingCompl,
+                    y: (-e123root / 2) * -cubePaddingCompl,
+                    z: -e123root / 2,
+                },
+                {
+                    x: (-cubePaddingCompl * e123root) / 2,
+                    y: (-e123root / 2) * -cubePaddingCompl,
+                    z: e123root / 2,
+                },
+                {
+                    x: (e123root / 2) * cubePaddingCompl,
+                    y: (-e123root / 2) * cubePaddingCompl,
+                    z: e123root / 2,
+                },
+                {
+                    x: (e123root / 2) * -cubePaddingCompl,
+                    y: (-e123root / 2) * cubePaddingCompl,
+                    z: e123root / 2,
+                },
+                {
+                    x: (e123root / 2) * cubePaddingCompl,
+                    y: (-e123root / 2) * -cubePaddingCompl,
+                    z: e123root / 2,
+                },
+
+                { x: -e123root / 2, y: 0, z: 0 },
+                {
+                    x: e123root / 2,
                     y: 0,
-                    z: e123root * cubePaddingCompl,
-                },
-                {
-                    x: e123root * cubePaddingCompl,
-                    y: 0,
-                    z: e123root * cubePadding,
-                },
-                {
-                    x: e123root * cubePadding,
-                    y: 0,
-                    z: e123root * cubePaddingCompl,
-                },
-
-                {
-                    x: e123root * cubePadding,
-                    y: -e123root,
-                    z: cubePadding * e123root,
-                },
-                {
-                    x: e123root * cubePaddingCompl,
-                    y: -e123root,
-                    z: e123root * cubePaddingCompl,
-                },
-                {
-                    x: e123root * cubePaddingCompl,
-                    y: -e123root,
-                    z: e123root * cubePadding,
-                },
-                {
-                    x: e123root * cubePadding,
-                    y: -e123root,
-                    z: e123root * cubePaddingCompl,
-                },
-
-                { x: cubePadding * e123root, y: -e123root * cubePadding, z: 0 },
-                {
-                    x: e123root * cubePaddingCompl,
-                    y: -e123root * cubePaddingCompl,
                     z: 0,
                 },
+
+                { x: 0, y: e123root / 2, z: 0 },
                 {
-                    x: e123root * cubePadding,
-                    y: -e123root * cubePaddingCompl,
+                    x: 0,
+                    y: -e123root / 2,
                     z: 0,
                 },
+
+                { x: 0, y: 0, z: -e123root / 2 },
                 {
-                    x: e123root * cubePaddingCompl,
-                    y: -e123root * cubePadding,
-                    z: 0,
-                },
-                {
-                    x: cubePadding * e123root,
-                    y: -e123root * cubePadding,
-                    z: e123root,
-                },
-                {
-                    x: e123root * cubePaddingCompl,
-                    y: -e123root * cubePaddingCompl,
-                    z: e123root,
-                },
-                {
-                    x: e123root * cubePadding,
-                    y: -e123root * cubePaddingCompl,
-                    z: e123root,
-                },
-                {
-                    x: e123root * cubePaddingCompl,
-                    y: -e123root * cubePadding,
-                    z: e123root,
+                    x: 0,
+                    y: 0,
+                    z: e123root / 2,
                 },
 
-                { x: 0, y: -e123root * 0.5, z: 0.5 * e123root },
-                { x: e123root, y: -e123root * 0.5, z: 0.5 * e123root },
-
-                { x: e123root * 0.5, y: 0, z: 0.5 * e123root },
-                { x: e123root * 0.5, y: -e123root, z: 0.5 * e123root },
-
-                { x: e123root * 0.5, y: -e123root * 0.5, z: 0 },
-                { x: e123root * 0.5, y: -e123root * 0.5, z: e123root },
+                { x: -e123root / 2, y: e123root / 2, z: -e123root / 2 },
+                { x: 0, y: 0, z: 0 },
             ],
             edges: [
                 {
@@ -693,7 +732,7 @@
                 },
 
                 {
-                    vertices: [36, 6],
+                    vertices: [36, 73],
                     faces: [],
                     attrs: {
                         class: "blade3-border",
@@ -753,7 +792,7 @@
                 },
 
                 {
-                    vertices: [6, 37],
+                    vertices: [73, 37],
                     faces: [],
                     attrs: {
                         class: "blade3-border",
@@ -763,7 +802,7 @@
                 },
 
                 {
-                    vertices: [6, 38],
+                    vertices: [73, 38],
                     faces: [],
                     attrs: {
                         class: "blade3-border",
@@ -1108,7 +1147,7 @@
                 // e123
 
                 {
-                    vertices: [6, 36, 41, 38],
+                    vertices: [73, 36, 41, 38],
                     attrs: { color: "#ddd", opacity: 0.5 },
                 },
 
@@ -1122,7 +1161,7 @@
                     attrs: { color: "#ddd", opacity: 0.5 },
                 },
                 {
-                    vertices: [36, 6, 37, 39],
+                    vertices: [36, 73, 37, 39],
                     attrs: { color: "#ddd", opacity: 0.5 },
                 },
                 {
@@ -1131,7 +1170,7 @@
                 },
 
                 {
-                    vertices: [6, 38, 40, 37],
+                    vertices: [73, 38, 40, 37],
                     attrs: { color: "#ddd", opacity: 0.5 },
                 },
 
