@@ -15,6 +15,9 @@
         const e13root = Math.sqrt(Math.abs(vector.e13)) * Math.sign(vector.e13);
         const e23root = Math.sqrt(Math.abs(vector.e23)) * Math.sign(vector.e23);
 
+        const e12rootAbs = Math.abs(e12root);
+        const e13rootAbs = Math.abs(e13root);
+        const e23rootAbs = Math.abs(e23root);
         const cubePadding = 0.1;
         const cubePaddingCompl = 1 - cubePadding;
 
@@ -50,41 +53,49 @@
                 { x: 4, y: 0, z: 4 },
 
                 // 20
-                { x: 0, y: -Math.abs(e23root), z: 0 },
                 {
                     x: 0,
-                    y: 0,
-                    z: e23root,
+                    y: -(e23rootAbs + e23root) / 2,
+                    z: (e23rootAbs - e23root) / 2,
                 },
                 {
                     x: 0,
-                    y: -Math.abs(e23root),
-                    z: e23root,
+                    y: -(e23rootAbs - e23root) / 2,
+                    z: (e23rootAbs + e23root) / 2,
                 },
+                { x: 0, y: -e23rootAbs, z: e23rootAbs },
 
                 // 23
                 {
-                    x: 0,
+                    x: (e13rootAbs - e13root) / 2,
                     y: 0,
-                    z: e13root,
+                    z: (e13rootAbs + e13root) / 2,
                 },
-                { x: Math.abs(e13root), y: 0, z: 0 },
                 {
-                    x: Math.abs(e13root),
+                    x: (e13rootAbs + e13root) / 2,
                     y: 0,
-                    z: e13root,
+                    z: (e13rootAbs - e13root) / 2,
+                },
+                {
+                    x: e13rootAbs,
+                    y: 0,
+                    z: e13rootAbs,
                 },
 
                 // 26
-                { x: Math.abs(e12root), y: 0, z: 0 },
                 {
-                    x: 0,
-                    y: -e12root,
+                    x: (e12rootAbs + e12rootAbs) / 2,
+                    y: -(e12rootAbs - e12rootAbs) / 2,
                     z: 0,
                 },
                 {
-                    x: Math.abs(e12root),
-                    y: -e12root,
+                    x: (e12rootAbs - e12rootAbs) / 2,
+                    y: -(e12rootAbs + e12rootAbs) / 2,
+                    z: 0,
+                },
+                {
+                    x: e12rootAbs,
+                    y: -e12rootAbs,
                     z: 0,
                 },
 
@@ -93,6 +104,7 @@
                     const area =
                         Math.hypot(vector.e12, vector.e23, vector.e13) || 1;
                     const size = Math.sqrt(area);
+                    const offset = size / 2;
                     const n = {
                         x: -vector.e23 / area,
                         y: vector.e13 / area,
@@ -156,24 +168,24 @@
 
                     return [
                         {
-                            x: -v.x / 2 - u.x / 2,
-                            y: -v.y / 2 - u.y / 2,
-                            z: -v.z / 2 - u.z / 2,
+                            x: -v.x / 2 - u.x / 2 + offset,
+                            y: -v.y / 2 - u.y / 2 - offset,
+                            z: -v.z / 2 - u.z / 2 + offset,
                         },
                         {
-                            x: u.x / 2 - v.x / 2,
-                            y: u.y / 2 - v.y / 2,
-                            z: u.z / 2 - v.z / 2,
+                            x: u.x / 2 - v.x / 2 + offset,
+                            y: u.y / 2 - v.y / 2 - offset,
+                            z: u.z / 2 - v.z / 2 + offset,
                         },
                         {
-                            x: v.x / 2 - u.x / 2,
-                            y: v.y / 2 - u.y / 2,
-                            z: v.z / 2 - u.z / 2,
+                            x: v.x / 2 - u.x / 2 + offset,
+                            y: v.y / 2 - u.y / 2 - offset,
+                            z: v.z / 2 - u.z / 2 + offset,
                         },
                         {
-                            x: u.x / 2 + v.x / 2,
-                            y: u.y / 2 + v.y / 2,
-                            z: u.z / 2 + v.z / 2,
+                            x: u.x / 2 + v.x / 2 + offset,
+                            y: u.y / 2 + v.y / 2 - offset,
+                            z: u.z / 2 + v.z / 2 + offset,
                         },
                     ];
                 })(),
@@ -392,7 +404,7 @@
                     vertices: [11, 8],
                     faces: [],
                     attrs: {
-                        class: "vector-component",
+                        class: "vector-component-offset",
                         color: "#3332",
                         flip: false,
                     },
@@ -402,7 +414,7 @@
                     vertices: [13, 8],
                     faces: [],
                     attrs: {
-                        class: "vector-component",
+                        class: "vector-component-offset",
                         color: "#3332",
                         flip: false,
                     },
@@ -412,7 +424,7 @@
                     vertices: [13, 10],
                     faces: [],
                     attrs: {
-                        class: "vector-component",
+                        class: "vector-component-offset",
                         color: "#3332",
                         flip: false,
                     },
@@ -422,7 +434,7 @@
                     vertices: [12, 10],
                     faces: [],
                     attrs: {
-                        class: "vector-component",
+                        class: "vector-component-offset",
                         color: "#3332",
                         flip: false,
                     },
@@ -432,7 +444,7 @@
                     vertices: [11, 9],
                     faces: [],
                     attrs: {
-                        class: "vector-component",
+                        class: "vector-component-offset",
                         color: "#3332",
                         flip: false,
                     },
@@ -442,7 +454,7 @@
                     vertices: [12, 9],
                     faces: [],
                     attrs: {
-                        class: "vector-component",
+                        class: "vector-component-offset",
                         color: "#3332",
                         flip: false,
                     },
@@ -490,7 +502,7 @@
                     vertices: [8, 7],
                     faces: [],
                     attrs: {
-                        class: "vector-component",
+                        class: "vector-component-ortho",
                         color: "#3332",
                         "stroke-dasharray": "10 10",
                         flip: false,
@@ -501,7 +513,7 @@
                     vertices: [9, 7],
                     faces: [],
                     attrs: {
-                        class: "vector-component",
+                        class: "vector-component-ortho",
                         color: "#3332",
                         "stroke-dasharray": "10 10",
                         flip: false,
@@ -512,7 +524,7 @@
                     vertices: [10, 7],
                     faces: [],
                     attrs: {
-                        class: "vector-component",
+                        class: "vector-component-ortho",
                         color: "#3332",
                         "stroke-dasharray": "10 10",
                         flip: false,
@@ -523,7 +535,7 @@
                     vertices: [6, 8],
                     faces: [],
                     attrs: {
-                        class: "vector",
+                        class: "vector-component-planar",
                         color: "#000",
                         opacity: 0.3,
                         flip: false,
@@ -536,7 +548,7 @@
                     vertices: [6, 9],
                     faces: [],
                     attrs: {
-                        class: "vector",
+                        class: "vector-component-planar",
                         color: "#000",
                         opacity: 0.3,
                         flip: false,
@@ -549,7 +561,7 @@
                     vertices: [6, 10],
                     faces: [],
                     attrs: {
-                        class: "vector",
+                        class: "vector-component-planar",
                         color: "#000",
                         opacity: 0.3,
                         flip: false,
@@ -1106,6 +1118,92 @@
                         "marker-end": "url(#vector-arrow)",
                     },
                 },
+                {
+                    vertices: [14, 17],
+                    faces: [],
+                    attrs: {
+                        color: "blue",
+                        opacity: 0.7,
+                        class: "bivector-basis-orientation",
+                        "marker-end": "url(#vector-arrow)",
+                    },
+                },
+
+                {
+                    vertices: [17, 15],
+                    faces: [],
+                    attrs: {
+                        color: "blue",
+                        opacity: 0.7,
+                        class: "bivector-basis-orientation",
+                        "marker-end": "url(#vector-arrow)",
+                    },
+                },
+
+                {
+                    vertices: [18, 16],
+                    faces: [],
+                    attrs: {
+                        color: "red",
+                        opacity: 0.7,
+                        class: "bivector-basis-orientation",
+                        "marker-end": "url(#vector-arrow)",
+                    },
+                },
+
+                {
+                    vertices: [15, 18],
+                    faces: [],
+                    attrs: {
+                        color: "red",
+                        opacity: 0.7,
+                        class: "bivector-basis-orientation",
+                        "marker-end": "url(#vector-arrow)",
+                    },
+                },
+
+                {
+                    vertices: [14, 19],
+                    faces: [],
+                    attrs: {
+                        color: "green",
+                        opacity: 0.7,
+                        class: "bivector-basis-orientation",
+                        "marker-end": "url(#vector-arrow)",
+                    },
+                },
+                {
+                    vertices: [19, 16],
+                    faces: [],
+                    attrs: {
+                        color: "green",
+                        opacity: 0.5,
+                        class: "bivector-basis-orientation",
+                        "marker-end": "url(#vector-arrow)",
+                    },
+                },
+
+                {
+                    vertices: [0, 0],
+                    faces: [],
+                    attrs: {
+                        fill: vector.scalar >= 0 ? "black" : "white",
+                        "stroke-width": Math.abs(vector.scalar) * 10 + 1,
+                        opacity: 0.5,
+                        "marker-end": "url(#circlehead)",
+                    },
+                },
+
+                {
+                    vertices: [0, 0],
+                    faces: [],
+                    attrs: {
+                        fill: vector.scalar < 0 ? "black" : "white",
+                        "stroke-width": Math.abs(vector.scalar) * 10,
+                        opacity: 0.3,
+                        "marker-end": "url(#circlehead)",
+                    },
+                },
             ],
             faces: [
                 {
@@ -1303,87 +1401,87 @@
                     },
                 },
 
-                {
-                    vertex: 67,
-                    text: ["e32"],
-                    attrs: {
-                        class: "axis-label",
-                        "pointer-events": "none",
-                        "text-anchor": "middle",
-                        "stroke-width": "2px",
-                        "font-size": "1em",
-                        fill: "red",
-                        transform: "translate(0, -10)",
-                    },
-                },
+                //         {
+                //             vertex: 67,
+                //             text: ["e32"],
+                //             attrs: {
+                //                 class: "axis-label",
+                //                 "pointer-events": "none",
+                //                 "text-anchor": "middle",
+                //                 "stroke-width": "2px",
+                //                 "font-size": "1em",
+                //                 fill: "red",
+                //                 transform: "translate(0, -10)",
+                //             },
+                //         },
 
-                {
-                    vertex: 68,
-                    text: ["e23"],
-                    attrs: {
-                        class: "axis-label",
-                        "pointer-events": "none",
-                        "text-anchor": "middle",
-                        "stroke-width": "2px",
-                        "font-size": "1em",
-                        fill: "red",
-                        transform: "translate(0, -10)",
-                    },
-                },
+                //         {
+                //             vertex: 68,
+                //             text: ["e23"],
+                //             attrs: {
+                //                 class: "axis-label",
+                //                 "pointer-events": "none",
+                //                 "text-anchor": "middle",
+                //                 "stroke-width": "2px",
+                //                 "font-size": "1em",
+                //                 fill: "red",
+                //                 transform: "translate(0, -10)",
+                //             },
+                //         },
 
-                {
-                    vertex: 69,
-                    text: ["e13"],
-                    attrs: {
-                        class: "axis-label",
-                        "pointer-events": "none",
-                        "text-anchor": "middle",
-                        "stroke-width": "2px",
-                        "font-size": "1em",
-                        fill: "green",
-                        transform: "translate(0, -10)",
-                    },
-                },
-                {
-                    vertex: 70,
-                    text: ["e31"],
-                    attrs: {
-                        class: "axis-label",
-                        "pointer-events": "none",
-                        "text-anchor": "middle",
-                        "stroke-width": "2px",
-                        "font-size": "1em",
-                        fill: "green",
-                        transform: "translate(0, -10)",
-                    },
-                },
+                //         {
+                //             vertex: 69,
+                //             text: ["e13"],
+                //             attrs: {
+                //                 class: "axis-label",
+                //                 "pointer-events": "none",
+                //                 "text-anchor": "middle",
+                //                 "stroke-width": "2px",
+                //                 "font-size": "1em",
+                //                 fill: "green",
+                //                 transform: "translate(0, -10)",
+                //             },
+                //         },
+                //         {
+                //             vertex: 70,
+                //             text: ["e31"],
+                //             attrs: {
+                //                 class: "axis-label",
+                //                 "pointer-events": "none",
+                //                 "text-anchor": "middle",
+                //                 "stroke-width": "2px",
+                //                 "font-size": "1em",
+                //                 fill: "green",
+                //                 transform: "translate(0, -10)",
+                //             },
+                //         },
 
-                {
-                    vertex: 71,
-                    text: ["e21"],
-                    attrs: {
-                        class: "axis-label",
-                        "pointer-events": "none",
-                        "text-anchor": "middle",
-                        "stroke-width": "2px",
-                        "font-size": "1em",
-                        fill: "blue",
-                        transform: "translate(0, -10)",
-                    },
-                },
-                {
-                    vertex: 72,
-                    text: ["e12"],
-                    attrs: {
-                        class: "axis-label",
-                        "pointer-events": "none",
-                        "text-anchor": "middle",
-                        "stroke-width": "2px",
-                        "font-size": "1em",
-                        fill: "blue",
-                        transform: "translate(0, -10)",
-                    },
-                },
+                //         {
+                //             vertex: 71,
+                //             text: ["e21"],
+                //             attrs: {
+                //                 class: "axis-label",
+                //                 "pointer-events": "none",
+                //                 "text-anchor": "middle",
+                //                 "stroke-width": "2px",
+                //                 "font-size": "1em",
+                //                 fill: "blue",
+                //                 transform: "translate(0, -10)",
+                //             },
+                //         },
+                //         {
+                //             vertex: 72,
+                //             text: ["e12"],
+                //             attrs: {
+                //                 class: "axis-label",
+                //                 "pointer-events": "none",
+                //                 "text-anchor": "middle",
+                //                 "stroke-width": "2px",
+                //                 "font-size": "1em",
+                //                 fill: "blue",
+                //                 transform: "translate(0, -10)",
+                //             },
+                //         },
             ],
         };
     };
@@ -1882,13 +1980,14 @@
         return L.modify(L.values, R.divide(R.__, L.sum(L.values, o) || 1), o);
     });
     const mainVector = atom({
-        e1: 1,
-        e2: 1,
-        e3: 1,
-        e12: 1,
-        e13: 2,
-        e23: 3,
-        e123: 1,
+        scalar: 0,
+        e1: 0,
+        e2: 0,
+        e3: 0,
+        e12: 0,
+        e13: 0,
+        e23: 0,
+        e123: 0,
     });
     const worldGeo = view(makeGeo, mainVector);
     const sunLightDir = atom({
@@ -2712,7 +2811,7 @@
     const cameraFoVWheel = $derived(
         view(
             [
-                L.normalize(R.clamp(10, 90)),
+                L.normalize(R.clamp(2, 160)),
                 L.setter((a, b) => b * Math.exp(a / 1000)),
             ],
             cameraFoVDeg,
@@ -3789,7 +3888,7 @@
 
 <fieldset>
     <legend>Vector</legend>
-    {#each Object.entries( { e1: 25, e2: 25, e3: 25, e12: 200, e13: 200, e23: 200, e123: 5000 } ) as [axis, range]}
+    {#each Object.entries( { scalar: 10, e1: 25, e2: 25, e3: 25, e12: 200, e13: 200, e23: 200, e123: 5000 } ) as [axis, range]}
         <label
             >{axis}-Axis
             <input
@@ -4111,6 +4210,18 @@
         </g>
         <defs>
             <marker
+                id="circlehead"
+                viewBox="0 0 10 10"
+                refX="5"
+                refY="5"
+                markerWidth="6"
+                markerHeight="6"
+                fill="context-fill"
+                orient="auto-start-reverse"
+            >
+                <circle cx="5" cy="5" r="4" stroke-width="0" stroke="black" />
+            </marker>
+            <marker
                 id="axis-arrow"
                 viewBox="0 0 10 10"
                 refX="9"
@@ -4158,7 +4269,7 @@
     }
 
     .blade3-orientation2 {
-        stroke-width: 2;
+        stroke-width: 1;
     }
 
     .viewport:focus,
@@ -4234,6 +4345,17 @@
 
     .cube-edge {
         stroke-linecap: round;
+    }
+    .vector-component-ortho {
+        display: none;
+    }
+
+    .vector-component-planar {
+        display: none;
+    }
+
+    .vector-component-offset {
+        display: none;
     }
 
     text.cube-edge[data-any-clockwise="false"] {
