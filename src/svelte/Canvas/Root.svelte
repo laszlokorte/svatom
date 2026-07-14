@@ -3924,7 +3924,10 @@
                             {rotationInverseTransform}
                             {rotationTransform}
                         >
-                            <LayeredUse {zLayers} {rotationTransform} />
+                            <LayeredUse
+                                {zLayers}
+                                rotationTransform={atom("")}
+                            />
                         </Minimap>
                     </div>
                 </Scroller>

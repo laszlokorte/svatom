@@ -4668,20 +4668,27 @@
     .cube-edge[data-any-clockwise="true"] {
         stroke-width: var(--stroke-width-fg, 8);
     }
+    .vector {
+        stroke-linecap: round;
+    }
 
     .cube-edge {
+        stroke-linecap: round;
         stroke-linecap: round;
     }
     .vector-component-ortho {
         display: none;
+        stroke-linecap: round;
     }
 
     .vector-component-planar {
         display: none;
+        stroke-linecap: round;
     }
 
     .vector-component-offset {
         display: none;
+        stroke-linecap: round;
     }
 
     text.cube-edge[data-any-clockwise="false"] {

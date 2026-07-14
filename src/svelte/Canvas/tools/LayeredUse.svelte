@@ -1,5 +1,5 @@
 <script>
-    const { rotationTransform, zLayers } = $props();
+    const { rotationTransform = atom(""), zLayers } = $props();
 </script>
 
 <g pointer-events="none" transform={rotationTransform.value}>
