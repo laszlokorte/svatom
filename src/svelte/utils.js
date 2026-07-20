@@ -210,3 +210,149 @@ export function formattedNumbers(parts, ...args) {
   //     ) + R.last(parts)
   // );
 }
+
+export function quadToEllipse(W, X, Y, Z) {
+  // Reconstruct matrix that transforms the unit square ((-1,-1), (1,1)) into quad (W,X,Y,Z)
+  const m00 =
+    X.x * Y.x * Z.y -
+    W.x * Y.x * Z.y -
+    X.x * Y.y * Z.x +
+    W.x * Y.y * Z.x -
+    W.x * X.y * Z.x +
+    W.y * X.x * Z.x +
+    W.x * X.y * Y.x -
+    W.y * X.x * Y.x;
+  const m01 =
+    W.x * Y.x * Z.y -
+    W.x * X.x * Z.y -
+    X.x * Y.y * Z.x +
+    X.y * Y.x * Z.x -
+    W.y * Y.x * Z.x +
+    W.y * X.x * Z.x +
+    W.x * X.x * Y.y -
+    W.x * X.y * Y.x;
+  const m02 =
+    X.x * Y.x * Z.y -
+    W.x * X.x * Z.y -
+    W.x * Y.y * Z.x -
+    X.y * Y.x * Z.x +
+    W.y * Y.x * Z.x +
+    W.x * X.y * Z.x +
+    W.x * X.x * Y.y -
+    W.y * X.x * Y.x;
+  const m10 =
+    X.y * Y.x * Z.y -
+    W.y * Y.x * Z.y -
+    W.x * X.y * Z.y +
+    W.y * X.x * Z.y -
+    X.y * Y.y * Z.x +
+    W.y * Y.y * Z.x +
+    W.x * X.y * Y.y -
+    W.y * X.x * Y.y;
+  const m11 =
+    -X.x * Y.y * Z.y +
+    W.x * Y.y * Z.y +
+    X.y * Y.x * Z.y -
+    W.x * X.y * Z.y -
+    W.y * Y.y * Z.x +
+    W.y * X.y * Z.x +
+    W.y * X.x * Y.y -
+    W.y * X.y * Y.x;
+  const m12 =
+    X.x * Y.y * Z.y -
+    W.x * Y.y * Z.y +
+    W.y * Y.x * Z.y -
+    W.y * X.x * Z.y -
+    X.y * Y.y * Z.x +
+    W.y * X.y * Z.x +
+    W.x * X.y * Y.y -
+    W.y * X.y * Y.x;
+  const m20 =
+    X.x * Z.y -
+    W.x * Z.y -
+    X.y * Z.x +
+    W.y * Z.x -
+    X.x * Y.y +
+    W.x * Y.y +
+    X.y * Y.x -
+    W.y * Y.x;
+  const m21 =
+    Y.x * Z.y -
+    X.x * Z.y -
+    Y.y * Z.x +
+    X.y * Z.x +
+    W.x * Y.y -
+    W.y * Y.x -
+    W.x * X.y +
+    W.y * X.x;
+  const m22 =
+    Y.x * Z.y -
+    W.x * Z.y -
+    Y.y * Z.x +
+    W.y * Z.x +
+    X.x * Y.y -
+    X.y * Y.x +
+    W.x * X.y -
+    W.y * X.x;
+
+  // invert matrix
+  const determinant =
+    +m00 * (m11 * m22 - m21 * m12) -
+    m01 * (m10 * m22 - m12 * m20) +
+    m02 * (m10 * m21 - m11 * m20);
+
+  if (determinant == 0) return null;
+
+  const invdet = 1 / determinant;
+  const J = (m11 * m22 - m21 * m12) * invdet;
+  const K = -(m01 * m22 - m02 * m21) * invdet;
+  const L = (m01 * m12 - m02 * m11) * invdet;
+  const M = -(m10 * m22 - m12 * m20) * invdet;
+  const N = (m00 * m22 - m02 * m20) * invdet;
+  const O = -(m00 * m12 - m10 * m02) * invdet;
+  const P = (m10 * m21 - m20 * m11) * invdet;
+  const Q = -(m00 * m21 - m20 * m01) * invdet;
+  const R = (m00 * m11 - m10 * m01) * invdet;
+
+  // extract ellipse coefficients from matrix
+  const a = J * J + M * M - P * P;
+  const b = J * K + M * N - P * Q;
+  const c = K * K + N * N - Q * Q;
+  const d = J * L + M * O - P * R;
+  const f = K * L + N * O - Q * R;
+  const g = L * L + O * O - R * R;
+
+  // deduce ellipse center from coefficients
+  const centerX = (c * d - b * f) / (b * b - a * c);
+  const centerY = (a * f - b * d) / (b * b - a * c);
+
+  // deduce ellipse radius from coefficients
+  const radiusA = Math.sqrt(
+    (2 * (a * f * f + c * d * d + g * b * b - 2 * b * d * f - a * c * g)) /
+      ((b * b - a * c) * (Math.sqrt((a - c) * (a - c) + 4 * b * b) - (a + c))),
+  );
+  const radiusB = Math.sqrt(
+    (2 * (a * f * f + c * d * d + g * b * b - 2 * b * d * f - a * c * g)) /
+      ((b * b - a * c) * (-Math.sqrt((a - c) * (a - c) + 4 * b * b) - (a + c))),
+  );
+
+  // deduce ellipse rotation from coefficients
+  let angle = 0;
+  if (b == 0 && a <= c) {
+    angle = 0;
+  } else if (b == 0 && a >= c) {
+    angle = Math.PI / 2;
+  } else if (b != 0 && a > c) {
+    angle = Math.PI / 2 + 0.5 * (Math.PI / 2 - Math.atan2(a - c, 2 * b));
+  } else if (b != 0 && a <= c) {
+    angle = Math.PI / 2 + 0.5 * (Math.PI / 2 - Math.atan2(a - c, 2 * b));
+  }
+
+  return {
+    centerX,
+    centerY,
+    radiusA,
+    radiusB,
+    angle,
+  };
+}

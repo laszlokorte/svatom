@@ -4,6 +4,7 @@
     import * as R from "ramda";
     import * as M from "@svatom/threedee/matrix";
     import * as S from "@svatom/threedee/shader";
+    import * as U from "./utils";
     import createREGL from "regl";
     import { parseColor } from "./colors";
 
@@ -1399,38 +1400,38 @@
             faces: [
                 {
                     vertices: [6, 14, 17, 15],
-                    attrs: { color: "blue", opacity: 0.5 },
+                    attrs: { color: "blue", opacity: 0.5, ellipse: true },
                 },
 
                 {
                     vertices: [6, 16, 18, 15],
-                    attrs: { color: "red", opacity: 0.5 },
+                    attrs: { color: "red", opacity: 0.5, ellipse: true },
                 },
 
                 {
                     vertices: [6, 14, 19, 16],
-                    attrs: { color: "green", opacity: 0.5 },
+                    attrs: { color: "green", opacity: 0.5, ellipse: true },
                 },
 
                 //
                 {
                     vertices: [77, 20, 22, 21],
-                    attrs: { color: "red", opacity: 0.5 },
+                    attrs: { color: "red", opacity: 0.5, ellipse: true },
                 },
 
                 {
                     vertices: [77, 23, 25, 24],
-                    attrs: { color: "green", opacity: 0.5 },
+                    attrs: { color: "green", opacity: 0.5, ellipse: true },
                 },
 
                 {
                     vertices: [77, 26, 28, 27],
-                    attrs: { color: "blue", opacity: 0.5 },
+                    attrs: { color: "blue", opacity: 0.5, ellipse: true },
                 },
 
                 {
                     vertices: [29, 30, 32, 31],
-                    attrs: { color: "gray", opacity: 0.5 },
+                    attrs: { color: "gray", opacity: 0.5, ellipse: true },
                 },
 
                 // e123
@@ -1676,8 +1677,8 @@
                         class: "vector-label",
                         "pointer-events": "none",
                         stroke: "white",
-                        "text-anchor": "middle",
                         "stroke-width": "3px",
+                        "text-anchor": "middle",
                         "font-size": "1.4em",
                         fill: "black",
                         transform: "translate(0, -30)",
@@ -1690,8 +1691,9 @@
                         class: "axis-label",
                         "pointer-events": "none",
                         "text-anchor": "middle",
-                        "stroke-width": "2px",
-                        "font-size": "1em",
+                        "font-size": "1.2em",
+                        stroke: "white",
+                        "stroke-width": "3px",
                         fill: "red",
                         transform: "translate(0, -10)",
                     },
@@ -1703,8 +1705,9 @@
                         class: "axis-label",
                         "pointer-events": "none",
                         "text-anchor": "middle",
-                        "stroke-width": "2px",
-                        "font-size": "1em",
+                        "font-size": "1.2em",
+                        stroke: "white",
+                        "stroke-width": "3px",
                         fill: "green",
                         transform: "translate(0, -10)",
                     },
@@ -1716,8 +1719,9 @@
                         class: "axis-label",
                         "pointer-events": "none",
                         "text-anchor": "middle",
-                        "stroke-width": "2px",
-                        "font-size": "1em",
+                        "font-size": "1.2em",
+                        stroke: "white",
+                        "stroke-width": "3px",
                         fill: "blue",
                         transform: "translate(0, -10)",
                     },
@@ -1823,7 +1827,7 @@
             },
             aspectRatio: 1,
             fov: Math.PI / 2 / 5,
-            orthogonality: 1,
+            orthogonality: 0,
             eye: {
                 tx: 0,
                 ty: 0,
@@ -2736,6 +2740,7 @@
         const result = [];
 
         const length = poly.length;
+        let clipped = poly.clipped || false;
 
         for (let i = 0; i < length; i++) {
             const j = (i + 1) % poly.length;
@@ -2757,14 +2762,17 @@
             if (bSign <= 0) {
                 if (aSign >= 0) {
                     result.push(c);
+                    clipped = true;
                 }
 
                 result.push(b);
             } else if (aSign <= 0) {
                 result.push(c);
+                clipped = true;
             }
         }
 
+        result.clipped = clipped;
         return result;
     };
 
@@ -3489,13 +3497,20 @@
             ({ ndcGeo, camera, screen, screenAspect }) => {
                 const vertices = ndcGeo.vertices;
                 return ndcGeo.faces.map((face) => {
-                    const vs = clipFace(
+                    const vso = clipFace(
                         face.vertices.map((vi) => vertices[vi]),
-                    ).map((v) => fastProject(v, camera, screen));
+                    );
+
+                    const vs = vso.map((v) => fastProject(v, camera, screen));
+                    const unclipped = face.vertices
+                        .map((vi) => vertices[vi])
+                        .map((v) => fastProject(v, camera, screen));
                     return {
                         attrs: face.attrs,
+                        clipped: vso.clipped,
                         clockwise: isClockwise(vs),
                         path: vs.map((c) => c.x + "," + c.y).join(","),
+                        unclipped,
                         center: vs.length
                             ? vs.reduce(
                                   ({ x: ax, y: ay }, { x, y }) => ({
@@ -4194,6 +4209,21 @@
     const upsert = R.curry((key, updateFn, defaultVal, obj) =>
         R.assoc(key, updateFn(R.propOr(defaultVal, key, obj)), obj),
     );
+
+    function polyToEllipse(c) {
+        if (c.length == 4) {
+            const e = U.quadToEllipse(...c);
+
+            return {
+                cx: e.centerX,
+                cy: e.centerY,
+                rx: e.radiusA,
+                ry: e.radiusB,
+                transform: `rotate(${(e.angle / Math.PI) * 180}, ${e.centerX} ${e.centerY})`,
+            };
+        }
+        return {};
+    }
 </script>
 
 <fieldset>
@@ -4341,7 +4371,9 @@
             }
         }}
         onkeydown={(evt) => {
-            evt.preventDefault();
+            if (!evt.ctrlKey) {
+                evt.preventDefault();
+            }
             keyDown.value = evt.key;
         }}
         onkeyup={(evt) => {
@@ -4404,6 +4436,17 @@
                         data-clockwise={p.clockwise !== (p.attrs.flip ?? false)}
                         points={p.path}
                     />
+                    {#if p.attrs.ellipse}
+                        <ellipse
+                            stroke={p.attrs.color ?? "#ccc"}
+                            {...p.attrs}
+                            stroke-width="2"
+                            fill="none"
+                            stroke-opacity="0.8"
+                            opacity="1"
+                            {...polyToEllipse(p.unclipped)}
+                        ></ellipse>
+                    {/if}
                     {#if labelFace.value}
                         <text
                             class={p.attrs.class}
