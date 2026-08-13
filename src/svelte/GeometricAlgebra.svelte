@@ -4214,13 +4214,15 @@
         if (c.length == 4) {
             const e = U.quadToEllipse(...c);
 
-            return {
-                cx: e.centerX,
-                cy: e.centerY,
-                rx: e.radiusA,
-                ry: e.radiusB,
-                transform: `rotate(${(e.angle / Math.PI) * 180}, ${e.centerX} ${e.centerY})`,
-            };
+            if (e) {
+                return {
+                    cx: e.centerX,
+                    cy: e.centerY,
+                    rx: e.radiusA,
+                    ry: e.radiusB,
+                    transform: `rotate(${(e.angle / Math.PI) * 180}, ${e.centerX} ${e.centerY})`,
+                };
+            }
         }
         return {};
     }

@@ -23,6 +23,7 @@
     import Robot from "./Robot.svelte";
     import ThreeDeeFresh from "./ThreeDeeFresh.svelte";
     import GeometricAlgebra from "./GeometricAlgebra.svelte";
+    import Marcher from "./Marcher.svelte";
     import RenewImport from "./Renew/Import.svelte";
     import asciiLogo from "../data/asciiLogo.txt?raw";
     import { lerp } from "./utils.js";
@@ -924,6 +925,7 @@
     <h2>Geometric Algebra</h2>
 
     <GeometricAlgebra />
+    <Marcher />
     <div style:height="60vh"></div>
 </section>
 
