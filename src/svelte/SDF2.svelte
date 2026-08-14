@@ -61,7 +61,7 @@
                                     child: {
                                         type: "rect",
                                         size: [0.75, 0.55],
-                                        color: [0.75, 0.45, 0.25],
+                                        color: [0.75, 0.45, 0.25, 1],
                                     },
                                 },
 
@@ -76,7 +76,20 @@
                                     child: {
                                         type: "triangle",
                                         size: [0.9, 0.25],
-                                        color: [0.7, 0.15, 0.1],
+                                        color: [0.7, 0.15, 0.1, 1],
+                                    },
+                                },
+                                {
+                                    type: "transform",
+                                    transform: {
+                                        translate: [0.0, -0.72],
+                                        rotate: 0,
+                                        scale: [1, 1],
+                                    },
+                                    child: {
+                                        type: "rect",
+                                        size: [1.9, 0.02],
+                                        color: [0.1, 0.75, 0.1, 1],
                                     },
                                 },
                             ],
@@ -91,7 +104,7 @@
                             child: {
                                 type: "rect",
                                 size: [0.18, 0.3],
-                                color: [0.25, 0.12, 0.05],
+                                color: [0.25, 0.12, 0.05, 1],
                             },
                         },
                     },
@@ -107,7 +120,7 @@
                         child: {
                             type: "circle",
                             radius: 0.02,
-                            color: [1.0, 0.8, 0.2],
+                            color: [1.0, 0.8, 0.2, 1],
                         },
                     },
 
@@ -122,7 +135,7 @@
                         child: {
                             type: "circle",
                             radius: 0.12,
-                            color: [1.0, 0.8, 0.1],
+                            color: [1.0, 0.8, 0.1, 1],
                         },
                     },
                 ],
@@ -147,28 +160,35 @@
             switch (node.type) {
                 case "circle": {
                     const radius = addUniform("float", `${name}_radius`);
+                    const color = addUniform("vec4", `${name}_color`);
 
                     functions.push(`
-                           float ${name}(vec2 p) {
-                               return length(p)
-                                   - ${radius} * min(screen.x, screen.y);
-                           }
-                       `);
+                      SDFResult ${name}(vec2 p) {
+                          return SDFResult(
+                              length(p) - ${radius} * min(screen.x, screen.y),
+                              ${color}
+                          );
+                      }
+                  `);
 
                     return name;
                 }
 
                 case "rect": {
                     const size = addUniform("vec2", `${name}_size`);
+                    const color = addUniform("vec4", `${name}_color`);
 
                     functions.push(`
-                      float ${name}(vec2 p) {
+                      SDFResult  ${name}(vec2 p) {
                                  vec2 b = 0.5 * ${size} * min(screen.x, screen.y);
 
                                  vec2 d = abs(p) - b;
 
-                                 return length(max(d, 0.0))
-                                      + min(max(d.x, d.y), 0.0);
+                                 return SDFResult(
+                                    length(max(d, 0.0))
+                                      + min(max(d.x, d.y), 0.0),
+                                    ${color}
+                                );
                              }
                      `);
 
@@ -176,16 +196,19 @@
                 }
                 case "triangle": {
                     const size = addUniform("vec2", `${name}_size`);
+                    const color = addUniform("vec4", `${name}_color`);
 
                     functions.push(`
-                         float ${name}(vec2 p) {
+                         SDFResult  ${name}(vec2 p) {
                              vec2 s = ${size} * min(screen.x, screen.y);
 
                              vec2 a = vec2(-s.x * 0.5, -s.y * 0.5);
                              vec2 b = vec2( s.x * 0.5, -s.y * 0.5);
                              vec2 c = vec2(0.0, s.y * 0.5);
 
-                             return sdTriangle(p, a, b, c);
+                             return SDFResult(sdTriangle(p, a, b, c),
+                                                             ${color}
+                                                         );
                          }
                      `);
 
@@ -196,11 +219,11 @@
                     const children = node.children.map(compile);
 
                     functions.push(`
-              float ${name}(vec2 p) {
-                float d = 1e20;
+              SDFResult  ${name}(vec2 p) {
+                SDFResult d = SDFResult(1e20, vec4(0.0));
 
                 ${children
-                    .map((child) => `d = min(d, ${child}(p));`)
+                    .map((child) => `d = sdf_union(d, ${child}(p));`)
                     .join("\n")}
 
                 return d;
@@ -215,11 +238,14 @@
                     const b = compile(node.b);
 
                     functions.push(`
-              float ${name}(vec2 p) {
-                return max(
-                  ${a}(p),
-                  -${b}(p)
-                );
+              SDFResult  ${name}(vec2 p) {
+
+                SDFResult a = ${a}(p);
+                SDFResult b = ${b}(p);
+                return SDFResult(max(
+                  a.d,
+                  -b.d
+                ), a.color);
               }
             `);
 
@@ -236,7 +262,7 @@
                     const child = compile(node.child);
 
                     functions.push(`
-                         float ${name}(vec2 p) {
+                         SDFResult ${name}(vec2 p) {
                              vec2 q = p;
 
                              q -= ${translate} * 0.5 * min(screen.x, screen.y);
@@ -274,13 +300,15 @@
             switch (node.type) {
                 case "circle":
                     uniforms[`${name}_radius`] = node.radius;
+                    uniforms[`${name}_color`] = node.color;
                     break;
-
                 case "rect":
                     uniforms[`${name}_size`] = node.size;
+                    uniforms[`${name}_color`] = node.color;
                     break;
                 case "triangle":
                     uniforms[`${name}_size`] = node.size;
+                    uniforms[`${name}_color`] = node.color;
                     break;
 
                 case "transform": {
@@ -360,6 +388,25 @@
              uniform vec2 screen;
              uniform vec4 foreground;
              uniform vec4 background;
+             struct SDFResult {
+                 float d;
+                 vec4 color;
+             };
+             SDFResult sdf_union(SDFResult a, SDFResult b) {
+             SDFResult result;
+
+             result.d = min(a.d, b.d);
+
+             if (a.d < 0.0 && b.d < 0.0) {
+                 result.color = b.color;
+             } else if (b.d < a.d) {
+                 result.color = b.color;
+             } else {
+                 result.color = a.color;
+             }
+
+             return result;
+             }
 
              ${uniformDecle}
 
@@ -419,14 +466,13 @@
              vec2 p =
                      (gl_FragCoord.xy - 0.5 * screen);
 
-               float d = 1e20;
+               SDFResult result = SDFResult(1e20, background);
 
-               ${main ? ` d = ${main}(p);` : ""}
+               ${main ? ` result = ${main}(p);` : ""}
 
-               float alpha = 1.0 - smoothstep(-1.0, 0.0, d);
+               float alpha = 1.0 - smoothstep(-1.0, 0.0, result.d);
 
-
-               gl_FragColor =  mix(background, foreground, alpha);
+               gl_FragColor =  mix(background, result.color, alpha);
              }
            `;
 
@@ -503,7 +549,7 @@
             }
 
             regl.clear({
-                color: [0.4, 0.4, 0.4, 1],
+                color: [0.4, 0.4, 0.4, 1, 1],
                 stencil: 1,
                 depth: 1.0,
             });
@@ -634,6 +680,8 @@
     {@const o = ov.value}
     {#if o.type == "circle"}
         {@const r = view("radius", ov)}
+        {@const color = failableView(["color"], ov)}
+        {@const colorHex = failableView([rgbaHex], color)}
         <fieldset>
             <legend>circle</legend>
             <div style="display: flex; gap: 1ex">
@@ -646,11 +694,27 @@
                         step="0.01"
                     /></label
                 >
+                <label
+                    style=""
+                    class={{
+                        error: colorHex.hasError,
+                        "color-picker": true,
+                    }}
+                    ><span class="label">Color</span>
+                    <span class="ctrl">
+                        <input type="text" bind:value={colorHex.value} /><input
+                            type="color"
+                            bind:value={colorHex.value}
+                        />
+                    </span>
+                </label>
             </div>
         </fieldset>
     {:else if o.type == "rect"}
         {@const width = view(["size", 0], ov)}
         {@const height = view(["size", 1], ov)}
+        {@const color = failableView(["color"], ov)}
+        {@const colorHex = failableView([rgbaHex], color)}
         <fieldset>
             <legend>rect</legend>
 
@@ -673,11 +737,28 @@
                         min="0"
                     /></label
                 >
+
+                <label
+                    style=""
+                    class={{
+                        error: colorHex.hasError,
+                        "color-picker": true,
+                    }}
+                    ><span class="label">Color</span>
+                    <span class="ctrl">
+                        <input type="text" bind:value={colorHex.value} /><input
+                            type="color"
+                            bind:value={colorHex.value}
+                        />
+                    </span>
+                </label>
             </div>
         </fieldset>
     {:else if o.type == "triangle"}
         {@const width = view(["size", 0], ov)}
         {@const height = view(["size", 1], ov)}
+        {@const color = failableView(["color"], ov)}
+        {@const colorHex = failableView([rgbaHex], color)}
         <fieldset>
             <legend>triangle</legend>
 
@@ -700,6 +781,21 @@
                         min="0"
                     /></label
                 >
+
+                <label
+                    style=""
+                    class={{
+                        error: colorHex.hasError,
+                        "color-picker": true,
+                    }}
+                    ><span class="label">Color</span>
+                    <span class="ctrl">
+                        <input type="text" bind:value={colorHex.value} /><input
+                            type="color"
+                            bind:value={colorHex.value}
+                        />
+                    </span>
+                </label>
             </div>
         </fieldset>
     {:else if o.type == "transform"}
