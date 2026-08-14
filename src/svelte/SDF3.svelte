@@ -6,16 +6,7 @@
     import * as R from "ramda";
     import * as M from "@svatom/threedee/matrix";
     import * as S from "@svatom/threedee/shader";
-    import {
-        atom,
-        view,
-        read,
-        update,
-        combine,
-        failableView,
-        bindValue,
-        autofocusIf,
-    } from "./svatom.svelte.js";
+    import { atom, view, read, update, failableView } from "./svatom.svelte.js";
     import clamp from "ramda/src/clamp";
     const clientSize = atom({
         clientWidth: 0,
@@ -35,156 +26,7 @@
         background: [
             0.9333333333333333, 0.9333333333333333, 0.9333333333333333, 1,
         ],
-        goo: 100,
-        items: [
-            {
-                type: "circle",
-                cx: -0.016666666915019373,
-                cy: -0.11875000176951289,
-                r: 0.1,
-                ox: 0.006250060473879178,
-                oy: -0.2447916315868497,
-            },
-            {
-                cx: -0.10745552674953998,
-                cy: -0.5055472684247442,
-                r: 0.06785042195204033,
-                ox: -0.10624994120250145,
-                oy: -0.5510416361503303,
-            },
-            {
-                cx: -0.2501138609551374,
-                cy: -0.38314285923488745,
-                r: 0.08870503811397856,
-                ox: -0.24583327661578852,
-                oy: -0.31083345133811235,
-            },
-            {
-                cx: 0.13626531555930177,
-                cy: 0.0924318676898448,
-                r: 0.1043432165684296,
-                ox: 0.11875006215025981,
-                oy: 0.02041655359789729,
-            },
-            {
-                cx: -0.3664188931537776,
-                cy: -0.5295525504866427,
-                r: 0.04880536216678138,
-                ox: -0.39791661221534014,
-                oy: -0.5420834547840059,
-            },
-            {
-                cx: 0.1707747615333018,
-                cy: 0.40905011308757977,
-                r: 0.020410364049853285,
-                ox: 0.1708333962596953,
-                oy: 0.45166656002402306,
-            },
-            {
-                cx: 0.20212513719494518,
-                cy: -0.23724080165768835,
-                r: 0.030248342165585036,
-            },
-            {
-                cx: -0.19583327587073046,
-                cy: 0.2739583761431277,
-                r: 0.10031399709807697,
-                ox: -0.19583327587073046,
-                oy: 0.2739583761431277,
-            },
-            {
-                cx: -0.11874994138876596,
-                cy: 0.5427083801478148,
-                r: 0.04526311670931689,
-            },
-            {
-                cx: -0.04166660690680146,
-                cy: 0.41145837819203734,
-                r: 0.07346450672454884,
-            },
-            {
-                cx: 0.15833339607343078,
-                cy: -0.19479163084179163,
-                r: 0.10027144152468646,
-                ox: 0.19583339663222432,
-                oy: -0.18229163065552711,
-            },
-            {
-                cx: 0.03333339421078563,
-                cy: -0.9447916420176625,
-                r: 0.08197377369616898,
-            },
-            {
-                cx: -0.4583332797822853,
-                cy: 0.07395837316289544,
-                r: 0.1041902718759346,
-            },
-            {
-                cx: -0.6666666162200272,
-                cy: 0.03020837251096964,
-                r: 0.05687325806240862,
-            },
-            {
-                cx: -0.7020832834144433,
-                cy: -0.4510416346602142,
-                r: 0.08156261578642879,
-            },
-            {
-                cx: -0.5520832811792691,
-                cy: -0.7760416395030916,
-                r: 0.02150128003704154,
-            },
-            {
-                cx: -0.3729166118428111,
-                cy: -0.8072916399687529,
-                r: 0.09399530944104029,
-            },
-            {
-                cx: -0.2541666100732982,
-                cy: -0.8197916401550174,
-                r: 0.05870602358990981,
-            },
-            {
-                cx: -0.3437499447415272,
-                cy: 0.011458372231572866,
-                r: 0.04909557260133504,
-            },
-            {
-                cx: -0.3854166120290756,
-                cy: 0.8739583850838244,
-                r: 0.05213975341004809,
-            },
-            {
-                cx: 0.3895833995193243,
-                cy: 0.36770837754011154,
-                r: 0.052052693446654905,
-            },
-            {
-                cx: 0.4562500671794017,
-                cy: 0.06770837306976318,
-                r: 0.0883700892806129,
-            },
-            {
-                cx: 0.37916673269743717,
-                cy: -0.4760416350327432,
-                r: 0.030449069336246685,
-            },
-            {
-                cx: 0.31041673167298234,
-                cy: -0.6072916369885206,
-                r: 0.041089866215471386,
-            },
-            {
-                cx: 0.08333339495584369,
-                cy: 0.0802083732560277,
-                r: 0.056419585033615445,
-            },
-            {
-                cx: 0.1062500619639953,
-                cy: -0.1260416298173368,
-                r: 0.02495048155524621,
-            },
-        ],
+        items: [],
     });
 
     const renderGL = (canvasRoot) => {
@@ -236,7 +78,6 @@
              uniform vec2 screen;
              uniform vec4 foreground;
              uniform vec4 background;
-             uniform float goo;
 
              ${circleDecl}
              float smin(float a, float b, float k) {
@@ -281,7 +122,6 @@
 
                 frag: fs,
                 uniforms: {
-                    goo: regl.prop("goo"),
                     foreground: ({
                         foreground = [238 / 255, 63 / 255, 16 / 255, 1],
                     }) => scene.value.foreground || foreground,
@@ -309,7 +149,7 @@
                               p - (circles[${i}].xy * 0.5 + 0.5) * screen
                             ) - circles[${i}].z * min(screen.x, screen.y);
 
-                          d = smin(d, di${i}, goo);
+                          d = min(d, di${i});
                         `,
                     )
                     .join("\n"),
@@ -358,7 +198,6 @@
             try {
                 reglCamera(() => {
                     drawScene({
-                        goo: scene.value.goo,
                         circles: scene.value.items.map(({ cx, cy, r }, i) => [
                             cx,
                             cy,
@@ -388,8 +227,6 @@
             y: pp.y * sy,
         };
     }
-    const items = view(["items", "length"], scene);
-    const goo = view(["goo"], scene);
     const newCircle = view(["items", L.appendTo], scene);
 
     const rgbaHex = L.lens(
@@ -442,7 +279,7 @@
     const sceneJson = $derived(view(L.inverse(L.json({ space: "  " })), scene));
 </script>
 
-<h2>Gooey</h2>
+<h2>Raytracer</h2>
 
 <div
     bind:clientWidth={clientWidth.value}
@@ -477,127 +314,11 @@
             }
         }}
     >
-        {#each scene.value.items as { cx, cy, r }, i}
-            {@const circle = view(["items", i], scene)}
-            {@const circlePos = view(
-                [
-                    L.pick({
-                        cx: ["cx", L.rewrite(clamp(-1, 1))],
-                        cy: ["cy", L.rewrite(clamp(-1, 1))],
-                        ox: ["ox", L.rewrite(clamp(-1, 1))],
-                        oy: ["oy", L.rewrite(clamp(-1, 1))],
-                    }),
-                    L.setter(({ x, y }, old) => ({
-                        ...old,
-                        cx: x - (old.ox - old.cx ?? 0),
-                        cy: y - (old.oy - old.cy ?? 0),
-                        ox: x,
-                        oy: y,
-                    })),
-                ],
-                circle,
-            )}
-            {@const circleRad = view(
-                [
-                    L.pick({
-                        r: ["r", L.rewrite(clamp(0.0, 1))],
-                        cx: "cx",
-                        cy: "cy",
-                        ox: ["ox", L.rewrite(clamp(-1, 1))],
-                        oy: ["oy", L.rewrite(clamp(-1, 1))],
-                    }),
-                    L.setter(({ x, y }, old) => ({
-                        ...old,
-                        r:
-                            old.r +
-                            Math.hypot(x - old.cx, y - old.cy) -
-                            Math.hypot(old.oy - old.cy, old.ox - old.cx),
-                        ox: x,
-                        oy: y,
-                    })),
-                ],
-                circle,
-            )}
-            {@const circleOffset = view(L.pick({ x: "ox", y: "oy" }), circle)}
-            <circle
-                vector-effect="non-scaling-stroke"
-                cx={cx * clientAspect.value}
-                cy={-cy}
-                r={r * 2}
-                fill="transparent"
-                stroke-width="2"
-                stroke="white"
-                opacity="0.08"
-                role="button"
-                tabindex="-1"
-                ondblclick={(evt) => {
-                    evt.preventDefault();
-                    update(
-                        (s) => ({
-                            ...s,
-                            items: [
-                                ...s.items.slice(0, i),
-                                ...s.items.slice(i + 1),
-                            ],
-                        }),
-                        scene,
-                    );
-                }}
-                onkeypress={() => {}}
-                onpointerdown={(evt) => {
-                    if (evt.isPrimary && evt.pointerType == "mouse") {
-                        evt.stopPropagation();
-                        evt.preventDefault();
-                        evt.currentTarget.setPointerCapture(evt.pointerId);
-                        circleOffset.value = svgPoint(
-                            evt.currentTarget.ownerSVGElement,
-                            evt,
-                            { x: 1 / clientAspect.value, y: -1 },
-                        );
-                    }
-                }}
-                onpointermove={(evt) => {
-                    if (evt.currentTarget.hasPointerCapture(evt.pointerId)) {
-                        evt.preventDefault();
-                        evt.stopPropagation();
-                        if (evt.ctrlKey) {
-                            circleRad.value = svgPoint(
-                                evt.currentTarget.ownerSVGElement,
-                                evt,
-                                { x: 1 / clientAspect.value, y: -1 },
-                            );
-                        } else {
-                            circlePos.value = svgPoint(
-                                evt.currentTarget.ownerSVGElement,
-                                evt,
-                                { x: 1 / clientAspect.value, y: -1 },
-                            );
-                        }
-                    }
-                }}
-                onpointerup={(evt) => {
-                    if (evt.currentTarget.hasPointerCapture(evt.pointerId)) {
-                        evt.preventDefault();
-                        evt.stopPropagation();
-                    }
-                }}
-            ></circle>
-        {/each}
     </svg>
 </div>
 
 <textarea bind:value={sceneJson.value}></textarea>
-<label style="display: flex; align-items: center; gap: 1ex"
-    >Goo<input
-        style="flex-grow: 1;"
-        type="range"
-        bind:value={goo.value}
-        min="1"
-        max="100"
-        step="1"
-    />
-    <output style="flex-basis: 4em; text-align: center;">{goo.value}</output>
-</label>
+
 <label style="" class={{ error: foregroundHex.hasError, "color-picker": true }}
     ><span class="label">Foreground</span>
     <span class="ctrl">
@@ -625,69 +346,6 @@
         };
     }}>Add</button
 >
-
-<div
-    style="display: flex; padding: 1ex; flex-direction: column; gap: 1ex; flex-wrap: none; max-height: 20em; overflow: auto;"
->
-    {#each { length: items.value } as _, i}
-        {@const cx = view(["items", i, "cx"], scene)}
-        {@const cy = view(["items", i, "cy"], scene)}
-        {@const r = view(["items", i, "r"], scene)}
-        <fieldset
-            style="display: flex; gap: 1em; flex-grow: 1; align-items: center; flex-shrink: 0;"
-        >
-            <legend
-                style="background-color: #111; color: #fff; padding: 0.1ex 1ex 0.1ex 0.1ex"
-            >
-                <button
-                    onclick={() => {
-                        update(
-                            (s) => ({
-                                ...s,
-                                items: [
-                                    ...s.items.slice(0, i),
-                                    ...s.items.slice(i + 1),
-                                ],
-                            }),
-                            scene,
-                        );
-                    }}>🞭</button
-                >
-                Circle #{i + 1}
-            </legend>
-            <label
-                style="display: flex; flex-grow: 1; align-items: center; gap: 1ex;"
-                >CX<input
-                    type="range"
-                    bind:value={cx.value}
-                    min="-1"
-                    max="1"
-                    step="0.01"
-                />
-            </label>
-            <label
-                style="display: flex; flex-grow: 1; align-items: center; gap: 1ex;"
-                >CY<input
-                    type="range"
-                    bind:value={cy.value}
-                    min="-1"
-                    max="1"
-                    step="0.01"
-                />
-            </label>
-            <label
-                style="display: flex; flex-grow: 1; align-items: center; gap: 1ex;"
-                >R<input
-                    type="range"
-                    bind:value={r.value}
-                    min="0"
-                    max="1"
-                    step="0.01"
-                />
-            </label>
-        </fieldset>
-    {/each}
-</div>
 
 <style>
     .viewportContainer {

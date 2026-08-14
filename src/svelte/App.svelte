@@ -24,6 +24,8 @@
     import ThreeDeeFresh from "./ThreeDeeFresh.svelte";
     import GeometricAlgebra from "./GeometricAlgebra.svelte";
     import Gooey from "./Gooey.svelte";
+    import SDF2 from "./SDF2.svelte";
+    import SDF3 from "./SDF3.svelte";
     import RenewImport from "./Renew/Import.svelte";
     import asciiLogo from "../data/asciiLogo.txt?raw";
     import { lerp } from "./utils.js";
@@ -926,6 +928,8 @@
 
     <GeometricAlgebra />
     <Gooey />
+    <SDF2 />
+    <SDF3 />
     <div style:height="60vh"></div>
 </section>
 
