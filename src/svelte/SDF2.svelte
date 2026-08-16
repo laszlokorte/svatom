@@ -1052,7 +1052,11 @@
         align-self: center;
         margin-right: 1em;
     }
+    svg:hover .dashed {
+        opacity: 1;
+    }
     .dashed {
+        opacity: 0;
         fill-opacity: 0.2;
         stroke-width: 2;
         vector-effect: non-scaling-stroke;

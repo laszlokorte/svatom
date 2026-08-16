@@ -21,12 +21,11 @@
 
     const scene = atom({
         foreground: [
-            0.14901960784313725, 0.6352941176470588, 0.4117647058823529, 1,
+            0.14901960784313725, 0.6352941176470588, 0.4117647058823529, 0.1,
         ],
         background: [
             0.9333333333333333, 0.9333333333333333, 0.9333333333333333, 1,
         ],
-        items: [],
     });
 
     const renderGL = (canvasRoot) => {
@@ -79,22 +78,170 @@
              uniform vec4 foreground;
              uniform vec4 background;
 
-             ${circleDecl}
-             float smin(float a, float b, float k) {
-                 float h = max(k - abs(a - b), 0.0) / k;
-                 return min(a, b) - h * h * k * 0.25;
+             struct SDFResult {
+                 float d;
+                 vec4 color;
+                 float roughness;
+                 float metallic;
+             };
+             struct RayHit {
+                 float t;
+                 SDFResult material;
+             };
+
+
+             float sdfSphere(vec3 p, float rad) {
+                  return length(p) - rad;
+              }
+
+              float smin(float a, float b, float k) {
+                  float h = max(k - abs(a - b), 0.0) / k;
+                  return min(a, b) - h * h * k * 0.25;
+              }
+             // ─────────────────────────────────────────────
+             // Scene
+             // ─────────────────────────────────────────────
+
+             SDFResult sceneSDF(vec3 p) {
+                SDFResult result;
+
+                result.d = smin(sdfSphere(p - vec3(0.8,0.2,0.1), 0.7), sdfSphere(p + vec3(0.8,0.2,0.3), 0.7), 1.0);
+                result.color = foreground;
+                result.roughness = 0.2;
+                result.metallic = 0.3;
+
+                return result;
              }
 
+
+             // ─────────────────────────────────────────────
+             // Ray marching
+             // ─────────────────────────────────────────────
+
+
+             RayHit rayMarch(vec3 ro, vec3 rd) {
+                 float t = 0.0;
+
+                 for (int i = 0; i < 100; i++) {
+                     vec3 p = ro + rd * t;
+                     SDFResult result = sceneSDF(p);
+
+                     if (result.d < 0.001) {
+                         RayHit hit;
+                         hit.t = t;
+                         hit.material = result;
+                         return hit;
+                     }
+
+                     t += result.d;
+
+                     if (t > 100.0) {
+                         break;
+                     }
+                 }
+
+                 RayHit miss;
+                 miss.t = -1.0;
+                 return miss;
+             }
+             vec3 shade(
+                 vec3 p,
+                 vec3 n,
+                 vec3 rd,
+                 SDFResult material
+             ) {
+                 vec3 baseColor = material.color.rgb;
+
+                 vec3 lightPos = vec3(2.0, 3.0, 4.0);
+                 vec3 lightDir = normalize(lightPos - p);
+
+                 float diffuse = max(dot(n, lightDir), 0.0);
+
+                 // View direction points from surface toward camera.
+                 vec3 viewDir = normalize(-rd);
+
+                 // Simple specular highlight.
+                 vec3 halfDir = normalize(lightDir + viewDir);
+
+                 float specular = pow(
+                     max(dot(n, halfDir), 0.0),
+                     mix(128.0, 4.0, material.roughness)
+                 );
+
+                 // Metals use their base color for the specular response.
+                 vec3 specularColor = mix(
+                     vec3(1.0),
+                     baseColor,
+                     material.metallic
+                 );
+
+                 vec3 diffuseColor =
+                     baseColor * (1.0 - material.metallic);
+
+
+                     float ambient = 0.1;
+                 vec3 color =
+                     diffuseColor * (ambient + diffuse)
+                     + specularColor * specular;
+
+                 // Small ambient term.
+                 color += baseColor * 0.5;
+
+                 return color;
+             }
+
+             // ─────────────────────────────────────────────
+             // Normal
+             // ─────────────────────────────────────────────
+
+
+             vec3 sceneNormal(vec3 p) {
+                 float e = 0.001;
+
+                 return normalize(
+                     vec3(
+                         sceneSDF(p + vec3(e, -e, -e)).d -
+                         sceneSDF(p + vec3(-e, -e, -e)).d,
+
+                         sceneSDF(p + vec3(-e, e, -e)).d -
+                         sceneSDF(p + vec3(-e, -e, -e)).d,
+
+                         sceneSDF(p + vec3(-e, -e, e)).d -
+                         sceneSDF(p + vec3(-e, -e, -e)).d
+                     )
+                 );
+             }
+
+             // ─────────────────────────────────────────────
+             // Main
+             // ─────────────────────────────────────────────
+
              void main() {
-               vec2 p = gl_FragCoord.xy;
+             vec2 uv =
+                 (gl_FragCoord.xy - 0.5 * screen)
+                 / min(screen.x, screen.y);
 
-               float d = 1e20;
+             vec3 ro = vec3(0.0, 0.0, 3.0);
+             vec3 rd = normalize(vec3(uv, -1.5));
 
-               ${circleCode}
+             RayHit hit = rayMarch(ro, rd);
 
-               float alpha = 1.0 - smoothstep(-1.0, 0.0, d);
+             if (hit.t < 0.0) {
+                 gl_FragColor = background;
+                 return;
+             }
 
-               gl_FragColor =  mix(background, foreground, alpha);
+             vec3 p = ro + rd * hit.t;
+             vec3 n = sceneNormal(p);
+
+             vec3 color = shade(
+                 p,
+                 n,
+                 rd,
+                 hit.material
+             );
+
+             gl_FragColor = vec4(color, 1.0);
              }
            `;
 
@@ -139,32 +286,9 @@
             });
         };
         let drawScene = makeScene("", "", []);
-        const sceneCode = view(
-            ({ items }) =>
-                items
-                    .map(
-                        (_, i) => `
-                          float di${i} =
-                            length(
-                              p - (circles[${i}].xy * 0.5 + 0.5) * screen
-                            ) - circles[${i}].z * min(screen.x, screen.y);
-
-                          d = min(d, di${i});
-                        `,
-                    )
-                    .join("\n"),
-            scene,
-        );
-        const sceneUniforms = view(
-            ({ items }) =>
-                items.length ? ` uniform vec3 circles[${items.length}];` : "",
-            scene,
-        );
-        const sceneUniformsDelc = view(
-            ({ items }) =>
-                items.map((_, i) => [`circles[${i}]`, `circles[${i}]`]),
-            scene,
-        );
+        const sceneCode = view(({ items }) => "", scene);
+        const sceneUniforms = view(({ items }) => "", scene);
+        const sceneUniformsDelc = view(({ items }) => [], scene);
         $effect(() => {
             drawScene = makeScene(
                 sceneCode.value,
@@ -197,13 +321,7 @@
             });
             try {
                 reglCamera(() => {
-                    drawScene({
-                        circles: scene.value.items.map(({ cx, cy, r }, i) => [
-                            cx,
-                            cy,
-                            r,
-                        ]),
-                    });
+                    drawScene();
                 });
             } catch (e) {
                 console.error(e);
@@ -227,7 +345,6 @@
             y: pp.y * sy,
         };
     }
-    const newCircle = view(["items", L.appendTo], scene);
 
     const rgbaHex = L.lens(
         ([r, g, b, a]) => {
@@ -292,27 +409,6 @@
         preserveAspectRatio="xMidYMid meet"
         role="button"
         tabindex="-1"
-        onpointerup={(evt) => {
-            if (evt.isPrimary && evt.pointerType == "mouse") {
-                evt.stopPropagation();
-                evt.preventDefault();
-                evt.currentTarget.setPointerCapture(evt.pointerId);
-                newCircle.value = L.get(
-                    L.pick({
-                        cx: "x",
-                        cy: "y",
-                        r: "r",
-                    }),
-                    {
-                        ...svgPoint(evt.currentTarget, evt, {
-                            x: 1 / clientAspect.value,
-                            y: -1,
-                        }),
-                        r: 0.01 + Math.random() * 0.1,
-                    },
-                );
-            }
-        }}
     >
     </svg>
 </div>
@@ -335,17 +431,6 @@
         <input type="color" bind:value={backgroundHex.value} />
     </span>
 </label>
-
-<button
-    style="align-self: center;"
-    onclick={() => {
-        newCircle.value = {
-            cx: Math.random() - 0.5,
-            cy: Math.random() - 0.5,
-            r: Math.random() / 10 + 0.02,
-        };
-    }}>Add</button
->
 
 <style>
     .viewportContainer {

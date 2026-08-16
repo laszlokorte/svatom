@@ -322,18 +322,25 @@ export function quadToEllipse(W, X, Y, Z) {
   const f = K * L + N * O - Q * R;
   const g = L * L + O * O - R * R;
 
+  const denom = b * b - a * c;
+  const denom2 = Math.sqrt((a - c) * (a - c) + 4 * b * b) - (a + c);
+  const denom3 = -Math.sqrt((a - c) * (a - c) + 4 * b * b) - (a + c);
+  if (denom * denom2 * denom3 == 0) {
+    return null;
+  }
+
   // deduce ellipse center from coefficients
-  const centerX = (c * d - b * f) / (b * b - a * c);
-  const centerY = (a * f - b * d) / (b * b - a * c);
+  const centerX = (c * d - b * f) / denom;
+  const centerY = (a * f - b * d) / denom;
 
   // deduce ellipse radius from coefficients
   const radiusA = Math.sqrt(
     (2 * (a * f * f + c * d * d + g * b * b - 2 * b * d * f - a * c * g)) /
-      ((b * b - a * c) * (Math.sqrt((a - c) * (a - c) + 4 * b * b) - (a + c))),
+      (denom * denom2),
   );
   const radiusB = Math.sqrt(
     (2 * (a * f * f + c * d * d + g * b * b - 2 * b * d * f - a * c * g)) /
-      ((b * b - a * c) * (-Math.sqrt((a - c) * (a - c) + 4 * b * b) - (a + c))),
+      (denom * denom3),
   );
 
   // deduce ellipse rotation from coefficients
