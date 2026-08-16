@@ -98,14 +98,21 @@
                   float h = max(k - abs(a - b), 0.0) / k;
                   return min(a, b) - h * h * k * 0.25;
               }
+              float smax(float a, float b, float k) {
+                             float h = max(k - abs(a - b), 0.0) / k;
+                             return max(a, b) - h * h * k * 0.25;
+                         }
              // ─────────────────────────────────────────────
              // Scene
              // ─────────────────────────────────────────────
 
              SDFResult sceneSDF(vec3 p) {
                 SDFResult result;
-
-                result.d = smin(sdfSphere(p - vec3(0.8,0.2,0.1), 0.7), sdfSphere(p + vec3(0.8,0.2,0.3), 0.7), 1.0);
+                float s1 = sdfSphere(p - vec3(0.9,0.2,0.1), 0.7);
+                float s2 = sdfSphere(p + vec3(0.8,0.2,0.3), 0.7);
+                float s3 = sdfSphere(p + vec3(1.0,0.2,-0.5), 0.3);
+                float s4 = sdfSphere(p + vec3(-0.9,-0.2,-1.5), 0.9);
+                result.d = smin(smax(s2,-s3, 0.0),smax(s1, -s4, 0.0), 1.0);
                 result.color = foreground;
                 result.roughness = 0.2;
                 result.metallic = 0.3;

@@ -173,6 +173,12 @@
             },
         },
     });
+
+    const compiledScene = view(["root", compileScene], scene);
+    const sceneCode = view("code", compiledScene);
+    const sceneCodeRoot = view("root", compiledScene);
+    const sceneUniforms = view("uniforms", compiledScene);
+    const sceneUniformsDelc = view("declarations", compiledScene);
     function compileScene(root) {
         let id = 0;
         const functions = [];
@@ -564,11 +570,6 @@
             });
         };
         let drawScene = makeScene("", "", "", []);
-        const compiledScene = view(["root", compileScene], scene);
-        const sceneCode = view("code", compiledScene);
-        const sceneCodeRoot = view("root", compiledScene);
-        const sceneUniforms = view("uniforms", compiledScene);
-        const sceneUniformsDelc = view("declarations", compiledScene);
         $effect(() => {
             drawScene = makeScene(
                 sceneCodeRoot.value,
