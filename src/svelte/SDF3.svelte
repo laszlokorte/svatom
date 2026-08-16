@@ -21,7 +21,7 @@
 
     const scene = atom({
         foreground: [
-            0.14901960784313725, 0.6352941176470588, 0.4117647058823529, 0.1,
+            0.14901960784313725, 0.6352941176470588, 0.4117647058823529, 0.9,
         ],
         background: [
             0.9333333333333333, 0.9333333333333333, 0.9333333333333333, 1,
@@ -151,7 +151,7 @@
                  miss.t = -1.0;
                  return miss;
              }
-             vec3 shade(
+             vec4 shade(
                  vec3 p,
                  vec3 n,
                  vec3 rd,
@@ -194,7 +194,7 @@
                  // Small ambient term.
                  color += baseColor * 0.5;
 
-                 return color;
+                 return vec4(color, material.color.a);
              }
 
              // ─────────────────────────────────────────────
@@ -241,14 +241,18 @@
              vec3 p = ro + rd * hit.t;
              vec3 n = sceneNormal(p);
 
-             vec3 color = shade(
+             vec4 color = shade(
                  p,
                  n,
                  rd,
                  hit.material
              );
 
-             gl_FragColor = vec4(color, 1.0);
+             gl_FragColor = mix(
+                 background,
+                 color,
+                 color.a
+             );
              }
            `;
 
