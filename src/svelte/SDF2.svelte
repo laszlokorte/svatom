@@ -29,16 +29,13 @@
     );
 
     const scene = atom({
-        foreground: [
-            0.14901960784313725, 0.6352941176470588, 0.4117647058823529, 1,
-        ],
         background: [
-            0.9333333333333333, 0.9333333333333333, 0.9333333333333333, 1,
+            0.788235294117647, 0.8823529411764706, 0.9450980392156862, 1,
         ],
         root: {
             type: "transform",
             transform: {
-                translate: [0.0, -0.15],
+                translate: [0, -0.15],
                 rotate: 0,
                 scale: [1, 1],
             },
@@ -50,11 +47,10 @@
                         a: {
                             type: "union",
                             children: [
-                                // House body
                                 {
                                     type: "transform",
                                     transform: {
-                                        translate: [0.0, -0.15],
+                                        translate: [0, -0.15],
                                         rotate: 0,
                                         scale: [1, 1],
                                     },
@@ -64,32 +60,21 @@
                                         color: [0.75, 0.45, 0.25, 1],
                                     },
                                 },
-
-                                // Roof
                                 {
-                                    type: "transform",
-                                    transform: {
-                                        translate: [0.0, 0.65],
-                                        rotate: 0,
-                                        scale: [1, 1],
-                                    },
+                                    type: "offset",
+                                    offset: 0.02,
                                     child: {
-                                        type: "triangle",
-                                        size: [0.9, 0.25],
-                                        color: [0.7, 0.15, 0.1, 1],
-                                    },
-                                },
-                                {
-                                    type: "transform",
-                                    transform: {
-                                        translate: [0.0, -0.72],
-                                        rotate: 0,
-                                        scale: [1, 1],
-                                    },
-                                    child: {
-                                        type: "rect",
-                                        size: [1.9, 0.02],
-                                        color: [0.1, 0.75, 0.1, 1],
+                                        type: "transform",
+                                        transform: {
+                                            translate: [0, 0.65],
+                                            rotate: 0,
+                                            scale: [1, 1],
+                                        },
+                                        child: {
+                                            type: "triangle",
+                                            size: [0.9, 0.25],
+                                            color: [0.7, 0.15, 0.1, 1],
+                                        },
                                     },
                                 },
                             ],
@@ -97,7 +82,7 @@
                         b: {
                             type: "transform",
                             transform: {
-                                translate: [0.0, -0.4],
+                                translate: [-0.2, -0.4],
                                 rotate: 0,
                                 scale: [1, 1],
                             },
@@ -108,34 +93,80 @@
                             },
                         },
                     },
-
-                    // Door knob
                     {
                         type: "transform",
                         transform: {
-                            translate: [-0.1, -0.4],
+                            translate: [-0.3, -0.4],
                             rotate: 0,
                             scale: [1, 1],
                         },
                         child: {
                             type: "circle",
                             radius: 0.02,
-                            color: [1.0, 0.8, 0.2, 1],
+                            color: [1, 0.8, 0.2, 1],
                         },
                     },
-
-                    // Sun
                     {
                         type: "transform",
                         transform: {
-                            translate: [1.1, 0.9],
+                            translate: [1.1, 0.8],
                             rotate: 0,
                             scale: [1, 1],
                         },
                         child: {
                             type: "circle",
                             radius: 0.12,
-                            color: [1.0, 0.8, 0.1, 1],
+                            color: [1, 0.8, 0.1, 1],
+                        },
+                    },
+                    {
+                        type: "transform",
+                        transform: {
+                            translate: [0, -0.72],
+                            rotate: 0,
+                            scale: [1, 1],
+                        },
+                        child: {
+                            type: "rect",
+                            size: [1.9, 0.02],
+                            color: [0.1, 0.75, 0.1, 1],
+                        },
+                    },
+                    {
+                        type: "difference",
+                        a: {
+                            type: "offset",
+                            offset: 0.08,
+                            child: {
+                                type: "transform",
+                                transform: {
+                                    translate: [0.35, -0.3],
+                                    rotate: 0,
+                                    scale: [1, 1],
+                                },
+                                child: {
+                                    type: "rect",
+                                    size: [0.15, 0.1],
+                                    color: [0.25, 0.12, 0.05, 1],
+                                },
+                            },
+                        },
+                        b: {
+                            type: "offset",
+                            offset: 0.05,
+                            child: {
+                                type: "transform",
+                                transform: {
+                                    translate: [0.35, -0.3],
+                                    rotate: 0,
+                                    scale: [1, 1],
+                                },
+                                child: {
+                                    type: "rect",
+                                    size: [0.15, 0.1],
+                                    color: [0.25, 0.12, 0.05, 1],
+                                },
+                            },
                         },
                     },
                 ],
@@ -276,6 +307,21 @@
                     return name;
                 }
 
+                case "offset": {
+                    const child = compile(node.child);
+                    const size = addUniform("float", `${name}_offset`);
+
+                    functions.push(`
+                        SDFResult  ${name}(vec2 p) {
+                          SDFResult c = ${child}(p);
+
+                          return SDFResult(c.d - ${size} * 0.5 * min(screen.x, screen.y), c.color);
+                        }
+                    `);
+
+                    return name;
+                }
+
                 default:
                     throw new Error(`Unknown node type: ${node.type}`);
             }
@@ -330,6 +376,11 @@
                 case "difference":
                     walk(node.a);
                     walk(node.b);
+                    break;
+
+                case "offset":
+                    uniforms[`${name}_offset`] = node.offset ?? 0;
+                    walk(node.child);
                     break;
             }
         }
@@ -386,7 +437,6 @@
             const fs = `
              precision mediump float;
              uniform vec2 screen;
-             uniform vec4 foreground;
              uniform vec4 background;
              struct SDFResult {
                  float d;
@@ -500,9 +550,6 @@
 
                 frag: fs,
                 uniforms: {
-                    foreground: ({
-                        foreground = [238 / 255, 63 / 255, 16 / 255, 1],
-                    }) => scene.value.foreground || foreground,
                     background: ({ background = [1, 1, 1, 1] }) =>
                         scene.value.background || background,
                     view: regl.context("view"),
@@ -620,13 +667,9 @@
             }
         },
     );
-    const foreground = $derived(
-        failableView(["foreground", L.valueOr([0, 0, 0, 1])], scene),
-    );
     const background = $derived(
         failableView(["background", L.valueOr([0, 0, 0, 1])], scene),
     );
-    const foregroundHex = $derived(failableView([rgbaHex], foreground));
     const backgroundHex = $derived(failableView([rgbaHex], background));
 
     const sceneJson = $derived(view(L.inverse(L.json({ space: "  " })), scene));
@@ -877,6 +920,41 @@
                 </div>
             {/each}
         </fieldset>
+    {:else if o.type == "offset"}
+        {@const offset = view(["offset"], ov)}
+
+        <fieldset>
+            <legend> Offset </legend>
+            <label>
+                Offset<input
+                    type="range"
+                    min="-2"
+                    max="2"
+                    step="0.01"
+                    bind:value={offset.value}
+                /></label
+            >
+
+            <div>
+                {@render sceneTreeObject(scene, [...path, "child"])}
+            </div>
+        </fieldset>
+    {:else if o.child}
+        <fieldset>
+            <legend> {o.type} </legend>
+            <div>
+                {@render sceneTreeObject(scene, [...path, "child"])}
+            </div>
+        </fieldset>
+    {:else if o.children}
+        <fieldset>
+            <legend> {o.type} </legend>
+            {#each o.children as c, i}
+                <div>
+                    {@render sceneTreeObject(scene, [...path, "children", i])}
+                </div>
+            {/each}
+        </fieldset>
     {/if}
 {/snippet}
 
@@ -897,27 +975,19 @@
 </div>
 
 <div style="max-height: 10em; overflow: auto;">
+    <label
+        style=""
+        class={{ error: backgroundHex.hasError, "color-picker": true }}
+        ><span class="label">Background</span>
+        <span class="ctrl">
+            <input type="text" bind:value={backgroundHex.value} />
+            <input type="color" bind:value={backgroundHex.value} />
+        </span>
+    </label>
     {@render sceneTreeObject(scene, ["root"])}
 </div>
 
 <textarea bind:value={sceneJson.value}></textarea>
-
-<label style="" class={{ error: foregroundHex.hasError, "color-picker": true }}
-    ><span class="label">Foreground</span>
-    <span class="ctrl">
-        <input type="text" bind:value={foregroundHex.value} /><input
-            type="color"
-            bind:value={foregroundHex.value}
-        />
-    </span>
-</label>
-<label style="" class={{ error: backgroundHex.hasError, "color-picker": true }}
-    ><span class="label">Background</span>
-    <span class="ctrl">
-        <input type="text" bind:value={backgroundHex.value} />
-        <input type="color" bind:value={backgroundHex.value} />
-    </span>
-</label>
 
 <style>
     .viewportContainer {
