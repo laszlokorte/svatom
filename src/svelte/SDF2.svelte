@@ -583,12 +583,8 @@
         });
 
         const tick = regl.frame(() => {
-            const width = Math.round(
-                reglCanvas.clientWidth * window.devicePixelRatio * 2,
-            );
-            const height = Math.round(
-                reglCanvas.clientHeight * window.devicePixelRatio * 2,
-            );
+            const width = Math.round(reglCanvas.clientWidth);
+            const height = Math.round(reglCanvas.clientHeight);
 
             if (reglCanvas.width !== width || reglCanvas.height !== height) {
                 reglCanvas.width = width;

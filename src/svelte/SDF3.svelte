@@ -20,13 +20,375 @@
     );
 
     const scene = atom({
-        foreground: [
-            0.14901960784313725, 0.6352941176470588, 0.4117647058823529, 0.9,
-        ],
-        background: [
-            0.9333333333333333, 0.9333333333333333, 0.9333333333333333, 1,
-        ],
+        pos: [0.0, 2.0, 5.0],
+        target: [0.0, 1.0, 0.0],
+        background: [0.6, 0.7568627450980392, 0.9450980392156862, 1],
+        root: {
+            type: "transform",
+            translate: [0, 2, -2],
+            rotate: [0, 0, 0],
+            scale: [1, 1, 1],
+            child: {
+                type: "union",
+                children: [
+                    {
+                        type: "transform",
+                        translate: [-1, 0, 0],
+                        rotate: [0, 0, 0],
+                        scale: [1, 1, 1],
+                        child: {
+                            type: "sphere",
+                            radius: 1,
+                            color: [1, 0, 0, 1],
+                            roughness: 0.3,
+                            metallic: 0.4,
+                        },
+                    },
+                    {
+                        type: "transform",
+                        translate: [0, 0, 0],
+                        rotate: [0, 0, 0],
+                        scale: [0.5, 0.5, 0.5],
+                        child: {
+                            type: "sphere",
+                            radius: 1,
+                            color: [0.5, 0.5, 0.5, 1],
+                            roughness: 0.0,
+                            metallic: 0.1,
+                        },
+                    },
+                    {
+                        type: "transform",
+                        translate: [1, 0, 0],
+                        rotate: [0, 0, 0],
+                        scale: [1, 1, 1],
+                        child: {
+                            type: "sphere",
+                            radius: 1,
+                            color: [0, 0, 1, 1],
+                            roughness: 0.5,
+                            metallic: 0.5,
+                        },
+                    },
+                    {
+                        type: "plane",
+                        normal: [0, 1, 0],
+                        offset: -1,
+                        color: [0.2, 0.7, 0.1, 1],
+                        roughness: 0.5,
+                        metallic: 0.5,
+                    },
+                ],
+            },
+        },
     });
+    function collectSceneUniforms(root) {
+        let id = 0;
+        const uniforms = {};
+
+        function collect(node) {
+            const name = `sdf${id++}`;
+
+            switch (node.type) {
+                case "sphere": {
+                    uniforms[`${name}_radius`] = node.radius;
+                    uniforms[`${name}_color`] = node.color;
+                    uniforms[`${name}_roughness`] = node.roughness;
+                    uniforms[`${name}_metallic`] = node.metallic;
+                    break;
+                }
+
+                case "box": {
+                    uniforms[`${name}_size`] = node.size;
+                    uniforms[`${name}_color`] = node.color;
+                    uniforms[`${name}_roughness`] = node.roughness;
+                    uniforms[`${name}_metallic`] = node.metallic;
+                    break;
+                }
+                case "plane": {
+                    uniforms[`${name}_normal`] = node.normal;
+                    uniforms[`${name}_offset`] = node.offset;
+                    uniforms[`${name}_color`] = node.color;
+                    uniforms[`${name}_roughness`] = node.roughness;
+                    uniforms[`${name}_metallic`] = node.metallic;
+                    break;
+                }
+
+                case "union": {
+                    node.children.forEach(collect);
+                    break;
+                }
+
+                case "difference": {
+                    collect(node.a);
+                    collect(node.b);
+                    break;
+                }
+
+                case "intersection": {
+                    collect(node.a);
+                    collect(node.b);
+                    break;
+                }
+
+                case "transform": {
+                    uniforms[`${name}_translate`] = node.translate;
+                    uniforms[`${name}_rotate`] = node.rotate;
+                    uniforms[`${name}_scale`] = node.scale;
+
+                    collect(node.child);
+                    break;
+                }
+
+                case "offset": {
+                    collect(node.child);
+                    uniforms[`${name}_offset`] = node.offset;
+                    break;
+                }
+
+                default:
+                    throw new Error(`Unknown node type: ${node.type}`);
+            }
+        }
+
+        collect(root);
+
+        return uniforms;
+    }
+    function compileScene(root) {
+        let id = 0;
+        const functions = [];
+        const uniforms = [];
+        const declarations = [];
+
+        function addUniform(type, name) {
+            declarations.push(`uniform ${type} ${name};`);
+            uniforms.push([name, name]);
+            return name;
+        }
+
+        function compile(node) {
+            const name = `sdf${id++}`;
+
+            switch (node.type) {
+                case "sphere": {
+                    const radius = addUniform("float", `${name}_radius`);
+
+                    const color = addUniform("vec4", `${name}_color`);
+
+                    const roughness = addUniform("float", `${name}_roughness`);
+
+                    const metallic = addUniform("float", `${name}_metallic`);
+
+                    functions.push(`
+                        SDFResult ${name}(vec3 p) {
+                            return SDFResult(
+                                length(p) - ${radius},
+                                ${color},
+                                ${roughness},
+                                ${metallic}
+                            );
+                        }
+                    `);
+
+                    return name;
+                }
+
+                case "box": {
+                    const size = addUniform("vec3", `${name}_size`);
+
+                    const color = addUniform("vec4", `${name}_color`);
+
+                    const roughness = addUniform("float", `${name}_roughness`);
+
+                    const metallic = addUniform("float", `${name}_metallic`);
+
+                    functions.push(`
+                        SDFResult ${name}(vec3 p) {
+                            vec3 b = 0.5 * ${size};
+                            vec3 q = abs(p) - b;
+
+                            return SDFResult(
+                                length(max(q, 0.0))
+                                    + min(
+                                        max(q.x, max(q.y, q.z)),
+                                        0.0
+                                    ),
+                                ${color},
+                                ${roughness},
+                                ${metallic}
+                            );
+                        }
+                    `);
+
+                    return name;
+                }
+                case "plane": {
+                    const normal = addUniform("vec3", `${name}_normal`);
+                    const offset = addUniform("float", `${name}_offset`);
+
+                    const color = addUniform("vec4", `${name}_color`);
+
+                    const roughness = addUniform("float", `${name}_roughness`);
+
+                    const metallic = addUniform("float", `${name}_metallic`);
+
+                    functions.push(`
+                                        SDFResult ${name}(vec3 p) {
+
+                                            return SDFResult(dot(p, normalize(${normal})) - ${offset},
+                                                ${color},
+                                                ${roughness},
+                                                ${metallic}
+                                            );
+                                        }
+                                    `);
+
+                    return name;
+                }
+
+                case "union": {
+                    const children = node.children.map(compile);
+
+                    if (!children.length) {
+                        throw new Error("Union must have at least one child");
+                    }
+
+                    functions.push(`
+                        SDFResult ${name}(vec3 p) {
+                            SDFResult d = ${children[0]}(p);
+
+                            ${children
+                                .slice(1)
+                                .map(
+                                    (child) => `
+                                        d = sdf_union(
+                                            d,
+                                            ${child}(p)
+                                        );
+                                    `,
+                                )
+                                .join("\n")}
+
+                            return d;
+                        }
+                    `);
+
+                    return name;
+                }
+
+                case "difference": {
+                    const a = compile(node.a);
+                    const b = compile(node.b);
+
+                    functions.push(`
+                        SDFResult ${name}(vec3 p) {
+                            SDFResult a = ${a}(p);
+                            SDFResult b = ${b}(p);
+
+                            return SDFResult(
+                                max(a.d, -b.d),
+                                a.color,
+                                a.roughness,
+                                a.metallic
+                            );
+                        }
+                    `);
+
+                    return name;
+                }
+
+                case "intersection": {
+                    const a = compile(node.a);
+                    const b = compile(node.b);
+
+                    functions.push(`
+                        SDFResult ${name}(vec3 p) {
+                            SDFResult a = ${a}(p);
+                            SDFResult b = ${b}(p);
+
+                            return SDFResult(
+                                max(a.d, b.d),
+                                a.color,
+                                a.roughness,
+                                a.metallic
+                            );
+                        }
+                    `);
+
+                    return name;
+                }
+
+                case "transform": {
+                    const translate = addUniform("vec3", `${name}_translate`);
+
+                    const rotate = addUniform("vec3", `${name}_rotate`);
+
+                    const scale = addUniform("vec3", `${name}_scale`);
+
+                    const child = compile(node.child);
+
+                    functions.push(`
+                        SDFResult ${name}(vec3 p) {
+                            vec3 q = p;
+
+                            q -= ${translate};
+
+                            q = rotateXYZ(q, -${rotate});
+
+                            q /= ${scale};
+
+                            SDFResult r =${child}(q);
+                            r.d = r.d ;
+                            return r;
+                        }
+                    `);
+
+                    return name;
+                }
+
+                case "offset": {
+                    const child = compile(node.child);
+
+                    const offset = addUniform("float", `${name}_offset`);
+
+                    functions.push(`
+                        SDFResult ${name}(vec3 p) {
+                            SDFResult c = ${child}(p);
+
+                            return SDFResult(
+                                c.d - ${offset},
+                                c.color,
+                                c.roughness,
+                                c.metallic
+                            );
+                        }
+                    `);
+
+                    return name;
+                }
+
+                default:
+                    throw new Error(`Unknown node type: ${node.type}`);
+            }
+        }
+
+        const rootFn = compile(root);
+
+        return {
+            root: rootFn,
+            code: functions.join("\n"),
+            declarations: declarations.join("\n"),
+            uniforms,
+        };
+    }
+
+    const compiledScene = view(["root", compileScene], scene);
+
+    const sceneCode = view("code", compiledScene);
+    const sceneCodeRoot = view("root", compiledScene);
+    const sceneUniforms = view("uniforms", compiledScene);
+    const sceneUniformsDelc = view("declarations", compiledScene);
 
     const renderGL = (canvasRoot) => {
         const reglCanvas = document.createElement("canvas");
@@ -71,12 +433,17 @@
                 viewNormal: regl.context("viewNormal"),
             },
         });
-        const makeScene = (circleCode, circleDecl, uniformTypes) => {
+        const makeScene = (root, sceneCode, decls, uniformTypes) => {
             const fs = `
              precision mediump float;
              uniform vec2 screen;
+             uniform vec3 pos;
+             uniform vec3 target;
+             uniform float time;
              uniform vec4 foreground;
              uniform vec4 background;
+
+             ${decls}
 
              struct SDFResult {
                  float d;
@@ -88,10 +455,54 @@
                  float t;
                  SDFResult material;
              };
+             vec3 rotateXYZ(vec3 p, vec3 r) {
+                 // X
+                 float cx = cos(r.x);
+                 float sx = sin(r.x);
+
+                 p = vec3(
+                     p.x,
+                     cx * p.y - sx * p.z,
+                     sx * p.y + cx * p.z
+                 );
+
+                 // Y
+                 float cy = cos(r.y);
+                 float sy = sin(r.y);
+
+                 p = vec3(
+                     cy * p.x + sy * p.z,
+                     p.y,
+                     -sy * p.x + cy * p.z
+                 );
+
+                 // Z
+                 float cz = cos(r.z);
+                 float sz = sin(r.z);
+
+                 p = vec3(
+                     cz * p.x - sz * p.y,
+                     sz * p.x + cz * p.y,
+                     p.z
+                 );
+
+                 return p;
+             }
 
 
              float sdfSphere(vec3 p, float rad) {
                   return length(p) - rad;
+              }
+              float sdfBox(vec3 p, vec3 b) {
+                  vec3 q = abs(p) - b;
+
+                  return length(max(q, 0.0))
+                       + min(max(q.x, max(q.y, q.z)), 0.0);
+
+              }
+
+              float sdfPlane(vec3 p, vec3 n, float d) {
+                  return dot(p, n) - d;
               }
 
               float smin(float a, float b, float k) {
@@ -105,31 +516,134 @@
              // ─────────────────────────────────────────────
              // Scene
              // ─────────────────────────────────────────────
+             //
+             vec3 rgb2hsv(vec3 c) {
+                 float maxC = max(c.r, max(c.g, c.b));
+                 float minC = min(c.r, min(c.g, c.b));
+                 float d = maxC - minC;
 
-             SDFResult sceneSDF(vec3 p) {
-                SDFResult result;
-                float s1 = sdfSphere(p - vec3(0.9,0.2,0.1), 0.7);
-                float s2 = sdfSphere(p + vec3(0.8,0.2,0.3), 0.7);
-                float s3 = sdfSphere(p + vec3(1.0,0.2,-0.5), 0.3);
-                float s4 = sdfSphere(p + vec3(-0.9,-0.2,-1.5), 0.9);
-                result.d = smin(smax(s2,-s3, 0.0),smax(s1, -s4, 0.0), 1.0);
-                result.color = foreground;
-                result.roughness = 0.2;
-                result.metallic = 0.3;
+                 float h = 0.0;
 
-                return result;
+                 if (d > 0.00001) {
+                     if (maxC == c.r) {
+                         h = mod((c.g - c.b) / d, 6.0);
+                     } else if (maxC == c.g) {
+                         h = (c.b - c.r) / d + 2.0;
+                     } else {
+                         h = (c.r - c.g) / d + 4.0;
+                     }
+
+                     h /= 6.0;
+
+                     if (h < 0.0)
+                         h += 1.0;
+                 }
+
+                 float s = maxC > 0.0 ? d / maxC : 0.0;
+
+                 return vec3(h, s, maxC);
+             }
+             vec3 hsv2rgb(vec3 c) {
+                 float h = c.x * 6.0;
+                 float s = c.y;
+                 float v = c.z;
+
+                 float i = floor(h);
+                 float f = h - i;
+
+                 float p = v * (1.0 - s);
+                 float q = v * (1.0 - s * f);
+                 float t = v * (1.0 - s * (1.0 - f));
+
+                 if (i < 1.0)
+                     return vec3(v, t, p);
+
+                 if (i < 2.0)
+                     return vec3(q, v, p);
+
+                 if (i < 3.0)
+                     return vec3(p, v, t);
+
+                 if (i < 4.0)
+                     return vec3(p, q, v);
+
+                 if (i < 5.0)
+                     return vec3(t, p, v);
+
+                 return vec3(v, p, q);
              }
 
+             vec3 mixHSV(vec3 a, vec3 b, float t) {
+                 vec3 ah = rgb2hsv(a);
+                 vec3 bh = rgb2hsv(b);
 
-             // ─────────────────────────────────────────────
-             // Ray marching
-             // ─────────────────────────────────────────────
+                 float dh = bh.x - ah.x;
 
+                 if (dh > 0.5) {
+                     dh -= 1.0;
+                 }
+
+                 if (dh < -0.5) {
+                     dh += 1.0;
+                 }
+
+                 return hsv2rgb(vec3(
+                     fract(ah.x + t * dh),
+                     mix(ah.y, bh.y, t),
+                     mix(ah.z, bh.z, t)
+                 ));
+             }
+             SDFResult smoothUnion(
+                 SDFResult a,
+                 SDFResult b,
+                 float k
+             ) {
+                 float h = clamp(
+                                  0.5 + 0.5 * (b.d - a.d) / k,
+                                  0.0,
+                                  1.0
+                              );
+
+                 SDFResult result;
+
+                 result.d =
+                     mix(b.d, a.d, h)
+                     - k * h * (1.0 - h);
+
+                 result.color = vec4(
+                     mixHSV(b.color.rgb, a.color.rgb, h),
+                     mix(b.color.a, a.color.a, h)
+                 );
+
+                 result.roughness =
+                     mix(b.roughness, a.roughness, h);
+
+                 result.metallic =
+                     mix(b.metallic, a.metallic, h);
+
+                 return result;
+             }
+             SDFResult sdf_union(
+                            SDFResult a,
+                            SDFResult b
+                        ) {
+                           if(a.d < b.d) {
+                            return a;
+                           } else {
+                           return b;
+                           }
+                        }
+
+             ${sceneCode}
+
+             SDFResult sceneSDF(vec3 p) {
+              ${root ? `return ${root}(p);` : "SDFResult r = SDFResult(100.0, vec4(0.0), 0.0, 0.0); return r;"}
+             }
 
              RayHit rayMarch(vec3 ro, vec3 rd) {
                  float t = 0.0;
 
-                 for (int i = 0; i < 100; i++) {
+                 for (int i = 0; i < 500; i++) {
                      vec3 p = ro + rd * t;
                      SDFResult result = sceneSDF(p);
 
@@ -219,22 +733,30 @@
                  );
              }
 
-             // ─────────────────────────────────────────────
-             // Main
-             // ─────────────────────────────────────────────
 
              void main() {
              vec2 uv =
                  (gl_FragCoord.xy - 0.5 * screen)
                  / min(screen.x, screen.y);
 
-             vec3 ro = vec3(0.0, 0.0, 3.0);
-             vec3 rd = normalize(vec3(uv, -1.5));
+                 vec3 upHint = vec3(0.0, 1.0, 0.0);
+
+                 vec3 forward = normalize(target - pos);
+                 vec3 side    = normalize(cross(forward, upHint));
+                 vec3 up      = cross(side, forward);
+
+                 vec3 ro = pos;
+
+                 vec3 rd = normalize(
+                     uv.x * side +
+                     uv.y * up +
+                     1.5 * forward
+                 );
 
              RayHit hit = rayMarch(ro, rd);
 
              if (hit.t < 0.0) {
-                 gl_FragColor = background;
+                 gl_FragColor = background + 0.1 * (gl_FragCoord.y / screen.y);
                  return;
              }
 
@@ -280,9 +802,10 @@
 
                 frag: fs,
                 uniforms: {
-                    foreground: ({
-                        foreground = [238 / 255, 63 / 255, 16 / 255, 1],
-                    }) => scene.value.foreground || foreground,
+                    time: regl.context("time"),
+                    pos: ({ pos = [0.0, 2.0, 5.0] }) => scene.value.pos || pos,
+                    target: ({ pos = [1.0, 0.0, 1.0] }) =>
+                        scene.value.target || target,
                     background: ({ background = [1, 1, 1, 1] }) =>
                         scene.value.background || background,
                     view: regl.context("view"),
@@ -296,15 +819,18 @@
                 },
             });
         };
-        let drawScene = makeScene("", "", []);
-        const sceneCode = view(({ items }) => "", scene);
-        const sceneUniforms = view(({ items }) => "", scene);
-        const sceneUniformsDelc = view(({ items }) => [], scene);
+        let drawScene = makeScene(
+            "",
+            sceneCode.value,
+            sceneUniformsDelc.value,
+            sceneUniforms.value,
+        );
         $effect(() => {
             drawScene = makeScene(
+                sceneCodeRoot.value,
                 sceneCode.value,
-                sceneUniforms.value,
                 untrack(() => sceneUniformsDelc.value),
+                sceneUniforms.value,
             );
             return () => {
                 drawScene.destroy();
@@ -312,12 +838,8 @@
         });
 
         const tick = regl.frame(() => {
-            const width = Math.round(
-                reglCanvas.clientWidth * window.devicePixelRatio * 2,
-            );
-            const height = Math.round(
-                reglCanvas.clientHeight * window.devicePixelRatio * 2,
-            );
+            const width = Math.round(reglCanvas.clientWidth);
+            const height = Math.round(reglCanvas.clientHeight);
 
             if (reglCanvas.width !== width || reglCanvas.height !== height) {
                 reglCanvas.width = width;
@@ -332,7 +854,9 @@
             });
             try {
                 reglCamera(() => {
-                    drawScene();
+                    drawScene({
+                        ...collectSceneUniforms(scene.value.root),
+                    });
                 });
             } catch (e) {
                 console.error(e);
@@ -395,14 +919,17 @@
             }
         },
     );
-    const foreground = $derived(
-        failableView(["foreground", L.valueOr([0, 0, 0, 1])], scene),
-    );
     const background = $derived(
         failableView(["background", L.valueOr([0, 0, 0, 1])], scene),
     );
-    const foregroundHex = $derived(failableView([rgbaHex], foreground));
     const backgroundHex = $derived(failableView([rgbaHex], background));
+
+    const posX = $derived(view(["pos", 0], scene));
+    const posY = $derived(view(["pos", 1], scene));
+    const posZ = $derived(view(["pos", 2], scene));
+    const targetX = $derived(view(["target", 0], scene));
+    const targetY = $derived(view(["target", 1], scene));
+    const targetZ = $derived(view(["target", 2], scene));
 
     const sceneJson = $derived(view(L.inverse(L.json({ space: "  " })), scene));
 </script>
@@ -426,22 +953,311 @@
 
 <textarea bind:value={sceneJson.value}></textarea>
 
-<label style="" class={{ error: foregroundHex.hasError, "color-picker": true }}
-    ><span class="label">Foreground</span>
-    <span class="ctrl">
-        <input type="text" bind:value={foregroundHex.value} /><input
-            type="color"
-            bind:value={foregroundHex.value}
-        />
-    </span>
-</label>
-<label style="" class={{ error: backgroundHex.hasError, "color-picker": true }}
+<label class={{ error: backgroundHex.hasError, "color-picker": true }}
     ><span class="label">Background</span>
     <span class="ctrl">
         <input type="text" bind:value={backgroundHex.value} />
         <input type="color" bind:value={backgroundHex.value} />
     </span>
 </label>
+<fieldset>
+    <legend>Cam</legend>
+    <label style="display: flex; gap: 1ex">
+        Pos X
+        <input
+            type="range"
+            style="flex-grow: 1;"
+            bind:value={posX.value}
+            min="-2"
+            max="2"
+            step="0.01"
+        />
+        <input type="text" bind:value={posX.value} />
+    </label>
+    <label style="display: flex; gap: 1ex">
+        Pos Y
+        <input
+            type="range"
+            style="flex-grow: 1;"
+            bind:value={posY.value}
+            min="1.5"
+            max="3"
+            step="0.01"
+        />
+        <input type="text" bind:value={posY.value} />
+    </label>
+    <label style="display: flex; gap: 1ex">
+        Pos Z
+        <input
+            type="range"
+            style="flex-grow: 1;"
+            bind:value={posZ.value}
+            min="-10"
+            max="10"
+            step="0.01"
+        />
+        <input type="text" bind:value={posZ.value} />
+    </label>
+    <label style="display: flex; gap: 1ex">
+        target X
+        <input
+            type="range"
+            style="flex-grow: 1;"
+            bind:value={targetX.value}
+            min="-2"
+            max="2"
+            step="0.01"
+        />
+        <input type="text" bind:value={targetX.value} />
+    </label>
+    <label style="display: flex; gap: 1ex">
+        target Y
+        <input
+            type="range"
+            style="flex-grow: 1;"
+            bind:value={targetY.value}
+            min="-3"
+            max="3"
+            step="0.01"
+        />
+        <input type="text" bind:value={targetY.value} />
+    </label>
+    <label style="display: flex; gap: 1ex">
+        target Z
+        <input
+            type="range"
+            style="flex-grow: 1;"
+            bind:value={targetZ.value}
+            min="-10"
+            max="10"
+            step="0.01"
+        />
+        <input type="text" bind:value={targetZ.value} />
+    </label>
+</fieldset>
+
+{#snippet sceneTreeObject(scene, path)}
+    {@const ov = view(path, scene)}
+    {@const ot = view("type", ov)}
+    {@const o = ov.value}
+
+    {#if o.type == "sphere"}
+        {@const radius = view(["radius"], ov)}
+        {@const roughness = view(["roughness"], ov)}
+        {@const metallic = view(["metallic"], ov)}
+        {@const color = failableView(["color"], ov)}
+        {@const colorHex = failableView([rgbaHex], color)}
+        <fieldset>
+            <legend>Sphere</legend>
+
+            <div style="display: flex; gap: 1ex">
+                <label>
+                    Radius<input
+                        type="range"
+                        bind:value={radius.value}
+                        step="0.01"
+                        max="2"
+                        min="0"
+                    /></label
+                >
+                <label>
+                    metallic<input
+                        type="range"
+                        bind:value={metallic.value}
+                        step="0.01"
+                        max="2"
+                        min="0"
+                    /></label
+                >
+
+                <label>
+                    roughness<input
+                        type="range"
+                        bind:value={roughness.value}
+                        step="0.01"
+                        max="2"
+                        min="0"
+                    /></label
+                >
+
+                <label
+                    style=""
+                    class={{
+                        error: colorHex.hasError,
+                        "color-picker": true,
+                    }}
+                    ><span class="label">Color</span>
+                    <span class="ctrl">
+                        <input type="text" bind:value={colorHex.value} /><input
+                            type="color"
+                            bind:value={colorHex.value}
+                        />
+                    </span>
+                </label>
+            </div>
+        </fieldset>
+    {:else if o.type == "transform"}
+        {@const transx = view(["translate", 0], ov)}
+        {@const transy = view(["translate", 1], ov)}
+        {@const transz = view(["translate", 2], ov)}
+        {@const scalex = view(["scale", 0], ov)}
+        {@const scaley = view(["scale", 1], ov)}
+        {@const scalez = view(["scale", 2], ov)}
+        {@const rotx = view(["rotate", 0], ov)}
+        {@const roty = view(["rotate", 1], ov)}
+        {@const rotz = view(["rotate", 2], ov)}
+        <fieldset>
+            <legend>Transform</legend>
+
+            <div
+                style="display: grid; gap: 1ex; grid-template-rows: 1fr 1fr 1fr; grid-auto-flow: column;"
+            >
+                <label>
+                    Translate X<input
+                        type="range"
+                        min="-2"
+                        max="2"
+                        step="0.01"
+                        bind:value={transx.value}
+                    /></label
+                >
+                <label>
+                    Transalte Y<input
+                        type="range"
+                        min="-2"
+                        max="2"
+                        step="0.01"
+                        bind:value={transy.value}
+                    /></label
+                >
+
+                <label>
+                    Transalte Z<input
+                        type="range"
+                        min="-2"
+                        max="2"
+                        step="0.01"
+                        bind:value={transz.value}
+                    /></label
+                >
+                <label>
+                    Scale X<input
+                        type="range"
+                        min="-2"
+                        max="2"
+                        step="0.01"
+                        bind:value={scalex.value}
+                    /></label
+                >
+                <label>
+                    Scale Y<input
+                        type="range"
+                        min="-2"
+                        max="2"
+                        step="0.01"
+                        bind:value={scaley.value}
+                    /></label
+                >
+
+                <label>
+                    Scale Z<input
+                        type="range"
+                        min="-2"
+                        max="2"
+                        step="0.01"
+                        bind:value={scalez.value}
+                    /></label
+                >
+                <label>
+                    Rotation X<input
+                        type="range"
+                        min="-2"
+                        max="0.5"
+                        step="0.01"
+                        bind:value={rotx.value}
+                    /></label
+                >
+
+                <label>
+                    Rotation Y<input
+                        type="range"
+                        min="-2"
+                        max="0.5"
+                        step="0.01"
+                        bind:value={roty.value}
+                    /></label
+                >
+                <label>
+                    Rotation Z<input
+                        type="range"
+                        min="-2"
+                        max="0.5"
+                        step="0.01"
+                        bind:value={rotz.value}
+                    /></label
+                >
+            </div>
+            <div>
+                {@render sceneTreeObject(scene, [...path, "child"])}
+            </div>
+        </fieldset>
+    {:else if o.type == "difference"}
+        <fieldset>
+            <legend> Difference </legend>
+            <div>
+                {@render sceneTreeObject(scene, [...path, "a"])}
+            </div>
+            <div>
+                {@render sceneTreeObject(scene, [...path, "b"])}
+            </div>
+        </fieldset>
+    {:else if o.type == "union"}
+        <fieldset>
+            <legend> Union </legend>
+            {#each o.children as c, i}
+                <div>
+                    {@render sceneTreeObject(scene, [...path, "children", i])}
+                </div>
+            {/each}
+        </fieldset>
+    {:else if o.type == "offset"}
+        {@const offset = view(["offset"], ov)}
+
+        <fieldset>
+            <legend> Offset </legend>
+            <label>
+                Offset<input
+                    type="range"
+                    min="-2"
+                    max="2"
+                    step="0.01"
+                    bind:value={offset.value}
+                /></label
+            >
+
+            <div>
+                {@render sceneTreeObject(scene, [...path, "child"])}
+            </div>
+        </fieldset>
+    {:else if o.child}
+        <fieldset>
+            <legend> {o.type} </legend>
+            <div>
+                {@render sceneTreeObject(scene, [...path, "child"])}
+            </div>
+        </fieldset>
+    {:else if o.children}
+        <fieldset>
+            <legend> {o.type} </legend>
+            {#each o.children as c, i}
+                <div>
+                    {@render sceneTreeObject(scene, [...path, "children", i])}
+                </div>
+            {/each}
+        </fieldset>
+    {/if}
+{/snippet}
+{@render sceneTreeObject(scene, ["root"])}
 
 <style>
     .viewportContainer {

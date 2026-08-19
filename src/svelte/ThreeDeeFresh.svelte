@@ -1672,12 +1672,12 @@
     const showNDCCube = $derived(view("ndcCube", debugLabels));
     const screenTriangle = $derived(view("screenTriangle", debugLabels));
     const penSize = atom({
-        fg: 2,
-        bg: 1,
+        fg: 1,
+        bg: 0.5,
         circleRad: 0,
         fontSize: 12,
         dashRatio: 0.5,
-        dashFrequency: 1.5,
+        dashFrequency: 2,
         alphaBlend: true,
     });
 
@@ -2354,12 +2354,8 @@
         );
 
         const tick = regl.frame(() => {
-            const width = Math.round(
-                reglCanvas.clientWidth * window.devicePixelRatio * 2,
-            );
-            const height = Math.round(
-                reglCanvas.clientHeight * window.devicePixelRatio * 2,
-            );
+            const width = Math.round(reglCanvas.clientWidth);
+            const height = Math.round(reglCanvas.clientHeight);
 
             if (reglCanvas.width !== width || reglCanvas.height !== height) {
                 reglCanvas.width = width;
